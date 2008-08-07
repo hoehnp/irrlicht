@@ -1,12 +1,9 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #ifndef __C_GUI_IMAGE_H_INCLUDED__
 #define __C_GUI_IMAGE_H_INCLUDED__
-
-#include "IrrCompileConfig.h"
-#ifdef _IRR_COMPILE_WITH_GUI_
 
 #include "IGUIImage.h"
 
@@ -23,16 +20,10 @@ namespace gui
 		CGUIImage(IGUIEnvironment* environment, IGUIElement* parent, s32 id, core::rect<s32> rectangle);
 
 		//! destructor
-		virtual ~CGUIImage();
+		~CGUIImage();
 
 		//! sets an image
 		virtual void setImage(video::ITexture* image);
-
-		//! sets the color of the image
-		virtual void setColor(video::SColor color);
-
-		//! sets if the image should scale to fit the element
-		virtual void setScaleImage(bool scale);
 
 		//! draws the element and its children
 		virtual void draw();
@@ -40,24 +31,17 @@ namespace gui
 		//! sets if the image should use its alpha channel to draw itself
 		virtual void setUseAlphaChannel(bool use);
 
-		//! Returns true if the image is scaled to fit, false if not
-		virtual bool isImageScaled() const;
-
-		//! Returns true if the image is using the alpha channel, false if not
-		virtual bool isAlphaChannelUsed() const;
-
 		//! Writes attributes of the element.
-		virtual void serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options) const;
+		virtual void serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options);
 
 		//! Reads attributes of the element
 		virtual void deserializeAttributes(io::IAttributes* in, io::SAttributeReadWriteOptions* options);
 
 
 	private:
-		video::SColor Color;
+
 		video::ITexture* Texture;
 		bool UseAlphaChannel;
-		bool ScaleImage;
 
 	};
 
@@ -65,6 +49,5 @@ namespace gui
 } // end namespace gui
 } // end namespace irr
 
-#endif // _IRR_COMPILE_WITH_GUI_
+#endif
 
-#endif // __C_GUI_IMAGE_H_INCLUDED__

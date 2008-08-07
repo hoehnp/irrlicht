@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -37,11 +37,6 @@ CD3D9HLSLMaterialRenderer::CD3D9HLSLMaterialRenderer(IDirect3DDevice9* d3ddev,
 	: CD3D9ShaderMaterialRenderer(d3ddev, driver, callback, baseMaterial, userData),
 	VSConstantsTable(0), PSConstantsTable(0)
 {
-
-	#ifdef _DEBUG
-	setDebugName("CD3D9HLSLMaterialRenderer");
-	#endif
-
 	outMaterialTypeNr = -1;
 
 	// now create shaders
@@ -292,5 +287,5 @@ void CD3D9HLSLMaterialRenderer::printHLSLVariables(LPD3DXCONSTANTTABLE table)
 } // end namespace video
 } // end namespace irr
 
-#endif // _IRR_COMPILE_WITH_DIRECT3D_9_
+#endif
 

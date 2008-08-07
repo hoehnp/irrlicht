@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -13,15 +13,10 @@ namespace scene
 
 //! constructor
 CParticleFadeOutAffector::CParticleFadeOutAffector(
-	const video::SColor& targetColor, u32 fadeOutTime)
-	: IParticleFadeOutAffector(), TargetColor(targetColor)
+	video::SColor targetColor, u32 fadeOutTime)
+	: IParticleAffector(), TargetColor(targetColor)
 {
-
-	#ifdef _DEBUG
-	setDebugName("CParticleFadeOutAffector");
-	#endif
-
-	FadeOutTime = fadeOutTime ? static_cast<f32>(fadeOutTime) : 1.0f;
+	FadeOutTime = fadeOutTime ? (f32)fadeOutTime : 1.0f;
 }
 
 
@@ -45,16 +40,16 @@ void CParticleFadeOutAffector::affect(u32 now, SParticle* particlearray, u32 cou
 
 
 //! Writes attributes of the object.
-//! Implement this to expose the attributes of your scene node animator for
+//! Implement this to expose the attributes of your scene node animator for 
 //! scripting languages, editors, debuggers or xml serialization purposes.
-void CParticleFadeOutAffector::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options) const
+void CParticleFadeOutAffector::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options)
 {
 	out->addColor("TargetColor", TargetColor);
 	out->addFloat("FadeOutTime", FadeOutTime);
 }
 
 //! Reads attributes of the object.
-//! Implement this to set the attributes of your scene node animator for
+//! Implement this to set the attributes of your scene node animator for 
 //! scripting languages, editors, debuggers or xml deserialization purposes.
 //! \param startIndex: start index where to start reading attributes.
 //! \return: returns last index of an attribute read by this affector
@@ -68,7 +63,7 @@ s32 CParticleFadeOutAffector::deserializeAttributes(s32 startIndex, io::IAttribu
 	TargetColor = in->getAttributeAsColor(startIndex);
 	++startIndex;
 
-	name = in->getAttributeName(startIndex);
+	in->getAttributeName(startIndex);
 	if (!name || strcmp(name, "FadeOutTime"))
 		return startIndex; // attribute not valid
 

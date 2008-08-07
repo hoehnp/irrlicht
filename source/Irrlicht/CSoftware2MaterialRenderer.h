@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -21,25 +21,25 @@ class CSoftware2MaterialRenderer : public IMaterialRenderer
 public:
 
 	//! Constructor
-	CSoftware2MaterialRenderer(video::CBurningVideoDriver* driver)
+	CSoftware2MaterialRenderer(video::CSoftwareDriver2* driver)
 		: Driver(driver)
 	{
 	}
 
 protected:
 
-	video::CBurningVideoDriver* Driver;
+	video::CSoftwareDriver2* Driver;
 };
 
 //! solid material renderer
 class CSoftware2MaterialRenderer_SOLID : public CSoftware2MaterialRenderer
 {
 public:
-	CSoftware2MaterialRenderer_SOLID ( video::CBurningVideoDriver* driver )
+	CSoftware2MaterialRenderer_SOLID ( video::CSoftwareDriver2* driver )
 		:CSoftware2MaterialRenderer ( driver ) {}
 
 	//! Returns if the material is transparent. 
-	virtual bool isTransparent() const
+	virtual bool isTransparent() 
 	{
 		return false; 
 	}
@@ -52,12 +52,12 @@ public:
 class CSoftware2MaterialRenderer_TRANSPARENT_ADD_COLOR : public CSoftware2MaterialRenderer
 {
 public:
-	CSoftware2MaterialRenderer_TRANSPARENT_ADD_COLOR ( video::CBurningVideoDriver* driver )
-		: CSoftware2MaterialRenderer ( driver ) {}
+	CSoftware2MaterialRenderer_TRANSPARENT_ADD_COLOR ( video::CSoftwareDriver2* driver )
+		:CSoftware2MaterialRenderer ( driver ) {}
 
 
 	//! Returns if the material is transparent. 
-	virtual bool isTransparent() const
+	virtual bool isTransparent() 
 	{
 		return true; 
 	}
@@ -68,47 +68,12 @@ public:
 class CSoftware2MaterialRenderer_UNSUPPORTED : public CSoftware2MaterialRenderer
 {
 public:
-	CSoftware2MaterialRenderer_UNSUPPORTED ( video::CBurningVideoDriver* driver )
-		: CSoftware2MaterialRenderer ( driver ) {}
+	CSoftware2MaterialRenderer_UNSUPPORTED ( video::CSoftwareDriver2* driver )
+		:CSoftware2MaterialRenderer ( driver ) {}
 
-	virtual s32 getRenderCapability() const { return 1; }
-
-};
-
-//! unsupported material renderer
-class CBurningShader_REFERENCE : public CSoftware2MaterialRenderer
-{
-public:
-	CBurningShader_REFERENCE ( video::CBurningVideoDriver* driver )
-		: CSoftware2MaterialRenderer ( driver ) {}
-
-	virtual void OnSetMaterial(const SMaterial& material, const SMaterial& lastMaterial,
-		bool resetAllRenderstates, IMaterialRendererServices* services)
-	{
-	}
-
-	virtual void OnUnsetMaterial()
-	{
-	}
-
-	virtual bool isTransparent() const
-	{
-		return false;
-	}
-
-	virtual bool OnRender(IMaterialRendererServices* service, E_VERTEX_TYPE vtxtype)
-	{
-		return true;
-	};
-
-
-	virtual s32 getRenderCapability() const
-	{
-		return 1;
-	}
+	virtual s32 getRenderCapability() { return 1; }
 
 };
-
 
 
 } // end namespace video

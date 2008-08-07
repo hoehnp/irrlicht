@@ -35,16 +35,16 @@ public:
 
 		irr::scene::ILightSceneNode* l = (irr::scene::ILightSceneNode*) node;
 
+		core::vector3df now = l->getPosition();
+
 		if ( ToFollow )
 		{
-			core::vector3df now = l->getPosition();
 			now += ToFollow->getBoundingBox().getCenter();
 			now += Offset;
-			l->setPosition(now);
 		}
 
 		irr::video::SColorHSL color;
-		irr::video::SColor rgb(0);
+		irr::video::SColor rgb;
 		color.Hue = ( ( timeMs + Phase ) % Frequency  ) * ( 2.f * irr::core::PI / Frequency );
 		color.Saturation = 1.f;
 		color.Luminance = 0.5f;
@@ -52,6 +52,7 @@ public:
 
 		video::SLight light = l->getLightData();
 		light.DiffuseColor = rgb;
+		light.Position = now;
 		l->setLightData(light);
 	}
 
@@ -68,8 +69,8 @@ private:
 
 
 CMainMenu::CMainMenu()
-: startButton(0), device(0), selected(2), start(false), fullscreen(true),
-	music(true), shadows(false), additive(false), transparent(true), vsync(false)
+: startButton(0), device(0), start(false), fullscreen(true), selected(2),
+	music(true), shadows(false), additive(false), transparent(true), vsync(true)
 {
 }
 
@@ -78,13 +79,11 @@ CMainMenu::CMainMenu()
 bool CMainMenu::run(bool& outFullscreen, bool& outMusic, bool& outShadows,
 					bool& outAdditive, bool &outVSync, video::E_DRIVER_TYPE& outDriver)
 {
-	device = createDevice( outDriver, //Varmint: 2007/12/18 video::EDT_BURNINGSVIDEO,
+	device = createDevice( video::EDT_BURNINGSVIDEO,
 		core::dimension2d<s32>(512, 384), 16, false, false, false, this);
 
-	if (device->getFileSystem()->existFile("irrlicht.dat"))
-		device->getFileSystem()->addZipFileArchive("irrlicht.dat");
-	else
-		device->getFileSystem()->addZipFileArchive("../../media/irrlicht.dat");
+	device->getFileSystem()->addZipFileArchive("irrlicht.dat");
+	device->getFileSystem()->addZipFileArchive("../../media/irrlicht.dat");
 
 	video::IVideoDriver* driver = device->getVideoDriver();
 	scene::ISceneManager* smgr = device->getSceneManager();
@@ -121,7 +120,7 @@ bool CMainMenu::run(bool& outFullscreen, bool& outMusic, bool& outShadows,
 	box->addItem(L"OpenGL 1.5");
 	box->addItem(L"Direct3D 8.1");
 	box->addItem(L"Direct3D 9.0c");
-	box->addItem(L"Burning's Video 0.39");
+	box->addItem(L"Burning's Video 0.38");
 	box->addItem(L"Irrlicht Software Renderer 1.0");
 	box->setSelected(selected);
 
@@ -179,9 +178,6 @@ bool CMainMenu::run(bool& outFullscreen, bool& outMusic, bool& outShadows,
 		modelNode->getMaterial(0).Shininess = 28.f;
 		modelNode->getMaterial(0).NormalizeNormals = true;
 		modelNode->setMD2Animation ( scene::EMAT_STAND );
-
-		//modelNode->setMD2Animation ( scene::EMAT_JUMP );
-		//modelNode->setDebugDataVisible ( scene::EDS_BBOX_ALL );
 		//modelNode->setFrameLoop ( 0, 0 );
 	}
 
@@ -322,7 +318,7 @@ bool CMainMenu::run(bool& outFullscreen, bool& outMusic, bool& outShadows,
 
 
 
-bool CMainMenu::OnEvent(const SEvent& event)
+bool CMainMenu::OnEvent(SEvent event)
 {
 	if (event.EventType == EET_KEY_INPUT_EVENT &&
 		event.KeyInput.Key == KEY_F9 &&

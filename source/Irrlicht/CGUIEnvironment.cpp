@@ -1,12 +1,9 @@
 
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #include "CGUIEnvironment.h"
-
-#ifdef _IRR_COMPILE_WITH_GUI_
-
 #include "IVideoDriver.h"
 
 #include "CGUISkin.h"
@@ -23,7 +20,6 @@
 #include "CGUIColorSelectDialog.h"
 #include "CGUIStaticText.h"
 #include "CGUIEditBox.h"
-#include "CGUISpinBox.h"
 #include "CGUIInOutFader.h"
 #include "CGUIMessageBox.h"
 #include "CGUIModalScreen.h"
@@ -32,7 +28,6 @@
 #include "CGUIComboBox.h"
 #include "CGUIMenu.h"
 #include "CGUIToolBar.h"
-#include "CGUITable.h"
 
 #include "CDefaultGUIElementFactory.h"
 #include "IWriteFile.h"
@@ -53,7 +48,7 @@ const wchar_t* IRR_XML_FORMAT_GUI_ELEMENT_ATTR_TYPE	= L"type";
 //! constructor
 CGUIEnvironment::CGUIEnvironment(io::IFileSystem* fs, video::IVideoDriver* driver, IOSOperator* op)
 : IGUIElement(EGUIET_ELEMENT, 0, 0, 0, core::rect<s32>(core::position2d<s32>(0,0), driver ? driver->getScreenSize() : core::dimension2d<s32>(0,0))),
-	Driver(driver), Hovered(0), Focus(0), LastHoveredMousePos(0,0), CurrentSkin(0),
+	Driver(driver), Hovered(0), Focus(0), CurrentSkin(0),
 	FileSystem(fs), UserReceiver(0), Operator(op)
 {
 	if (Driver)
@@ -84,10 +79,6 @@ CGUIEnvironment::CGUIEnvironment(io::IFileSystem* fs, video::IVideoDriver* drive
 	ToolTip.LastTime = 0;
 	ToolTip.LaunchTime = 1000;
 	ToolTip.Element = 0;
-
-	// environment is root tab group
-	Environment = this;
-	setTabGroup(true);
 }
 
 
@@ -95,62 +86,33 @@ CGUIEnvironment::CGUIEnvironment(io::IFileSystem* fs, video::IVideoDriver* drive
 CGUIEnvironment::~CGUIEnvironment()
 {
 	if (Hovered && Hovered != this)
-	{
 		Hovered->drop();
-		Hovered = 0;
-	}
+
+	if (CurrentSkin)
+		CurrentSkin->drop();
 
 	if (Driver)
-	{
 		Driver->drop();
-		Driver = 0;
-	}
 
 	if (Focus)
-	{
 		Focus->drop();
-		Focus = 0;
-	}
-
-	if (ToolTip.Element)
-	{
-		ToolTip.Element->drop();
-		ToolTip.Element = 0;
-	}
 
 	if (FileSystem)
-	{
 		FileSystem->drop();
-		FileSystem = 0;
-	}
 
 	if (Operator)
-	{
 		Operator->drop();
-		Operator = 0;
-	}
-
-	// drop skin
-	if (CurrentSkin)
-	{
-		CurrentSkin->drop();
-		CurrentSkin = 0;
-	}
-
-	u32 i;
-
-	// delete all sprite banks
-	for (i=0; i<Banks.size(); ++i)
-		if (Banks[i].Bank)
-			Banks[i].Bank->drop();
 
 	// delete all fonts
+	u32 i;
+
 	for (i=0; i<Fonts.size(); ++i)
 		Fonts[i].Font->drop();
 
 	// remove all factories
 	for (i=0; i<GUIElementFactoryList.size(); ++i)
 		GUIElementFactoryList[i]->drop();
+
 }
 
 
@@ -162,7 +124,7 @@ void CGUIEnvironment::loadBuiltInFont()
 	CGUIFont* font = new CGUIFont(this, "#DefaultFont");
 	if (!font->load(file))
 	{
-		os::Printer::log("Error: Could not load built-in Font. Did you compile without the BMP loader?", ELL_ERROR);
+		os::Printer::log("Error: Could not load built-in Font.", ELL_ERROR);
 		font->drop();
 		file->drop();
 		return;
@@ -177,6 +139,7 @@ void CGUIEnvironment::loadBuiltInFont()
 }
 
 
+
 //! draws all gui elements
 void CGUIEnvironment::drawAll()
 {
@@ -187,17 +150,13 @@ void CGUIEnvironment::drawAll()
 			AbsoluteRect.LowerRightCorner.Y != dim.Height)
 		{
 			// resize gui environment
-			DesiredRect.LowerRightCorner.X = Driver->getScreenSize().Width;
-			DesiredRect.LowerRightCorner.Y = Driver->getScreenSize().Height;
-			AbsoluteClippingRect = DesiredRect;
-			AbsoluteRect = DesiredRect;
+			RelativeRect.LowerRightCorner.X = Driver->getScreenSize().Width;
+			RelativeRect.LowerRightCorner.Y = Driver->getScreenSize().Height;
+			AbsoluteClippingRect = RelativeRect;
+			AbsoluteRect = RelativeRect;
 			updateAbsolutePosition();
 		}		
 	}
-
-	// make sure tooltip is always on top
-	if (ToolTip.Element)
-		bringToFront(ToolTip.Element);
 
 	draw();
 	OnPostRender ( os::Timer::getTime () );
@@ -205,158 +164,76 @@ void CGUIEnvironment::drawAll()
 
 
 //! sets the focus to an element
-bool CGUIEnvironment::setFocus(IGUIElement* element)
+void CGUIEnvironment::setFocus(IGUIElement* element)
 {
 	if (Focus == element)
-	{
-		_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
-		return false;
-	}
+		return;
 
-	// GUI Environment should not get the focus
-	if (element == this)
-		element = 0;
+	removeFocus(Focus);
 
-	// stop element from being deleted
-	if (element)
-		element->grab();
+	Focus = element;
 
-	// focus may change or be removed in this call
-	IGUIElement *currentFocus = 0;
 	if (Focus)
 	{
-		currentFocus = Focus;
-		currentFocus->grab();
-		SEvent e;
-		e.EventType = EET_GUI_EVENT;
-		e.GUIEvent.Caller = Focus;
-		e.GUIEvent.Element = element;
-		e.GUIEvent.EventType = EGET_ELEMENT_FOCUS_LOST;
-		if (Focus->OnEvent(e))
-		{
-			if (element)
-				element->drop();
-			currentFocus->drop();
-			_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
-			return false;
-		}
-		currentFocus->drop();
-		currentFocus = 0;
-	}
-	
-	if (element)
-	{
-		currentFocus = Focus;
-		if (currentFocus)
-			currentFocus->grab();
+		Focus->grab();
 
 		// send focused event
 		SEvent e;
 		e.EventType = EET_GUI_EVENT;
-		e.GUIEvent.Caller = element;
-		e.GUIEvent.Element = Focus;
+		e.GUIEvent.Caller = Focus;
 		e.GUIEvent.EventType = EGET_ELEMENT_FOCUSED;
-		if (element->OnEvent(e))
-		{
-			if (element)
-				element->drop();
-			if (currentFocus)
-				currentFocus->drop();
-			_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
-			return false;
-		}
+		Focus->OnEvent(e);
 	}
-
-	if (currentFocus)
-		currentFocus->drop();
-
-	if (Focus)
-		Focus->drop();
-
-	// element is the new focus so it doesn't have to be dropped
-	Focus = element;
-	
-	_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
-	return true;
 }
 
-
 //! returns the element with the focus
-IGUIElement* CGUIEnvironment::getFocus() const
+IGUIElement* CGUIEnvironment::getFocus()
 {
 	return Focus;
 }
 
 
 //! removes the focus from an element
-bool CGUIEnvironment::removeFocus(IGUIElement* element)
+void CGUIEnvironment::removeFocus(IGUIElement* element)
 {
 	if (Focus && Focus==element)
 	{
 		SEvent e;
 		e.EventType = EET_GUI_EVENT;
 		e.GUIEvent.Caller = Focus;
-		e.GUIEvent.Element = 0;
 		e.GUIEvent.EventType = EGET_ELEMENT_FOCUS_LOST;
-		if (Focus->OnEvent(e))
-		{
-			_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
-			return false;
-		}
-	}
-	if (Focus)
-	{
+		Focus->OnEvent(e);
 		Focus->drop();
 		Focus = 0;
 	}
-	
-	_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
-	return true;
 }
 
 
 //! Returns if the element has focus
-bool CGUIEnvironment::hasFocus(IGUIElement* element) const
+bool CGUIEnvironment::hasFocus(IGUIElement* element)
 {
+	bool ret = (element == Focus); 
 	_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
-	return (element == Focus); 
+	return ret;
 }
 
 
 //! returns the current video driver
-video::IVideoDriver* CGUIEnvironment::getVideoDriver() const
+video::IVideoDriver* CGUIEnvironment::getVideoDriver()
 {
 	return Driver;
 }
 
 //! returns the current file system
-io::IFileSystem* CGUIEnvironment::getFileSystem() const
+io::IFileSystem* CGUIEnvironment::getFileSystem()
 {
 	return FileSystem;
 }
 
-//! returns the current file system
-IOSOperator* CGUIEnvironment::getOSOperator() const
-{
-	return Operator;
-}
 
 //! clear all GUI elements
 void CGUIEnvironment::clear()
 {
-	// Remove the focus
-	if (Focus)
-	{
-		Focus->drop();
-		Focus = 0;
-	}
-
-	if (Hovered && Hovered != this)
-	{
-		Hovered->drop();
-		Hovered = 0;
-	}
-
 	// get the root's children in case the root changes in future
 	const core::list<IGUIElement*>& children = getRootGUIElement()->getChildren();
 
@@ -366,19 +243,16 @@ void CGUIEnvironment::clear()
 
 
 //! called by ui if an event happened.
-bool CGUIEnvironment::OnEvent(const SEvent& event)
+bool CGUIEnvironment::OnEvent(SEvent event)
 {
-	if (UserReceiver && (event.EventType != EET_MOUSE_INPUT_EVENT) &&
-		(event.EventType != EET_GUI_EVENT || event.GUIEvent.Caller != this))
-	{
+	if (UserReceiver && event.GUIEvent.Caller != this)
 		return UserReceiver->OnEvent(event);
-	}
 
 	return false;
 }
 
-
-//
+/*
+*/
 void CGUIEnvironment::OnPostRender( u32 time )
 {
 	// check tooltip
@@ -388,30 +262,21 @@ void CGUIEnvironment::OnPostRender( u32 time )
 		Hovered && Hovered != this &&
 		ToolTip.Element == 0 &&
 		Hovered != ToolTip.Element &&
-		Hovered->getToolTipText().size() &&
-		getSkin() && 
-		getSkin()->getFont(EGDF_TOOLTIP)
+		Hovered->getToolTipText().size()
 		)
 	{
 		core::rect<s32> pos;
+		pos.UpperLeftCorner = Hovered->getAbsolutePosition().LowerRightCorner;
+		pos.LowerRightCorner = pos.UpperLeftCorner + core::position2d<s32> ( 100, 50 );
+		if (getSkin() && getSkin()->getFont())
+		{
+			pos.LowerRightCorner = pos.UpperLeftCorner + 
+				getSkin()->getFont()->getDimension(Hovered->getToolTipText().c_str()) + 
+				core::position2di(getSkin()->getSize(EGDS_TEXT_DISTANCE_X)*2, getSkin()->getSize(EGDS_TEXT_DISTANCE_Y)*2);
+		}
 
-		pos.UpperLeftCorner = LastHoveredMousePos;
-		core::dimension2di dim = getSkin()->getFont(EGDF_TOOLTIP)->getDimension(Hovered->getToolTipText().c_str());
-		dim.Width += getSkin()->getSize(EGDS_TEXT_DISTANCE_X)*2;
-		dim.Height += getSkin()->getSize(EGDS_TEXT_DISTANCE_Y)*2;
-
-		pos.UpperLeftCorner.Y -= dim.Height+1;
-		pos.LowerRightCorner.Y = pos.UpperLeftCorner.Y + dim.Height-1;
-		pos.LowerRightCorner.X = pos.UpperLeftCorner.X + dim.Width;
-
-		pos.constrainTo(getAbsolutePosition());
-
-		ToolTip.Element = addStaticText(Hovered->getToolTipText().c_str(), pos, true, true, this, -1, true);
-		ToolTip.Element->setOverrideColor(getSkin()->getColor(EGDC_TOOLTIP));
-		ToolTip.Element->setBackgroundColor(getSkin()->getColor(EGDC_TOOLTIP_BACKGROUND));
-		ToolTip.Element->setOverrideFont(getSkin()->getFont(EGDF_TOOLTIP));
-		ToolTip.Element->setSubElement(true);
-		ToolTip.Element->grab();
+		ToolTip.Element = addStaticText (	Hovered->getToolTipText().c_str(), pos, true, true, this, -1, true );
+		ToolTip.Element->setOverrideColor ( getSkin()->getColor ( EGDC_TOOLTIP ) );
 
 		s32 textHeight = ToolTip.Element->getTextHeight();
 		pos = ToolTip.Element->getRelativePosition();
@@ -423,12 +288,11 @@ void CGUIEnvironment::OnPostRender( u32 time )
 	IGUIElement::OnPostRender ( time );
 }
 
-
-//
+/*
+*/
 void CGUIEnvironment::updateHoveredElement(core::position2d<s32> mousePos)
 {
 	IGUIElement* lastHovered = Hovered;
-	LastHoveredMousePos = mousePos;
 
 	Hovered = getElementFromPoint(mousePos);
 
@@ -453,17 +317,15 @@ void CGUIEnvironment::updateHoveredElement(core::position2d<s32> mousePos)
 
 			if ( ToolTip.Element )
 			{
-				ToolTip.Element->remove();
-				ToolTip.Element->drop();
+				ToolTip.Element->remove ();
 				ToolTip.Element = 0;
-				ToolTip.LastTime += 500;
 			}
 			else
 			{
 				// boost tooltip generation for relaunch
 				if ( now - ToolTip.LastTime < ToolTip.LastTime )
 				{
-					ToolTip.LastTime += 500;
+					ToolTip.LastTime += 100;
 				}
 				else
 				{
@@ -492,7 +354,7 @@ void CGUIEnvironment::setUserEventReceiver(IEventReceiver* evr)
 
 
 //! posts an input event to the environment
-bool CGUIEnvironment::postEventFromUser(const SEvent& event)
+bool CGUIEnvironment::postEventFromUser(SEvent event)
 {
 	switch(event.EventType)
 	{
@@ -501,42 +363,23 @@ bool CGUIEnvironment::postEventFromUser(const SEvent& event)
 		break;
 	case EET_MOUSE_INPUT_EVENT:
 
-		updateHoveredElement(core::position2d<s32>(event.MouseInput.X, event.MouseInput.Y));
-
-		if (event.MouseInput.Event == EMIE_LMOUSE_PRESSED_DOWN)
-			if ( (Hovered && Hovered != Focus) || !Focus )
-		{
-			setFocus(Hovered);
-		}
-
-		// sending input to focus
+		// sending input to focus, stopping of focus processed input
+		
 		if (Focus && Focus->OnEvent(event))
 			return true;
 
-		// focus could have died in last call
-		if (!Focus && Hovered)
-			return Hovered->OnEvent(event);
-
-		break;
-	case EET_KEY_INPUT_EVENT:
+		if (!Focus) // focus could have died in last call
 		{
-			// send focus changing event
-			if (event.EventType == EET_KEY_INPUT_EVENT && 
-				event.KeyInput.PressedDown && 
-				event.KeyInput.Key == KEY_TAB)
-			{
-				IGUIElement *next = getNextElement(event.KeyInput.Shift, event.KeyInput.Control);
-				if (next && next != Focus)
-				{
-					if (setFocus(next))
-						return true;
-				}
-			}
-			if (Focus)
-				return Focus->OnEvent(event);
+			// trying to send input to hovered element
+			updateHoveredElement(core::position2d<s32>(event.MouseInput.X, event.MouseInput.Y));
+
+			if (Hovered && Hovered != this)
+				return Hovered->OnEvent(event);
 		}
 		break;
-	default:
+	case EET_KEY_INPUT_EVENT:
+		if (Focus && Focus != this)
+			return Focus->OnEvent(event);
 		break;
 	} // end switch
 
@@ -544,8 +387,9 @@ bool CGUIEnvironment::postEventFromUser(const SEvent& event)
 }
 
 
+
 //! returns the current gui skin
-IGUISkin* CGUIEnvironment::getSkin() const
+IGUISkin* CGUIEnvironment::getSkin()
 {
 	return CurrentSkin;
 }
@@ -554,9 +398,6 @@ IGUISkin* CGUIEnvironment::getSkin() const
 //! Sets a new GUI Skin
 void CGUIEnvironment::setSkin(IGUISkin* skin)
 {
-	if (CurrentSkin==skin)
-		return;
-
 	if (CurrentSkin)
 		CurrentSkin->drop();
 
@@ -566,11 +407,10 @@ void CGUIEnvironment::setSkin(IGUISkin* skin)
 		CurrentSkin->grab();
 }
 
-
 //! Creates a new GUI Skin based on a template.
 /** \return Returns a pointer to the created skin.
 If you no longer need the skin, you should call IGUISkin::drop().
-See IReferenceCounted::drop() for more information. */
+See IUnknown::drop() for more information. */
 IGUISkin* CGUIEnvironment::createSkin(EGUI_SKIN_TYPE type)
 {
 	IGUISkin* skin = new CGUISkin(type, Driver);
@@ -593,11 +433,10 @@ IGUISkin* CGUIEnvironment::createSkin(EGUI_SKIN_TYPE type)
 
 
 //! Returns the default element factory which can create all built in elements
-IGUIElementFactory* CGUIEnvironment::getDefaultGUIElementFactory() const
+IGUIElementFactory* CGUIEnvironment::getDefaultGUIElementFactory()
 {
 	return getGUIElementFactory(0);
 }
-
 
 //! Adds an element factory to the gui environment.
 /** Use this to extend the gui environment with new element types which it should be
@@ -611,23 +450,20 @@ void CGUIEnvironment::registerGUIElementFactory(IGUIElementFactory* factoryToAdd
 	}
 }
 
-
 //! Returns amount of registered scene node factories.
-u32 CGUIEnvironment::getRegisteredGUIElementFactoryCount() const
+s32 CGUIEnvironment::getRegisteredGUIElementFactoryCount()
 {
 	return GUIElementFactoryList.size();
 }
 
-
 //! Returns a scene node factory by index
-IGUIElementFactory* CGUIEnvironment::getGUIElementFactory(u32 index) const
+IGUIElementFactory* CGUIEnvironment::getGUIElementFactory(s32 index)
 {
-	if (index < GUIElementFactoryList.size())
+	if (index>=0 && index<(int)GUIElementFactoryList.size())
 		return GUIElementFactoryList[index];
-	else
-		return 0;
-}
 
+	return 0;
+}
 
 //! adds a GUI Element using its name
 IGUIElement* CGUIEnvironment::addGUIElement(const c8* elementName, IGUIElement* parent)
@@ -637,7 +473,7 @@ IGUIElement* CGUIEnvironment::addGUIElement(const c8* elementName, IGUIElement* 
 	if (!parent)
 		parent = this;
 
-	for (u32 i=0; i<GUIElementFactoryList.size() && !node; ++i)
+	for (s32 i=0; i<(int)GUIElementFactoryList.size() && !node; ++i)
 		node = GUIElementFactoryList[i]->addGUIElement(elementName, parent);
 
 	return node;
@@ -646,20 +482,20 @@ IGUIElement* CGUIEnvironment::addGUIElement(const c8* elementName, IGUIElement* 
 
 //! Saves the current gui into a file.
 //! \param filename: Name of the file .
-bool CGUIEnvironment::saveGUI(const c8* filename, IGUIElement* start)
+bool CGUIEnvironment::saveGUI(const c8* filename)
 {
 	io::IWriteFile* file = FileSystem->createAndWriteFile(filename);
 	if (!file)
 		return false;
 
-	bool ret = saveGUI(file, start);
+	bool ret = saveGUI(file);
 	file->drop();
 	return ret;
 }
 
 
 //! Saves the current gui into a file.
-bool CGUIEnvironment::saveGUI(io::IWriteFile* file, IGUIElement* start)
+bool CGUIEnvironment::saveGUI(io::IWriteFile* file)
 {
 	if (!file)
 		return false;
@@ -669,7 +505,7 @@ bool CGUIEnvironment::saveGUI(io::IWriteFile* file, IGUIElement* start)
 		return false;
 
 	writer->writeXMLHeader();
-	writeGUIElement(writer, start ? start : this);
+	writeGUIElement(writer, this);
 	writer->drop();
 
 	return true;
@@ -677,8 +513,8 @@ bool CGUIEnvironment::saveGUI(io::IWriteFile* file, IGUIElement* start)
 
 
 //! Loads the gui. Note that the current gui is not cleared before.
-//! \param filename: Name of the file.
-bool CGUIEnvironment::loadGUI(const c8* filename, IGUIElement* parent)
+//! \param filename: Name of the file .
+bool CGUIEnvironment::loadGUI(const c8* filename)
 {
 	io::IReadFile* read = FileSystem->createAndOpenFile(filename);
 	if (!read)
@@ -687,7 +523,7 @@ bool CGUIEnvironment::loadGUI(const c8* filename, IGUIElement* parent)
 		return false;
 	}
 
-	bool ret = loadGUI(read, parent);
+	bool ret = loadGUI(read);
 	read->drop();
 
 	return ret;
@@ -695,11 +531,12 @@ bool CGUIEnvironment::loadGUI(const c8* filename, IGUIElement* parent)
 
 
 //! Loads the gui. Note that the current gui is not cleared before.
-bool CGUIEnvironment::loadGUI(io::IReadFile* file, IGUIElement* parent)
+bool CGUIEnvironment::loadGUI(io::IReadFile* file)
 {
+	
 	if (!file)
 	{
-		os::Printer::log("Unable to open GUI file", ELL_ERROR);
+		os::Printer::log("Unable to open gui file", ELL_ERROR);
 		return false;
 	}
 
@@ -713,14 +550,16 @@ bool CGUIEnvironment::loadGUI(io::IReadFile* file, IGUIElement* parent)
 	// read file
 	while(reader->read())
 	{
-		readGUIElement(reader, parent);
+		readGUIElement(reader, 0);
 	}
 
 	// finish up
 
 	reader->drop(); 
 	return true; 
+
 }
+
 
 
 //! reads an element
@@ -731,24 +570,21 @@ void CGUIEnvironment::readGUIElement(io::IXMLReader* reader, IGUIElement* parent
 
 	gui::IGUIElement* node = 0;
 
-	io::EXML_NODE nodeType = reader->getNodeType();
-
-	if (nodeType == io::EXN_NONE || nodeType == io::EXN_UNKNOWN || nodeType == io::EXN_ELEMENT_END)
-		return;
-
-	if (!parent && !wcscmp(IRR_XML_FORMAT_GUI_ENV, reader->getNodeName()))
+	if ((!parent && !wcscmp(IRR_XML_FORMAT_GUI_ENV, reader->getNodeName())) ||
+		( parent && !wcscmp(IRR_XML_FORMAT_GUI_ELEMENT, reader->getNodeName())))
 	{
-		node = this; // root
-	}
-	else if	(!wcscmp(IRR_XML_FORMAT_GUI_ELEMENT, reader->getNodeName()))
-	{
-		// find node type and create it
-		core::stringc attrName = reader->getAttributeValue(IRR_XML_FORMAT_GUI_ELEMENT_ATTR_TYPE);
+		if (parent)
+		{
+			// find node type and create it
+			core::stringc attrName = reader->getAttributeValue(IRR_XML_FORMAT_GUI_ELEMENT_ATTR_TYPE);
 
-		node = addGUIElement(attrName.c_str(), parent);
+			node = addGUIElement(attrName.c_str(), parent);
 
-		if (!node)
-			os::Printer::log("Could not create GUI element of unknown type", attrName.c_str());
+			if (!node)
+				os::Printer::log("Could not create GUI element of unknown type", attrName.c_str());
+		}
+		else
+			node = this; // root
 	}
 
 	// read attributes
@@ -791,14 +627,13 @@ void CGUIEnvironment::readGUIElement(io::IXMLReader* reader, IGUIElement* parent
 			}
 
 			break;
-		default:
-			break;
 		}
 
 		if (endreached)
 			break;
 	}
 }
+
 
 
 //! writes an element
@@ -816,7 +651,7 @@ void CGUIEnvironment::writeGUIElement(io::IXMLWriter* writer, IGUIElement* node)
 
 	// all gui elements must have at least one attribute
 	// if they have nothing then we ignore them.
-	if (attr->getAttributeCount() != 0)
+	if (attr->getAttributeCount() > 0)
 	{
 		if (node == this)
 		{
@@ -839,7 +674,7 @@ void CGUIEnvironment::writeGUIElement(io::IXMLWriter* writer, IGUIElement* node)
 
 	// write children
 
-	core::list<IGUIElement*>::ConstIterator it = node->getChildren().begin();
+	core::list<IGUIElement*>::Iterator it = node->getChildren().begin();
 	for (; it != node->getChildren().end(); ++it)
 	{
 		if (!(*it)->isSubElement())
@@ -847,7 +682,7 @@ void CGUIEnvironment::writeGUIElement(io::IXMLWriter* writer, IGUIElement* node)
 	}
 
 	// write closing brace if required
-	if (attr->getAttributeCount() != 0)
+	if (attr->getAttributeCount() > 0)
 	{
 		writer->writeClosingTag(name);
 		writer->writeLineBreak();
@@ -855,25 +690,26 @@ void CGUIEnvironment::writeGUIElement(io::IXMLWriter* writer, IGUIElement* node)
 	}
 
 	attr->drop();
+
 }
 
 
 //! Writes attributes of the environment
-void CGUIEnvironment::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options) const
+void CGUIEnvironment::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options)
 {
 	IGUISkin* skin = getSkin();
 
 	if (skin)
 	{
-		out->addEnum("Skin", getSkin()->getType(), GUISkinTypeNames);
+		out->addEnum("Skin",getSkin()->getType(),GUISkinTypeNames);
 		skin->serializeAttributes(out, options);
 	}
 }
 
-
 //! Reads attributes of the environment
 void CGUIEnvironment::deserializeAttributes(io::IAttributes* in, io::SAttributeReadWriteOptions* options)
 {
+
 	if (in->existsAttribute("Skin"))
 	{
 		IGUISkin *skin = getSkin();
@@ -898,10 +734,13 @@ void CGUIEnvironment::deserializeAttributes(io::IAttributes* in, io::SAttributeR
 	RelativeRect = AbsoluteRect = 
 			core::rect<s32>(core::position2d<s32>(0,0), 
 					Driver ? Driver->getScreenSize() : core::dimension2d<s32>(0,0));
+
 }
 
 
-//! adds a button. The returned pointer must not be dropped.
+
+
+//! adds an button. The returned pointer must not be dropped.
 IGUIButton* CGUIEnvironment::addButton(const core::rect<s32>& rectangle, IGUIElement* parent, s32 id, const wchar_t* text, const wchar_t *tooltiptext)
 {
 	IGUIButton* button = new CGUIButton(this, parent ? parent : this, id, rectangle);
@@ -935,8 +774,6 @@ IGUIWindow* CGUIEnvironment::addWindow(const core::rect<s32>& rectangle, bool mo
 
 	return win;
 }
-
-
 //! adds a modal screen. The returned pointer must not be dropped.
 IGUIElement* CGUIEnvironment::addModalScreen(IGUIElement* parent)
 {
@@ -947,7 +784,6 @@ IGUIElement* CGUIEnvironment::addModalScreen(IGUIElement* parent)
 
 	return win;
 }
-
 
 //! Adds a message box.
 IGUIWindow* CGUIEnvironment::addMessageBox(const wchar_t* caption, const wchar_t* text,
@@ -993,12 +829,6 @@ IGUIScrollBar* CGUIEnvironment::addScrollBar(bool horizontal, const core::rect<s
 	return bar;
 }
 
-IGUITable* CGUIEnvironment::addTable(const core::rect<s32>& rectangle, IGUIElement* parent, s32 id, bool drawBackground)
-{
-	CGUITable* b = new CGUITable(this, parent ? parent : this, id, rectangle, true, drawBackground, false);
-	b->drop();
-	return b;
-}
 
 //! Adds an image element. 
 IGUIImage* CGUIEnvironment::addImage(video::ITexture* image, core::position2d<s32> pos,
@@ -1067,32 +897,29 @@ IGUICheckBox* CGUIEnvironment::addCheckBox(bool checked, const core::rect<s32>& 
 }
 
 
+
 //! adds a list box
 IGUIListBox* CGUIEnvironment::addListBox(const core::rect<s32>& rectangle, 
-					 IGUIElement* parent, s32 id,
-					 bool drawBackground)
+										 IGUIElement* parent, s32 id,
+										 bool drawBackground)
 {
 	IGUIListBox* b = new CGUIListBox(this, parent ? parent : this, id, rectangle,
 		true, drawBackground, false);
 
-	if (CurrentSkin && CurrentSkin->getSpriteBank())
-	{
-		b->setSpriteBank(CurrentSkin->getSpriteBank());
-	}
-	else if (getBuiltInFont() && getBuiltInFont()->getType() == EGFT_BITMAP)
-	{
+	if (getBuiltInFont() && getBuiltInFont()->getType() == EGFT_BITMAP)
 		b->setSpriteBank( ((IGUIFontBitmap*)getBuiltInFont())->getSpriteBank());
-	}
 
 	b->drop();
 	return b;
+
 }
+
 
 
 //! adds a file open dialog. The returned pointer must not be dropped.
 IGUIFileOpenDialog* CGUIEnvironment::addFileOpenDialog(const wchar_t* title, 
-						   bool modal,
-						   IGUIElement* parent, s32 id)
+													   bool modal,
+													   IGUIElement* parent, s32 id)
 {
 	parent = parent ? parent : this;
 
@@ -1111,8 +938,8 @@ IGUIFileOpenDialog* CGUIEnvironment::addFileOpenDialog(const wchar_t* title,
 
 //! adds a color select dialog. The returned pointer must not be dropped.
 IGUIColorSelectDialog* CGUIEnvironment::addColorSelectDialog(const wchar_t* title, 
-						   bool modal,
-						   IGUIElement* parent, s32 id)
+													   bool modal,
+													   IGUIElement* parent, s32 id)
 {
 	parent = parent ? parent : this;
 
@@ -1130,12 +957,14 @@ IGUIColorSelectDialog* CGUIEnvironment::addColorSelectDialog(const wchar_t* titl
 }
 
 
+
 //! adds a static text. The returned pointer must not be dropped.
 IGUIStaticText* CGUIEnvironment::addStaticText(const wchar_t* text,  
-					   const core::rect<s32>& rectangle,
-					   bool border, bool wordWrap,
-					   IGUIElement* parent, s32 id,
-					   bool background)
+											   const core::rect<s32>& rectangle,
+											   bool border,
+											   bool wordWrap,
+											   IGUIElement* parent, s32 id,
+											   bool background)
 {
 	IGUIStaticText* d = new CGUIStaticText(text, border, this,
 			parent ? parent : this, id, rectangle, background);
@@ -1147,31 +976,19 @@ IGUIStaticText* CGUIEnvironment::addStaticText(const wchar_t* text,
 }
 
 
+
 //! Adds an edit box. The returned pointer must not be dropped.
 IGUIEditBox* CGUIEnvironment::addEditBox(const wchar_t* text, 
-					 const core::rect<s32>& rectangle, 
-					 bool border, IGUIElement* parent,
-					 s32 id)
+										 const core::rect<s32>& rectangle, 
+										 bool border, IGUIElement* parent,
+										 s32 id)
 {
 	IGUIEditBox* d = new CGUIEditBox(text, border, this,
-			parent ? parent : this, id, rectangle);
+			parent ? parent : this, id, rectangle, Operator);
 
 	d->drop();
 	return d;
 }
-
-
-//! Adds a spin box to the environment
-IGUISpinBox* CGUIEnvironment::addSpinBox(const wchar_t* text, 
-					 const core::rect<s32> &rectangle, 
-					 IGUIElement* parent, s32 id)
-{
-	IGUISpinBox* d = new CGUISpinBox(text, this, parent ? parent : this, id, rectangle);
-
-	d->drop();
-	return d;
-}
-
 
 //! Adds a tab control to the environment.
 IGUITabControl* CGUIEnvironment::addTabControl(const core::rect<s32>& rectangle,
@@ -1221,7 +1038,6 @@ IGUIContextMenu* CGUIEnvironment::addMenu(IGUIElement* parent, s32 id)
 	return c;
 }
 
-
 //! Adds a toolbar to the environment. It is like a menu is always placed on top
 //! in its parent, and contains buttons.
 IGUIToolBar* CGUIEnvironment::addToolBar(IGUIElement* parent, s32 id)
@@ -1233,6 +1049,7 @@ IGUIToolBar* CGUIEnvironment::addToolBar(IGUIElement* parent, s32 id)
 	b->drop();
 	return b;
 }
+
 
 
 //! Adds an element for fading in or out.
@@ -1263,7 +1080,9 @@ IGUIComboBox* CGUIEnvironment::addComboBox(const core::rect<s32>& rectangle,
 		id, rectangle);
 	t->drop();
 	return t;
+
 }
+
 
 
 //! returns the font
@@ -1288,13 +1107,13 @@ IGUIFont* CGUIEnvironment::getFont(const c8* filename)
 
 	// does the file exist?
 
-	if (!FileSystem->existFile(filename))
+	if (!FileSystem->existFile(f.Filename.c_str()))
 	{
 		os::Printer::log("Could not load font because the file does not exist", f.Filename.c_str(), ELL_ERROR);
 		return 0;
 	}
 
-	io::IXMLReader *xml = FileSystem->createXMLReader(filename);
+	io::IXMLReader *xml = FileSystem->createXMLReader(f.Filename.c_str());
 	if (xml)
 	{
 		// this is an XML font, but we need to know what type
@@ -1324,26 +1143,18 @@ IGUIFont* CGUIEnvironment::getFont(const c8* filename)
 
 		if (t==EGFT_BITMAP)
 		{
-			CGUIFont* font = new CGUIFont(this, filename);
+			CGUIFont* font = new CGUIFont(this, f.Filename.c_str());
 			ifont = (IGUIFont*)font;
-			// change working directory, for loading textures
-			core::stringc workingDir = FileSystem->getWorkingDirectory();
-			FileSystem->changeWorkingDirectoryTo(FileSystem->getFileDir(f.Filename).c_str());
-
-			// load the font
 			if (!font->load(xml))
 			{
 				font->drop();
 				font  = 0;
 				ifont = 0;
 			}
-			// change working dir back again
-			FileSystem->changeWorkingDirectoryTo( workingDir.c_str());
 		}
 		else if (t==EGFT_VECTOR)
 		{
 			// todo: vector fonts
-			os::Printer::log("Unable to load font, XML vector fonts are not supported yet", f.Filename.c_str(), ELL_ERROR);
 
 			//CGUIFontVector* font = new CGUIFontVector(Driver);
 			//ifont = (IGUIFont*)font;
@@ -1373,7 +1184,6 @@ IGUIFont* CGUIEnvironment::getFont(const c8* filename)
 	return ifont;
 }
 
-
 IGUISpriteBank* CGUIEnvironment::getSpriteBank(const c8* filename)
 {
 	// search for the file name
@@ -1401,8 +1211,8 @@ IGUISpriteBank* CGUIEnvironment::getSpriteBank(const c8* filename)
 	// todo: load it!
 
 	return 0;
-}
 
+}
 
 IGUISpriteBank* CGUIEnvironment::addEmptySpriteBank(const c8 *name)
 {
@@ -1414,9 +1224,10 @@ IGUISpriteBank* CGUIEnvironment::addEmptySpriteBank(const c8 *name)
 	else
 		b.Filename = name;
 
-	const s32 index = Banks.binary_search(b);
+	s32 index = Banks.binary_search(b);
 	if (index != -1)
 		return 0; 
+
 
 	// create a new sprite bank
 
@@ -1425,17 +1236,18 @@ IGUISpriteBank* CGUIEnvironment::addEmptySpriteBank(const c8 *name)
 	Banks.push_back(b);
 
 	return b.Bank;
+
 }
 
-
 //! returns default font
-IGUIFont* CGUIEnvironment::getBuiltInFont() const
+IGUIFont* CGUIEnvironment::getBuiltInFont()
 {
 	if (Fonts.empty())
 		return 0;
 
 	return Fonts[0].Font;
 }
+
 
 
 //! Returns the root gui element. 
@@ -1445,59 +1257,10 @@ IGUIElement* CGUIEnvironment::getRootGUIElement()
 }
 
 
-//! Returns the next element in the tab group starting at the focused element
-IGUIElement* CGUIEnvironment::getNextElement(bool reverse, bool group)
-{
-	// start the search at the root of the current tab group
-	IGUIElement *startPos = Focus ? Focus->getTabGroup() : 0;
-	s32 startOrder = -1;
-
-	// if we're searching for a group
-	if (group && startPos)
-	{
-		startOrder = startPos->getTabOrder();
-	}
-	else 
-	if (!group && Focus && !Focus->isTabGroup())
-	{
-		startOrder = Focus->getTabOrder();
-		if (startOrder == -1)
-		{
-			// this element is not part of the tab cycle, 
-			// but its parent might be...
-			IGUIElement *el = Focus;
-			while (el && el->getParent() && startOrder == -1)
-			{
-				el = el->getParent();
-				startOrder = el->getTabOrder();
-			}
-
-		}
-	}
-
-	if (group || !startPos)
-		startPos = this; // start at the root
-
-	// find the element
-	IGUIElement *closest = 0;
-	IGUIElement *first = 0;
-	startPos->getNextElement(startOrder, reverse, group, first, closest);
-
-	if (closest)
-		return closest; // we found an element
-	else if (first)
-		return first; // go to the end or the start
-	else if (group)
-		return this; // no group found? root group
-	else
-		return 0;
-}
-
 
 //! creates an GUI Environment
-IGUIEnvironment* createGUIEnvironment(io::IFileSystem* fs,
-					video::IVideoDriver* Driver,
-					IOSOperator* op)
+IGUIEnvironment* createGUIEnvironment(io::IFileSystem* fs, video::IVideoDriver* Driver,
+									  IOSOperator* op)
 {
 	return new CGUIEnvironment(fs, Driver, op);
 }
@@ -1505,7 +1268,4 @@ IGUIEnvironment* createGUIEnvironment(io::IFileSystem* fs,
 
 } // end namespace gui
 } // end namespace irr
-
-#endif // _IRR_COMPILE_WITH_GUI_
-
 

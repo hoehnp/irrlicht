@@ -1,31 +1,27 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #include "CDefaultGUIElementFactory.h"
-
-#ifdef _IRR_COMPILE_WITH_GUI_
-
 #include "IGUIEnvironment.h"
-
 #include "IGUIButton.h"
 #include "IGUICheckBox.h"
-#include "IGUIColorSelectDialog.h"
 #include "IGUIComboBox.h"
 #include "IGUIContextMenu.h"
 #include "IGUIEditBox.h"
 #include "IGUIFileOpenDialog.h"
+#include "IGUIColorSelectDialog.h"
 #include "IGUIInOutFader.h"
 #include "IGUIImage.h"
 #include "IGUIListBox.h"
 #include "IGUIMeshViewer.h"
 #include "IGUIScrollBar.h"
-#include "IGUISpinBox.h"
 #include "IGUIStaticText.h"
 #include "IGUITabControl.h"
-#include "IGUITable.h"
 #include "IGUIToolbar.h"
 #include "IGUIWindow.h"
+
+#include <string.h>
 
 namespace irr
 {
@@ -35,18 +31,19 @@ namespace gui
 CDefaultGUIElementFactory::CDefaultGUIElementFactory(IGUIEnvironment* env)
 : Environment(env)
 {
-
-	#ifdef _DEBUG
-	setDebugName("CDefaultGUIElementFactory");
-	#endif
-
 	// don't grab the gui environment here to prevent cyclic references
+}
+
+
+CDefaultGUIElementFactory::~CDefaultGUIElementFactory()
+{
 }
 
 
 //! adds an element to the env based on its type id
 IGUIElement* CDefaultGUIElementFactory::addGUIElement(EGUI_ELEMENT_TYPE type, IGUIElement* parent)
 {
+	
 	switch(type)
 	{
 		case EGUIET_BUTTON:
@@ -85,17 +82,14 @@ IGUIElement* CDefaultGUIElementFactory::addGUIElement(EGUI_ELEMENT_TYPE type, IG
 			return Environment->addTab(core::rect<s32>(0,0,100,100),parent);
 		case EGUIET_TAB_CONTROL:
 			return Environment->addTabControl(core::rect<s32>(0,0,100,100),parent);
-		case EGUIET_TABLE:
-			return Environment->addTable(core::rect<s32>(0,0,100,100), parent);
 		case EGUIET_TOOL_BAR:
 			return Environment->addToolBar(parent);
 		case EGUIET_WINDOW:
 			return Environment->addWindow(core::rect<s32>(0,0,100,100),false,0,parent);
-		case EGUIET_SPIN_BOX:
-			return Environment->addSpinBox(L"0.0", core::rect<s32>(0,0,100,100), parent);
-		default:
- 			return 0;
+
 	}
+
+	return 0;
 }
 
 
@@ -106,15 +100,15 @@ IGUIElement* CDefaultGUIElementFactory::addGUIElement(const c8* typeName, IGUIEl
 }
 
 
-//! Returns the amount of element types this factory is able to create.
-s32 CDefaultGUIElementFactory::getCreatableGUIElementTypeCount() const
+//! returns amount of element types this factory is able to create
+s32 CDefaultGUIElementFactory::getCreatableGUIElementTypeCount()
 {
 	return EGUIET_COUNT;
 }
 
 
-//! Returns the type of a createable element type.
-EGUI_ELEMENT_TYPE CDefaultGUIElementFactory::getCreateableGUIElementType(s32 idx) const
+//! returns type of a createable element type
+EGUI_ELEMENT_TYPE CDefaultGUIElementFactory::getCreateableGUIElementType(s32 idx)
 {
 	if (idx>=0 && idx<EGUIET_COUNT)
 		return (EGUI_ELEMENT_TYPE)idx;
@@ -123,8 +117,8 @@ EGUI_ELEMENT_TYPE CDefaultGUIElementFactory::getCreateableGUIElementType(s32 idx
 }
 
 
-//! Returns the type name of a createable element type.
-const c8* CDefaultGUIElementFactory::getCreateableGUIElementTypeName(s32 idx) const
+//! returns type name of a createable element type 
+const c8* CDefaultGUIElementFactory::getCreateableGUIElementTypeName(s32 idx)
 {
 	if (idx>=0 && idx<EGUIET_COUNT)
 		return GUIElementTypeNames[idx];
@@ -133,8 +127,8 @@ const c8* CDefaultGUIElementFactory::getCreateableGUIElementTypeName(s32 idx) co
 }
 
 
-//! Returns the type name of a createable element type.
-const c8* CDefaultGUIElementFactory::getCreateableGUIElementTypeName(EGUI_ELEMENT_TYPE type) const
+//! returns type name of a createable element type 
+const c8* CDefaultGUIElementFactory::getCreateableGUIElementTypeName(EGUI_ELEMENT_TYPE type)
 {
 	// for this factory, type == index
 
@@ -144,9 +138,9 @@ const c8* CDefaultGUIElementFactory::getCreateableGUIElementTypeName(EGUI_ELEMEN
 	return 0;
 }
 
-EGUI_ELEMENT_TYPE CDefaultGUIElementFactory::getTypeFromName(const c8* name) const
+EGUI_ELEMENT_TYPE CDefaultGUIElementFactory::getTypeFromName(const c8* name)
 {
-	for ( u32 i=0; GUIElementTypeNames[i]; ++i)
+	for ( int i=0; GUIElementTypeNames[i]; ++i)
 		if (!strcmp(name, GUIElementTypeNames[i]) )
 			return (EGUI_ELEMENT_TYPE)i;
 
@@ -156,6 +150,4 @@ EGUI_ELEMENT_TYPE CDefaultGUIElementFactory::getTypeFromName(const c8* name) con
 
 } // end namespace gui
 } // end namespace irr
-
-#endif // _IRR_COMPILE_WITH_GUI_
 

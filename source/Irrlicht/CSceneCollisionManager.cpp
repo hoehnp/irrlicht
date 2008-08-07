@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -10,7 +10,6 @@
 
 #include "os.h"
 #include "irrMath.h"
-#include <float.h> // For FLT_MAX
 
 namespace irr
 {
@@ -62,7 +61,7 @@ ISceneNode* CSceneCollisionManager::getSceneNodeFromRayBB(core::line3d<f32> ray,
 						bool bNoDebugObjects)
 {
 	ISceneNode* best = 0;
-	f32 dist = FLT_MAX;
+	f32 dist = 9999999999.0f;
 
 	getPickedNodeBB(SceneManager->getRootSceneNode(), ray, 
 		idBitMask, bNoDebugObjects, dist, best);
@@ -83,7 +82,7 @@ void CSceneCollisionManager::getPickedNodeBB(ISceneNode* root,
 
    const core::list<ISceneNode*>& children = root->getChildren();
 
-   core::list<ISceneNode*>::ConstIterator it = children.begin();
+   core::list<ISceneNode*>::Iterator it = children.begin();
    for (; it != children.end(); ++it)
    {
       ISceneNode* current = *it;
@@ -167,50 +166,25 @@ bool CSceneCollisionManager::getCollisionPoint(const core::line3d<f32>& ray,
 	s32 cnt = 0;
 	selector->getTriangles(Triangles.pointer(), totalcnt, cnt, ray);
 
-	const core::vector3df linevect = ray.getVector().normalize();
+	core::vector3df linevect = ray.getVector().normalize();
 	core::vector3df intersection;
-	f32 nearest = FLT_MAX;
+	f32 nearest = 9999999999999.0f;
 	bool found = false;
-	const f32 raylength = ray.getLengthSQ();
-
-	const f32 minX = core::min_(ray.start.X, ray.end.X);
-	const f32 maxX = core::max_(ray.start.X, ray.end.X);
-	const f32 minY = core::min_(ray.start.Y, ray.end.Y);
-	const f32 maxY = core::max_(ray.start.Y, ray.end.Y);
-	const f32 minZ = core::min_(ray.start.Z, ray.end.Z);
-	const f32 maxZ = core::max_(ray.start.Z, ray.end.Z);
+	f32 tmp, tmp2;
+	f32 raylength = (f32)ray.getLengthSQ();
 
 	for (s32 i=0; i<cnt; ++i)
 	{
-		const core::triangle3df & triangle = Triangles[i];
-
-		if(minX > triangle.pointA.X && minX > triangle.pointB.X && minX > triangle.pointC.X)
-			continue;
-		if(maxX < triangle.pointA.X && maxX < triangle.pointB.X && maxX < triangle.pointC.X)
-			continue;
-		if(minY > triangle.pointA.Y && minY > triangle.pointB.Y && minY > triangle.pointC.Y)
-			continue;
-		if(maxY < triangle.pointA.Y && maxY < triangle.pointB.Y && maxY < triangle.pointC.Y)
-			continue;
-		if(minZ > triangle.pointA.Z && minZ > triangle.pointB.Z && minZ > triangle.pointC.Z)
-			continue;
-		if(maxZ < triangle.pointA.Z && maxZ < triangle.pointB.Z && maxZ < triangle.pointC.Z)
-			continue;
-
-		if(ray.start.getDistanceFromSQ(triangle.pointA) >= nearest &&
-			ray.start.getDistanceFromSQ(triangle.pointB) >= nearest &&
-			ray.start.getDistanceFromSQ(triangle.pointC) >= nearest)
-			continue;
-
-		if (triangle.getIntersectionWithLine(ray.start, linevect, intersection))
+		if (Triangles[i].getIntersectionWithLine(ray.start, linevect, intersection))
 		{
-			const f32 tmp = intersection.getDistanceFromSQ(ray.start);
-			const f32 tmp2 = intersection.getDistanceFromSQ(ray.end);
+			tmp = (f32)intersection.getDistanceFromSQ(ray.start);
+			tmp2 = (f32)intersection.getDistanceFromSQ(ray.end);
 
-			if (tmp < raylength && tmp2 < raylength && tmp < nearest)
+			if (tmp < raylength && tmp2 < raylength &&
+				tmp < nearest)
 			{
 				nearest = tmp;
-				outTriangle = triangle;
+				outTriangle = Triangles[i];
 				outIntersection = intersection;
 				found = true;
 			}
@@ -509,7 +483,7 @@ core::vector3df CSceneCollisionManager::collideEllipsoidWithWorld(
 	colData.R3Position = position;
 	colData.R3Velocity = velocity;
 	colData.eRadius = radius;
-	colData.nearestDistance = FLT_MAX;
+	colData.nearestDistance = 9999999999999.0f;
 	colData.selector = selector;
 	colData.slidingSpeed = slidingSpeed;
 	colData.triangleHits = 0;
@@ -565,7 +539,7 @@ core::vector3df CSceneCollisionManager::collideWithWorld(s32 recursionDepth,
 	colData.normalizedVelocity.normalize();
 	colData.basePoint = pos;
 	colData.foundCollision = false;
-	colData.nearestDistance = FLT_MAX;
+	colData.nearestDistance = 9999999999999.0f;
 
 	//------------------ collide with world
 
@@ -659,7 +633,7 @@ core::line3d<f32> CSceneCollisionManager::getRayFromScreenCoordinates(
 	core::vector3df lefttoright = f->getFarRightUp() - farLeftUp;
 	core::vector3df uptodown = f->getFarLeftDown() - farLeftUp;
 
-	const core::rect<s32>& viewPort = Driver->getViewPort();
+	core::rect<s32> viewPort = Driver->getViewPort();
 	core::dimension2d<s32> screenSize(viewPort.getWidth(), viewPort.getHeight());
 
 	f32 dx = pos.X / (f32)screenSize.Width;
@@ -676,43 +650,51 @@ core::line3d<f32> CSceneCollisionManager::getRayFromScreenCoordinates(
 }
 
 
+
 //! Calculates 2d screen position from a 3d position.
 core::position2d<s32> CSceneCollisionManager::getScreenCoordinatesFrom3DPosition(
 	core::vector3df pos3d, ICameraSceneNode* camera)
 {
+	core::position2d<s32> pos2d(-1000,-1000);
+
 	if (!SceneManager || !Driver)
-		return core::position2d<s32>(-1000,-1000);
+		return pos2d;
 
 	if (!camera)
 		camera = SceneManager->getActiveCamera();
 
 	if (!camera)
-		return core::position2d<s32>(-1000,-1000);
+		return pos2d;
 
-	const core::rect<s32>& viewPort = Driver->getViewPort();
+	core::rect<s32> viewPort = Driver->getViewPort();
 	core::dimension2d<s32> dim(viewPort.getWidth(), viewPort.getHeight());
 
 	dim.Width /= 2;
 	dim.Height /= 2;
 
+	f32 transformedPos[4];
+
 	core::matrix4 trans = camera->getProjectionMatrix();
 	trans *= camera->getViewMatrix();
 
-	f32 transformedPos[4] = { pos3d.X, pos3d.Y, pos3d.Z, 1.0f };
+	transformedPos[0] = pos3d.X;
+	transformedPos[1] = pos3d.Y;
+	transformedPos[2] = pos3d.Z;
+	transformedPos[3] = 1.0f;
 
 	trans.multiplyWith1x4Matrix(transformedPos);
 
 	if (transformedPos[3] < 0)
 		return core::position2d<s32>(-10000,-10000);
 
-	const f32 zDiv = transformedPos[3] == 0.0f ? 1.0f :
-		core::reciprocal(transformedPos[3]);
+	f32 zDiv = transformedPos[3] == 0.0f ? 1.0f :
+		(1.0f / transformedPos[3]);
 
-	return core::position2d<s32>(
-			core::round32(dim.Width * transformedPos[0] * zDiv) + dim.Width,
-			dim.Height - core::round32(dim.Height * (transformedPos[1] * zDiv)));
+	pos2d.X = (s32)(dim.Width * transformedPos[0] * zDiv) + dim.Width;
+	pos2d.Y = ((s32)(dim.Height - (dim.Height * (transformedPos[1] * zDiv))));
+
+	return pos2d;
 }
-
 
 inline bool CSceneCollisionManager::getLowestRoot(f32 a, f32 b, f32 c, f32 maxR, f32* root)
 {
@@ -754,5 +736,4 @@ inline bool CSceneCollisionManager::getLowestRoot(f32 a, f32 b, f32 c, f32 maxR,
 
 } // end namespace scene
 } // end namespace irr
-
 

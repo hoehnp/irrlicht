@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -26,12 +26,14 @@ namespace scene
 		}
 
 		//! destructor
-		virtual ~SMesh()
+		~SMesh()
 		{
 			// drop buffers
 			for (u32 i=0; i<MeshBuffers.size(); ++i)
+			{
 				MeshBuffers[i]->drop();
-		}
+			}
+		};
 
 		//! returns amount of mesh buffers.
 		virtual u32 getMeshBufferCount() const
@@ -46,12 +48,12 @@ namespace scene
 		}
 
 		//! returns a meshbuffer which fits a material
-		/** reverse search */
+		// reverse search
 		virtual IMeshBuffer* getMeshBuffer( const video::SMaterial & material) const
 		{
-			for (s32 i = (s32)MeshBuffers.size()-1; i >= 0; --i)
+			for (s32 i = (s32) MeshBuffers.size(); --i >= 0; )
 			{
-				if ( material == MeshBuffers[i]->getMaterial())
+				if ( !(material != MeshBuffers[i]->getMaterial()) )
 					return MeshBuffers[i];
 			}
 
@@ -100,9 +102,7 @@ namespace scene
 				MeshBuffers[i]->getMaterial().setFlag(flag, newvalue);
 		}
 
-		//! The meshbuffers of this mesh
 		core::array<IMeshBuffer*> MeshBuffers;
-		//! The bounding box of this mesh
 		core::aabbox3d<f32> BoundingBox;
 	};
 

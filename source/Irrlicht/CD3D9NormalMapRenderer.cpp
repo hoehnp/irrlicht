@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -82,7 +82,7 @@ namespace video
 		"\n";
 
 	// Irrlicht Engine D3D9 render path normal map pixel shader
-	const char D3D9_NORMAL_MAP_PSH_1_1[] = 
+	const char D3D9_NORMAL_MAP_PSH[] = 
 		";Irrlicht Engine 0.8 D3D9 render path normal map pixel shader\n"\
 		";Input: \n"\
 		";t0: color map texture coord \n"\
@@ -108,78 +108,19 @@ namespace video
 		"+mov r0.a, v0.a             ; write interpolated vertex alpha value \n"\
 		"\n"\
 		"";
-		
-	// Higher-quality normal map pixel shader (requires PS 2.0)
-	// uses per-pixel normalization for improved accuracy
-	const char D3D9_NORMAL_MAP_PSH_2_0[] = 
-		";Irrlicht Engine 0.8 D3D9 render path normal map pixel shader\n"\
-		";Input: \n"\
-		";t0: color map texture coord \n"\
-		";t1: normal map texture coords \n"\
-		";t2: light 1 vector in tangent space \n"\
-		";v0: light 1 color \n"\
-		";t3: light 2 vector in tangent space \n"\
-		";v1: light 2 color \n"\
-		";v0.a: vertex alpha value  \n"\
-
-		"ps_2_0 \n"\
-		"def c0, 0, 0, 0, 0\n"\
-		"def c1, 1.0, 1.0, 1.0, 1.0\n"\
-		"def c2, 2.0, 2.0, 2.0, 2.0\n"\
-		"def c3, -.5, -.5, -.5, -.5\n"\
-		"dcl t0\n"\
-		"dcl t1\n"\
-		"dcl t2\n"\
-		"dcl t3\n"\
-		"dcl v1\n"\
-		"dcl v0\n"\
-		"dcl_2d s0\n"\
-		"dcl_2d s1\n"\
-
-		"texld r0, t0, s0			; sample color map into r0 \n"\
-		"texld r4, t0, s1			; sample normal map into r4\n"\
-		"add r4, r4, c3				; bias the normal vector\n"\
-		"add r5, t2, c3				; bias the light 1 vector into r5\n"\
-		"add r6, t3, c3				; bias the light 2 vector into r6\n"\
-
-		"nrm r1, r4					; normalize the normal vector into r1\n"\
-		"nrm r2, r5					; normalize the light1 vector into r2\n"\
-		"nrm r3, r6					; normalize the light2 vector into r3\n"\
-		
-		"dp3 r2, r2, r1				; let r2 = normal DOT light 1 vector\n"\
-		"max r2, r2, c0				; clamp result to positive numbers\n"\
-		"mul r2, r2, v0             ; let r2 = luminance1 * light color 1 \n"\
-
-		"dp3 r3, r3, r1				; let r3 = normal DOT light 2 vector\n"\
-		"max r3, r3, c0				; clamp result to positive numbers\n"\
-
-		"mad r2, r3, v1, r2         ; let r2 = (luminance2 * light color 2) + (luminance2 * light color 1) \n"\
-
-		"mul r2, r2, r0	; let r2 = total luminance * base color\n"\
-		"mov r2.w, v0.w				; write interpolated vertex alpha value \n"\
-
-		"mov oC0, r2				; copy r2 to the output register \n"\
-
-		"\n"\
-		"";
 
 	CD3D9NormalMapRenderer::CD3D9NormalMapRenderer(
 		IDirect3DDevice9* d3ddev, video::IVideoDriver* driver, 
 		s32& outMaterialTypeNr, IMaterialRenderer* baseMaterial)
 		: CD3D9ShaderMaterialRenderer(d3ddev, driver, 0, baseMaterial)
 	{
-		#ifdef _DEBUG
-		setDebugName("CD3D9NormalMapRenderer");
-		#endif
-	
 		// set this as callback. We could have done this in 
 		// the initialization list, but some compilers don't like it.
 
 		CallBack = this;
 
-		// basically, this thing simply compiles the hardcoded shaders
-		// if the hardware is able to do them, otherwise it maps to the
-		// base material
+		// basicly, this thing simply compiles these hardcoded shaders if the
+		// hardware is able to do them, otherwise it maps to the base material
 
 		if (!driver->queryFeature(video::EVDF_PIXEL_SHADER_1_1) ||
 			!driver->queryFeature(video::EVDF_VERTEX_SHADER_1_1))
@@ -190,7 +131,7 @@ namespace video
 			return;
 		}
 
-		// check if already compiled normal map shaders are there.
+        // check if already compiled normal map shaders are there.
 
 		video::IMaterialRenderer* renderer = driver->getMaterialRenderer(EMT_NORMAL_MAP_SOLID);
 		if (renderer)
@@ -210,27 +151,15 @@ namespace video
 		else
 		{
 			// compile shaders on our own
-			if (driver->queryFeature(video::EVDF_PIXEL_SHADER_2_0))
-			{
-				init(outMaterialTypeNr, D3D9_NORMAL_MAP_VSH, D3D9_NORMAL_MAP_PSH_2_0);
-			}
-			else
-			{
-				init(outMaterialTypeNr, D3D9_NORMAL_MAP_VSH, D3D9_NORMAL_MAP_PSH_1_1);
-			}
+			init(outMaterialTypeNr, D3D9_NORMAL_MAP_VSH, D3D9_NORMAL_MAP_PSH);
 		}
-		// something failed, use base material
-		if (-1==outMaterialTypeNr)
-			driver->addMaterialRenderer(this);
 	}
-
 
 	CD3D9NormalMapRenderer::~CD3D9NormalMapRenderer()
 	{
 		if (CallBack == this)
 			CallBack = 0;
 	}
-
 
 	bool CD3D9NormalMapRenderer::OnRender(IMaterialRendererServices* service, E_VERTEX_TYPE vtxtype)
 	{
@@ -245,7 +174,7 @@ namespace video
 
 
 	//! Returns the render capability of the material. 
-	s32 CD3D9NormalMapRenderer::getRenderCapability() const
+	s32 CD3D9NormalMapRenderer::getRenderCapability()
 	{
 		if (Driver->queryFeature(video::EVDF_PIXEL_SHADER_1_1) &&
 			Driver->queryFeature(video::EVDF_VERTEX_SHADER_1_1))
@@ -255,8 +184,8 @@ namespace video
 	}
 
 
-	//! Called by the engine when the vertex and/or pixel shader constants
-	//! for an material renderer should be set.
+	//! Called by the engine when the vertex and/or pixel shader constants for an
+	//! material renderer should be set.
 	void CD3D9NormalMapRenderer::OnSetConstants(IMaterialRendererServices* services, s32 userData)
 	{
 		video::IVideoDriver* driver = services->getVideoDriver();
@@ -270,8 +199,8 @@ namespace video
 		worldViewProj *= driver->getTransform(video::ETS_WORLD);
 		services->setVertexShaderConstant(worldViewProj.getTransposed().pointer(), 8, 4);
 
-		// here we've got to fetch the fixed function lights from the
-		// driver and set them as constants
+		// here we've got to fetch the fixed function lights from the driver
+		// and set them as constants
 
 		u32 cnt = driver->getDynamicLightCount();
 
@@ -302,5 +231,5 @@ namespace video
 } // end namespace video
 } // end namespace irr
 
-#endif // _IRR_COMPILE_WITH_DIRECT3D_9_
+#endif
 

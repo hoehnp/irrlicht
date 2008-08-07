@@ -1,8 +1,10 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
+#include "IrrCompileConfig.h"
 #include "CTRTextureGouraud.h"
+#include "os.h"
 
 #ifdef _IRR_COMPILE_WITH_SOFTWARE_
 
@@ -13,10 +15,8 @@ namespace video
 
 //! constructor
 CTRTextureGouraud::CTRTextureGouraud(IZBuffer* zbuffer)
-	: RenderTarget(0), ZBuffer(zbuffer), SurfaceWidth(0), SurfaceHeight(0),
-		BackFaceCullingEnabled(true), lockedZBuffer(0),
-		lockedSurface(0), lockedTexture(0), lockedTextureWidth(0),
-		textureXMask(0), textureYMask(0), Texture(0)
+: RenderTarget(0),	BackFaceCullingEnabled(true), SurfaceHeight(0), SurfaceWidth(0),
+	Texture(0), ZBuffer(zbuffer)
 {
 	#ifdef _DEBUG
 	setDebugName("CTRTextureGouraud");
@@ -174,7 +174,8 @@ void CTRTextureGouraud::drawIndexedTriangleList(S2DVertex* vertices, s32 vertexC
 		if (!TriangleRect.isRectCollided(ViewPortRect))
 			continue;
 
-		// calculate height of triangle
+
+		// höhe des dreiecks berechnen
 		height = v3->Pos.Y - v1->Pos.Y;
 		if (!height)
 			continue;
@@ -313,7 +314,7 @@ void CTRTextureGouraud::drawIndexedTriangleList(S2DVertex* vertices, s32 vertexC
 				// draw the span
 				if (rightx + tDiffRight - leftx - tDiffLeft)
 				{
-					tmpDiv = 1.0f / (f32)(rightx - leftx);
+					f32 tmpDiv = 1.0f / (f32)(rightx - leftx);
 					spanZStep = (s32)((rightZValue - leftZValue) * tmpDiv);
 					spanZValue = leftZValue+tDiffLeft*spanZStep;
 
@@ -339,9 +340,7 @@ void CTRTextureGouraud::drawIndexedTriangleList(S2DVertex* vertices, s32 vertexC
 						{
 							*spanZTarget = spanZValue;
 							u16 color = lockedTexture[((spanTy>>8)&textureYMask) * lockedTextureWidth + ((spanTx>>8)&textureXMask)];
-							*hSpanBegin = video::RGB16(video::getRedSigned(color) * (spanR>>8) >>2,
-									video::getGreenSigned(color) * (spanG>>8) >>2,
-									video::getBlueSigned(color) * (spanB>>8) >>2);
+							*hSpanBegin = video::RGB16(video::getRedSigned(color) * (spanR>>8) >>2, video::getGreenSigned(color) * (spanG>>8) >>2, video::getBlueSigned(color) * (spanB>>8) >>2);
 						}
 
 						spanR += spanStepR;

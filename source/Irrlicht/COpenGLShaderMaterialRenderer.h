@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -8,22 +8,21 @@
 #include "IrrCompileConfig.h"
 #ifdef _IRR_COMPILE_WITH_OPENGL_
 
-#ifdef _IRR_WINDOWS_API_
-	#define WIN32_LEAN_AND_MEAN
-	#include <windows.h>
-	#include <GL/gl.h>
-#else
+#ifdef _IRR_WINDOWS_
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <GL/gl.h>
+#elif defined(LINUX)
 #if defined(_IRR_OPENGL_USE_EXTPOINTER_)
-	#define GL_GLEXT_LEGACY 1
+#define GL_GLEXT_LEGACY 1
 #endif
-#if defined(_IRR_USE_OSX_DEVICE_)
-	#include <OpenGL/gl.h>
-#else
-	#include <GL/gl.h>
-#endif
+#include <GL/gl.h>
 #if defined(_IRR_OPENGL_USE_EXTPOINTER_)
-	#include "glext.h"
+#include "glext.h"
 #endif
+#elif defined(MACOSX)
+#include <OpenGL/gl.h>
+#include <OpenGL/glext.h>
 #endif
 
 #include "IMaterialRenderer.h"
@@ -43,22 +42,22 @@ class COpenGLShaderMaterialRenderer : public IMaterialRenderer
 public:
 
 	//! Constructor
-	COpenGLShaderMaterialRenderer(COpenGLDriver* driver,
+	COpenGLShaderMaterialRenderer(video::COpenGLDriver* driver,
 		s32& outMaterialTypeNr, const c8* vertexShaderProgram, const c8* pixelShaderProgram,
 		IShaderConstantSetCallBack* callback, IMaterialRenderer* baseMaterial, s32 userData);
 
 	//! Destructor
-	virtual ~COpenGLShaderMaterialRenderer();
+	~COpenGLShaderMaterialRenderer();
 
-	virtual void OnSetMaterial(const SMaterial& material, const SMaterial& lastMaterial,
-		bool resetAllRenderstates, IMaterialRendererServices* services);
+	virtual void OnSetMaterial(video::SMaterial& material, const video::SMaterial& lastMaterial,
+		bool resetAllRenderstates, video::IMaterialRendererServices* services);
 
 	virtual bool OnRender(IMaterialRendererServices* service, E_VERTEX_TYPE vtxtype);
 
 	virtual void OnUnsetMaterial();
 
 	//! Returns if the material is transparent.
-	virtual bool isTransparent() const;
+	virtual bool isTransparent();
 
 protected:
 
@@ -74,7 +73,7 @@ protected:
 	bool createPixelShader(const c8* pxsh);
 	bool createVertexShader(const char* vtxsh);
 
-	COpenGLDriver* Driver;
+	video::COpenGLDriver* Driver;
 	IShaderConstantSetCallBack* CallBack;
 	IMaterialRenderer* BaseMaterial;
 

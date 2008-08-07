@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -149,11 +149,6 @@ namespace video
 		: CD3D8ShaderMaterialRenderer(d3ddev, driver, 0, baseMaterial), 
 		CompiledShaders(true), CurrentScale(0.0f)
 	{
-
-		#ifdef _DEBUG
-		setDebugName("CD3D8ParallaxMapRenderer");
-		#endif
-
 		// set this as callback. We could have done this in 
 		// the initialization list, but some compilers don't like it.
 
@@ -190,11 +185,7 @@ namespace video
 			// compile shaders on our own
 			init(outMaterialTypeNr, D3D8_PARALLAX_MAP_VSH, D3D8_PARALLAX_MAP_PSH, EVT_TANGENTS);
 		}
-		// something failed, use base material
-		if (-1==outMaterialTypeNr)
-			driver->addMaterialRenderer(this);
 	}
-
 
 	CD3D8ParallaxMapRenderer::~CD3D8ParallaxMapRenderer()
 	{
@@ -209,7 +200,6 @@ namespace video
 		}
 	}
 
-
 	bool CD3D8ParallaxMapRenderer::OnRender(IMaterialRendererServices* service, E_VERTEX_TYPE vtxtype)
 	{
 		if (vtxtype != video::EVT_TANGENTS)
@@ -221,8 +211,7 @@ namespace video
 		return CD3D8ShaderMaterialRenderer::OnRender(service, vtxtype);
 	}
 
-
-	void CD3D8ParallaxMapRenderer::OnSetMaterial(const video::SMaterial& material, 
+	void CD3D8ParallaxMapRenderer::OnSetMaterial(video::SMaterial& material, 
 		const video::SMaterial& lastMaterial,
 		bool resetAllRenderstates, video::IMaterialRendererServices* services)
 	{
@@ -232,9 +221,8 @@ namespace video
 		CurrentScale = material.MaterialTypeParam;
 	}
 
-
 	//! Returns the render capability of the material. 
-	s32 CD3D8ParallaxMapRenderer::getRenderCapability() const
+	s32 CD3D8ParallaxMapRenderer::getRenderCapability()
 	{
 		if (Driver->queryFeature(video::EVDF_PIXEL_SHADER_1_4) &&
 			Driver->queryFeature(video::EVDF_VERTEX_SHADER_1_1))
@@ -244,8 +232,8 @@ namespace video
 	}
 
 
-	//! Called by the engine when the vertex and/or pixel shader constants
-	//! for an material renderer should be set.
+	//! Called by the engine when the vertex and/or pixel shader constants for an
+	//! material renderer should be set.
 	void CD3D8ParallaxMapRenderer::OnSetConstants(IMaterialRendererServices* services, s32 userData)
 	{
 		video::IVideoDriver* driver = services->getVideoDriver();
@@ -275,7 +263,7 @@ namespace video
 		// here we've got to fetch the fixed function lights from the driver
 		// and set them as constants
 
-		const u32 cnt = driver->getDynamicLightCount();
+		u32 cnt = driver->getDynamicLightCount();
 		
 		for (u32 i=0; i<2; ++i)
 		{
@@ -302,7 +290,7 @@ namespace video
 		services->setVertexShaderConstant(c96, 96, 1);
 
 		// set scale factor
-		f32 factor = 0.02f; // default value
+        f32 factor = 0.02f; // default value
 		if (CurrentScale != 0)
 			factor = CurrentScale;
 
@@ -314,5 +302,5 @@ namespace video
 } // end namespace video
 } // end namespace irr
 
-#endif // _IRR_COMPILE_WITH_DIRECT3D_8_
+#endif
 

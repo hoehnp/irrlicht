@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt / Thomas Alten
+// Copyright (C) 2002-2007 Nikolaus Gebhardt / Thomas Alten
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -16,21 +16,21 @@ namespace irr
 {
 namespace video
 {
-	class CBurningVideoDriver : public CNullDriver
+	class CSoftwareDriver2 : public CNullDriver
 	{
 	public:
 
 		//! constructor
-		CBurningVideoDriver(const core::dimension2d<s32>& windowSize, bool fullscreen, io::IFileSystem* io, video::IImagePresenter* presenter);
+		CSoftwareDriver2(const core::dimension2d<s32>& windowSize, bool fullscreen, io::IFileSystem* io, video::IImagePresenter* presenter);
 
 		//! destructor
-		virtual ~CBurningVideoDriver();
+		virtual ~CSoftwareDriver2();
 
 		//! presents the rendered scene on the screen, returns false if failed
-		virtual bool endScene( void* windowId=0, core::rect<s32>* sourceRect=0 );
+		virtual bool endScene( s32 windowId = 0, core::rect<s32>* sourceRect=0 );
 
 		//! queries the features of the driver, returns true if feature is available
-		virtual bool queryFeature(E_VIDEO_DRIVER_FEATURE feature) const;
+		virtual bool queryFeature(E_VIDEO_DRIVER_FEATURE feature);
 
 		//! sets transformation
 		virtual void setTransform(E_TRANSFORMATION_STATE state, const core::matrix4& mat);
@@ -47,13 +47,6 @@ namespace video
 		//! clears the zbuffer
 		virtual bool beginScene(bool backBuffer, bool zBuffer, SColor color);
 
-		//! Only used by the internal engine. Used to notify the driver that
-		//! the window was resized.
-		virtual void OnResize(const core::dimension2d<s32>& size);
-
-		//! returns size of the current render target
-		virtual const core::dimension2d<s32>& getCurrentRenderTargetSize() const;
-
 		//! deletes all dynamic lights there are
 		virtual void deleteAllDynamicLights();
 
@@ -61,7 +54,7 @@ namespace video
 		virtual void addDynamicLight(const SLight& light);
 
 		//! returns the maximal amount of dynamic lights the device can handle
-		virtual u32 getMaximalDynamicLightAmount() const;
+		virtual u32 getMaximalDynamicLightAmount();
 
 		//! Sets the dynamic ambient light color. The default color is
 		//! (0,0,0,0) which means it is dark.
@@ -69,12 +62,10 @@ namespace video
 		virtual void setAmbientLight(const SColorf& color);
 
 		//! draws a vertex primitive list
-		void drawVertexPrimitiveList(const void* vertices, u32 vertexCount,
-				const u16* indexList, u32 primitiveCount,
-				E_VERTEX_TYPE vType, scene::E_PRIMITIVE_TYPE pType);
+		void drawVertexPrimitiveList(const void* vertices, u32 vertexCount, const u16* indexList, u32 primitiveCount, E_VERTEX_TYPE vType, scene::E_PRIMITIVE_TYPE pType);
 
 		//! draws an 2d image, using a color (if color is other then Color(255,255,255,255)) and the alpha channel of the texture if wanted.
-		virtual void draw2DImage(const video::ITexture* texture, const core::position2d<s32>& destPos,
+		virtual void draw2DImage(video::ITexture* texture, const core::position2d<s32>& destPos,
 			const core::rect<s32>& sourceRect, const core::rect<s32>* clipRect = 0,
 			SColor color=SColor(255,255,255,255), bool useAlphaChannelOfTexture=false);
 
@@ -98,19 +89,16 @@ namespace video
 
 		//! \return Returns the name of the video driver. Example: In case of the DirectX8
 		//! driver, it would return "Direct3D8.1".
-		virtual const wchar_t* getName() const;
+		virtual const wchar_t* getName();
 
 		//! Returns type of video driver
-		virtual E_DRIVER_TYPE getDriverType() const;
-
-		//! get color format of the current color buffer
-		virtual ECOLOR_FORMAT getColorFormat() const;
+		virtual E_DRIVER_TYPE getDriverType();
 
 		//! Returns the transformation set by setTransform
-		virtual const core::matrix4& getTransform(E_TRANSFORMATION_STATE state) const;
+		virtual const core::matrix4& getTransform(E_TRANSFORMATION_STATE state);
 
 		//! Creates a render target texture.
-		virtual ITexture* createRenderTargetTexture(const core::dimension2d<s32>& size, const c8* name);
+		virtual ITexture* createRenderTargetTexture(const core::dimension2d<s32>& size);
 
 		//! Clears the DepthBuffer.
 		virtual void clearZBuffer();
@@ -118,24 +106,13 @@ namespace video
 		//! Returns an image created from the last rendered frame.
 		virtual IImage* createScreenShot();
 
+		//! Enables or disables a texture creation flag.
+		virtual void setTextureCreationFlag(E_TEXTURE_CREATION_FLAG flag, bool enabled);
+
 		//! Returns the maximum amount of primitives (mostly vertices) which
 		//! the device is able to render with one drawIndexedTriangleList
 		//! call.
-		virtual u32 getMaximalPrimitiveCount() const;
-
-		//! Draws a shadow volume into the stencil buffer. To draw a stencil shadow, do
-		//! this: First, draw all geometry. Then use this method, to draw the shadow
-		//! volume. Then, use IVideoDriver::drawStencilShadow() to visualize the shadow.
-		virtual void drawStencilShadowVolume(const core::vector3df* triangles, s32 count, bool zfail);
-
-		//! Fills the stencil shadow with color. After the shadow volume has been drawn
-		//! into the stencil buffer using IVideoDriver::drawStencilShadowVolume(), use this
-		//! to draw the color of the shadow.
-		virtual void drawStencilShadow(bool clearStencilBuffer=false,
-			video::SColor leftUpEdge = video::SColor(0,0,0,0),
-			video::SColor rightUpEdge = video::SColor(0,0,0,0),
-			video::SColor leftDownEdge = video::SColor(0,0,0,0),
-			video::SColor rightDownEdge = video::SColor(0,0,0,0));
+		virtual u32 getMaximalPrimitiveCount();
 
 	protected:
 
@@ -143,7 +120,7 @@ namespace video
 		void setRenderTarget(video::CImage* image);
 
 		//! sets the current Texture
-		//bool setTexture(u32 stage, video::ITexture* texture);
+		bool setTexture(u32 stage, video::ITexture* texture);
 
 		//! returns a device dependent texture from a software surface (IImage)
 		//! THIS METHOD HAS TO BE OVERRIDDEN BY DERIVED DRIVERS WITH OWN TEXTURES
@@ -164,6 +141,8 @@ namespace video
 
 		IDepthBuffer* DepthBuffer;
 
+		video::ITexture* Texture[2];
+		sInternalTexture Texmap[2];
 
 		/*
 			extend Matrix Stack
@@ -232,8 +211,37 @@ namespace video
 		void select_polygon_mipmap2 ( s4DVertex **source, s32 tex ) const;
 
 
-		SBurningShaderLightSpace LightSpace;
-		SBurningShaderMaterial Material;
+		sVec4 Global_AmbientLight;
+
+		struct SInternalLight
+		{
+			SLight org;
+
+			sVec4 posEyeSpace;
+
+			f32 constantAttenuation;
+			f32 linearAttenuation;
+			f32 quadraticAttenuation;
+
+			sVec4 AmbientColor;
+			sVec4 DiffuseColor;
+			sVec4 SpecularColor;
+		};
+		core::array<SInternalLight> Light;
+
+		struct SInternalMaterial
+		{
+			SMaterial org;
+
+			sVec4 AmbientColor;
+			sVec4 DiffuseColor;
+			sVec4 SpecularColor;
+			sVec4 EmissiveColor;
+
+			u32 SpecularEnabled;	// == Power2
+		};
+
+		SInternalMaterial Material;
 
 		static const sVec4 NDCPlane[6];
 

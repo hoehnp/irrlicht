@@ -13,14 +13,15 @@ namespace gui
 	{
 	public:
 		//
-		CGUIBoolAttribute(IGUIEnvironment* environment, IGUIElement *parent, s32 myParentID) :
-		  	CGUIAttribute(environment, parent, myParentID), AttribCheckBox(0)
+		CGUIBoolAttribute(IGUIEnvironment* environment, IGUIElement *parent) :
+		  	CGUIAttribute(environment, parent), AttribCheckBox(0)
 		{
 
 			core::rect<s32> r = getAbsolutePosition();
 			core::rect<s32> r2(0, Environment->getSkin()->getFont()->getDimension(L"A").Height + 10, 
 				r.getWidth() - 5, 
-				Environment->getSkin()->getFont()->getDimension(L"A").Height*2 + 15 );
+				Environment->getSkin()->getFont()->getDimension(L"A").Height + 
+				Environment->getSkin()->getSize(EGDS_CHECK_BOX_WIDTH) + 5 );
 
 			AttribCheckBox = environment->addCheckBox(false, r2, this);
 			AttribCheckBox->setAlignment(EGUIA_UPPERLEFT, EGUIA_LOWERRIGHT, EGUIA_UPPERLEFT, EGUIA_UPPERLEFT);
@@ -43,9 +44,6 @@ namespace gui
 		// save the attribute and possibly post the event to its parent
 		virtual bool updateAttrib(bool sendEvent=true)
 		{
-			if (!Attribs)
-				return true;
-
 			Attribs->setAttribute(Index, AttribCheckBox->isChecked());
 
 			return CGUIAttribute::updateAttrib(sendEvent);

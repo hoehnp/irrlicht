@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt / Thomas Alten
+// Copyright (C) 2002-2007 Nikolaus Gebhardt / Thomas Alten
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -29,32 +29,19 @@ namespace video
 		virtual void setSize(const core::dimension2d<s32>& size);
 
 		//! returns the size of the zbuffer
-		virtual const core::dimension2d<s32>& getSize() const;
+		virtual const core::dimension2d<s32>& getSize();
 
 		//! locks the zbuffer
-		virtual void* lock()
-		{
-			return (void*) Buffer;
-		}
+		virtual fp24* lock();
 
 		//! unlocks the zbuffer
-		virtual void unlock()
-		{
-		}
-
-		//! returns pitch of depthbuffer (in bytes)
-		virtual u32 getPitch() const
-		{
-			return Pitch;
-		}
-
+		virtual void unlock();
 
 	private:
 
 		u8* Buffer;
 		core::dimension2d<s32> Size;
 		u32 TotalSize;
-		u32 Pitch;
 	};
 	
 } // end namespace video

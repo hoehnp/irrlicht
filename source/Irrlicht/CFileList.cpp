@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -12,7 +12,7 @@ namespace irr
 namespace io
 {
 
-#if (defined(_IRR_POSIX_API_) || defined(_IRR_OSX_PLATFORM_))
+#if (defined(LINUX) || defined(MACOSX))
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,24 +23,18 @@ namespace io
 #include <unistd.h>
 #endif
 
-#ifdef _IRR_WINDOWS_API_
-	#if !defined ( _WIN32_WCE )
-		#include <io.h>
-		#include <direct.h>
-	#endif
+#ifdef _IRR_WINDOWS_
+#include <io.h>
+#include <direct.h>
 #endif
 
 
 CFileList::CFileList()
 {
-	#ifdef _DEBUG
-	setDebugName("CFileList");
-	#endif
-
 	// --------------------------------------------
 	// Windows version
-	#ifdef _IRR_WINDOWS_API_
-	#if !defined ( _WIN32_WCE )
+	#ifdef _IRR_WINDOWS_
+
 	char tmp[_MAX_PATH];
 	_getcwd(tmp, _MAX_PATH);
 	Path = tmp;
@@ -62,7 +56,6 @@ CFileList::CFileList()
 
 		_findclose( hFile );
 	}
-	#endif
 
 	//TODO add drives
 	//entry.Name = "E:\\";
@@ -72,7 +65,7 @@ CFileList::CFileList()
 
 	// --------------------------------------------
 	// Linux version
-	#if (defined(_IRR_POSIX_API_) || defined(_IRR_OSX_PLATFORM_))
+	#if (defined(LINUX) || defined(MACOSX))
 
 	FileEntry entry;
 
@@ -117,7 +110,7 @@ CFileList::CFileList()
 			entry.Size = buf.st_size;
 			entry.isDirectory = S_ISDIR(buf.st_mode);
 		}
-		#if !defined(_IRR_SOLARIS_PLATFORM_) && !defined(__CYGWIN__)
+		#if !defined(__sun__) && !defined(__CYGWIN__)
 		// only available on some systems
 		else
 		{
@@ -133,25 +126,30 @@ CFileList::CFileList()
 }
 
 
-u32 CFileList::getFileCount() const
+CFileList::~CFileList()
+{
+}
+
+
+s32 CFileList::getFileCount()
 {
 	return Files.size();
 }
 
 
-const c8* CFileList::getFileName(u32 index) const
+const c8* CFileList::getFileName(s32 index)
 {
-	if (index < Files.size())
-		return Files[index].Name.c_str();
-	else
+	if (index < 0 || index > (s32)Files.size())
 		return 0;
+
+	return Files[index].Name.c_str();
 }
 
 
 //! Gets the full name of a file in the list, path included, based on an index.
-const c8* CFileList::getFullFileName(u32 index)
+const c8* CFileList::getFullFileName(s32 index)
 {
-	if (index >= Files.size())
+	if (index < 0 || index > (s32)Files.size())
 		return 0;
 
 	if (Files[index].FullName.size() < Files[index].Name.size())
@@ -169,14 +167,13 @@ const c8* CFileList::getFullFileName(u32 index)
 }
 
 
-bool CFileList::isDirectory(u32 index) const
+bool CFileList::isDirectory(s32 index)
 {
-	bool ret = false;
-	if (index < Files.size())
-		ret = Files[index].isDirectory;
+	if (index < 0 || index > (s32)Files.size())
+		return false;
 
 	_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
-	return ret;
+	return Files[index].isDirectory;
 }
 
 } // end namespace irr

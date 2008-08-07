@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -22,13 +22,13 @@ namespace gui
 			: IGUIElement(EGUIET_CHECK_BOX, environment, parent, id, rectangle) {}
 
 		//! destructor
-		virtual ~IGUICheckBox() {}
+		~IGUICheckBox() {};
 
 		//! Set if box is checked.
 		virtual void setChecked(bool checked) = 0;
 
 		//! Returns true if box is checked.
-		virtual bool isChecked() const = 0;
+		virtual bool isChecked() = 0;
 	};
 
 } // end namespace gui

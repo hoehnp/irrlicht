@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -25,7 +25,7 @@ namespace io
 	{
 	public:
 
-		CLimitReadFile(IReadFile* alreadyOpenedFile, long areaSize, const c8* name);
+		CLimitReadFile(IReadFile* alreadyOpenedFile, s32 areaSize, const c8* name);
 
 		virtual ~CLimitReadFile();
 
@@ -35,25 +35,25 @@ namespace io
 		//! changes position in file, returns true if successful
 		//! if relativeMovement==true, the pos is changed relative to current pos,
 		//! otherwise from begin of file
-		virtual bool seek(long finalPos, bool relativeMovement = false);
+		virtual bool seek(s32 finalPos, bool relativeMovement = false);
 
 		//! returns size of file
-		virtual long getSize() const;
+		virtual s32 getSize();
 
 		//! returns where in the file we are.
-		virtual long getPos() const;
+		virtual s32 getPos();
 
 		//! returns name of file
-		virtual const c8* getFileName() const;
+		virtual const c8* getFileName();
 
 	private:
 
 		void init();
 
 		core::stringc Filename;
-		long AreaSize;
-		long AreaStart;
-		long AreaEnd;
+		s32 AreaSize;
+		s32 AreaStart;
+		s32 AreaEnd;
 		IReadFile* File;
 	};
 

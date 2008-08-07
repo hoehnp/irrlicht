@@ -1,5 +1,6 @@
 
 /*
+
 	Vector font tool - Gaz Davidson December 2006
 
 	I noticed bitmap fonts were taking massive amounts of video memory at reasonable sizes,
@@ -7,6 +8,7 @@
 
 	And I failed! This is a collection of the ugliest, bloated, most inneficient algorithms
 	i've ever written, but its kinda working so I'm not changing it.
+
 */
 
 #ifndef __VECTOR_FONT_TOOL_INCLUDED__
@@ -17,19 +19,22 @@
 #include <assert.h>
 
 using namespace irr;
+using namespace core;
 using namespace video;
 
 struct STriangleList
 {
-	core::array<core::vector2df>	positions;
-	core::array<u16>		indexes;
+	STriangleList() : positions(), indexes() { }
+
+	array<vector2df>	positions;
+	array<u16>		indexes;
 
 	// for adding one triangle list to another,
 	// these triangles share positions, but dont share triangles
 	STriangleList& operator+=(STriangleList &other)
 	{
-		core::matrix4 m;
-		core::array<s32> map;
+		matrix4 m;
+		array<s32> map;
 		map.set_used(other.positions.size());
 
 		for (u32 i=0; i<map.size(); ++i)
@@ -55,16 +60,16 @@ struct STriangleList
 	}
 
 	// functions for building triangles for shapes,
-	// each shape can't have duplicate triangles
-	bool hasTriangle(core::vector2df a, core::vector2df b, core::vector2df c)
+	// each shape can't have duplicate triangels
+	bool hasTriangle(vector2df a, vector2df b, vector2df c)
 	{
 		// make sure the triangle is wound correctly
-		if (core::line2df(a,b).getPointOrientation(c) < 0)
-			{ core::vector2df tmp=a; a=b; b=tmp; }
+		if (line2df(a,b).getPointOrientation(c) < 0)
+			{ vector2df tmp=a; a=b; b=a; }
 
 		u32 ia=-1, ib=-1, ic=-1;
 		// Find each vertex
-		for (u32 i=0; i < positions.size() && (ia==(u32)-1||ib==(u32)-1||ic==(u32)-1) ; ++i)
+		for (u32 i=0; i < positions.size() && (ia==-1||ib==-1||ic==-1) ; ++i)
 		{
 			if (positions[i] == a) ia = i;
 			if (positions[i] == b) ib = i;
@@ -84,13 +89,13 @@ struct STriangleList
 		return false;
 	}
 
-	void add(core::vector2df a, core::vector2df b, core::vector2df c)
+	void add(vector2df a, vector2df b, vector2df c)
 	{
 
 		// make sure the triangle is wound correctly
-		if (core::line2df(a,b).getPointOrientation(c) < 0)
+		if (line2df(a,b).getPointOrientation(c) < 0)
 		{
-			core::vector2df tmp=a; a=b; b=tmp;
+			vector2df tmp=a; a=b; b=tmp;
 		}
 
 		u32 ia=-1, ib=-1, ic=-1;
@@ -138,14 +143,18 @@ struct STriangleList
 			indexes.push_back(ic);
 		}
 	}
+
 };
 
 // finds groups of pixels and triangulates them
 class CGroupFinder
 {
 public:
+
+	IrrlichtDevice *Device;
+
 	CGroupFinder(bool *memory, s32 w, s32 h, IrrlichtDevice *dev):
-		width(w), height(h), mem(memory), Device(dev)
+		width(w), height(h), mem(memory), refbuffer(), groupRefs(), Device(dev)
 	{
 		refbuffer.set_used(w*h);
 		for (u32 i=0; i<refbuffer.size(); ++i)
@@ -166,7 +175,7 @@ public:
 	{
 		SEdge() : positions() { }
 
-		core::array<core::position2di> positions;
+		array<position2di> positions;
 
 		bool isMember(s32 x, s32 y)
 		{
@@ -190,8 +199,8 @@ public:
 				}
 
 				// get headings
-				core::vector2d<f32>	h1((f32)(positions[i-1].X - positions[i].X),(f32)(positions[i-1].Y - positions[i].Y)),
-							h2((f32)(positions[i].X - positions[i+1].X),(f32)(positions[i].Y - positions[i+1].Y));
+				vector2d<f32>	h1((f32)(positions[i-1].X - positions[i].X),(f32)(positions[i-1].Y - positions[i].Y)),
+								h2((f32)(positions[i].X - positions[i+1].X),(f32)(positions[i].Y - positions[i+1].Y));
 				h1.normalize();
 				h2.normalize();
 
@@ -209,22 +218,22 @@ public:
 	// contains an array of lines for triangulation
 	struct SLineList
 	{
-		core::array<core::line2df>	lines;
+		array<line2df>	lines;
 		SLineList() : lines() { }
 		void addEdge(const SEdge &edge)
 		{
 			// adds lines to the buffer
 			for (u32 i=1; i<edge.positions.size(); ++i)
-				addLine(core::line2df((f32)edge.positions[i-1].X,	(f32)edge.positions[i-1].Y,
+				addLine(line2df((f32)edge.positions[i-1].X,	(f32)edge.positions[i-1].Y,
 						(f32)edge.positions[i].X,	(f32)edge.positions[i].Y ));
 		}
-		void addLine( const core::line2df &line )
+		void addLine( const line2df &line )
 		{
 			// no dupes!
 			if (!hasLine(line))
 				lines.push_back(line);
 		}
-		bool hasLine( const core::line2df &line )
+		bool hasLine( const line2df &line )
 		{
 			for (u32 i=0; i<lines.size(); ++i)
 				if (line == lines[i] || (line.start == lines[i].end && line.end == lines[i].start) )
@@ -232,19 +241,19 @@ public:
 			return false;
 		}
 
-		bool crossesWith( core::line2df l, core::vector2df p)
+		bool crossesWith( line2df l, vector2df p)
 		{
 			// inside checks only work with clockwise triangles
 			if (l.getPointOrientation(p) < 0)
-				{ core::vector2df tmp=l.start; l.start=l.end; l.end=tmp; }
+				{ vector2df tmp=l.start; l.start=l.end; l.end=tmp; }
 
 			// make the 3 triangle edges
-			core::line2df &la=l, lb(l.end,p), lc(p,l.start);
+			line2df &la=l, lb(l.end,p), lc(p,l.start);
 
 			// test every line in the list
 			for (u32 i=0; i<lines.size(); ++i)
 			{
-				core::line2df &l2 = lines[i];
+				line2df &l2 = lines[i];
 
 				// the triangle isn't allowed to enclose any points
 				// triangles are clockwise, so if to the right of all 3 lines, it's enclosed
@@ -257,7 +266,7 @@ public:
 				//	lc.getPointOrientation(l2.start) < 0)
 				//	return true;
 
-				core::vector2df out;
+				vector2df out;
 				//if (la.intersectWith(l2,out))
 				//	if ( out != la.start && out != la.end &&
 				//		out != l2.start && out != l2.end  )
@@ -295,17 +304,17 @@ public:
 	// an area of adjacent pixels
 	struct SPixelGroup
 	{
-		SPixelGroup(IrrlichtDevice *device) : triangles(), pixelWidth(0), pixelHeight(0),
+		IrrlichtDevice *Device;
+		SPixelGroup(IrrlichtDevice *device) : pixels(), edges(), isMemberCache(),
 			Device(device) {}
 
-		core::array<core::position2di>	pixels;
-		core::array<SEdge>		edges;
+		array<position2di>	pixels;
+		array<SEdge>		edges;
 		STriangleList		triangles;
-		core::array<SLineList>	ll;
-		core::array<bool>		isMemberCache;
-		s32			pixelWidth;
-		s32			pixelHeight;
-		IrrlichtDevice		*Device;
+		array<SLineList>	ll;
+		s32 pixelWidth;
+		s32 pixelHeight;
+		array<bool>			isMemberCache;
 
 		void triangulate()
 		{
@@ -317,8 +326,7 @@ public:
 			makeTriangles();
 
 		}
-
-		void drawTriangle( core::line2df line, core::vector2df point)
+		void drawTrianagle( line2df line, vector2df point)
 		{
 			//u32 endt = Device->getTimer()->getTime() + t;
 			f32 scale = 5;
@@ -331,16 +339,16 @@ public:
 				for (u32 v=0;v<ll.size(); ++v)
 				for (u32 h=0;h<ll[v].lines.size(); ++h)
 				{
-					core::line2df &currentline = ll[v].lines[h];
-					core::position2di st = core::position2di((s32)(currentline.start.X*scale)+50, (s32)(currentline.start.Y*scale)+50);
-					core::position2di en = core::position2di((s32)(currentline.end.X*scale)+50,   (s32)(currentline.end.Y*scale)+50);
+					line2df &currentline = ll[v].lines[h];
+					position2di st = position2di((s32)(currentline.start.X*scale)+50, (s32)(currentline.start.Y*scale)+50);
+					position2di en = position2di((s32)(currentline.end.X*scale)+50,   (s32)(currentline.end.Y*scale)+50);
 
 					Device->getVideoDriver()->draw2DLine(st,en, SColor(255,255,255,255));
 				}
 				// draw this triangle
-				core::position2di st = core::position2di((s32)(line.start.X*scale)+50, (s32)(line.start.Y*scale)+50);
-				core::position2di en = core::position2di((s32)(line.end.X*scale)+50,   (s32)(line.end.Y*scale)+50);
-				core::position2di p  = core::position2di((s32)(point.X*scale)+50, (s32)(point.Y*scale)+50);
+				position2di st = position2di((s32)(line.start.X*scale)+50, (s32)(line.start.Y*scale)+50);
+				position2di en = position2di((s32)(line.end.X*scale)+50,   (s32)(line.end.Y*scale)+50);
+				position2di p  = position2di((s32)(point.X*scale)+50, (s32)(point.Y*scale)+50);
 				Device->getVideoDriver()->draw2DLine(st,en, SColor(255,255,0,0));
 				Device->getVideoDriver()->draw2DLine(en,p, SColor(255,0,255,0));
 				Device->getVideoDriver()->draw2DLine(p,st, SColor(255,0,0,255));
@@ -370,7 +378,7 @@ public:
 				for (u32 cl=0; cl<ll[i].lines.size(); ++cl)
 				{
 
-					core::line2df &currentLine = ll[i].lines[cl];
+					line2df &currentLine = ll[i].lines[cl];
 					f32 bestScore = -10.0f;
 					s32 bestEdge  = -1;
 					s32 bestPoint = -1;
@@ -379,10 +387,10 @@ public:
 						for (u32 j=0; j< ll[k].lines.size(); ++j)
 						{
 							f32 score = 0.0f;
-							core::vector2df point(ll[k].lines[j].start.X,
+							vector2df point(ll[k].lines[j].start.X,
 											ll[k].lines[j].start.Y);
-							core::line2df line1(point,currentLine.start);
-							core::line2df line2(currentLine.end,point);
+							line2df line1(point,currentLine.start);
+							line2df line2(currentLine.end,point);
 
 							// can't be part of the current line
 							if (point == currentLine.start || point == currentLine.end)
@@ -391,8 +399,8 @@ public:
 							// must be to the right hand side (triangles are wound clockwise)
 							// unless its part of the inside...
 							f32 side1 = currentLine.getPointOrientation(point);
-							f32 side2 = core::line2df(point,currentLine.start).getPointOrientation(currentLine.end);
-							f32 side3 = core::line2df(currentLine.end,point).getPointOrientation(currentLine.start);
+							f32 side2 = line2df(point,currentLine.start).getPointOrientation(currentLine.end);
+							f32 side3 = line2df(currentLine.end,point).getPointOrientation(currentLine.start);
 							if (i<ll.size()-1)
 								if (side1 <= 0 || side2 <= 0 || side3 <=0)
 									continue;
@@ -440,15 +448,15 @@ public:
 						//assert(bestEdge >= 0 && bestPoint >= 0);
 						//assert(bestScore >= 0.0f);
 
-						core::vector2df point(ll[bestEdge].lines[bestPoint].start.X, ll[bestEdge].lines[bestPoint].start.Y);
+						vector2df point(ll[bestEdge].lines[bestPoint].start.X, ll[bestEdge].lines[bestPoint].start.Y);
 
 						// add it to the triangles list
 						triangles.add(currentLine.start, currentLine.end, point);
 
 						// add inner lines to the line buffer, but only if they arent in others
 
-						core::line2df la(point,currentLine.start);
-						core::line2df lb(currentLine.end,point);
+						line2df la(point,currentLine.start);
+						line2df lb(currentLine.end,point);
 
 						bool found = false;
 						for (u32 lineno=0;lineno<ll.size()-1; ++lineno)
@@ -463,12 +471,13 @@ public:
 						if (!found)
 							ll[ll.size()-1].addLine(lb);
 
-						//drawTriangle(currentLine, point);
+						//drawTrianagle(currentLine, point);
 
 					}
 
 				}
 			}
+
 		}
 
 		// finds the edges
@@ -484,7 +493,7 @@ public:
 			// loop through each pixel
 			for (u32 i=0; i < pixels.size(); ++i)
 			{
-				core::position2di &p = pixels[i];
+				position2di &p = pixels[i];
 				s32 &x=p.X, &y=p.Y;
 				bool ul = isMember(p.X-1,p.Y-1);
 				bool u  = isMember(p.X,p.Y-1);
@@ -502,11 +511,11 @@ public:
 				{
 					// lone square
 					SEdge a;
-					a.positions.push_back( core::position2di(x,y));
-					a.positions.push_back( core::position2di(x+1,y));
-					a.positions.push_back( core::position2di(x+1,y+1));
-					a.positions.push_back( core::position2di(x,y+1));
-					a.positions.push_back( core::position2di(x,y));
+					a.positions.push_back( position2di(x,y));
+					a.positions.push_back( position2di(x+1,y));
+					a.positions.push_back( position2di(x+1,y+1));
+					a.positions.push_back( position2di(x,y+1));
+					a.positions.push_back( position2di(x,y));
 					edges.push_back(a);
 					top=bottom=left=right=true;
 				}
@@ -583,18 +592,18 @@ public:
 			for (u32 i=0; i<edges.size(); ++i)
 			{
 				// if this line starts at the end of an edge
-				if ( edges[i].positions[edges[i].positions.size()-1] == core::position2di(x1,y1))
+				if ( edges[i].positions[edges[i].positions.size()-1] == position2di(x1,y1))
 				{
 					// add it to the end
-					edges[i].positions.push_back(core::position2di(x2,y2));
+					edges[i].positions.push_back(position2di(x2,y2));
 					found=true;
 					break;
 				}
 				// if the line ends at the start of the edge
-				if ( edges[i].positions[0]== core::position2di(x2,y2))
+				if ( edges[i].positions[0]== position2di(x2,y2))
 				{
 					// add it to the front
-					edges[i].positions.push_front(core::position2di(x1,y1));
+					edges[i].positions.push_front(position2di(x1,y1));
 					found=true;
 					break;
 				}
@@ -603,8 +612,8 @@ public:
 			{
 				// we make a new edge
 				SEdge n;
-				n.positions.push_back(core::position2di(x1,y1));
-				n.positions.push_back(core::position2di(x2,y2));
+				n.positions.push_back(position2di(x1,y1));
+				n.positions.push_back(position2di(x2,y2));
 				edges.push_back(n);
 			}
 
@@ -646,7 +655,6 @@ public:
 			else
 				return isMemberCache[pixelWidth*y + x];
 		}
-
 		void refreshIsMemberCache()
 		{
 			isMemberCache.clear();
@@ -663,6 +671,8 @@ public:
 			for (u32 i=0; i<pixels.size(); ++i)
 				isMemberCache[pixelWidth*pixels[i].Y + pixels[i].X] = true;
 		}
+
+
 	};
 
 
@@ -681,10 +691,10 @@ public:
 			for (u32 v=0;v<groups[g].edges.size(); ++v)
 			for (u32 p=1;p<groups[g].edges[v].positions.size(); ++p)
 			{
-				core::position2di st = core::position2di(groups[g].edges[v].positions[p-1].X*scale+50, groups[g].edges[v].positions[p-1].Y*scale+50) ;
-				core::position2di en = core::position2di(groups[g].edges[v].positions[p].X*scale+50, groups[g].edges[v].positions[p].Y*scale+50) ;
-				core::position2di ep = en-st;
-				ep = st + core::position2di((s32)(ep.X*phase), (s32)(ep.Y*phase));
+				position2di st = position2di(groups[g].edges[v].positions[p-1].X*scale+50, groups[g].edges[v].positions[p-1].Y*scale+50) ;
+				position2di en = position2di(groups[g].edges[v].positions[p].X*scale+50, groups[g].edges[v].positions[p].Y*scale+50) ;
+				position2di ep = en-st;
+				ep = st + position2di((s32)(ep.X*phase), (s32)(ep.Y*phase));
 				device->getVideoDriver()->draw2DLine(st,en);
 				device->getVideoDriver()->draw2DLine(st,ep,video::SColor(255,255,0,0) );
 			}
@@ -707,15 +717,15 @@ public:
 			for (u32 v=0;v<groups[g].triangles.indexes.size()*phase; v+=3)
 			{
 				STriangleList &t = groups[g].triangles;
-				core::position2di st, en;
-				st = core::position2di((s32)(t.positions[t.indexes[v+0]].X*scale)+50,(s32)(t.positions[t.indexes[v+0]].Y*scale)+50);
-				en = core::position2di((s32)(t.positions[t.indexes[v+1]].X*scale)+50,(s32)(t.positions[t.indexes[v+1]].Y*scale)+50);
+				position2di st, en;
+				st = position2di((s32)(t.positions[t.indexes[v+0]].X*scale)+50,(s32)(t.positions[t.indexes[v+0]].Y*scale)+50);
+				en = position2di((s32)(t.positions[t.indexes[v+1]].X*scale)+50,(s32)(t.positions[t.indexes[v+1]].Y*scale)+50);
 				device->getVideoDriver()->draw2DLine(st,en, SColor(255,255,0,0));
-				st = core::position2di((s32)(t.positions[t.indexes[v+1]].X*scale)+50,(s32)(t.positions[t.indexes[v+1]].Y*scale)+50);
-				en = core::position2di((s32)(t.positions[t.indexes[v+2]].X*scale)+50,(s32)(t.positions[t.indexes[v+2]].Y*scale)+50);
+				st = position2di((s32)(t.positions[t.indexes[v+1]].X*scale)+50,(s32)(t.positions[t.indexes[v+1]].Y*scale)+50);
+				en = position2di((s32)(t.positions[t.indexes[v+2]].X*scale)+50,(s32)(t.positions[t.indexes[v+2]].Y*scale)+50);
 				device->getVideoDriver()->draw2DLine(st,en, SColor(255,0,255,0));
-				st = core::position2di((s32)(t.positions[t.indexes[v+2]].X*scale)+50,(s32)(t.positions[t.indexes[v+2]].Y*scale)+50);
-				en = core::position2di((s32)(t.positions[t.indexes[v+0]].X*scale)+50,(s32)(t.positions[t.indexes[v+0]].Y*scale)+50);
+				st = position2di((s32)(t.positions[t.indexes[v+2]].X*scale)+50,(s32)(t.positions[t.indexes[v+2]].Y*scale)+50);
+				en = position2di((s32)(t.positions[t.indexes[v+0]].X*scale)+50,(s32)(t.positions[t.indexes[v+0]].Y*scale)+50);
 				device->getVideoDriver()->draw2DLine(st,en, SColor(255,0,0,255));
 			}
 			device->getVideoDriver()->endScene();
@@ -734,9 +744,9 @@ public:
 			for (u32 v=0;v<groups[g].ll.size()-1; ++v)
 			for (u32 h=0;h<groups[g].ll[v].lines.size(); ++h)
 			{
-				core::line2df &currentline = groups[g].ll[v].lines[h];
-				core::position2di st = core::position2di((s32)(currentline.start.X*scale)+50, (s32)(currentline.start.Y*scale)+50);
-				core::position2di en = core::position2di((s32)(currentline.end.X*scale)+50,   (s32)(currentline.end.Y*scale)+50);
+				line2df &currentline = groups[g].ll[v].lines[h];
+				position2di st = position2di((s32)(currentline.start.X*scale)+50, (s32)(currentline.start.Y*scale)+50);
+				position2di en = position2di((s32)(currentline.end.X*scale)+50,   (s32)(currentline.end.Y*scale)+50);
 				device->getVideoDriver()->draw2DLine(st,en, SColor(255,255,0,0));
 			}
 
@@ -748,7 +758,7 @@ public:
 		for (u32 g=0;g<groups.size(); ++g)
 		{
 			STriangleList &t = groups[g].triangles;
-			core::array<S3DVertex> verts;
+			array<S3DVertex> verts;
 			verts.clear();
 			for(u32 v=0; v< t.positions.size(); ++v)
 			{
@@ -872,14 +882,14 @@ public:
 			if (!found)
 			{
 				SPixelGroup p(Device);
-				p.pixels.push_back(core::position2di(x,y));
+				p.pixels.push_back(position2di(x,y));
 				groups.push_back(p);
 				groupRefs.push_back(groups.size());
 				grp=groups.size();
 			}
 			else
 			{
-				groups[groupRefs[grp-1]-1].pixels.push_back(core::position2di(x,y));
+				groups[groupRefs[grp-1]-1].pixels.push_back(position2di(x,y));
 			}
 			setRef(x,y,groupRefs[grp-1]);
 		}
@@ -901,11 +911,10 @@ public:
 	}
 
 	s32 width, height;
-	core::array<SPixelGroup> groups;
-	core::array<s32> groupRefs;
-	core::array<s32> refbuffer;
+	array<SPixelGroup> groups;
+	array<s32> groupRefs;
+	array<s32> refbuffer;
 	bool *mem;
-	IrrlichtDevice *Device;
 };
 
 // creates a simple vector font from a bitmap from the font tool
@@ -913,9 +922,13 @@ class CVectorFontTool
 {
 public:
 	CVectorFontTool(CFontTool *fonttool) :
-		triangulator(0), FontTool(fonttool), 
-		letterHeight(0), letterWidth(0), triangles()
+		FontTool(fonttool), triangulator(0), charstarts(),
+		charlengths(), chars(), inds(), verts(), triangles()
 	{
+		// get max character width+height
+		letterWidth = 0;
+		letterHeight = 0;
+
 		core::map<wchar_t, u32>::Iterator it = FontTool->CharMap.getIterator();
 
 		while(!it.atEnd())
@@ -942,10 +955,10 @@ public:
 			for (s32 x=0; x<letterWidth; ++x)
 			{
 				S3DVertex &v = getVert(x,y);
-				v.Pos = core::vector3df((f32)x,(f32)y,0.0f);
+				v.Pos = vector3df((f32)x,(f32)y,0.0f);
 				v.TCoords.X = (f32)letterWidth / (f32)x;
 				v.TCoords.Y = (f32)letterHeight / (f32)y;
-				v.Normal = core::vector3df(0,0,-1);
+				v.Normal = vector3df(0,0,-1);
 				v.Color = SColor(255,255,255,255);
 			}
 		// clear index list
@@ -972,7 +985,7 @@ public:
 		CFontTool::SFontArea &fa = FontTool->Areas[area];
 
 		s32 img = fa.sourceimage;
-		core::rect<s32> r = fa.rectangle;
+		rect<s32> r = fa.rectangle;
 
 		// init image memory
 		IImage *image = FontTool->currentImages[img];
@@ -1035,7 +1048,7 @@ public:
 
 		core::stringc fn = filename;
 
-		if (core::stringc(formatname) == core::stringc("xml"))
+		if (stringc(formatname) == stringc("xml"))
 		{
 			fn += ".xml";
 			io::IXMLWriter *writer = FontTool->Device->getFileSystem()->createXMLWriter(fn.c_str());
@@ -1103,7 +1116,7 @@ public:
 			}
 
 			// write vertex data
-			core::stringw data, count;
+			stringw data, count;
 			data  = L"";
 			count = triangles.positions.size();
 			for (u32 i=0; i<triangles.positions.size(); ++i)
@@ -1142,7 +1155,7 @@ public:
 			return true;
 
 		}
-		else if (core::stringc(formatname) == core::stringc("bin"))
+		else if (stringc(formatname) == stringc("bin"))
 		{
 			FontTool->Device->getLogger()->log("binary fonts not supported yet, sorry");
 			return false;
@@ -1156,13 +1169,14 @@ public:
 
 	S3DVertex& getVert(s32 x, s32 y) { return verts[letterWidth*y +x]; }
 
-	core::array<S3DVertex>	verts;
-	core::array<u16>		inds;
-	core::array<bool>		imagedata;
 
-	core::array<s32>		charstarts;	// start position of each char
-	core::array<s32>		charlengths;	// index count
-	core::array<wchar_t>		chars;		// letters
+	array<S3DVertex>	verts;
+	array<u16>		inds;
+	array<bool>		imagedata;
+
+	array<s32>		charstarts;	// start position of each char
+	array<s32>		charlengths;	// index count
+	array<wchar_t>		chars;		// letters
 
 	CGroupFinder*		triangulator;
 	CFontTool*		FontTool;
@@ -1171,6 +1185,7 @@ public:
 	s32			letterWidth;
 
 	STriangleList		triangles;
+
 };
 
 #endif // __VECTOR_FONT_TOOL_INCLUDED__

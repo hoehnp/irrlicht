@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -103,7 +103,8 @@ public:
 			if (!TriangleRect.isRectCollided(ViewPortRect))
 				continue;
 
-			// calculate height of triangle
+
+			// höhe des dreiecks berechnen
 			height = v3->Pos.Y - v1->Pos.Y;
 			if (!height)
 				continue;
@@ -231,7 +232,7 @@ public:
 					// draw the span
 					if (rightx + tDiffRight - leftx - tDiffLeft)
 					{
-						tmpDiv = 1.0f / (f32)(rightx - leftx);
+						f32 tmpDiv = 1.0f / (f32)(rightx - leftx);
 
 						spanStepR = (s32)((rightR - leftR) * tmpDiv);
 						spanR = leftR+tDiffLeft*spanStepR;
@@ -251,9 +252,7 @@ public:
 						while (hSpanBegin < hSpanEnd) 
 						{
 							color = lockedTexture[((spanTy>>8)&textureYMask) * lockedTextureWidth + ((spanTx>>8)&textureXMask)];
-							*hSpanBegin = video::RGB16(video::getRed(color) * (spanR>>8) >>2,
-									video::getGreen(color) * (spanG>>8) >>2,
-									video::getBlue(color) * (spanB>>8) >>2);
+							*hSpanBegin = video::RGB16(video::getRed(color) * (spanR>>8) >>2, video::getGreen(color) * (spanG>>8) >>2, video::getBlue(color) * (spanB>>8) >>2);
 
 							spanR += spanStepR;
 							spanG += spanStepG;

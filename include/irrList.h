@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -12,8 +12,7 @@ namespace irr
 namespace core
 {
 
-
-//! Doubly linked list template.
+//! Double linked list template.
 template <class T>
 class list
 {
@@ -22,364 +21,285 @@ private:
 	//! List element node with pointer to previous and next element in the list.
 	struct SKListNode
 	{
-		SKListNode() : Next(0), Prev(0) {}
+		SKListNode() : next(0), prev(0) {};
 
-		SKListNode* Next;
-		SKListNode* Prev;
-		T Element;
+		SKListNode* next;
+		SKListNode* prev;
+		T element;
 	};
 
 public:
-	class ConstIterator;
 
 	//! List iterator.
 	class Iterator
 	{
 	public:
-		Iterator() : Current(0) {}
 
-		Iterator& operator ++()    { Current = Current->Next; return *this; }
-		Iterator& operator --()    { Current = Current->Prev; return *this; }
-		Iterator  operator ++(s32) { Iterator tmp = *this; Current = Current->Next; return tmp; }
-		Iterator  operator --(s32) { Iterator tmp = *this; Current = Current->Prev; return tmp; }
+		Iterator() : current(0) {};
 
-		Iterator& operator +=(s32 num)
+		Iterator& operator ++() { current = current->next; return *this; };
+		Iterator& operator --() { current = current->prev; return *this; };
+		Iterator operator ++(s32) { Iterator tmp = *this; current = current->next; return tmp; };
+		Iterator operator --(s32) { Iterator tmp = *this; current = current->prev; return tmp; };
+
+		Iterator operator+(s32 num) const
 		{
-			if(num > 0)
-			{
-				while (num-- && this->Current != 0) ++(*this);
-			}
+			Iterator tmp = *this;
+
+			if (num >= 0)
+				while (num-- && tmp.current != 0) ++tmp;
 			else
-			{
-				while(num++ && this->Current != 0) --(*this);
-			}
+				while (num++ && tmp.current != 0) --tmp;
+
+			return tmp;
+		}
+
+		Iterator& operator+=(s32 num)
+		{
+			if (num >= 0)
+				while (num-- && this->current != 0) ++(*this);
+			else
+				while (num++ && this->current != 0) --(*this);
+
 			return *this;
 		}
 
-		Iterator  operator + (s32 num) const { Iterator tmp = *this; return tmp += num; }
-		Iterator& operator -=(s32 num) const { return (*this)+=(-num); }
-		Iterator  operator - (s32 num) const { return (*this)+ (-num); }
+		Iterator operator-(s32 num) const  { return (*this)+(-num);          }
+		Iterator operator-=(s32 num) const { (*this)+=(-num);  return *this; }
 
-		bool operator ==(const Iterator&      other) const { return Current == other.Current; }
-		bool operator !=(const Iterator&      other) const { return Current != other.Current; }
-		bool operator ==(const ConstIterator& other) const { return Current == other.Current; }
-		bool operator !=(const ConstIterator& other) const { return Current != other.Current; }
+		bool operator ==(const Iterator& other) const { return current == other.current; };
+		bool operator !=(const Iterator& other) const { return current != other.current; };
 
-		#if defined (_MSC_VER) && (_MSC_VER < 1300)
-			#pragma warning(disable:4284) // infix notation problem when using iterator operator ->
-		#endif
-
-		T & operator * () { return Current->Element; }
-		T * operator ->() { return &Current->Element; }
+		T& operator *() { return current->element; };
 
 	private:
-		Iterator(SKListNode* begin) : Current(begin) {}
 
-		SKListNode* Current;
+		Iterator(SKListNode* begin) : current(begin) {};
 
 		friend class list<T>;
+
+		SKListNode* current;
 	};
 
-	//! List iterator for const access.
-	class ConstIterator
-	{
-	public:
 
-		ConstIterator() : Current(0) {}
-
-		ConstIterator& operator ++()    { Current = Current->Next; return *this; }
-		ConstIterator& operator --()    { Current = Current->Prev; return *this; }
-		ConstIterator  operator ++(s32) { ConstIterator tmp = *this; Current = Current->Next; return tmp; }
-		ConstIterator  operator --(s32) { ConstIterator tmp = *this; Current = Current->Prev; return tmp; }
-
-		ConstIterator& operator +=(s32 num)
-		{
-			if(num > 0)
-			{
-				while(num-- && this->Current != 0) ++(*this);
-			}
-			else
-			{
-				while(num++ && this->Current != 0) --(*this);
-			}
-			return *this;
-		}
-
-		ConstIterator  operator + (s32 num) const { ConstIterator tmp = *this; return tmp += num; }
-		ConstIterator& operator -=(s32 num) const { return (*this)+=(-num); }
-		ConstIterator  operator - (s32 num) const { return (*this)+ (-num); }
-
-		bool operator ==(const ConstIterator& other) const { return Current == other.Current; }
-		bool operator !=(const ConstIterator& other) const { return Current != other.Current; }
-		bool operator ==(const Iterator&      other) const { return Current == other.Current; }
-		bool operator !=(const Iterator&      other) const { return Current != other.Current; }
-
-		const T & operator * () { return Current->Element; }
-		const T * operator ->() { return &Current->Element; }
-
-		ConstIterator & operator =(const Iterator & iterator) { Current = iterator.Current; return *this; }
-
-	private:
-		ConstIterator(SKListNode* begin) : Current(begin) {}
-
-		SKListNode* Current;
-
-		friend class Iterator;
-		friend class list<T>;
-	};
-
-	//! Default constructor for empty list.
+	//! constructor
 	list()
-		: First(0), Last(0), Size(0) {}
+		: root(0), last(0), size(0) {}
 
 
-	//! Copy constructor.
-	list(const list<T>& other) : First(0), Last(0), Size(0)
+	//! copy constructor
+	list(const list<T>& other) : root(0), last(0), size(0)
 	{
 		*this = other;
 	}
 
 
-	//! Destructor
+	//! destructor
 	~list()
 	{
 		clear();
 	}
 
 
-	//! Assignment operator
-	void operator=(const list<T>& other)
-	{
-		if(&other == this)
-		{
-			return;
-		}
 
+	//! Assignment operator 
+	void operator=(const list<T>& other) 
+	{ 
 		clear();
+ 
+		SKListNode* node = other.root; 
+		while(node) 
+		{ 
+			push_back(node->element); 
+			node = node->next; 
+		} 
+	} 
 
-		SKListNode* node = other.First;
-		while(node)
-		{
-			push_back(node->Element);
-			node = node->Next;
-		}
-	}
 
 
 	//! Returns amount of elements in list.
-	/** \return Amount of elements in the list. */
+	//! \return Returns amount of elements in the list.
 	u32 getSize() const
 	{
-		return Size;
+		return size;
 	}
 
 
-	//! Clears the list, deletes all elements in the list.
-	/** All existing iterators of this list will be invalid. */
+
+	//! Clears the list, deletes all elements in the list. All existing
+	//! iterators of this list will be invalid.
 	void clear()
 	{
-		while(First)
+		SKListNode* node = root;
+		while(node)
 		{
-			SKListNode * next = First->Next;
-			delete First;
-			First = next;
+			SKListNode* next = node->next;
+			delete node;
+			node = next;
 		}
 
-		//First = 0; handled by loop
-		Last = 0;
-		Size = 0;
+		root = 0;
+		last = 0;
+		size = 0;
 	}
 
 
-	//! Checks for empty list.
-	/** \return True if the list is empty and false if not. */
+
+	//! Returns ture if the list is empty.
+	//! \return Returns true if the list is empty and false if not.
 	bool empty() const
 	{
-		return (First == 0);
+		return root == 0;
 	}
+
 
 
 	//! Adds an element at the end of the list.
-	/** \param element Element to add to the list. */
+	//! \param element: Element to add to the list.
 	void push_back(const T& element)
 	{
 		SKListNode* node = new SKListNode;
-		node->Element = element;
+		node->element = element;
 
-		++Size;
+		++size;
 
-		if (First == 0)
-			First = node;
+		if (root == 0)
+			root = node;
 
-		node->Prev = Last;
+		node->prev = last;
 
-		if (Last != 0)
-			Last->Next = node;
+		if (last != 0)
+			last->next = node;
 
-		Last = node;
+		last = node;
 	}
 
 
 	//! Adds an element at the begin of the list.
-	/** \param element: Element to add to the list. */
+	//! \param element: Element to add to the list.
 	void push_front(const T& element)
 	{
 		SKListNode* node = new SKListNode;
-		node->Element = element;
+		node->element = element;
 
-		++Size;
+		++size;
 
-		if (First == 0)
+		if (root == 0)
 		{
-			Last = node;
-			First = node;
+			last = node;
+			root = node;
 		}
 		else
 		{
-			node->Next = First;
-			First->Prev = node;
-			First = node;
+			node->next = root;
+			root->prev = node;
+			root = node;
 		}
 	}
 
 
-	//! Gets first node.
-	/** \return A list iterator pointing to the beginning of the list. */
-	Iterator begin()
+	//! Gets begin node.
+	//! \return Returns a list iterator pointing to the begin of the list.
+	Iterator begin() const
 	{
-		return Iterator(First);
-	}
-
-
-	//! Gets first node.
-	/** \return A const list iterator pointing to the beginning of the list. */
-	ConstIterator begin() const
-	{
-		return ConstIterator(First);
+		return Iterator(root);
 	}
 
 
 	//! Gets end node.
-	/** \return List iterator pointing to null. */
-	Iterator end()
+	//! \return Returns a list iterator pointing to null.
+	Iterator end() const
 	{
 		return Iterator(0);
 	}
 
 
-	//! Gets end node.
-	/** \return Const list iterator pointing to null. */
-	ConstIterator end() const
-	{
-		return ConstIterator(0);
-	}
-
-
 	//! Gets last element.
-	/** \return List iterator pointing to the last element of the list. */
-	Iterator getLast()
+	//! \return Returns a list iterator pointing to the end of the list.
+	Iterator getLast() const
 	{
-		return Iterator(Last);
-	}
-
-
-	//! Gets last element.
-	/** \return Const list iterator pointing to the last element of the list. */
-	ConstIterator getLast() const
-	{
-		return ConstIterator(Last);
+		return Iterator(last);
 	}
 
 
 	//! Inserts an element after an element.
-	/** \param it Iterator pointing to element after which the new element
-	should be inserted.
-	\param element The new element to be inserted into the list.
-	*/
-	void insert_after(const Iterator& it, const T& element)
+	//! \param it: Iterator pointing to element after which the new element
+	//! should be inserted.
+	//! \param element: The new element to be insterted into the list.
+	void insert_after(Iterator& it, const T& element)
 	{
 		SKListNode* node = new SKListNode;
-		node->Element = element;
+		node->element = element;
 
-		node->Next = it.Current->Next;
+		node->next = it.current->next;
 
-		if (it.Current->Next)
-			it.Current->Next->Prev = node;
+		if (it.current->next)
+			it.current->next->prev = node;
 
-		node->Prev = it.Current;
-		it.Current->Next = node;
-		++Size;
+		node->prev = it.current;
+		it.current->next = node;
+		++size;
 
-		if (it.Current == Last)
-			Last = node;
+		if (it.current == last)
+			last = node;
 	}
 
 
 	//! Inserts an element before an element.
-	/** \param it Iterator pointing to element before which the new element
-	should be inserted.
-	\param element The new element to be inserted into the list.
-	*/
-	void insert_before(const Iterator& it, const T& element)
+	//! \param it: Iterator pointing to element before which the new element
+	//! should be inserted.
+	//! \param element: The new element to be insterted into the list.
+	void insert_before(Iterator& it, const T& element)
 	{
 		SKListNode* node = new SKListNode;
-		node->Element = element;
+		node->element = element;
 
-		node->Prev = it.Current->Prev;
+		node->prev = it.current->prev;
 
-		if (it.Current->Prev)
-			it.Current->Prev->Next = node;
+		if (it.current->prev)
+			it.current->prev->next = node;
 
-		node->Next = it.Current;
-		it.Current->Prev = node;
-		++Size;
+		node->next = it.current;
+		it.current->prev = node;
+		++size;
 
-		if (it.Current == First)
-			First = node;
+		if (it.current == root)
+			root = node;
 	}
 
 
-	//! Erases an element.
-	/** \param it Iterator pointing to the element which shall be erased.
-	\return Iterator pointing to next element. */
+	//! Erases an element
+	//! \param it: Iterator pointing to the element which should be erased.
+	//! \return Returns iterator pointing to next element.
 	Iterator erase(Iterator& it)
 	{
-		// suggest changing this to a const Iterator& and
-		// working around line: it.Current = 0 (possibly with a mutable, or just let it be garbage?)
-
 		Iterator returnIterator(it);
 		++returnIterator;
 
-		if(it.Current == First)
-		{
-			First = it.Current->Next;
-		}
-		else
-		{
-			it.Current->Prev->Next = it.Current->Next;
-		}
+		if (it.current == root)
+			root = it.current->next;
 
-		if(it.Current == Last)
-		{
-			Last = it.Current->Prev;
-		}
-		else
-		{
-			it.Current->Next->Prev = it.Current->Prev;
-		}
+		if (it.current == last)
+			last = it.current->prev;
 
-		delete it.Current;
-		it.Current = 0;
-		--Size;
+		if (it.current->next)
+			it.current->next->prev = it.current->prev;
+
+		if (it.current->prev)
+			it.current->prev->next = it.current->next;
+
+		delete it.current;
+		it.current = 0;
+		--size;
 
 		return returnIterator;
 	}
 
 private:
 
-	SKListNode* First;
-	SKListNode* Last;
-	u32 Size;
+	SKListNode* root;
+	SKListNode* last;
+	u32 size;
 
 };
 

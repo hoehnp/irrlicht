@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -12,8 +12,6 @@
 #include "SMesh.h"
 #include "SMeshBuffer.h"
 #include "ISceneManager.h"
-#include "irrMap.h"
-#include "CAttributes.h"
 
 namespace irr
 {
@@ -33,7 +31,6 @@ enum ECOLLADA_PARAM_NAME
 	ECPN_DIFFUSE,
 	ECPN_SPECULAR,
 	ECPN_SHININESS,
-	ECPN_TRANSPARENCY,
 	ECPN_YFOV,
 	ECPN_ZNEAR,
 	ECPN_ZFAR,
@@ -74,8 +71,6 @@ enum ECOLLADA_INPUT_SEMANTIC
 	ECIS_TEXCOORD,
 	ECIS_UV,
 	ECIS_TANGENT,
-	ECIS_IMAGE,
-	ECIS_TEXTURE,
 
 	ECIS_COUNT
 };
@@ -84,65 +79,23 @@ enum ECOLLADA_INPUT_SEMANTIC
 struct SColladaInput
 {
 	SColladaInput()
-		: Semantic(ECIS_COUNT), Data(0), Offset(0), Set(0), Stride(1)
+		: Semantic(ECIS_COUNT)
 	{
 	}
 
 	ECOLLADA_INPUT_SEMANTIC Semantic;
 	core::stringc Source;
-	f32* Data;
-	u32 Offset;
-	u32 Set;
-	u32 Stride;
 };
-
-//! Collada images
-struct SColladaImage
-{
-	core::stringc Id;
-	core::stringc Source;
-	core::dimension2di Dimension;
-	bool SourceIsFilename;
-};
-
-
-//! Collada texture
-struct SColladaTexture
-{
-	video::ITexture* Texture;
-	core::stringc Id;
-};
-
 
 //! Collada material
 struct SColladaMaterial
 {
 	video::SMaterial Mat;
 	core::stringc Id;
-	core::stringc InstanceEffectId;
-	f32 Transparency;
-	
-	inline bool operator< (const SColladaMaterial & other) const
-	{
-		return Id < other.Id;
-	}
-};
-
-//! Collada effect (materials, shaders, and programs)
-struct SColladaEffect
-{
-	video::SMaterial Mat;
-	core::stringc Id;
-	f32 Transparency;
-	
-	inline bool operator< (const SColladaEffect & other) const
-	{
-		return Id < other.Id;
-	}
 };
 
 
-struct SNumberArray // for storing float and int arrays
+struct SNumberArray // for stroring float and int arrays
 {
 	core::stringc Name;
 	core::array<f32> Data;
@@ -169,7 +122,6 @@ struct SSource
 	core::array<SAccessor> Accessors;
 };
 
-class CScenePrefab;
 
 //! Meshloader capable of loading COLLADA meshes and scene descriptions into Irrlicht.
 class CColladaFileLoader : public IMeshLoader
@@ -177,20 +129,21 @@ class CColladaFileLoader : public IMeshLoader
 public:
 
 	//! Constructor
-	CColladaFileLoader(scene::ISceneManager* smgr, io::IFileSystem* fs);
+	CColladaFileLoader(video::IVideoDriver* driver,
+		scene::ISceneManager* smgr, io::IFileSystem* fs);
 
 	//! destructor
 	virtual ~CColladaFileLoader();
 
 	//! returns true if the file maybe is able to be loaded by this class
 	//! based on the file extension (e.g. ".cob")
-	virtual bool isALoadableFileExtension(const c8* fileName) const;
+	virtual bool isALoadableFileExtension(const c8* fileName);
 
 	//! creates/loads an animated mesh from the file.
 	//! \return Pointer to the created mesh. Returns 0 if loading failed.
 	//! If you no longer need the mesh, you should call IAnimatedMesh::drop().
-	//! See IReferenceCounted::drop() for more information.
-	virtual IAnimatedMesh* createMesh(io::IReadFile* file);
+	//! See IUnknown::drop() for more information.
+	virtual IAnimatedMesh* createMesh(irr::io::IReadFile* file);
 
 private:
 
@@ -203,9 +156,6 @@ private:
 	//! reads a <library> section and its content
 	void readLibrarySection(io::IXMLReaderUTF8* reader);
 
-	//! reads a <visual_scene> element and stores it as a prefab
-	void readVisualSceneLibrary(io::IXMLReaderUTF8* reader);
-
 	//! reads a <scene> section and its content
 	void readSceneSection(io::IXMLReaderUTF8* reader);
 
@@ -213,8 +163,7 @@ private:
 	void readAssetSection(io::IXMLReaderUTF8* reader);
 
 	//! reads a <node> section and its content
-	//! if a prefab pointer is passed the nodes are created as scene prefabs childs of that prefab
-	void readNodeSection(io::IXMLReaderUTF8* reader, scene::ISceneNode* parent, CScenePrefab* p=0);
+	void readNodeSection(io::IXMLReaderUTF8* reader, scene::ISceneNode* parent);
 
 	//! reads a <lookat> element and its content and creates a matrix from it
 	core::matrix4 readLookAtNode(io::IXMLReaderUTF8* reader);
@@ -231,24 +180,15 @@ private:
 	//! reads a <skew> element and its content and creates a matrix from it
 	core::matrix4 readSkewNode(io::IXMLReaderUTF8* reader);
 
-	//! reads a <boundingbox> element and its content and stores it in bbox
-	void readBboxNode(io::IXMLReaderUTF8* reader, core::aabbox3df& bbox);
-
 	//! reads a <scale> element and its content and creates a matrix from it
 	core::matrix4 readScaleNode(io::IXMLReaderUTF8* reader);
 
 	//! reads a <translate> element and its content and creates a matrix from it
 	core::matrix4 readTranslateNode(io::IXMLReaderUTF8* reader);
 
-	//! reads a <color> element
-	video::SColorf readColorNode(io::IXMLReaderUTF8* reader);
-
-	//! reads a <float> element
-	f32 readFloatNode(io::IXMLReaderUTF8* reader);
-
 	//! reads a <instance> node and creates a scene node from it
 	void readInstanceNode(io::IXMLReaderUTF8* reader, scene::ISceneNode* parent,
-		scene::ISceneNode** outNode, CScenePrefab* p=0);
+		scene::ISceneNode** outNode);
 
 	//! reads a <light> element and stores it as prefab
 	void readLightPrefab(io::IXMLReaderUTF8* reader);
@@ -256,17 +196,8 @@ private:
 	//! reads a <camera> element and stores it as prefab
 	void readCameraPrefab(io::IXMLReaderUTF8* reader);
 
-	//! reads a <image> element and stores it in the image section
-	void readImage(io::IXMLReaderUTF8* reader);
-
-	//! reads a <texture> element and stores it in the texture section
-	void readTexture(io::IXMLReaderUTF8* reader);
-
 	//! reads a <material> element and stores it in the material section
 	void readMaterial(io::IXMLReaderUTF8* reader);
-
-	//! reads a <effect> element and stores it in the effects section
-	void readEffect(io::IXMLReaderUTF8* reader, SColladaEffect * effect = 0);
 
 	//! reads a <geometry> element and stores it as mesh if possible
 	void readGeometry(io::IXMLReaderUTF8* reader);
@@ -283,10 +214,7 @@ private:
 	void findNextNoneWhiteSpace(const c8** p);
 
 	//! reads floats from inside of xml element until end of xml element
-	void readFloatsInsideElement(io::IXMLReaderUTF8* reader, f32* floats, u32 count);
-
-	//! reads ints from inside of xml element until end of xml element
-	void readIntsInsideElement(io::IXMLReaderUTF8* reader, s32* ints, u32 count);
+	void readFloatsInsideElement(io::IXMLReaderUTF8* reader, f32* floats, s32 count);
 
 	//! clears all loaded data
 	void clearData();
@@ -297,7 +225,7 @@ private:
 	//! returns a collada parameter or none if not found
 	SColladaParam* getColladaParameter(ECOLLADA_PARAM_NAME name);
 
-	//! parses all collada inputs inside an element and stores them in Inputs. Reads
+	//! parses all collada inuts inside an element and stores them in Inputs. Reads
 	//! until first tag which is not an input tag or the end of the parent is reached
 	void readColladaInputs(io::IXMLReaderUTF8* reader, const core::stringc& parentName);
 
@@ -307,29 +235,15 @@ private:
 	//! returns a collada input or none if not found
 	SColladaInput* getColladaInput(ECOLLADA_INPUT_SEMANTIC input);
 
-	//! read Collada Id, uses id or name if id is missing
-	core::stringc readId(io::IXMLReaderUTF8* reader);
-
 	//! changes the XML URI into an internal id
 	void uriToId(core::stringc& str);
 
 	//! reads a polygons section and creates a mesh from it
 	void readPolygonSection(io::IXMLReaderUTF8* reader,
-		const core::stringc& vertexPositionSource, core::array<SSource>& sources,
-		scene::SMesh* mesh, const core::stringc& geometryId);
-	
-	//! finds a material, possible instancing it
-	const SColladaMaterial * findMaterial(const core::stringc & materialName);
-	
-	//! reads and bind materials as given by the symbol->target bind mapping
-	void readBindMaterialSection(io::IXMLReaderUTF8* reader, const core::stringc & id);
+		core::stringc vertexPositionSource, core::array<SSource>& sources,
+		scene::SMesh* mesh);
 
-	//! create an Irrlicht texture from the SColladaImage
-	video::ITexture* getTextureFromImage(core::stringc uri);
-
-	//! read a parameter and value
-	void readParameter(io::IXMLReaderUTF8* reader);
-
+	video::IVideoDriver* Driver;
 	scene::ISceneManager* SceneManager;
 	io::IFileSystem* FileSystem;
 
@@ -339,18 +253,11 @@ private:
 	scene::IAnimatedMesh* FirstLoadedMesh;
 	core::stringc FirstLoadedMeshName;
 	s32 LoadedMeshCount;
-	u32 Version;
 
 	core::array<IColladaPrefab*> Prefabs;
-	core::array<SColladaParam> ColladaParameters;
-	core::array<SColladaImage> Images;
-	core::array<SColladaTexture> Textures;
+	core::array<SColladaParam> Parameters;
 	core::array<SColladaMaterial> Materials;
 	core::array<SColladaInput> Inputs;
-	core::array<SColladaEffect> Effects;
-	core::map<core::stringc,u32> MaterialsToBind;
-	core::array< core::array<irr::scene::IMeshBuffer*> > MeshesToBind;
-	io::CAttributes Parameters;
 
 	bool CreateInstances;
 };
@@ -359,15 +266,16 @@ private:
 
 //! following class is for holding and createing instances of library objects,
 //! named prefabs in this loader.
-class IColladaPrefab : public virtual IReferenceCounted
+class IColladaPrefab : public virtual IUnknown
 {
 public:
+
 	//! creates an instance of this prefab
 	virtual scene::ISceneNode* addInstance(scene::ISceneNode* parent,
 		scene::ISceneManager* mgr) = 0;
 
 	//! returns id of this prefab
-	virtual const core::stringc& getId() = 0;
+	virtual const c8* getId() = 0;
 };
 
 

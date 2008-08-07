@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -12,7 +12,7 @@ namespace irr
 namespace scene
 {
 
-//! An interface for easy manipulation of meshes.
+//! An interface for easily manipulate meshes.
 /** Scale, set alpha value, flip surfaces, and so on. This exists for fixing problems 
  with wrong imported or exported meshes quickly after loading. It is not intended for doing mesh
  modifications and/or animations during runtime.
@@ -21,8 +21,11 @@ class CMeshManipulator : public IMeshManipulator
 {
 public:
 
+	//! Constructor
+	CMeshManipulator();
+
 	//! destructor
-	virtual ~CMeshManipulator() {}
+	virtual ~CMeshManipulator();
 
 	//! Flips the direction of surfaces. Changes backfacing triangles to frontfacing
 	//! triangles and vice versa.
@@ -40,27 +43,22 @@ public:
 	//! Recalculates all normals of the mesh.
 	/** \param mesh: Mesh on which the operation is performed.
 	    \param smooth: Whether to use smoothed normals. */
-	virtual void recalculateNormals(scene::IMesh* mesh, bool smooth = false, bool angleWeighted = false) const;
+	virtual void recalculateNormals(scene::IMesh* mesh, bool smooth = false) const;
 
 	//! Recalculates all normals of the mesh buffer.
 	/** \param buffer: Mesh buffer on which the operation is performed.
 	    \param smooth: Whether to use smoothed normals. */
-	virtual void recalculateNormals(IMeshBuffer* buffer, bool smooth = false, bool angleWeighted = false) const;
+	virtual void recalculateNormals(IMeshBuffer* buffer, bool smooth = false) const;
 
 	//! Scales the whole mesh.
 	//! \param mesh: Mesh on which the operation is performed.
 	//! \param scale: 3D Vector, defining the value, for each axis, to scale the mesh by.
 	virtual void scaleMesh(scene::IMesh* mesh, const core::vector3df& scale) const;
 
-	//! Applies a transformation to a meshbuffer
-	/** \param buffer: Meshbuffer on which the operation is performed.
-		\param m: matrix. */
-	void transform(scene::IMeshBuffer* buffer, const core::matrix4& m) const;
-
-	//! Applies a transformation to a mesh
+	//! Applies a transformation
 	/** \param mesh: Mesh on which the operation is performed.
 		\param m: transformation matrix. */
-	virtual void transform(scene::IMesh* mesh, const core::matrix4& m) const;
+	virtual void transformMesh(scene::IMesh* mesh, const core::matrix4& m) const;
 
 	//! Clones a static IMesh into a modifiable SMesh.
 	virtual SMesh* createMeshCopy(scene::IMesh* mesh) const;
@@ -73,16 +71,18 @@ public:
 	virtual void makePlanarTextureMapping(scene::IMesh* mesh, f32 resolution) const;
 
 	//! Creates a copy of the mesh, which will only consist of S3DVertexTangents vertices.
-	virtual IMesh* createMeshWithTangents(IMesh* mesh, bool recalculateNormals=false, bool smooth=false, bool angleWeighted=false) const;
+	//! This is useful if you want to draw tangent space normal mapped geometry because
+	//! it calculates the tangent and binormal data which is needed there.
+	//! \param mesh: Input mesh
+	//! \return Mesh consiting only of S3DVertexNormalMapped vertices.
+	//! If you no longer need the cloned mesh, you should call IMesh::drop().
+	//! See IUnknown::drop() for more information.
+	virtual IMesh* createMeshWithTangents(IMesh* mesh) const;
 
-	//! Creates a copy of the mesh, which will only consist of S3D2TCoords vertices.
-	virtual IMesh* createMeshWith2TCoords(IMesh* mesh) const;
-
-	//! Creates a copy of the mesh, which will only consist of unique triangles, i.e. no vertices are shared.
 	virtual IMesh* createMeshUniquePrimitives(IMesh* mesh) const;
 
-	//! Creates a copy of the mesh, which will have all duplicated vertices removed, i.e. maximal amount of vertices are shared via indexing.
-	virtual IMesh* createMeshWelded(IMesh *mesh, f32 tolerance=core::ROUNDING_ERROR_32) const;
+	//! Recalculates the bounding box for a meshbuffer
+	virtual void recalculateBoundingBox(scene::IMeshBuffer* buffer) const;
 
 	//! Returns amount of polygons in mesh.
 	virtual s32 getPolyCount(scene::IMesh* mesh) const;
@@ -98,8 +98,8 @@ private:
 	static void calculateTangents(core::vector3df& normal, 
 		core::vector3df& tangent, 
 		core::vector3df& binormal, 
-		const core::vector3df& vt1, const core::vector3df& vt2, const core::vector3df& vt3,
-		const core::vector2df& tc1, const core::vector2df& tc2, const core::vector2df& tc3);
+		core::vector3df& vt1, core::vector3df& vt2, core::vector3df& vt3,
+		core::vector2df& tc1, core::vector2df& tc2, core::vector2df& tc3);
 };
 
 } // end namespace scene

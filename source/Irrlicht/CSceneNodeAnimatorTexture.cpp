@@ -1,9 +1,8 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #include "CSceneNodeAnimatorTexture.h"
-#include "ITexture.h"
 
 namespace irr
 {
@@ -55,22 +54,23 @@ void CSceneNodeAnimatorTexture::animateNode(ISceneNode* node, u32 timeMs)
 {
 	if (Textures.size())
 	{
-		const u32 t = (timeMs-StartTime);
+		u32 t = (timeMs-StartTime);
 
-		u32 idx = 0;
+		s32 idx = 0;
+
 		if (!Loop && timeMs >= EndTime)
 			idx = Textures.size() - 1;
 		else
 			idx = (t/TimePerFrame) % Textures.size();
 
-		if (idx < Textures.size())
+		if (idx < (s32)Textures.size())
 			node->setMaterialTexture(0, Textures[idx]);
 	}
 }
 
 
 //! Writes attributes of the scene node animator.
-void CSceneNodeAnimatorTexture::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options) const
+void CSceneNodeAnimatorTexture::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options)
 {
 	out->addInt("TimePerFrame", TimePerFrame);
 	out->addBool("Loop", Loop);

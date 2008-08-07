@@ -20,13 +20,13 @@ using namespace gui;
 
 #pragma comment(lib, "Irrlicht.lib")
 
-const s32 texturesizes[] = {128, 256, 512, 1024, 2048, 4096, 0};
+s32 texturesizes[] = {128, 256, 512, 1024, 2048, 4096, 0};
 
-const wchar_t *fileformats[]		 =  { L"bmp", L"ppm", 0 };  // bitmap font formats
-const wchar_t *alphafileformats[]  =  { L"png", L"tga", 0 };  // bitmap font formats which support alpha channels
-const wchar_t *vectorfileformats[] =  { L"xml", L"bin", 0 };  // file formats for vector fonts
+wchar_t *fileformats[]		 =  { L"bmp", L"ppm", 0 };  // bitmap font formats
+wchar_t *alphafileformats[]  =  { L"png", L"tga", 0 };  // bitmap font formats which support alpha channels
+wchar_t *vectorfileformats[] =  { L"xml", L"bin", 0 };  // file formats for vector fonts
 
-const wchar_t *warntext = L"Legal Notice\n"
+wchar_t *warntext = L"Legal Notice\n"
 					L"------------\n\n"
 					L"When making bitmap and vector fonts, you should consider the potential legal "
 					L"issues with redistributing the fonts with your software; this tool basically "
@@ -63,7 +63,7 @@ wchar_t *helptext = L"This tool creates bitmap fonts for the Irrlicht Engine\n\n
 					L"when making a font with a lot of characters, please be patient!\n\n"
 
 					L"Now you're ready to give your font a name, select a format and click save.\n\n"
-					L"To load your font in Irrlicht, simply use env->getFont(\"Myfont.xml\");\n\n"
+					L"To load your font in Irrlicht, simply use env->addFont(\"Myfont.xml\");\n\n"
 
 					L"That's all, have fun :-)";
 
@@ -100,7 +100,7 @@ public:
 		device->setEventReceiver(this);
 	}
 
-	virtual bool OnEvent(const SEvent &event)
+	virtual bool OnEvent(SEvent event)
 	{
 		if (event.EventType == EET_GUI_EVENT)
 		{
@@ -129,6 +129,7 @@ public:
 					cbo->clear();
 					for (u32 i=0; i < FontTool->FontNames.size(); ++i)
 						cbo->addItem(FontTool->FontNames[i].c_str());
+					
 					return true;
 				}
 				break;
@@ -278,9 +279,9 @@ public:
 		return false;
 	}
 
-	IrrlichtDevice*	 Device;
-	CFontTool*       FontTool;
-	CVectorFontTool* VecTool;
+	CFontTool       *&FontTool;
+	CVectorFontTool *&VecTool;
+	IrrlichtDevice*	Device;
 
 };
 

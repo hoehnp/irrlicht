@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -25,11 +25,6 @@ COpenGLShaderMaterialRenderer::COpenGLShaderMaterialRenderer(video::COpenGLDrive
 	: Driver(driver), CallBack(callback), BaseMaterial(baseMaterial),
 		VertexShader(0), PixelShader(0), UserData(userData)
 {
-
-	#ifdef _DEBUG
-	setDebugName("COpenGLShaderMaterialRenderer");
-	#endif
-
 	if (BaseMaterial)
 		BaseMaterial->grab();
 
@@ -43,8 +38,8 @@ COpenGLShaderMaterialRenderer::COpenGLShaderMaterialRenderer(video::COpenGLDrive
 //! constructor only for use by derived classes who want to
 //! create a fall back material for example.
 COpenGLShaderMaterialRenderer::COpenGLShaderMaterialRenderer(COpenGLDriver* driver,
-				IShaderConstantSetCallBack* callback,
-				IMaterialRenderer* baseMaterial, s32 userData)
+							IShaderConstantSetCallBack* callback,
+							IMaterialRenderer* baseMaterial, s32 userData)
 : Driver(driver), CallBack(callback), BaseMaterial(baseMaterial),
 		VertexShader(0), PixelShader(0), UserData(userData)
 {
@@ -63,34 +58,31 @@ COpenGLShaderMaterialRenderer::~COpenGLShaderMaterialRenderer()
 		CallBack->drop();
 
 	if (VertexShader)
-		Driver->extGlDeletePrograms(1, &VertexShader);
+		Driver->extGlDeleteProgramsARB(1, &VertexShader);
 
 	if (PixelShader)
-		Driver->extGlDeletePrograms(1, &PixelShader);
+		Driver->extGlDeleteProgramsARB(1, &PixelShader);
 
 	if (BaseMaterial)
-		BaseMaterial->drop();
+		BaseMaterial->drop ();
 }
-
 
 void COpenGLShaderMaterialRenderer::init(s32& outMaterialTypeNr, const c8* vertexShaderProgram,
 	const c8* pixelShaderProgram, E_VERTEX_TYPE type)
 {
 	outMaterialTypeNr = -1;
 
-	bool failure;
-
 	// create vertex shader
-	failure=createVertexShader(vertexShaderProgram);
-
-	// create pixel shader
-	if (!createPixelShader(pixelShaderProgram) || failure)
+	if (!createVertexShader(vertexShaderProgram))
 		return;
 
-	// register as a new material
+	// create pixel shader
+	if (!createPixelShader(pixelShaderProgram))
+		return;
+
+	// register myself as new material
 	outMaterialTypeNr = Driver->addMaterialRenderer(this);
 }
-
 
 bool COpenGLShaderMaterialRenderer::OnRender(IMaterialRendererServices* service, E_VERTEX_TYPE vtxtype)
 {
@@ -102,16 +94,23 @@ bool COpenGLShaderMaterialRenderer::OnRender(IMaterialRendererServices* service,
 }
 
 
-void COpenGLShaderMaterialRenderer::OnSetMaterial(const video::SMaterial& material, const video::SMaterial& lastMaterial,
+void COpenGLShaderMaterialRenderer::OnSetMaterial(video::SMaterial& material, const video::SMaterial& lastMaterial,
 	bool resetAllRenderstates, video::IMaterialRendererServices* services)
 {
+	Driver->setTexture(3, material.Textures[3]);
+	Driver->setTexture(2, material.Textures[2]);
+	Driver->setTexture(1, material.Textures[1]);
+	Driver->setTexture(0, material.Textures[0]);
+
+	Driver->setBasicRenderStates(material, lastMaterial, resetAllRenderstates);
+
 	if (material.MaterialType != lastMaterial.MaterialType || resetAllRenderstates)
 	{
 #ifdef GL_ARB_vertex_program
 		if (VertexShader)
 		{
 			// set new vertex shader
-			Driver->extGlBindProgram(GL_VERTEX_PROGRAM_ARB, VertexShader);
+			Driver->extGlBindProgramARB(GL_VERTEX_PROGRAM_ARB, VertexShader);
 			glEnable(GL_VERTEX_PROGRAM_ARB);
 		}
 #endif
@@ -120,7 +119,7 @@ void COpenGLShaderMaterialRenderer::OnSetMaterial(const video::SMaterial& materi
 #ifdef GL_ARB_fragment_program
 		if (PixelShader)
 		{
-			Driver->extGlBindProgram(GL_FRAGMENT_PROGRAM_ARB, PixelShader);
+			Driver->extGlBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, PixelShader);
 			glEnable(GL_FRAGMENT_PROGRAM_ARB);
 		}
 #endif
@@ -128,14 +127,6 @@ void COpenGLShaderMaterialRenderer::OnSetMaterial(const video::SMaterial& materi
 		if (BaseMaterial)
 			BaseMaterial->OnSetMaterial(material, material, true, services);
 	}
-
-	//let callback know used material
-	if (CallBack)
-		CallBack->OnSetMaterial(material);
-
-	for (u32 i=0; i<MATERIAL_MAX_TEXTURES; ++i)
-		Driver->setTexture(i, material.getTexture(i));
-	Driver->setBasicRenderStates(material, lastMaterial, resetAllRenderstates);
 }
 
 
@@ -156,29 +147,26 @@ void COpenGLShaderMaterialRenderer::OnUnsetMaterial()
 		BaseMaterial->OnUnsetMaterial();
 }
 
-
 //! Returns if the material is transparent.
-bool COpenGLShaderMaterialRenderer::isTransparent() const
+bool COpenGLShaderMaterialRenderer::isTransparent()
 {
 	return BaseMaterial ? BaseMaterial->isTransparent() : false;
 }
-
 
 bool COpenGLShaderMaterialRenderer::createPixelShader(const c8* pxsh)
 {
 	if (!pxsh)
 		return true;
 
-	Driver->extGlGenPrograms(1, &PixelShader);
+	Driver->extGlGenProgramsARB(1, &PixelShader);
 #ifdef GL_ARB_fragment_program
-	Driver->extGlBindProgram(GL_FRAGMENT_PROGRAM_ARB, PixelShader);
+	Driver->extGlBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, PixelShader);
 
 	// clear error buffer
-	while(glGetError() != GL_NO_ERROR)
-		{}
+	while(glGetError() != GL_NO_ERROR)	{}
 
 	// compile
-	Driver->extGlProgramString(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
+	Driver->extGlProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
 		strlen(pxsh), pxsh);
 #endif
 
@@ -189,14 +177,11 @@ bool COpenGLShaderMaterialRenderer::createPixelShader(const c8* pxsh)
 		GLint errPos;
 		glGetIntegerv( GL_PROGRAM_ERROR_POSITION_ARB, &errPos );
 
-		const char* errString = reinterpret_cast<const char*>(glGetString(GL_PROGRAM_ERROR_STRING_ARB));
+		const GLubyte* errString = glGetString(GL_PROGRAM_ERROR_STRING_ARB);
 
 		char tmp[2048];
 		sprintf(tmp, "Pixel shader compilation failed at position %d:\n%s", errPos, errString);
 		os::Printer::log(tmp);
-
-		Driver->extGlDeletePrograms(1, &PixelShader);
-		PixelShader=0;
 
 		return false;
 	}
@@ -207,22 +192,20 @@ bool COpenGLShaderMaterialRenderer::createPixelShader(const c8* pxsh)
 	return true;
 }
 
-
 bool COpenGLShaderMaterialRenderer::createVertexShader(const char* vtxsh)
 {
 	if (!vtxsh)
 		return true;
 
 #ifdef GL_ARB_vertex_program
-	Driver->extGlGenPrograms(1, &VertexShader);
-	Driver->extGlBindProgram(GL_VERTEX_PROGRAM_ARB, VertexShader);
+	Driver->extGlGenProgramsARB(1, &VertexShader);
+	Driver->extGlBindProgramARB(GL_VERTEX_PROGRAM_ARB, VertexShader);
 
 	// clear error buffer
-	while(glGetError() != GL_NO_ERROR)
-	{}
+	while(glGetError() != GL_NO_ERROR)	{}
 
 	// compile
-	Driver->extGlProgramString(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
+	Driver->extGlProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
 		strlen(vtxsh), vtxsh);
 
 	GLenum g = glGetError();
@@ -231,14 +214,11 @@ bool COpenGLShaderMaterialRenderer::createVertexShader(const char* vtxsh)
 		GLint errPos;
 		glGetIntegerv( GL_PROGRAM_ERROR_POSITION_ARB, &errPos );
 
-		const char* errString = reinterpret_cast<const char*>(glGetString(GL_PROGRAM_ERROR_STRING_ARB));
+		const GLubyte* errString = glGetString(GL_PROGRAM_ERROR_STRING_ARB);
 
 		char tmp[2048];
 		sprintf(tmp, "Vertex shader compilation failed at position %d:\n%s", errPos, errString);
 		os::Printer::log(tmp);
-
-		Driver->extGlDeletePrograms(1, &VertexShader);
-		VertexShader=0;
 
 		return false;
 	}

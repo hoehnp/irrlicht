@@ -3,7 +3,7 @@ Target = Demo
 Sources = CDemo.cpp CMainMenu.cpp main.cpp
 
 CPPFLAGS = -I../../include -I/usr/X11R6/include
-CXXFLAGS = -Wall -O3 -ffast-math
+CXXFLAGS = -O3 -ffast-math
 
 ifeq ($(HOSTTYPE), x86_64)
 LIBSELECT=64
@@ -13,10 +13,10 @@ all: all_linux
 
 # target specific settings
 all_linux: SYSTEM=Linux
-all_linux: LDFLAGS = -L/usr/X11R6/lib$(LIBSELECT) -L../../lib/$(SYSTEM) -lIrrlicht -lGL -lXxf86vm -lXext -lX11
+all_linux: LDFLAGS = -L/usr/X11R6/lib$(LIBSELECT) -L../../lib/$(SYSTEM) -lIrrlicht -lGL -lGLU -lXxf86vm -lXext -lX11
 
 all_win32 clean_win32: SYSTEM=Win32-gcc
-all_win32: LDFLAGS = -L../../lib/$(SYSTEM) -lIrrlicht -lopengl32 -lm
+all_win32: LDFLAGS = -L../../lib/$(SYSTEM) -lIrrlicht -lopengl32 -lglu32 -lm
 
 # if you enable sound add the proper library for linking
 #LDFLAGS += -lIrrKlang

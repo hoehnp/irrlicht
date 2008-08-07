@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -29,17 +29,17 @@ namespace gui
 		virtual IGUIElement* addGUIElement(const c8* typeName, IGUIElement* parent=0);
 
 		//! returns amount of GUI element types this factory is able to create
-		virtual s32 getCreatableGUIElementTypeCount() const;
+		virtual s32 getCreatableGUIElementTypeCount();
 
 		//! returns type name of a createable GUI element type by index
 		/** \param idx: Index of the type in this factory. Must be a value between 0 and
 		getCreatableGUIElementTypeCount() */
-		virtual const c8* getCreateableGUIElementTypeName(s32 idx) const;
+		virtual const c8* getCreateableGUIElementTypeName(s32 idx);
 
 
 		// not used:
-		virtual const c8* getCreateableGUIElementTypeName(EGUI_ELEMENT_TYPE type) const {return 0;} ;
-		virtual EGUI_ELEMENT_TYPE getCreateableGUIElementType(s32 idx) const { return EGUIET_ELEMENT;};
+		virtual const c8* getCreateableGUIElementTypeName(EGUI_ELEMENT_TYPE type) {return 0;} ;
+		virtual EGUI_ELEMENT_TYPE getCreateableGUIElementType(s32 idx)	{ return EGUIET_ELEMENT;};
 		virtual IGUIElement* addGUIElement(EGUI_ELEMENT_TYPE type, IGUIElement* parent=0) {return 0;};
 	private:
 

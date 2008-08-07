@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -33,19 +33,17 @@ namespace gui
 			: IGUIElement(EGUIET_MESH_VIEWER, environment, parent, id, rectangle) {}
 
 		//! destructor
-		virtual ~IGUIMeshViewer() {}
+		~IGUIMeshViewer() {};
 
-		//! Sets the mesh to be shown
+		//! sets the mesh to be shown
 		virtual void setMesh(scene::IAnimatedMesh* mesh) = 0;
 
-		//! Gets the displayed mesh
-		virtual scene::IAnimatedMesh* getMesh() const = 0;
-
-		//! Sets the material
+		//! sets the material
 		virtual void setMaterial(const video::SMaterial& material) = 0;
 
-		//! Gets the material
-		virtual const video::SMaterial& getMaterial() const = 0;
+		//! gets the material
+		virtual const video::SMaterial& getMaterial() = 0;
+
 	};
 
 

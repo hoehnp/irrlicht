@@ -4,7 +4,6 @@
 #include "CGUIAttribute.h"
 #include "IGUIStaticText.h"
 #include "IGUIScrollBar.h"
-#include "IGUITabControl.h"
 
 namespace irr
 {
@@ -14,27 +13,20 @@ namespace gui
 	{
 	public:
 		//
-		CGUIColorAttribute(IGUIEnvironment* environment, IGUIElement *parent, s32 myParentID) :
-		  	CGUIAttribute(environment, parent, myParentID),
-			AttribEditBox(0), AttribSliderA(0), AttribSliderR(0), AttribSliderG(0), AttribSliderB(0),
-			AttribColor(0)
+		CGUIColorAttribute(IGUIEnvironment* environment, IGUIElement *parent) :
+		  	CGUIAttribute(environment, parent),
+			AttribEditBox(0), AttribSliderA(0), AttribSliderR(0), AttribSliderG(0), AttribSliderB(0)
 		{
-			s32 fh = Environment->getSkin()->getFont()->getDimension(L"A").Height;
 
-			core::rect<s32> r0(getAbsolutePosition()),
-							r2(0, fh + 5, r0.getWidth() - 5, fh*2 + 10 ),
-							r3(r2), 
-							r4(r2.getWidth() - 20, 3, r2.getWidth() - 3, r2.getHeight()-3);
+			core::rect<s32> r = getAbsolutePosition();
+			core::rect<s32> r2(0, Environment->getSkin()->getFont()->getDimension(L"A").Height + 5, 
+				r.getWidth() - 5, 
+				Environment->getSkin()->getFont()->getDimension(L"A").Height*2 + 10 );
+			core::rect<s32> r3 = r2;
 
-			AttribColor = Environment->addTab(r4, this, 0);
-			AttribColor->grab();
-			AttribColor->setDrawBackground(true);
-			AttribColor->setSubElement(true);
-			AttribColor->setAlignment(EGUIA_LOWERRIGHT, EGUIA_LOWERRIGHT, EGUIA_UPPERLEFT, EGUIA_UPPERLEFT);
-
-			s32 h=2;
-			r2 += core::position2di(0, h*4 + Environment->getSkin()->getSize(EGDS_WINDOW_BUTTON_WIDTH)*2);
-			r3.LowerRightCorner.Y = r3.UpperLeftCorner.Y + Environment->getSkin()->getSize(EGDS_WINDOW_BUTTON_WIDTH)/2;
+			s32 h=5;
+			r2 += core::position2di(0, h*4 + Environment->getSkin()->getSize(EGDS_WINDOW_BUTTON_WIDTH)*4);
+			r3.LowerRightCorner.Y = r3.UpperLeftCorner.Y + Environment->getSkin()->getSize(EGDS_WINDOW_BUTTON_WIDTH);
 
 			AttribSliderA = environment->addScrollBar(true, r3, this, -1);
 			AttribSliderA->setMax(255);
@@ -82,8 +74,6 @@ namespace gui
 				AttribSliderB->drop();
 			if (AttribEditBox)
 				AttribEditBox->drop();
-			if (AttribColor)
-				AttribColor->drop();
 		}
 
 		virtual void setAttrib(io::IAttributes *attribs, u32 attribIndex)
@@ -95,12 +85,11 @@ namespace gui
 			AttribSliderG->setPos(col.getGreen());
 			AttribSliderB->setPos(col.getBlue());
 			AttribEditBox->setText( attribs->getAttributeAsStringW(attribIndex).c_str() );
-			AttribColor->setBackgroundColor(col);
 
 			CGUIAttribute::setAttrib(attribs, attribIndex);
 		}
 
-		virtual bool OnEvent(const SEvent &e)
+		virtual bool OnEvent(SEvent e)
 		{
 			switch (e.EventType)
 			{
@@ -119,10 +108,9 @@ namespace gui
 						AttribSliderR->setPos(col.getRed()); 
 						AttribSliderG->setPos(col.getGreen());
 						AttribSliderB->setPos(col.getBlue());
-						// update colour
-						AttribColor->setBackgroundColor(col);
+
+						return updateAttrib();
 					}
-					break;
 				case EGET_SCROLL_BAR_CHANGED:
 					{
 						// update editbox from scrollbars
@@ -131,8 +119,6 @@ namespace gui
 
 						Attribs->setAttribute(Index, col);
 						AttribEditBox->setText( Attribs->getAttributeAsStringW(Index).c_str());
-						// update colour
-						AttribColor->setBackgroundColor(col);
 					}
 					return updateAttrib();
 				}
@@ -144,16 +130,13 @@ namespace gui
 		// save the attribute and possibly post the event to its parent
 		virtual bool updateAttrib(bool sendEvent=true)
 		{
-			if (!Attribs)
-				return true;
-
 			Attribs->setAttribute(Index, AttribEditBox->getText());
 			AttribEditBox->setText(Attribs->getAttributeAsStringW(Index).c_str());
 			return CGUIAttribute::updateAttrib(sendEvent);
 		}
 
 		//! this shoudln't be serialized, but this is included as it's an example
-		virtual const c8* getTypeName() const
+		virtual const c8* getTypeName() 
 		{ 
 			return "color_attribute"; 
 		}
@@ -164,7 +147,6 @@ namespace gui
 		IGUIScrollBar*		AttribSliderG;
 		IGUIScrollBar*		AttribSliderB;
 		IGUIEditBox*		AttribEditBox;
-		IGUITab*			AttribColor;
 	};
 
 } // namespace gui

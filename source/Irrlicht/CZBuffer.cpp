@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -14,9 +14,10 @@ namespace video
 {
 
 
+
 //! constructor
 CZBuffer::CZBuffer(const core::dimension2d<s32>& size)
-: Buffer(0), BufferEnd(0), Size(0,0), TotalSize(0)
+: Buffer(0), Size(0,0), TotalSize(0), BufferEnd(0)
 {
 	#ifdef _DEBUG
 	setDebugName("CZBuffer");
@@ -30,7 +31,8 @@ CZBuffer::CZBuffer(const core::dimension2d<s32>& size)
 //! destructor
 CZBuffer::~CZBuffer()
 {
-	delete [] Buffer;
+	if (Buffer)
+		delete [] Buffer;
 }
 
 
@@ -51,7 +53,8 @@ void CZBuffer::setSize(const core::dimension2d<s32>& size)
 
 	Size = size;
 
-	delete [] Buffer;
+	if (Buffer)
+		delete [] Buffer;
 
 	TotalSize = size.Width * size.Height;
 	Buffer = new TZBufferType[TotalSize];
@@ -61,7 +64,7 @@ void CZBuffer::setSize(const core::dimension2d<s32>& size)
 
 
 //! returns the size of the zbuffer
-const core::dimension2d<s32>& CZBuffer::getSize() const
+const core::dimension2d<s32>& CZBuffer::getSize()
 {
 	return Size;
 }

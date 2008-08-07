@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -29,7 +29,7 @@ namespace video
 		virtual void setSize(const core::dimension2d<s32>& size);
 
 		//! returns the size of the zbuffer
-		virtual const core::dimension2d<s32>& getSize() const;
+		virtual const core::dimension2d<s32>& getSize();
 
 		//! locks the zbuffer
 		virtual TZBufferType* lock();

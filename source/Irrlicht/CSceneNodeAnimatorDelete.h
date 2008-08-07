@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -25,7 +25,7 @@ namespace scene
 		virtual void animateNode(ISceneNode* node, u32 timeMs);
 
 		//! Returns type of the scene node animator
-		virtual ESCENE_NODE_ANIMATOR_TYPE getType() const
+		virtual ESCENE_NODE_ANIMATOR_TYPE getType()
 		{
 			return ESNAT_DELETION;
 		}

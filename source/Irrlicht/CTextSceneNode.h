@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -6,7 +6,6 @@
 #define __C_TEXT_SCENE_NODE_H_INCLUDED__
 
 #include "ITextSceneNode.h"
-#include "IBillboardSceneNode.h"
 #include "IGUIFont.h"
 #include "IGUIFontBitmap.h"
 #include "ISceneCollisionManager.h"
@@ -39,6 +38,9 @@ namespace scene
 		//! returns the axis aligned bounding box of this node
 		virtual const core::aabbox3d<f32>& getBoundingBox() const;
 
+		//! returns amount of materials used by this scene node.
+		virtual u32 getMaterialCount();
+
 		//! sets the text string
 		virtual void setText(const wchar_t* text);
 
@@ -46,7 +48,7 @@ namespace scene
 		virtual void setTextColor(video::SColor color);
 		
 		//! Returns type of the scene node
-		virtual ESCENE_NODE_TYPE getType() const { return ESNT_TEXT; }
+		virtual ESCENE_NODE_TYPE getType() { return ESNT_TEXT; }
 
 	private:
 
@@ -57,7 +59,7 @@ namespace scene
 		core::aabbox3d<f32> Box;
 	};
 
-	class CBillboardTextSceneNode : virtual public ITextSceneNode, virtual public IBillboardSceneNode
+	class CBillboardTextSceneNode : public ITextSceneNode
 	{
 	public:
 
@@ -87,29 +89,15 @@ namespace scene
 		virtual void setSize(const core::dimension2d<f32>& size);
 
 		//! gets the size of the billboard
-		virtual const core::dimension2d<f32>& getSize() const;
+		virtual const core::dimension2d<f32>& getSize();
 
 		virtual video::SMaterial& getMaterial(u32 i);
 		
 		//! returns amount of materials used by this scene node.
-		virtual u32 getMaterialCount() const;
+		virtual u32 getMaterialCount();
 
 		//! Returns type of the scene node
-		virtual ESCENE_NODE_TYPE getType() const { return ESNT_TEXT; }
-
-		//! Set the color of all vertices of the billboard
-		//! \param overallColor: the color to set
-		virtual void setColor(const video::SColor & overallColor);
-
-		//! Set the color of the top and bottom vertices of the billboard
-		//! \param topColor: the color to set the top vertices
-		//! \param bottomColor: the color to set the bottom vertices
-		virtual void setColor(const video::SColor & topColor, const video::SColor & bottomColor);
-
-		//! Gets the color of the top and bottom vertices of the billboard
-		//! \param topColor: stores the color of the top vertices
-		//! \param bottomColor: stores the color of the bottom vertices
-		virtual void getColor(video::SColor & topColor, video::SColor & bottomColor) const;
+		virtual ESCENE_NODE_TYPE getType() { return ESNT_TEXT; }
 
 	private:
 

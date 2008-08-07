@@ -1,87 +1,123 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #ifndef __E_SCENE_NODE_TYPES_H_INCLUDED__
 #define __E_SCENE_NODE_TYPES_H_INCLUDED__
 
-#include "irrTypes.h"
-
 namespace irr
 {
-namespace scene
+namespace scene  
 {
-
-	//! An enumeration for all types of built-in scene nodes
-	/** A scene node type is represented by a four character code
-	such as 'cube' or 'mesh' instead of simple numbers, to avoid
-	name clashes with external scene nodes.*/
+	//! An enumeration for all types of built-in scene nodes 
 	enum ESCENE_NODE_TYPE
 	{
 		//! simple cube scene node
-		ESNT_CUBE           = MAKE_IRR_ID('c','u','b','e'),
+		ESNT_CUBE = 0,
 
 		//! Sphere scene node
-		ESNT_SPHERE         = MAKE_IRR_ID('s','p','h','r'),
+		ESNT_SPHERE,
 
 		//! Text Scene Node
-		ESNT_TEXT           = MAKE_IRR_ID('t','e','x','t'),
+		ESNT_TEXT,
 
 		//! Water Surface Scene Node
-		ESNT_WATER_SURFACE  = MAKE_IRR_ID('w','a','t','r'),
+		ESNT_WATER_SURFACE,
 
 		//! Terrain Scene Node
-		ESNT_TERRAIN        = MAKE_IRR_ID('t','e','r','r'),
+		ESNT_TERRAIN,
 
 		//! Sky Box Scene Node
-		ESNT_SKY_BOX        = MAKE_IRR_ID('s','k','y','_'),
+		ESNT_SKY_BOX,
 
 		//! Shadow Volume Scene Node
-		ESNT_SHADOW_VOLUME  = MAKE_IRR_ID('s','h','d','w'),
+		ESNT_SHADOW_VOLUME,
 
 		//! OctTree Scene Node
-		ESNT_OCT_TREE       = MAKE_IRR_ID('o','c','t','t'),
+		ESNT_OCT_TREE,
 
 		//! Mesh Scene Node
-		ESNT_MESH           = MAKE_IRR_ID('m','e','s','h'),
+		ESNT_MESH,
 
 		//! Light Scene Node
-		ESNT_LIGHT          = MAKE_IRR_ID('l','g','h','t'),
+		ESNT_LIGHT,
 
 		//! Empty Scene Node
-		ESNT_EMPTY          = MAKE_IRR_ID('e','m','t','y'),
+		ESNT_EMPTY,
 
 		//! Dummy Transformation Scene Node
-		ESNT_DUMMY_TRANSFORMATION = MAKE_IRR_ID('d','m','m','y'),
+		ESNT_DUMMY_TRANSFORMATION,
 
 		//! Camera Scene Node
-		ESNT_CAMERA         = MAKE_IRR_ID('c','a','m','_'),
-
-		//! Billboard Scene Node
-		ESNT_BILLBOARD      = MAKE_IRR_ID('b','i','l','l'),
-
-		//! Animated Mesh Scene Node
-		ESNT_ANIMATED_MESH  = MAKE_IRR_ID('a','m','s','h'),
-
-		//! Particle System Scene Node
-		ESNT_PARTICLE_SYSTEM = MAKE_IRR_ID('p','t','c','l'),
-
-		//! Quake3 Model Scene Node ( has tag to link to )
-		ESNT_MD3_SCENE_NODE  = MAKE_IRR_ID('m','d','3','_'),
+		ESNT_CAMERA,
 
 		//! Maya Camera Scene Node
-		//! Legacy, for loading version <= 1.4.x .irr files
-		ESNT_CAMERA_MAYA    = MAKE_IRR_ID('c','a','m','M'),
+		ESNT_CAMERA_MAYA,
 
-		//! First Person Shooter Camera
-		//! Legacy, for loading version <= 1.4.x .irr files
-		ESNT_CAMERA_FPS     = MAKE_IRR_ID('c','a','m','F'),
+		//! First Person Shooter style Camera
+		ESNT_CAMERA_FPS,
+
+		//! Billboard Scene Node
+		ESNT_BILLBOARD,
+
+		//! Animated Mesh Scene Node
+		ESNT_ANIMATED_MESH,
+
+		//! Particle System Scene Node
+		ESNT_PARTICLE_SYSTEM,
+
+		//! Quake3 Model Scene Node ( has tag to link to )
+		ESNT_MD3_SCENE_NODE,
+
+		//! Amount of build in Scene Nodes
+		ESNT_COUNT,
 
 		//! Unknown scene node
-		ESNT_UNKNOWN        = MAKE_IRR_ID('u','n','k','n'),
+		ESNT_UNKNOWN,
 
-		//! Will match with any scene node when checking types
-		ESNT_ANY            = MAKE_IRR_ID('a','n','y','_')
+		//! This enum is never used, it only forces the compiler to 
+		//! compile these enumeration values to 32 bit.
+		ESNT_FORCE_32_BIT = 0x7fffffff
+	};
+
+
+	//! An enumeration for all types of automatic culling for built-in scene nodes 
+	enum E_CULLING_TYPE
+	{
+		EAC_OFF = 0,
+		EAC_BOX,
+		EAC_FRUSTUM_BOX,
+		EAC_FRUSTUM_SPHERE
+	};
+
+	//! Names for culling type
+	const c8* const AutomaticCullingNames[] =
+	{
+		"false",
+		"box",					// camera box against node box
+		"frustum_box",			// camera frustum against node box
+		"frustum_sphere",		// camera frustum against node sphere
+		0
+	};
+
+	//! An enumeration for all types of debug data for built-in scene nodes (flags)
+	enum E_DEBUG_SCENE_TYPE 
+	{
+		//! No Debug Data ( Default )
+		EDS_OFF			= 0,
+		//! Show Bounding Boxes of SceneNode
+		EDS_BBOX		= 1,
+		//! Show Vertex Normals
+		EDS_NORMALS		= 2,
+		//! Shows Skeleton/Tags
+		EDS_SKELETON	= 4,
+		//! Overlays Mesh Wireframe
+		EDS_MESH_WIRE_OVERLAY	= 8,
+		//! Temporary use transparency Material Type 
+		EDS_HALF_TRANSPARENCY	= 16,
+		//! Show Bounding Boxes of all MeshBuffers
+		EDS_BBOX_BUFFERS		= 32,
+		EDS_FULL		= EDS_BBOX | EDS_NORMALS | EDS_SKELETON | EDS_MESH_WIRE_OVERLAY
 	};
 
 

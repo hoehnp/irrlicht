@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -22,30 +22,28 @@ namespace scene
 			const core::vector3df& position = core::vector3df(0,0,0),
 			const core::vector3df& lookat = core::vector3df(0,0,100));
 
-		//! Sets the projection matrix of the camera.
-		/** The core::matrix4 class has some methods
-		to build a projection matrix. e.g: core::matrix4::buildProjectionMatrixPerspectiveFovLH.
-		Note that the matrix will only stay as set by this method until one of
-		the following Methods are called: setNearValue, setFarValue, setAspectRatio, setFOV.
-		\param projection The new projection matrix of the camera.
-		\param isOrthogonal Set this to true if the matrix is an orthogonal one (e.g.
-		from matrix4::buildProjectionMatrixOrthoLH(). */
-		virtual void setProjectionMatrix(const core::matrix4& projection, bool isOrthogonal = false);
+		//! destructor
+		virtual ~CCameraSceneNode();
+
+		//! Sets the projection matrix of the camera. The core::matrix4 class has some methods
+		//! to build a projection matrix. e.g: core::matrix4::buildProjectionMatrixPerspectiveFovLH
+		//! \param projection: The new projection matrix of the camera. 
+		virtual void setProjectionMatrix(const core::matrix4& projection);
 
 		//! Gets the current projection matrix of the camera
 		//! \return Returns the current projection matrix of the camera.
-		virtual const core::matrix4& getProjectionMatrix() const;
+		virtual const core::matrix4& getProjectionMatrix();
 
 		//! Gets the current view matrix of the camera
 		//! \return Returns the current view matrix of the camera.
-		virtual const core::matrix4& getViewMatrix() const;
+		virtual const core::matrix4& getViewMatrix();
 
 		//! It is possible to send mouse and key events to the camera. Most cameras
 		//! may ignore this input, but camera scene nodes which are created for 
 		//! example with scene::ISceneManager::addMayaCameraSceneNode or
 		//! scene::ISceneManager::addMeshViewerCameraSceneNode, may want to get this input
 		//! for changing their position, look at target or whatever. 
-		virtual bool OnEvent(const SEvent& event);
+		virtual bool OnEvent(SEvent event);
 
 		//! sets the look at target of the camera
 		//! \param pos: Look at target of the camera.
@@ -53,7 +51,7 @@ namespace scene
 
 		//! Gets the current look at target of the camera
 		//! \return Returns the current look at target of the camera
-		virtual const core::vector3df& getTarget() const;
+		virtual core::vector3df getTarget() const;
 
 		//! Sets the up vector of the camera.
 		//! \param pos: New upvector of the camera.
@@ -61,23 +59,23 @@ namespace scene
 
 		//! Gets the up vector of the camera.
 		//! \return Returns the up vector of the camera.
-		virtual const core::vector3df& getUpVector() const;
+		virtual core::vector3df getUpVector() const;
 
 		//! Gets distance from the camera to the near plane.
 		//! \return Value of the near plane of the camera.
-		virtual f32 getNearValue() const;
+		virtual f32 getNearValue();
 
 		//! Gets the distance from the camera to the far plane.
 		//! \return Value of the far plane of the camera.
-		virtual f32 getFarValue() const;
+		virtual f32 getFarValue();
 
 		//! Get the aspect ratio of the camera.
 		//! \return The aspect ratio of the camera.
-		virtual f32 getAspectRatio() const;
+		virtual f32 getAspectRatio();
 
 		//! Gets the field of view of the camera.
 		//! \return Field of view of the camera
-		virtual f32 getFOV() const;
+		virtual f32 getFOV();
 
 		//! Sets the value of the near clipping plane. (default: 1.0f)
 		virtual void setNearValue(f32 zn);
@@ -109,16 +107,18 @@ namespace scene
 		virtual void setInputReceiverEnabled(bool enabled);
 
 		//! Returns if the input receiver of the camera is currently enabled.
-		virtual bool isInputReceiverEnabled() const;
+		virtual bool isInputReceiverEnabled();
 
 		//! Writes attributes of the scene node.
-		virtual void serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options=0) const;
+		virtual void serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options=0);
 
 		//! Reads attributes of the scene node.
 		virtual void deserializeAttributes(io::IAttributes* in, io::SAttributeReadWriteOptions* options=0);
 
 		//! Returns type of the scene node
-		virtual ESCENE_NODE_TYPE getType() const { return ESNT_CAMERA; }
+		virtual ESCENE_NODE_TYPE getType() { return ESNT_CAMERA; }
+
+		virtual core::vector3df getAbsolutePosition() const;
 
 	protected:
 

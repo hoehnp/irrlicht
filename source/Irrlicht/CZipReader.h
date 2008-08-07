@@ -1,11 +1,11 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #ifndef __C_ZIP_READER_H_INCLUDED__
 #define __C_ZIP_READER_H_INCLUDED__
 
-#include "IReferenceCounted.h"
+#include "IUnknown.h"
 #include "IReadFile.h"
 #include "irrArray.h"
 #include "irrString.h"
@@ -15,13 +15,13 @@ namespace irr
 {
 namespace io
 {
-	// set if the file is encrypted
-	const s16 ZIP_FILE_ENCRYPTED =		0x0001;
-	// the fields crc-32, compressed size and uncompressed size are set to
-	// zero in the local header
-	const s16 ZIP_INFO_IN_DATA_DESCRITOR =	0x0008;
 
-#if defined(_MSC_VER) || defined(__BORLANDC__) || defined (__BCPLUSPLUS__) 
+	const s16 ZIP_FILE_ENCRYPTED =		0x0001; // set if the file is encrypted
+	const s16 ZIP_INFO_IN_DATA_DESCRITOR =	0x0008; // the fields crc-32, compressed size
+														// and uncompressed size are set to zero in the local
+														// header
+
+#ifdef _MSC_VER
 #	pragma pack( push, packing )
 #	pragma pack( 1 )
 #	define PACK_STRUCT
@@ -53,7 +53,7 @@ namespace io
 	} PACK_STRUCT;
 
 // Default alignment
-#if defined(_MSC_VER) || defined(__BORLANDC__) || defined (__BCPLUSPLUS__) 
+#ifdef _MSC_VER
 #	pragma pack( pop, packing )
 #endif
 
@@ -87,7 +87,7 @@ namespace io
 	Doesn't decompress data, only reads the file and is able to
 	open uncompressed entries.
 */
-	class CZipReader : public virtual IReferenceCounted
+	class CZipReader : public virtual IUnknown
 	{
 	public:
 
@@ -111,8 +111,7 @@ namespace io
 
 	private:
 		
-		//! scans for a local header, returns false if there is no more
-		//! local file header.
+		//! scans for a local header, returns false if there is no more local file header.
 		bool scanLocalHeader();
 		IReadFile* File;
 
@@ -135,8 +134,7 @@ namespace io
 	{
 	public:
 
-		CUnZipReader(IFileSystem *parent, const c8* basename,
-				bool ignoreCase, bool ignorePaths);
+		CUnZipReader( IFileSystem *parent, const c8* basename, bool ignoreCase, bool ignorePaths);
 
 		//! opens a file by file name
 		virtual IReadFile* openFile(const c8* filename);

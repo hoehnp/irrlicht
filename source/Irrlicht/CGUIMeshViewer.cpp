@@ -1,14 +1,12 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #include "CGUIMeshViewer.h"
-#ifdef _IRR_COMPILE_WITH_GUI_
-
 #include "IGUIEnvironment.h"
 #include "IVideoDriver.h"
 #include "IAnimatedMesh.h"
-#include "IMesh.h"
+#include "irrMath.h"
 #include "os.h"
 #include "IGUISkin.h"
 
@@ -29,12 +27,14 @@ CGUIMeshViewer::CGUIMeshViewer(IGUIEnvironment* environment, IGUIElement* parent
 }
 
 
+
 //! destructor
 CGUIMeshViewer::~CGUIMeshViewer()
 {
 	if (Mesh)
 		Mesh->drop();
 }
+
 
 
 //! sets the mesh to be shown
@@ -46,24 +46,20 @@ void CGUIMeshViewer::setMesh(scene::IAnimatedMesh* mesh)
 	Mesh = mesh;
 	if (!Mesh)
 		return;
-	else
-		Mesh->grab();
 
-	/* This might be used for proper transformation etc.
 	core::vector3df center(0.0f,0.0f,0.0f);
 	core::aabbox3d<f32> box;
 
-	box = Mesh->getMesh(0)->getBoundingBox();
-	center = (box.MaxEdge + box.MinEdge) / 2;
-	*/
+	if (mesh->getFrameCount())
+	{
+		box = mesh->getMesh(0)->getBoundingBox();
+		center = (box.MaxEdge + box.MinEdge) / 2;
+	}
+
+	if (Mesh)
+		Mesh->grab();
 }
 
-
-//! Gets the displayed mesh
-scene::IAnimatedMesh* CGUIMeshViewer::getMesh() const
-{
-	return Mesh;
-}
 
 
 //! sets the material
@@ -73,18 +69,21 @@ void CGUIMeshViewer::setMaterial(const video::SMaterial& material)
 }
 
 
+
 //! gets the material
-const video::SMaterial& CGUIMeshViewer::getMaterial() const
+const video::SMaterial& CGUIMeshViewer::getMaterial()
 {
 	return Material;
 }
 
 
+
 //! called if an event happened.
-bool CGUIMeshViewer::OnEvent(const SEvent& event)
+bool CGUIMeshViewer::OnEvent(SEvent event)
 {
-	return IGUIElement::OnEvent(event);
+	return Parent ? Parent->OnEvent(event) : false;
 }
+
 
 
 //! draws the element and its children
@@ -107,20 +106,20 @@ void CGUIMeshViewer::draw()
 	
 	core::rect<s32> frameRect(AbsoluteRect);
 	frameRect.LowerRightCorner.Y = frameRect.UpperLeftCorner.Y + 1;
-	skin->draw2DRectangle(this, skin->getColor(EGDC_3D_SHADOW), frameRect, &AbsoluteClippingRect);
+	driver->draw2DRectangle(skin->getColor(EGDC_3D_SHADOW), frameRect, &AbsoluteClippingRect);
 
 	frameRect.LowerRightCorner.Y = AbsoluteRect.LowerRightCorner.Y;
 	frameRect.LowerRightCorner.X = frameRect.UpperLeftCorner.X + 1;
-	skin->draw2DRectangle(this, skin->getColor(EGDC_3D_SHADOW), frameRect, &AbsoluteClippingRect);
+	driver->draw2DRectangle(skin->getColor(EGDC_3D_SHADOW), frameRect, &AbsoluteClippingRect);
 
 	frameRect = AbsoluteRect;
 	frameRect.UpperLeftCorner.X = frameRect.LowerRightCorner.X - 1;
-	skin->draw2DRectangle(this, skin->getColor(EGDC_3D_HIGH_LIGHT), frameRect, &AbsoluteClippingRect);
+	driver->draw2DRectangle(skin->getColor(EGDC_3D_HIGH_LIGHT), frameRect, &AbsoluteClippingRect);
 
 	frameRect = AbsoluteRect;
 	frameRect.UpperLeftCorner.Y = AbsoluteRect.LowerRightCorner.Y - 1;
 	frameRect.LowerRightCorner.Y = AbsoluteRect.LowerRightCorner.Y;
-	skin->draw2DRectangle(this, skin->getColor(EGDC_3D_HIGH_LIGHT), frameRect, &AbsoluteClippingRect);
+	driver->draw2DRectangle(skin->getColor(EGDC_3D_HIGH_LIGHT), frameRect, &AbsoluteClippingRect);
 
 	// draw the mesh
 
@@ -147,17 +146,23 @@ void CGUIMeshViewer::draw()
 
 		driver->setMaterial(Material);
 
-		u32 frame = 0;
-		if(Mesh->getFrameCount())
-			frame = (os::Timer::getTime()/20)%Mesh->getFrameCount();
-		const scene::IMesh* const m = Mesh->getMesh(frame);
+		scene::IMesh* m = Mesh->getMesh(os::Timer::getTime()/20);
 		for (u32 i=0; i<m->getMeshBufferCount(); ++i)
 		{
 			scene::IMeshBuffer* mb = m->getMeshBuffer(i);
-			driver->drawVertexPrimitiveList(mb->getVertices(),
-					mb->getVertexCount(), mb->getIndices(),
-					mb->getIndexCount()/ 3, mb->getVertexType(),
-					scene::EPT_TRIANGLES);
+
+			switch(mb->getVertexType())
+			{
+			case video::EVT_STANDARD:
+				driver->drawIndexedTriangleList((video::S3DVertex*)mb->getVertices(), mb->getVertexCount(), mb->getIndices(), mb->getIndexCount()/ 3);
+				break;
+			case video::EVT_2TCOORDS:
+				driver->drawIndexedTriangleList((video::S3DVertex2TCoords*)mb->getVertices(), mb->getVertexCount(), mb->getIndices(), mb->getIndexCount()/ 3);
+				break;
+			case video::EVT_TANGENTS:
+				driver->drawIndexedTriangleList((video::S3DVertexTangents*)mb->getVertices(), mb->getVertexCount(), mb->getIndices(), mb->getIndexCount()/ 3);
+				break;
+			}
 		}
 
 		driver->setViewPort(oldViewPort);
@@ -170,5 +175,4 @@ void CGUIMeshViewer::draw()
 } // end namespace gui
 } // end namespace irr
 
-#endif // _IRR_COMPILE_WITH_GUI_
 

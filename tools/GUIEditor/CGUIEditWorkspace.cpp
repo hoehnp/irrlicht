@@ -1,23 +1,16 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt / Gaz Davidson
+// Copyright (C) 2002-2007 Nikolaus Gebhardt / Gaz Davidson
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
-
-// Thanks to Midnight for all his testing, bug fixes and patches :)
 
 #include "CGUIEditWorkspace.h"
 #include "IGUIEnvironment.h"
 #include "IVideoDriver.h"
-#include "IOSOperator.h"
-#include "IReadFile.h"
-#include "IFileSystem.h"
-#include "IXMLWriter.h"
 #include "IGUISkin.h"
 #include "IGUIElementFactory.h"
 #include "CGUIEditWindow.h"
 #include "IGUIContextMenu.h"
 #include "IGUIFileOpenDialog.h"
 #include "CGUIAttribute.h"
-#include "CMemoryReadWriteFile.h"
 
 namespace irr
 {
@@ -35,7 +28,7 @@ CGUIEditWorkspace::CGUIEditWorkspace(IGUIEnvironment* environment, s32 id, IGUIE
 	setDebugName("CGUIEditWorkspace");
 	#endif
 
-	// this element is never saved.
+	// this element is never serialized.
 	setSubElement(true);
 
 	EditorWindow = (CGUIEditWindow*) Environment->addGUIElement("GUIEditWindow", this);
@@ -53,6 +46,7 @@ CGUIEditWorkspace::CGUIEditWorkspace(IGUIEnvironment* environment, s32 id, IGUIE
 			Environment->serializeAttributes(EditorWindow->getEnvironmentEditor()->getAttribs());
 			EditorWindow->getEnvironmentEditor()->refreshAttribs();
 		}
+
 	}
 }
 
@@ -76,35 +70,32 @@ CGUIEditWorkspace::EGUIEDIT_MODE CGUIEditWorkspace::getModeFromPos(core::positio
 	{
 		core::rect<s32>		r = SelectedElement->getAbsolutePosition();
 
-		if		(TLRect.isPointInside(p))  
+		if		( TLRect.isPointInside(p))  
 			return EGUIEDM_RESIZE_TL;
 
-		else if (TRRect.isPointInside(p))
+		else if ( TRRect.isPointInside(p))
 			return EGUIEDM_RESIZE_TR;
 
-		else if (BLRect.isPointInside(p) )
+		else if ( BLRect.isPointInside(p) )
 			return EGUIEDM_RESIZE_BL;
 
-		else if (BRRect.isPointInside(p))
+		else if ( BRRect.isPointInside(p))
 			return EGUIEDM_RESIZE_BR;
 
-		else if (TopRect.isPointInside(p))
+		else if ( TopRect.isPointInside(p))
 			return EGUIEDM_RESIZE_T;
 
-		else if (BRect.isPointInside(p))
+		else if ( BRect.isPointInside(p))
 			return EGUIEDM_RESIZE_B;
 
-		else if (LRect.isPointInside(p))
+		else if ( LRect.isPointInside(p))
 			return EGUIEDM_RESIZE_L;
 
-		else if (RRect.isPointInside(p))
+		else if ( RRect.isPointInside(p))
 			return EGUIEDM_RESIZE_R;
 
-		else if (getEditableElementFromPoint(SelectedElement, p) == SelectedElement)
+		else
 			return EGUIEDM_MOVE;
-
-		else 
-			return EGUIEDM_SELECT;
 	}
 
 	return EGUIEDM_SELECT;
@@ -117,30 +108,49 @@ IGUIElement* CGUIEditWorkspace::getEditableElementFromPoint(IGUIElement *start, 
 
 	// we have to search from back to front.
 
-	core::list<IGUIElement*>::ConstIterator it = start->getChildren().getLast();
+	core::list<IGUIElement*>::Iterator it = start->getChildren().getLast();
 	s32 count=0;
-	while(it != start->getChildren().end())
+	if (!start->isSubElement())
 	{
-		target = getEditableElementFromPoint((*it),point);
-		if (target)
+		while(it != start->getChildren().end())
 		{
-			if (!target->isSubElement() && !isMyChild(target) && target != this)
+			target = getEditableElementFromPoint((*it),point);
+			if (target)
 			{
-				if (index == count)
-					return target;
+				if (!target->isSubElement() && !isMyChild(target) && target != this)
+				{
+					if (index == count)
+						return target;
+					else
+						count++;
+				}
 				else
-					count++;
+					target = 0;
 			}
-			else
-				target = 0;
+			--it;
 		}
-		--it;
 	}
 
 	if (start->getAbsolutePosition().isPointInside(point))
 		target = start;
 
 	return target;
+}
+
+bool CGUIEditWorkspace::isMyChild(IGUIElement* target)
+{
+	if (!target)
+		return false;
+
+	IGUIElement *current = target;
+	while(current->getParent())
+	{
+		current = current->getParent();
+		if (current == this)
+			return true;
+	}
+
+	return false;
 }
 
 void CGUIEditWorkspace::setSelectedElement(IGUIElement *sel)
@@ -174,13 +184,14 @@ IGUIElement* CGUIEditWorkspace::getSelectedElement()
 void CGUIEditWorkspace::selectNextSibling()
 {
 	IGUIElement* p=0;
+	core::list<IGUIElement*>::Iterator it;
 
 	if (!SelectedElement)
 		p = Parent;
 	else
 		p = SelectedElement->getParent();
 
-	core::list<IGUIElement*>::ConstIterator it = p->getChildren().begin();
+	it = p->getChildren().begin();
 	// find selected element
 	if (SelectedElement)
 		while (*it != SelectedElement)
@@ -197,13 +208,14 @@ void CGUIEditWorkspace::selectNextSibling()
 void CGUIEditWorkspace::selectPreviousSibling()
 {
 	IGUIElement* p=0;
+	core::list<IGUIElement*>::Iterator it;
 
 	if (!SelectedElement)
 		p = Parent;
 	else
 		p = SelectedElement->getParent();
 
-	core::list<IGUIElement*>::ConstIterator it = p->getChildren().getLast();
+	it = p->getChildren().getLast();
 	// find selected element
 	if (SelectedElement)
 		while (*it != SelectedElement)
@@ -219,7 +231,7 @@ void CGUIEditWorkspace::selectPreviousSibling()
 }
 
 //! called if an event happened.
-bool CGUIEditWorkspace::OnEvent(const SEvent &e)
+bool CGUIEditWorkspace::OnEvent(SEvent e)
 {
 	IGUIFileOpenDialog* dialog=0;
 	switch(e.EventType)
@@ -264,43 +276,13 @@ bool CGUIEditWorkspace::OnEvent(const SEvent &e)
 	case EET_KEY_INPUT_EVENT:
 		if (!e.KeyInput.PressedDown)
 		{
-			switch (e.KeyInput.Key)
+			if (e.KeyInput.Key == KEY_DELETE && SelectedElement)
 			{
-			case KEY_DELETE:
-				if (SelectedElement)
-				{
-					IGUIElement* el = SelectedElement;
-					setSelectedElement(0);
-					MouseOverElement = 0;
-					el->remove();
-				}
-				break;
-			case KEY_KEY_X:
-				if (e.KeyInput.Control && SelectedElement)
-				{
-					// cut
-					CopySelectedElementXML();
-					// delete element
-					IGUIElement *el = SelectedElement;
-					setSelectedElement(0);
-					MouseOverElement = 0;
-					el->remove();
-				}
-				break;
-			case KEY_KEY_C:
-				// copy
-				if (e.KeyInput.Control && SelectedElement)
-				{
-					CopySelectedElementXML();
-				}
-				break;
-			case KEY_KEY_V:
-				// paste
-				if (e.KeyInput.Control)
-				{
-					PasteXMLToSelectedElement();
-				}
-				break;
+				IGUIElement* el = SelectedElement;
+				setSelectedElement(0);
+				MouseOverElement = 0;
+				el->remove();
+				return true;
 			}
 
 			return true;
@@ -308,7 +290,6 @@ bool CGUIEditWorkspace::OnEvent(const SEvent &e)
 		break;
 
 	case EET_MOUSE_INPUT_EVENT:
-
 		switch(e.MouseInput.Event)
 		{
 		case EMIE_MOUSE_WHEEL:
@@ -323,11 +304,8 @@ bool CGUIEditWorkspace::OnEvent(const SEvent &e)
 			break;
 		case EMIE_LMOUSE_PRESSED_DOWN:
 		{
-			core::position2di p = core::position2di(e.MouseInput.X,e.MouseInput.Y);
-
-			IGUIElement* newSelection = getElementFromPoint(p);
-
-			if (newSelection != this && isMyChild(newSelection) ) // redirect event
+			IGUIElement* newSelection = getElementFromPoint(core::position2di(e.MouseInput.X,e.MouseInput.Y));
+			if (newSelection != this) // redirect event
 			{
 				Environment->setFocus(newSelection);
 				return true;
@@ -339,9 +317,18 @@ bool CGUIEditWorkspace::OnEvent(const SEvent &e)
 
 			if (CurrentMode == EGUIEDM_SELECT)
 			{
-				if (SelectedElement)
+				// selecting an element...
+				MouseOverElement = getEditableElementFromPoint(Parent, core::position2di(e.MouseInput.X,e.MouseInput.Y));
+
+				if (MouseOverElement == Parent)
+						MouseOverElement = 0;
+
+				if (MouseOverElement && SelectedElement == MouseOverElement)
 				{
 					// start moving or dragging
+
+					core::position2di p = core::position2di(e.MouseInput.X,e.MouseInput.Y);
+
 					CurrentMode = getModeFromPos(p);
 
 					if (CurrentMode == EGUIEDM_MOVE)
@@ -351,16 +338,7 @@ bool CGUIEditWorkspace::OnEvent(const SEvent &e)
 					SelectedArea = SelectedElement->getAbsolutePosition();
 				}
 
-				if (CurrentMode < EGUIEDM_MOVE)
-				{
-					// selecting an element...
-					MouseOverElement = getEditableElementFromPoint(Parent, p);
-
-					if (MouseOverElement == Parent)
-						MouseOverElement = 0;
-
-					setSelectedElement(MouseOverElement);
-				}
+				setSelectedElement(MouseOverElement);
 			}
 
 			break;
@@ -393,9 +371,8 @@ bool CGUIEditWorkspace::OnEvent(const SEvent &e)
 				// edit menu
 				sub = mnu->getSubMenu(1);
 				sub->addItem(L"Cut (ctrl+x)", MenuCommandStart + EGUIEDMC_CUT_ELEMENT,	(SelectedElement != 0));
-				sub->addItem(L"Copy (ctrl+c)", MenuCommandStart + EGUIEDMC_COPY_ELEMENT,	(SelectedElement != 0));
-				sub->addItem(L"Paste (ctrl+v)", MenuCommandStart + EGUIEDMC_PASTE_ELEMENT,	
-					(core::stringc(Environment->getOSOperator()->getTextFromClipboard()) != ""));
+				sub->addItem(L"Copy (ctrl+x)", MenuCommandStart + EGUIEDMC_COPY_ELEMENT,	(SelectedElement != 0));
+				sub->addItem(L"Paste (ctrl+x)", MenuCommandStart + EGUIEDMC_PASTE_ELEMENT,	(CopyBuffer != ""));
 				sub->addItem(L"Delete (del)", MenuCommandStart + EGUIEDMC_DELETE_ELEMENT, (SelectedElement != 0));
 				sub->addSeparator();
 				sub->addItem(L"Set parent",		MenuCommandStart + EGUIEDMC_SET_PARENT,		(SelectedElement != 0));
@@ -414,7 +391,7 @@ bool CGUIEditWorkspace::OnEvent(const SEvent &e)
 				sub->addItem(L"Default factory",-1,true, true);
 
 				// add elements from each factory
-				for (i=0; u32(i) < Environment->getRegisteredGUIElementFactoryCount(); ++i)
+				for (i=0; i < Environment->getRegisteredGUIElementFactoryCount(); ++i)
 				{
 					sub2 = sub->getSubMenu(i);
 
@@ -426,7 +403,7 @@ bool CGUIEditWorkspace::OnEvent(const SEvent &e)
 						c++;
 					}
 
-					if (u32(i+1) < Environment->getRegisteredGUIElementFactoryCount())
+					if (i+1 < Environment->getRegisteredGUIElementFactoryCount())
 					{
 						core::stringw strFact;
 						strFact = L"Factory ";
@@ -486,24 +463,15 @@ bool CGUIEditWorkspace::OnEvent(const SEvent &e)
 			// if selecting
 			if (CurrentMode == EGUIEDM_SELECT || CurrentMode == EGUIEDM_SELECT_NEW_PARENT)
 			{
+				// highlight the element that the mouse is over
+				MouseOverElement = getEditableElementFromPoint(Parent, 
+					core::position2di(e.MouseInput.X,e.MouseInput.Y));
+				if (MouseOverElement == Parent)
+						MouseOverElement = 0;
 
 				core::position2di p = core::position2di(e.MouseInput.X,e.MouseInput.Y);
-
-				// highlight the element that the mouse is over
-				MouseOverElement = getEditableElementFromPoint(Parent, p);
-				if (MouseOverElement == Parent)
-				{
-					MouseOverElement = 0;
-				}
-
 				if (CurrentMode == EGUIEDM_SELECT)
-				{
 					MouseOverMode = getModeFromPos(p);
-					if (MouseOverMode > EGUIEDM_MOVE)
-					{
-						MouseOverElement = SelectedElement;
-					}
-				}
 			}
 			else if (CurrentMode == EGUIEDM_MOVE)
 			{
@@ -572,7 +540,7 @@ bool CGUIEditWorkspace::OnEvent(const SEvent &e)
 		// load a gui file
 		case EGET_FILE_SELECTED:
 			dialog = (IGUIFileOpenDialog*)e.GUIEvent.Caller;
-			Environment->loadGUI(core::stringc(dialog->getFileName()).c_str());
+			Environment->loadGUI(core::stringc(dialog->getFilename()).c_str());
 			break;
 
 		case EGET_MENU_ITEM_SELECTED:
@@ -593,7 +561,7 @@ bool CGUIEditWorkspace::OnEvent(const SEvent &e)
 					el = Parent;
 					grab();
 					// remove all children
-					while(Children.end() != el->getChildren().begin())
+					while(el->getChildren().begin() != Children.end())
 						el->removeChild(*(el->getChildren().begin()));
 					// attach to parent again
 					el->addChild(this);
@@ -609,20 +577,13 @@ bool CGUIEditWorkspace::OnEvent(const SEvent &e)
 
 				//! edit menu
 				case EGUIEDMC_CUT_ELEMENT:
-				{
-					CopySelectedElementXML();
-					// delete element
-					el = SelectedElement;
-					setSelectedElement(0);
-					MouseOverElement = 0;
-					el->remove();
+					// TODO
 					break;
-				}
 				case EGUIEDMC_COPY_ELEMENT:
-					CopySelectedElementXML();
+					// TODO
 					break;
 				case EGUIEDMC_PASTE_ELEMENT:
-					PasteXMLToSelectedElement();
+					// TODO
 					break;
 				case EGUIEDMC_DELETE_ELEMENT:
 					el = SelectedElement;
@@ -631,22 +592,22 @@ bool CGUIEditWorkspace::OnEvent(const SEvent &e)
 					el->remove();
 					break;
 				case EGUIEDMC_SET_PARENT:
+					// TODO
 					CurrentMode = EGUIEDM_SELECT_NEW_PARENT;
 					break;
 				case EGUIEDMC_BRING_TO_FRONT:
 					SelectedElement->getParent()->bringToFront(SelectedElement);
 					break;
-
 				case EGUIEDMC_SAVE_ELEMENT:
-					Environment->saveGUI("guiTest.xml", SelectedElement ? SelectedElement : Environment->getRootGUIElement() );
 					break;
 
 				//! toggle edit window
 				case EGUIEDMC_TOGGLE_EDITOR:
 					break;
-
+				//
 				case EGUIEDMC_INSERT_XML:
-					Environment->loadGUI("guiTest.xml", SelectedElement ? SelectedElement : Environment->getRootGUIElement() );
+					// TODO
+					//Environment->loadGUI("d:\\GUITest.xml", SelectedElement );
 					break;
 
 				default:
@@ -682,9 +643,8 @@ bool CGUIEditWorkspace::OnEvent(const SEvent &e)
 		break;
 	}
 
-	// even if we didn't absorb the event, 
 	// we never pass events back to the GUI we're editing!
-	return false;
+	return true;
 }
 
 
@@ -787,7 +747,7 @@ void CGUIEditWorkspace::setDrawGrid(bool drawGrid)
 	DrawGrid = drawGrid;
 }
 
-void CGUIEditWorkspace::setGridSize(const core::dimension2di& gridSize)
+void CGUIEditWorkspace::setGridSize(core::dimension2di	&gridSize)
 {
 	GridSize = gridSize;
 	if (GridSize.Width < 2)
@@ -798,7 +758,7 @@ void CGUIEditWorkspace::setGridSize(const core::dimension2di& gridSize)
 
 void CGUIEditWorkspace::setUseGrid(bool useGrid)
 {
-	UseGrid = useGrid;
+
 }
 
 
@@ -828,58 +788,6 @@ void CGUIEditWorkspace::updateAbsolutePosition()
 	IGUIElement::updateAbsolutePosition();
 }
 
-void CGUIEditWorkspace::CopySelectedElementXML()
-{
-	core::stringc XMLText;
-	core::stringw wXMLText;
-	// create memory write file
-	io::CMemoryReadWriteFile* memWrite = new io::CMemoryReadWriteFile("#Clipboard#");
-	// save gui to mem file
-	io::IXMLWriter* xml = Environment->getFileSystem()->createXMLWriter(memWrite);
-	Environment->writeGUIElement(xml, SelectedElement);
-
-	// copy to clipboard- wide chars not supported yet :(
-	wXMLText = (wchar_t*)&memWrite->getData()[0];
-	u32 i = memWrite->getData().size()/sizeof(wchar_t);
-	if (wXMLText.size() > i)
-		wXMLText[i] = L'\0';
-	XMLText = wXMLText.c_str();
-	memWrite->drop();
-	xml->drop();
-	Environment->getOSOperator()->copyToClipboard(XMLText.c_str());
-}
-
-void CGUIEditWorkspace::PasteXMLToSelectedElement()
-{
-	// get clipboard data
-	core::stringc XMLText = Environment->getOSOperator()->getTextFromClipboard();
-	// convert to stringw
-	core::stringw wXMLText = XMLText.c_str();
-
-	io::CMemoryReadWriteFile* memWrite = new io::CMemoryReadWriteFile("#Clipboard#");
-
-	io::IXMLWriter* xmlw = Environment->getFileSystem()->createXMLWriter(memWrite);
-	xmlw->writeXMLHeader(); // it needs one of those
-	xmlw->drop();
-
-	// write clipboard data
-	memWrite->write((void*)&wXMLText[0], wXMLText.size() * sizeof(wchar_t));
-
-	// rewind file
-	memWrite->seek(0, false);
-
-	io::IXMLReader* xmlReader = (io::IXMLReader*) Environment->getFileSystem()->createXMLReader(memWrite);
-
-	// read xml
-	Environment->readGUIElement(xmlReader, SelectedElement);
-
-	// drop the xml reader
-	xmlReader->drop();
-	
-	// drop the read file
-	memWrite->drop();
-}
-
 void CGUIEditWorkspace::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options)
 {
 	out->addBool("DrawGrid", DrawGrid);
@@ -890,13 +798,12 @@ void CGUIEditWorkspace::serializeAttributes(io::IAttributes* out, io::SAttribute
 
 void CGUIEditWorkspace::deserializeAttributes(io::IAttributes* in, io::SAttributeReadWriteOptions* options)
 {
-	setDrawGrid(in->getAttributeAsBool("DrawGrid"));
-	setUseGrid(in->getAttributeAsBool("UseGrid"));
+	DrawGrid = in->getAttributeAsBool("DrawGrid");
+	UseGrid = in->getAttributeAsBool("UseGrid");
 
-	core::position2di tmpp = in->getAttributeAsPosition2d("GridSize");
-	core::dimension2di tmpd(tmpp.X, tmpp.Y);
-	setGridSize(tmpd);
-	setMenuCommandIDStart(in->getAttributeAsInt("MenuCommandStart"));
+	core::position2di tmpd = in->getAttributeAsPosition2d("GridSize");
+	GridSize = core::dimension2di(tmpd.X, tmpd.Y);
+	MenuCommandStart = in->getAttributeAsInt("MenuCommandStart");
 }
 
 
