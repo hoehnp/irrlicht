@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -104,7 +104,8 @@ public:
 			if (!TriangleRect.isRectCollided(ViewPortRect))
 				continue;
 
-			// calculate height of triangle
+
+			// höhe des dreiecks berechnen
 			height = v3->Pos.Y - v1->Pos.Y;
 			if (!height)
 				continue;
@@ -233,9 +234,7 @@ public:
 						{
 							*(zTarget + leftx) = leftZValue;
 							color = lockedTexture[((leftTy>>8)&textureYMask) * lockedTextureWidth + ((leftTx>>8)&textureXMask)];
-							*(targetSurface + leftx) = video::RGB16(video::getRed(color) * (leftR>>8) >>2,
-									video::getGreen(color) * (leftG>>8) >>2,
-									video::getBlue(color) * (leftR>>8) >>2);
+							*(targetSurface + leftx) = video::RGB16(video::getRed(color) * (leftR>>8) >>2, video::getGreen(color) * (leftG>>8) >>2, video::getBlue(color) * (leftR>>8) >>2);
 						}
 					}
 
@@ -247,9 +246,7 @@ public:
 						{
 							*(zTarget + rightx) = rightZValue;
 							color = lockedTexture[((rightTy>>8)&textureYMask) * lockedTextureWidth + ((rightTx>>8)&textureXMask)];
-							*(targetSurface + rightx) = video::RGB16(video::getRed(color) * (rightR>>8) >>2,
-									video::getGreen(color) * (rightG>>8) >>2,
-									video::getBlue(color) * (rightR>>8) >>2);
+							*(targetSurface + rightx) = video::RGB16(video::getRed(color) * (rightR>>8) >>2, video::getGreen(color) * (rightG>>8) >>2, video::getBlue(color) * (rightR>>8) >>2);
 						}
 
 					}
@@ -335,9 +332,10 @@ public:
 		RenderTarget->unlock();
 		ZBuffer->unlock();
 		Texture->unlock();
-	}
-};
 
+	}
+
+};
 
 } // end namespace video
 } // end namespace irr
@@ -361,4 +359,3 @@ ITriangleRenderer* createTriangleRendererTextureGouraudWire(IZBuffer* zbuffer)
 
 } // end namespace video
 } // end namespace irr
-

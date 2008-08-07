@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -9,6 +9,7 @@
 #include "os.h"
 #include "CMS3DMeshFileLoader.h"
 #include "CSkinnedMesh.h"
+
 
 
 namespace irr
@@ -30,16 +31,16 @@ namespace scene
 // File header
 struct MS3DHeader
 {
-	char ID[10];
-	int Version;
+	c8 ID[10];
+	s32 Version;
 } PACK_STRUCT;
 
 // Vertex information
 struct MS3DVertex
 {
 	u8 Flags;
-	float Vertex[3];
-	char BoneID;
+	f32 Vertex[3];
+	s8 BoneID;
 	u8 RefCount;
 } PACK_STRUCT;
 
@@ -48,8 +49,8 @@ struct MS3DTriangle
 {
 	u16 Flags;
 	u16 VertexIndices[3];
-	float VertexNormals[3][3];
-	float S[3], T[3];
+	f32 VertexNormals[3][3];
+	f32 S[3], T[3];
 	u8 SmoothingGroup;
 	u8 GroupIndex;
 } PACK_STRUCT;
@@ -57,26 +58,26 @@ struct MS3DTriangle
 // Material information
 struct MS3DMaterial
 {
-    char Name[32];
-    float Ambient[4];
-    float Diffuse[4];
-    float Specular[4];
-    float Emissive[4];
-    float Shininess;	// 0.0f - 128.0f
-    float Transparency;	// 0.0f - 1.0f
+    s8 Name[32];
+    f32 Ambient[4];
+    f32 Diffuse[4];
+    f32 Specular[4];
+    f32 Emissive[4];
+    f32 Shininess;	// 0.0f - 128.0f
+    f32 Transparency;	// 0.0f - 1.0f
     u8 Mode;	// 0, 1, 2 is unused now
-    char Texture[128];
-    char Alphamap[128];
+    s8 Texture[128];
+    s8 Alphamap[128];
 } PACK_STRUCT;
 
 // Joint information
 struct MS3DJoint
 {
 	u8 Flags;
-	char Name[32];
-	char ParentName[32];
-	float Rotation[3];
-	float Translation[3];
+	s8 Name[32];
+	s8 ParentName[32];
+	f32 Rotation[3];
+	f32 Translation[3];
 	u16 NumRotationKeyframes;
 	u16 NumTranslationKeyframes;
 } PACK_STRUCT;
@@ -84,15 +85,8 @@ struct MS3DJoint
 // Keyframe data
 struct MS3DKeyframe
 {
-	float Time;
-	float Parameter[3];
-} PACK_STRUCT;
-
-// vertex weights in 1.8.x
-struct MS3DVertexWeights
-{
-	char boneIds[3];
-	u8 weights[3];
+	f32 Time;
+	f32 Parameter[3];
 } PACK_STRUCT;
 
 // Default alignment
@@ -102,20 +96,10 @@ struct MS3DVertexWeights
 
 #undef PACK_STRUCT
 
-struct SGroup
-{
-	core::stringc Name;
-	core::array<u16> VertexIds;
-	u16 MaterialIdx;
-};
-
 //! Constructor
 CMS3DMeshFileLoader::CMS3DMeshFileLoader(video::IVideoDriver *driver)
 : Driver(driver), AnimatedMesh(0)
 {
-	#ifdef _DEBUG
-	setDebugName("CMS3DMeshFileLoader");
-	#endif
 }
 
 
@@ -153,7 +137,7 @@ IAnimatedMesh* CMS3DMeshFileLoader::createMesh(io::IReadFile* file)
 }
 
 
-//! loads a milkshape file
+//! loads an md2 file
 bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 {
 	if (!file)
@@ -196,6 +180,11 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 		return false;
 	}
 
+	if ( pHeader->Version == 4 )
+	{
+		os::Printer::log("Milkshape3D version 4 (1.8) is not fully supported. Some features may not be available.", file->getFileName(), ELL_WARNING);
+	}
+
 	// get pointers to data
 
 	// vertices
@@ -206,12 +195,6 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 	pPtr += sizeof(u16);
 	MS3DVertex *vertices = (MS3DVertex*)pPtr;
 	pPtr += sizeof(MS3DVertex) * numVertices;
-	if (pPtr > buffer+fileSize)
-	{
-		delete [] buffer;
-		os::Printer::log("Loading failed. Corrupted data found.", file->getFileName(), ELL_ERROR);
-		return false;
-	}
 #ifdef __BIG_ENDIAN__
 	for (u16 tmp=0; tmp<numVertices; ++tmp)
 		for (u16 j=0; j<3; ++j)
@@ -226,12 +209,6 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 	pPtr += sizeof(u16);
 	MS3DTriangle *triangles = (MS3DTriangle*)pPtr;
 	pPtr += sizeof(MS3DTriangle) * numTriangles;
-	if (pPtr > buffer+fileSize)
-	{
-		delete [] buffer;
-		os::Printer::log("Loading failed. Corrupted data found.", file->getFileName(), ELL_ERROR);
-		return false;
-	}
 #ifdef __BIG_ENDIAN__
 	for (u16 tmp=0; tmp<numTriangles; ++tmp)
 	{
@@ -253,16 +230,13 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 	numGroups = os::Byteswap::byteswap(numGroups);
 #endif
 	pPtr += sizeof(u16);
-	
-	core::array<SGroup> groups;
-	groups.reallocate(numGroups);
 
-	//store groups
+	//skip groups
 	u32 i;
 	for (i=0; i<numGroups; ++i)
 	{
-		groups.push_back(SGroup());
-		SGroup& grp = groups.getLast();
+		Groups.push_back(SGroup());
+		SGroup& grp = Groups.getLast();
 
 		// The byte flag is before the name, so add 1
 		grp.Name = ((const c8*) pPtr) + 1;
@@ -273,7 +247,6 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 		triangleCount = os::Byteswap::byteswap(triangleCount);
 #endif
 		pPtr += sizeof(u16);
-		grp.VertexIds.reallocate(triangleCount);
 
 		//pPtr += sizeof(u16) * triangleCount; // triangle indices
 		for (u16 j=0; j<triangleCount; ++j)
@@ -291,12 +264,6 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 			grp.MaterialIdx = 0;
 
 		pPtr += sizeof(c8); // material index
-		if (pPtr > buffer+fileSize)
-		{
-			delete [] buffer;
-			os::Printer::log("Loading failed. Corrupted data found.", file->getFileName(), ELL_ERROR);
-			return false;
-		}
 	}
 
 	// skip materials
@@ -309,10 +276,12 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 	// MS3DMaterial *materials = (MS3DMaterial*)pPtr;
 	// pPtr += sizeof(MS3DMaterial) * numMaterials;
 
-	if(numMaterials == 0)
+	if(numMaterials <= 0)
 	{
 		// if there are no materials, add at least one buffer
+
 		AnimatedMesh->createBuffer();
+
 	}
 
 	for (i=0; i<numMaterials; ++i)
@@ -331,12 +300,7 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 		material->Transparency = os::Byteswap::byteswap(material->Transparency);
 #endif
 		pPtr += sizeof(MS3DMaterial);
-		if (pPtr > buffer+fileSize)
-		{
-			delete [] buffer;
-			os::Printer::log("Loading failed. Corrupted data found.", file->getFileName(), ELL_ERROR);
-			return false;
-		}
+
 
 		scene::SSkinMeshBuffer *tmpBuffer = AnimatedMesh->createBuffer();
 
@@ -348,15 +312,17 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 		tmpBuffer->Material.SpecularColor = video::SColorf(material->Specular[0], material->Specular[1], material->Specular[2], material->Specular[3]).toSColor ();
 		tmpBuffer->Material.Shininess = material->Shininess;
 
-		core::stringc TexturePath(material->Texture);
-		if (TexturePath.trim()!="")
+		core::stringc TexturePath=(const c8*)material->Texture;
+		TexturePath.trim();
+		if (TexturePath!="")
 		{
 			TexturePath=stripPathFromString(file->getFileName(),true) + stripPathFromString(TexturePath,false);
 			tmpBuffer->Material.setTexture(0, Driver->getTexture(TexturePath.c_str()) );
 		}
 
 		core::stringc AlphamapPath=(const c8*)material->Alphamap;
-		if (AlphamapPath.trim()!="")
+		AlphamapPath.trim();
+		if (AlphamapPath!="")
 		{
 			AlphamapPath=stripPathFromString(file->getFileName(),true) + stripPathFromString(AlphamapPath,false);
 			tmpBuffer->Material.setTexture(2, Driver->getTexture(AlphamapPath.c_str()) );
@@ -365,36 +331,31 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 	}
 
 	// animation time
-	f32 framesPerSecond = *(float*)pPtr;
+	f32 framesPerSecond = *(f32*)pPtr;
 #ifdef __BIG_ENDIAN__
 	framesPerSecond = os::Byteswap::byteswap(framesPerSecond);
 #endif
-	pPtr += sizeof(float) * 2; // fps and current time
+	pPtr += sizeof(f32) * 2; // fps and current time
 
-	if (framesPerSecond<1.f)
-		framesPerSecond=1.f;
 
-// calculated inside SkinnedMesh
-//	s32 frameCount = *(int*)pPtr;
+	if (framesPerSecond==0)
+		framesPerSecond=1;
+
+	s32 frameCount = *(s32*)pPtr;
 #ifdef __BIG_ENDIAN__
-//	frameCount = os::Byteswap::byteswap(frameCount);
+	frameCount = os::Byteswap::byteswap(frameCount);
 #endif
-	pPtr += sizeof(int);
+	pPtr += sizeof(s32);
+
 
 	u16 jointCount = *(u16*)pPtr;
 #ifdef __BIG_ENDIAN__
 	jointCount = os::Byteswap::byteswap(jointCount);
 #endif
 	pPtr += sizeof(u16);
-	if (pPtr > buffer+fileSize)
-	{
-		delete [] buffer;
-		os::Printer::log("Loading failed. Corrupted data found.", file->getFileName(), ELL_ERROR);
-		return false;
-	}
 
-	core::array<core::stringc> parentNames;
-	parentNames.reallocate(jointCount);
+
+	core::array<core::stringc> ParentNames;
 
 	// load joints
 	for (i=0; i<jointCount; ++i)
@@ -410,33 +371,47 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 		pJoint->NumTranslationKeyframes = os::Byteswap::byteswap(pJoint->NumTranslationKeyframes);
 #endif
 		pPtr += sizeof(MS3DJoint);
-		if (pPtr > buffer+fileSize)
-		{
-			delete [] buffer;
-			os::Printer::log("Loading failed. Corrupted data found.", file->getFileName(), ELL_ERROR);
-			return false;
-		}
+
+
 
 		ISkinnedMesh::SJoint *jnt = AnimatedMesh->createJoint();
 
+		/*
+		jnt.Name = pJoint->Name;
+		jnt.Index = i;
+		jnt.Rotation.X = pJoint->Rotation[0];
+		jnt.Rotation.Y = pJoint->Rotation[1];
+		jnt.Rotation.Z = pJoint->Rotation[2];
+		jnt.Translation.X = pJoint->Translation[0];
+		jnt.Translation.Y = pJoint->Translation[1];
+		jnt.Translation.Z = pJoint->Translation[2];
+		jnt.ParentName = pJoint->ParentName;
+		jnt.Parent = -1;
+		*/
+
 		jnt->Name = pJoint->Name;
+
 		jnt->LocalMatrix.makeIdentity();
+
+
 		jnt->LocalMatrix.setRotationRadians(
 			core::vector3df(pJoint->Rotation[0], pJoint->Rotation[1], pJoint->Rotation[2]) );
 
 		jnt->LocalMatrix.setTranslation(
 			core::vector3df(pJoint->Translation[0], pJoint->Translation[1], pJoint->Translation[2]) );
 
-		parentNames.push_back( (c8*)pJoint->ParentName );
+
+		ParentNames.push_back( (c8*)pJoint->ParentName );
 
 		/*if (pJoint->NumRotationKeyframes ||
 			pJoint->NumTranslationKeyframes)
-			HasAnimation = true;
-		 */
+			HasAnimation = true;*/
+
+
+
 
 		// get rotation keyframes
-		const u16 numRotationKeyframes = pJoint->NumRotationKeyframes;
-		for (j=0; j < numRotationKeyframes; ++j)
+		for (j=0; j < pJoint->NumRotationKeyframes; ++j)
 		{
 			MS3DKeyframe* kf = (MS3DKeyframe*)pPtr;
 #ifdef __BIG_ENDIAN__
@@ -445,12 +420,6 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 				kf->Parameter[l] = os::Byteswap::byteswap(kf->Parameter[l]);
 #endif
 			pPtr += sizeof(MS3DKeyframe);
-			if (pPtr > buffer+fileSize)
-			{
-				delete [] buffer;
-				os::Printer::log("Loading failed. Corrupted data found.", file->getFileName(), ELL_ERROR);
-				return false;
-			}
 
 			ISkinnedMesh::SRotationKey *k=AnimatedMesh->createRotationKey(jnt);
 			k->frame = kf->Time * framesPerSecond;
@@ -463,11 +432,17 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 			tmpMatrix=jnt->LocalMatrix*tmpMatrix;
 
 			k->rotation  = core::quaternion(tmpMatrix);
+
+			//fix
+			//k->rotation  = core::vector3df
+			//	(kf->Parameter[0],//+pJoint->Rotation[0]*core::RADTODEG,
+			//	 kf->Parameter[1],//+pJoint->Rotation[1]*core::RADTODEG,
+			//	 kf->Parameter[2]);//+pJoint->Rotation[2]*core::RADTODEG);
+
 		}
 
 		// get translation keyframes
-		const u16 numTranslationKeyframes = pJoint->NumTranslationKeyframes;
-		for (j=0; j<numTranslationKeyframes; ++j)
+		for (j=0; j<pJoint->NumTranslationKeyframes; ++j)
 		{
 			MS3DKeyframe* kf = (MS3DKeyframe*)pPtr;
 #ifdef __BIG_ENDIAN__
@@ -476,12 +451,6 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 				kf->Parameter[l] = os::Byteswap::byteswap(kf->Parameter[l]);
 #endif
 			pPtr += sizeof(MS3DKeyframe);
-			if (pPtr > buffer+fileSize)
-			{
-				delete [] buffer;
-				os::Printer::log("Loading failed. Corrupted data found.", file->getFileName(), ELL_ERROR);
-				return false;
-			}
 
 			ISkinnedMesh::SPositionKey *k=AnimatedMesh->createPositionKey(jnt);
 			k->frame = kf->Time * framesPerSecond;
@@ -490,97 +459,8 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 				(kf->Parameter[0]+pJoint->Translation[0],
 				 kf->Parameter[1]+pJoint->Translation[1],
 				 kf->Parameter[2]+pJoint->Translation[2]);
-		}
-	}
 
-	core::array<MS3DVertexWeights> vertexWeights;
 
-	if ((pHeader->Version == 4) && (pPtr < buffer+fileSize))
-	{
-		s32 subVersion = *(s32*)pPtr; // comment subVersion, always 1
-#ifdef __BIG_ENDIAN__
-		subVersion = os::Byteswap::byteswap(subVersion);
-#endif
-		pPtr += sizeof(s32);
-
-		for (u32 j=0; j<4; ++j) // four comment groups
-		{
-			u32 numComments = *(u32*)pPtr;
-#ifdef __BIG_ENDIAN__
-			numComments = os::Byteswap::byteswap(numComments);
-#endif
-			pPtr += sizeof(u32);
-			for (i=0; i<numComments; ++i)
-			{
-				pPtr += sizeof(s32); // index
-				s32 commentLength = *(s32*)pPtr;
-#ifdef __BIG_ENDIAN__
-				commentLength = os::Byteswap::byteswap(commentLength);
-#endif
-				pPtr += sizeof(s32);
-				pPtr += commentLength;
-			}
-
-			if (pPtr > buffer+fileSize)
-			{
-				delete [] buffer;
-				os::Printer::log("Loading failed. Corrupted data found.", file->getFileName(), ELL_ERROR);
-				return false;
-			}
-		}
-
-		if (pPtr < buffer+fileSize)
-		{
-			subVersion = *(s32*)pPtr; // vertex subVersion, 1 or 2
-#ifdef __BIG_ENDIAN__
-			subVersion = os::Byteswap::byteswap(subVersion);
-#endif
-			pPtr += sizeof(s32);
-
-			// read vertex weights, ignoring data 'extra' from 1.8.2
-			vertexWeights.reallocate(numVertices);
-			const char offset = (subVersion==1)?6:10;
-			for (i=0; i<numVertices; ++i)
-			{
-				vertexWeights.push_back(*(MS3DVertexWeights*)pPtr);
-				pPtr += offset;
-			}
-
-			if (pPtr > buffer+fileSize)
-			{
-				delete [] buffer;
-				os::Printer::log("Loading failed. Corrupted data found.", file->getFileName(), ELL_ERROR);
-				return false;
-			}
-		}
-
-		if (pPtr < buffer+fileSize)
-		{
-			subVersion = *(s32*)pPtr; // joint subVersion, 1 or 2
-#ifdef __BIG_ENDIAN__
-			subVersion = os::Byteswap::byteswap(subVersion);
-#endif
-			pPtr += sizeof(s32);
-			// skip joint colors
-			pPtr += 3*sizeof(float)*jointCount;
-
-			if (pPtr > buffer+fileSize)
-			{
-				delete [] buffer;
-				os::Printer::log("Loading failed. Corrupted data found", file->getFileName(), ELL_ERROR);
-				return false;
-			}
-		}
-
-		if (pPtr < buffer+fileSize)
-		{
-			subVersion = *(s32*)pPtr; // model subVersion, 1 or 2
-#ifdef __BIG_ENDIAN__
-			subVersion = os::Byteswap::byteswap(subVersion);
-#endif
-			pPtr += sizeof(s32);
-			// now the model extra information would follow
-			// we also skip this for now
 		}
 	}
 
@@ -589,13 +469,16 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 	{
 		for (u32 j2=0; j2<AnimatedMesh->getAllJoints().size(); ++j2)
 		{
-			if (jointnum != j2 && parentNames[jointnum] == AnimatedMesh->getAllJoints()[j2]->Name )
+			if (jointnum != j2 && ParentNames[jointnum] == AnimatedMesh->getAllJoints()[j2]->Name )
 			{
 				AnimatedMesh->getAllJoints()[j2]->Children.push_back(AnimatedMesh->getAllJoints()[jointnum]);
 				break;
 			}
 		}
 	}
+			/*if (Joints[jointnum].Parent == -1)
+				os::Printer::log("Found joint in model without parent.", ELL_WARNING);*/
+
 
 	// create vertices and indices, attach them to the joints.
 	video::S3DVertex v;
@@ -604,7 +487,7 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 
 	for (i=0; i<numTriangles; ++i)
 	{
-		u32 tmp = groups[triangles[i].GroupIndex].MaterialIdx;
+		u32 tmp = Groups[triangles[i].GroupIndex].MaterialIdx;
 		Vertices = &AnimatedMesh->getMeshBuffers()[tmp]->Vertices_Standard;
 
 		for (u16 j = 0; j<3; ++j)
@@ -616,8 +499,8 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 			v.Normal.Y = triangles[i].VertexNormals[j][1];
 			v.Normal.Z = triangles[i].VertexNormals[j][2];
 
-			if(triangles[i].GroupIndex < groups.size() && groups[triangles[i].GroupIndex].MaterialIdx < AnimatedMesh->getMeshBuffers().size())
-				v.Color = AnimatedMesh->getMeshBuffers()[groups[triangles[i].GroupIndex].MaterialIdx]->Material.DiffuseColor;
+			if(triangles[i].GroupIndex < Groups.size() && Groups[triangles[i].GroupIndex].MaterialIdx < AnimatedMesh->getMeshBuffers().size())
+				v.Color = AnimatedMesh->getMeshBuffers()[Groups[triangles[i].GroupIndex].MaterialIdx]->Material.DiffuseColor;
 			else
 				v.Color.set(255,255,255,255);
 			v.Pos.X = vertices[triangles[i].VertexIndices[j]].Vertex[0];
@@ -634,70 +517,22 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 					break;
 				}
 			}
-
 			if (index == -1)
 			{
-				index = Vertices->size();
-				const u32 vertidx = triangles[i].VertexIndices[j];
-				const u32 matidx = groups[triangles[i].GroupIndex].MaterialIdx;
-				if (vertexWeights.size()==0)
+				s32 boneid = vertices[triangles[i].VertexIndices[j]].BoneID;
+				if (boneid>=0 && boneid<(s32)AnimatedMesh->getAllJoints().size())
 				{
-					const s32 boneid = vertices[vertidx].BoneID;
-					if ((u32)boneid < AnimatedMesh->getAllJoints().size())
-					{
-						ISkinnedMesh::SWeight *w=AnimatedMesh->createWeight(AnimatedMesh->getAllJoints()[boneid]);
-						w->buffer_id = matidx;
-						w->strength = 1.0f;
-						w->vertex_id = index;
-					}
-				}
-				else // new weights from 1.8.x
-				{
-					f32 sum = 1.0f;
-					s32 boneid = vertices[vertidx].BoneID;
-					if (((u32)boneid < AnimatedMesh->getAllJoints().size()) && (vertexWeights[vertidx].weights[0] != 0))
-					{
-						ISkinnedMesh::SWeight *w=AnimatedMesh->createWeight(AnimatedMesh->getAllJoints()[boneid]);
-						w->buffer_id = matidx;
-						sum -= (w->strength = vertexWeights[vertidx].weights[0]/100.f);
-						w->vertex_id = index;
-					}
-					boneid = vertexWeights[vertidx].boneIds[0];
-					if (((u32)boneid < AnimatedMesh->getAllJoints().size()) && (vertexWeights[vertidx].weights[1] != 0))
-					{
-						ISkinnedMesh::SWeight *w=AnimatedMesh->createWeight(AnimatedMesh->getAllJoints()[boneid]);
-						w->buffer_id = matidx;
-						sum -= (w->strength = vertexWeights[vertidx].weights[1]/100.f);
-						w->vertex_id = index;
-					}
-					boneid = vertexWeights[vertidx].boneIds[1];
-					if (((u32)boneid < AnimatedMesh->getAllJoints().size()) && (vertexWeights[vertidx].weights[2] != 0))
-					{
-						ISkinnedMesh::SWeight *w=AnimatedMesh->createWeight(AnimatedMesh->getAllJoints()[boneid]);
-						w->buffer_id = matidx;
-						sum -= (w->strength = vertexWeights[vertidx].weights[2]/100.f);
-						w->vertex_id = index;
-					}
-					boneid = vertexWeights[vertidx].boneIds[2];
-					if (((u32)boneid < AnimatedMesh->getAllJoints().size()) && (sum > 0.f))
-					{
-						ISkinnedMesh::SWeight *w=AnimatedMesh->createWeight(AnimatedMesh->getAllJoints()[boneid]);
-						w->buffer_id = matidx;
-						w->strength = sum;
-						w->vertex_id = index;
-					}
-					// fallback, if no bone chosen. Seems to be an error in the specs
-					boneid = vertices[vertidx].BoneID;
-					if ((sum == 1.f) && ((u32)boneid < AnimatedMesh->getAllJoints().size()))
-					{
-						ISkinnedMesh::SWeight *w=AnimatedMesh->createWeight(AnimatedMesh->getAllJoints()[boneid]);
-						w->buffer_id = matidx;
-						w->strength = 1.f;
-						w->vertex_id = index;
-					}
+					ISkinnedMesh::SWeight *w=AnimatedMesh->createWeight(AnimatedMesh->getAllJoints()[boneid]);
+					w->buffer_id = Groups[triangles[i].GroupIndex].MaterialIdx;
+					w->strength = 1.0f;
+					w->vertex_id = Vertices->size();
+					//Joints[boneid]->VertexIds.push_back(Vertices.size());
+
+
 				}
 
 				Vertices->push_back(v);
+				index = Vertices->size() - 1;
 			}
 			Indices.push_back(index);
 		}
@@ -705,9 +540,9 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 
 	//create groups
 	s32 iIndex = -1;
-	for (i=0; i<groups.size(); ++i)
+	for (i=0; i<Groups.size(); ++i)
 	{
-		SGroup& grp = groups[i];
+		SGroup& grp = Groups[i];
 
 		if (grp.MaterialIdx >= AnimatedMesh->getMeshBuffers().size())
 			grp.MaterialIdx = 0;
@@ -719,31 +554,53 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 				indices.push_back(Indices[++iIndex]);
 	}
 
+	// calculate bounding box
+/*
+	// inverse translate and rotate all vertices for making animation easier
+	if (HasAnimation)
+	for (i=0; i<Joints.size(); ++i)
+	{
+		for (u32 j=0; j<Joints[i].VertexIds.size(); ++j)
+		{
+			Joints[i].AbsoluteTransformation.inverseTranslateVect(
+				Vertices[Joints[i].VertexIds[j]].Pos);
+
+			Joints[i].AbsoluteTransformation.inverseRotateVect(
+				Vertices[Joints[i].VertexIds[j]].Pos);
+
+			Joints[i].AbsoluteTransformation.inverseRotateVect(
+				Vertices[Joints[i].VertexIds[j]].Normal);
+		}
+	}
+
+	AnimatedVertices = Vertices;
+*/
+
 	delete [] buffer;
+	// clear arrays
+	Groups.clear();
 
 	return true;
 }
 
 
-core::stringc CMS3DMeshFileLoader::stripPathFromString(const core::stringc& inString, bool returnPath) const
+core::stringc CMS3DMeshFileLoader::stripPathFromString(core::stringc string, bool returnPath)
 {
-	s32 slashIndex=inString.findLast('/'); // forward slash
-	s32 backSlash=inString.findLast('\\'); // back slash
+	s32 slashIndex=string.findLast('/'); // forward slash
+	s32 backSlash=string.findLast('\\'); // back slash
 
 	if (backSlash>slashIndex) slashIndex=backSlash;
 
 	if (slashIndex==-1)//no slashes found
-	{
 		if (returnPath)
 			return core::stringc(); //no path to return
 		else
-			return inString;
-	}
+			return string;
 
 	if (returnPath)
-		return inString.subString(0, slashIndex + 1);
+		return string.subString(0, slashIndex + 1);
 	else
-		return inString.subString(slashIndex+1, inString.size() - (slashIndex+1));
+		return string.subString(slashIndex+1, string.size() - (slashIndex+1));
 }
 
 

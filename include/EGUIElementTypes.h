@@ -1,11 +1,9 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #ifndef __E_GUI_ELEMENT_TYPES_H_INCLUDED__
 #define __E_GUI_ELEMENT_TYPES_H_INCLUDED__
-
-#include "irrTypes.h"
 
 namespace irr
 {
@@ -61,9 +59,6 @@ enum EGUI_ELEMENT_TYPE
 	//! A scroll bar (IGUIScrollBar)
 	EGUIET_SCROLL_BAR,
 
-	//! A spin box (IGUISpinBox)
-	EGUIET_SPIN_BOX,
-
 	//! A static text (IGUIStaticText)
 	EGUIET_STATIC_TEXT,
 
@@ -73,14 +68,14 @@ enum EGUI_ELEMENT_TYPE
 	//! A tab control
 	EGUIET_TAB_CONTROL,
 
-	//! A Table
-	EGUIET_TABLE,
-
 	//! A tool bar (IGUIToolBar)
 	EGUIET_TOOL_BAR,
 
 	//! A window
 	EGUIET_WINDOW,
+
+	//! A spin box (IGUISpinBox)
+	EGUIET_SPIN_BOX,
 
 	//! Not an element, amount of elements in there
 	EGUIET_COUNT,
@@ -112,13 +107,12 @@ const c8* const GUIElementTypeNames[] =
 	"messageBox",
 	"modalScreen",
 	"scrollBar",
-	"spinBox",
 	"staticText",
 	"tab",
 	"tabControl",
-	"table",
 	"toolBar",
 	"window",
+	"spinBox",
 	0
 };
 
@@ -126,7 +120,4 @@ const c8* const GUIElementTypeNames[] =
 } // end namespace irr
 
 #endif
-
-
-
 

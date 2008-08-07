@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -93,16 +93,13 @@ void CGUIModalScreen::draw()
 
 		for (; it != Children.end(); ++it)
 		{
-			if ((*it)->isVisible())
-			{
-				r = (*it)->getAbsolutePosition();
-				r.LowerRightCorner.X += 1;
-				r.LowerRightCorner.Y += 1;
-				r.UpperLeftCorner.X -= 1;
-				r.UpperLeftCorner.Y -= 1;
+			r = (*it)->getAbsolutePosition();
+			r.LowerRightCorner.X += 1;
+			r.LowerRightCorner.Y += 1;
+			r.UpperLeftCorner.X -= 1;
+			r.UpperLeftCorner.Y -= 1;
 
-				skin->draw2DRectangle(this, c, r, &AbsoluteClippingRect);
-			}
+			skin->draw2DRectangle(this, c, r, &AbsoluteClippingRect);
 		}
 	}
 

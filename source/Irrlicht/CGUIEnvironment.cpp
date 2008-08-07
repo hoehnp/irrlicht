@@ -1,5 +1,5 @@
 
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -32,7 +32,6 @@
 #include "CGUIComboBox.h"
 #include "CGUIMenu.h"
 #include "CGUIToolBar.h"
-#include "CGUITable.h"
 
 #include "CDefaultGUIElementFactory.h"
 #include "IWriteFile.h"
@@ -137,14 +136,9 @@ CGUIEnvironment::~CGUIEnvironment()
 		CurrentSkin = 0;
 	}
 
+	// delete all fonts
 	u32 i;
 
-	// delete all sprite banks
-	for (i=0; i<Banks.size(); ++i)
-		if (Banks[i].Bank)
-			Banks[i].Bank->drop();
-
-	// delete all fonts
 	for (i=0; i<Fonts.size(); ++i)
 		Fonts[i].Font->drop();
 
@@ -162,7 +156,7 @@ void CGUIEnvironment::loadBuiltInFont()
 	CGUIFont* font = new CGUIFont(this, "#DefaultFont");
 	if (!font->load(file))
 	{
-		os::Printer::log("Error: Could not load built-in Font. Did you compile without the BMP loader?", ELL_ERROR);
+		os::Printer::log("Error: Could not load built-in Font.", ELL_ERROR);
 		font->drop();
 		file->drop();
 		return;
@@ -554,9 +548,6 @@ IGUISkin* CGUIEnvironment::getSkin() const
 //! Sets a new GUI Skin
 void CGUIEnvironment::setSkin(IGUISkin* skin)
 {
-	if (CurrentSkin==skin)
-		return;
-
 	if (CurrentSkin)
 		CurrentSkin->drop();
 
@@ -993,12 +984,6 @@ IGUIScrollBar* CGUIEnvironment::addScrollBar(bool horizontal, const core::rect<s
 	return bar;
 }
 
-IGUITable* CGUIEnvironment::addTable(const core::rect<s32>& rectangle, IGUIElement* parent, s32 id, bool drawBackground)
-{
-	CGUITable* b = new CGUITable(this, parent ? parent : this, id, rectangle, true, drawBackground, false);
-	b->drop();
-	return b;
-}
 
 //! Adds an image element. 
 IGUIImage* CGUIEnvironment::addImage(video::ITexture* image, core::position2d<s32> pos,
@@ -1414,9 +1399,10 @@ IGUISpriteBank* CGUIEnvironment::addEmptySpriteBank(const c8 *name)
 	else
 		b.Filename = name;
 
-	const s32 index = Banks.binary_search(b);
+	s32 index = Banks.binary_search(b);
 	if (index != -1)
 		return 0; 
+
 
 	// create a new sprite bank
 
@@ -1436,6 +1422,7 @@ IGUIFont* CGUIEnvironment::getBuiltInFont() const
 
 	return Fonts[0].Font;
 }
+
 
 
 //! Returns the root gui element. 
@@ -1507,5 +1494,4 @@ IGUIEnvironment* createGUIEnvironment(io::IFileSystem* fs,
 } // end namespace irr
 
 #endif // _IRR_COMPILE_WITH_GUI_
-
 

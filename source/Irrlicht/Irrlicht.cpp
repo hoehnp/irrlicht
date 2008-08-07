@@ -1,14 +1,14 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #include "IrrCompileConfig.h"
 
-static const char* const copyright = "Irrlicht Engine (c) 2002-2008 Nikolaus Gebhardt";
+static const char* const copyright = "Irrlicht Engine (c) 2002-2007 Nikolaus Gebhardt";
 
 #ifdef _IRR_WINDOWS_
 	#include <windows.h>
-	#if defined(_DEBUG) && !defined(__GNUWIN32__) && !defined(_WIN32_WCE)
+	#if defined(_DEBUG) && !defined(__GNUWIN32__)
 		#include <crtdbg.h>
 	#endif // _DEBUG
 #endif
@@ -24,8 +24,9 @@ namespace irr
 	//! stub for calling createDeviceEx
 	IRRLICHT_API IrrlichtDevice* IRRCALLCONV createDevice(video::E_DRIVER_TYPE driverType,
 			const core::dimension2d<s32>& windowSize,
-			u32 bits, bool fullscreen,
-			bool stencilbuffer, bool vsync, IEventReceiver* res)
+			u32 bits, bool fullscreen, 
+			bool stencilbuffer, bool vsync, IEventReceiver* res,
+			const char* version)
 	{
 		SIrrlichtCreationParameters p;
 		p.DriverType = driverType;
@@ -34,7 +35,8 @@ namespace irr
 		p.Fullscreen = fullscreen;
 		p.Stencilbuffer = stencilbuffer;
 		p.Vsync = vsync;
-		p.EventReceiver = res;
+		p.EventReceiver = res;	
+		p.SDK_version_do_not_use = version;
 
 		return createDeviceEx(p);
 	}
@@ -44,8 +46,8 @@ namespace irr
 
 #if defined(_IRR_WINDOWS_API_)
 
-BOOL APIENTRY DllMain( HANDLE hModule,
-                       DWORD  ul_reason_for_call,
+BOOL APIENTRY DllMain( HANDLE hModule, 
+                       DWORD  ul_reason_for_call, 
                        LPVOID lpReserved )
 {
 	// _crtBreakAlloc = 139;
@@ -53,7 +55,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
     switch (ul_reason_for_call)
 	{
 		case DLL_PROCESS_ATTACH:
-			#if defined(_DEBUG) && !defined(__GNUWIN32__) && !defined(__BORLANDC__) && !defined (_WIN32_WCE)
+			#if defined(_DEBUG) && !defined(__GNUWIN32__) && !defined(__BORLANDC__)
 				_CrtSetDbgFlag(_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF);
 			#endif
 			break;

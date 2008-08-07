@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -36,7 +36,7 @@ public:
 	virtual ~CD3D9Texture();
 
 	//! lock function
-	virtual void* lock(bool readOnly = false);
+	virtual void* lock();
 
 	//! unlock function
 	virtual void unlock();
@@ -77,13 +77,13 @@ private:
 	void createRenderTarget();
 
 	//! returns the size of a texture which would be the optimize size for rendering it
-	inline s32 getTextureSizeFromSurfaceSize(s32 size) const;
+	inline s32 getTextureSizeFromImageSize(s32 size) const;
 
 	//! creates the hardware texture
-	bool createTexture(u32 flags, IImage * image);
+	bool createTexture(u32 flags);
 
 	//! copies the image to the texture
-	bool copyTexture(IImage * image);
+	bool copyTexture();
 
 	//! Get D3D color format from Irrlicht color format.
 	D3DFORMAT getD3DFormatFromColorFormat(ECOLOR_FORMAT format) const;
@@ -102,6 +102,7 @@ private:
 	void copy32BitMipMap(char* src, char* tgt,
 		s32 width, s32 height,  s32 pitchsrc, s32 pitchtgt) const;
 
+	IImage* Image;
 	IDirect3DDevice9* Device;
 	IDirect3DTexture9* Texture;
 	IDirect3DSurface9* RTTSurface;
@@ -123,5 +124,4 @@ private:
 #endif // _IRR_COMPILE_WITH_DIRECT3D_9_
 
 #endif // __C_DIRECTX9_TEXTURE_H_INCLUDED__
-
 

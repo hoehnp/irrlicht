@@ -185,8 +185,7 @@ int main()
 			smgr->drawAll();                 
 
 			// set back old render target
-			// The buffer might have been distorted, so clear it
-			driver->setRenderTarget(0, true, true, 0);      
+			driver->setRenderTarget(0);      
 
 			// make the cube visible and set the user controlled camera as active one
 			test->setVisible(true);

@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -7,7 +7,6 @@
 
 #include "IrrlichtDevice.h"
 #include "IImagePresenter.h"
-#include "SIrrCreationParameters.h"
 #include "CVideoModeList.h"
 
 namespace irr
@@ -36,12 +35,8 @@ namespace irr
 
 	namespace video
 	{
-		IVideoDriver* createSoftwareDriver(const core::dimension2d<s32>& windowSize,
-				bool fullscreen, io::IFileSystem* io,
-				video::IImagePresenter* presenter);
-		IVideoDriver* createSoftwareDriver2(const core::dimension2d<s32>& windowSize,
-				bool fullscreen, io::IFileSystem* io,
-				video::IImagePresenter* presenter);
+		IVideoDriver* createSoftwareDriver(const core::dimension2d<s32>& windowSize, bool fullscreen, io::IFileSystem* io, video::IImagePresenter* presenter);
+		IVideoDriver* createSoftwareDriver2(const core::dimension2d<s32>& windowSize, bool fullscreen, io::IFileSystem* io, video::IImagePresenter* presenter);
 		IVideoDriver* createNullDriver(io::IFileSystem* io, const core::dimension2d<s32>& screenSize);
 	}
 
@@ -53,7 +48,7 @@ namespace irr
 	public:
 
 		//! constructor
-		CIrrDeviceStub(const SIrrlichtCreationParameters& param);
+		CIrrDeviceStub(const char* version, IEventReceiver* resv);
 
 		//! destructor
 		virtual ~CIrrDeviceStub();
@@ -73,10 +68,12 @@ namespace irr
 		//! \return Returns a pointer to the mouse cursor control interface.
 		virtual gui::ICursorControl* getCursorControl();
 
-		//! Returns a pointer to a list with all video modes supported by the gfx adapter.
+		//! \return Returns a pointer to a list with all video modes supported
+		//! by the gfx adapter.
 		virtual video::IVideoModeList* getVideoModeList();
 
-		//! Returns a pointer to the ITimer object. With it the current Time can be received.
+		//! \return Returns a pointer to the ITimer object. With it the
+		//! current Time can be received.
 		virtual ITimer* getTimer();
 
 		//! Returns the version of the engine. 
@@ -88,30 +85,24 @@ namespace irr
 		//! Sets a new event receiver to receive events
 		virtual void setEventReceiver(IEventReceiver* receiver);
 
-		//! Returns pointer to the current event receiver. Returns 0 if there is none.
+		//! Returns poinhter to the current event receiver. Returns 0 if there is none.
 		virtual IEventReceiver* getEventReceiver();
 
 		//! Sets the input receiving scene manager. 
 		/** If set to null, the main scene manager (returned by GetSceneManager()) will receive the input */
 		virtual void setInputReceivingSceneManager(scene::ISceneManager* sceneManager);
 
-		//! Returns a pointer to the logger.
+		//! \return Returns a pointer to the logger.
 		virtual ILogger* getLogger();
 
 		//! Returns the operation system opertator object.
 		virtual IOSOperator* getOSOperator();
 
-		//! Checks if the window is running in fullscreen mode.
-		virtual bool isFullscreen() const;
-
-		//! get color format of the current window
-		virtual video::ECOLOR_FORMAT getColorFormat() const;
-
 	protected:
 
 		void createGUIAndScene();
 
-		//! checks version of SDK and prints warning if there might be a problem
+		//! checks version of sdk and prints warning if there might be a problem
 		bool checkVersion(const char* version);
 
 		video::IVideoDriver* VideoDriver;
@@ -119,13 +110,12 @@ namespace irr
 		scene::ISceneManager* SceneManager;
 		ITimer* Timer;
 		gui::ICursorControl* CursorControl;
+		video::CVideoModeList VideoModeList;
 		IEventReceiver* UserReceiver;
 		CLogger* Logger;
 		IOSOperator* Operator;
 		io::IFileSystem* FileSystem;
 		scene::ISceneManager* InputReceivingSceneManager;
-		video::CVideoModeList VideoModeList;
-		SIrrlichtCreationParameters CreationParams;
 	};
 
 } // end namespace irr

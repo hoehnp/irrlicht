@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 // orginally written by Christian Stehno, modified by Nikolaus Gebhardt
@@ -48,11 +48,6 @@ const u16 COGRE_SUBMESH_TEXTURE_ALIAS= 0x4200;
 COgreMeshFileLoader::COgreMeshFileLoader(IMeshManipulator* manip,io::IFileSystem* fs, video::IVideoDriver* driver)
 : FileSystem(fs), Driver(driver), SwapEndian(false), Mesh(0), Manipulator(manip), NumUV(0)
 {
-
-	#ifdef _DEBUG
-	setDebugName("COgreMeshFileLoader");
-	#endif
-
 	if (FileSystem)
 		FileSystem->grab();
 

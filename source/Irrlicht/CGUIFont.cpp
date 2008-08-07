@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -33,8 +33,6 @@ CGUIFont::CGUIFont(IGUIEnvironment *env, const c8* filename)
 		Driver = Environment->getVideoDriver();
 
 		SpriteBank = Environment->addEmptySpriteBank(filename);
-		if (SpriteBank)
-			SpriteBank->grab();
 	}
 
 	if (Driver)
@@ -50,6 +48,7 @@ CGUIFont::~CGUIFont()
 
 	if (SpriteBank)
 		SpriteBank->drop();
+
 }
 
 
@@ -255,7 +254,7 @@ bool CGUIFont::loadTexture(video::IImage* image, const c8* name)
 
 	// output warnings
 	if (!lowerRightPositions || !SpriteBank->getSprites().size())
-		os::Printer::log("Either no upper or lower corner pixels in the font file. If this font was made using the new font tool, please load the XML file instead. If not, the font may be corrupted.", ELL_ERROR);
+		os::Printer::log("The amount of upper corner pixels or lower corner pixels is == 0, font file may be corrupted.", ELL_ERROR);
 	else
 	if (lowerRightPositions != (s32)SpriteBank->getPositions().size())
 		os::Printer::log("The amount of upper corner pixels and the lower corner pixels is not equal, font file may be corrupted.", ELL_ERROR);

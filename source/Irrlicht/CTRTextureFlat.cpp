@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -103,7 +103,8 @@ public:
 			if (!TriangleRect.isRectCollided(ViewPortRect))
 				continue;
 
-			// calculate height of triangle
+
+			// höhe des dreiecks berechnen
 			height = v3->Pos.Y - v1->Pos.Y;
 			if (!height)
 				continue;

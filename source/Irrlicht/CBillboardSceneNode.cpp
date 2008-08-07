@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -15,9 +15,9 @@ namespace scene
 
 //! constructor
 CBillboardSceneNode::CBillboardSceneNode(ISceneNode* parent, ISceneManager* mgr, s32 id,
-			const core::vector3df& position, const core::dimension2d<f32>& size,
-			video::SColor shade_top, video::SColor shade_down)
-	: ISceneNode(parent, mgr, id, position), IBillboardSceneNode(parent, mgr, id, position)
+				const core::vector3df& position, const core::dimension2d<f32>& size,
+				video::SColor shade_top, video::SColor shade_down)
+	: IBillboardSceneNode(parent, mgr, id, position)
 {
 	#ifdef _DEBUG
 	setDebugName("CBillboardSceneNode");
@@ -50,9 +50,10 @@ CBillboardSceneNode::CBillboardSceneNode(ISceneNode* parent, ISceneManager* mgr,
 void CBillboardSceneNode::OnRegisterSceneNode()
 {
 	if (IsVisible)
+	{
 		SceneManager->registerNodeForRendering(this);
-
-	ISceneNode::OnRegisterSceneNode();
+		ISceneNode::OnRegisterSceneNode();
+	}
 }
 
 
@@ -108,7 +109,8 @@ void CBillboardSceneNode::render()
 		driver->draw3DBox(BBox, video::SColor(0,208,195,152));
 	}
 
-	driver->setTransform(video::ETS_WORLD, core::IdentityMatrix);
+	core::matrix4 mat;
+	driver->setTransform(video::ETS_WORLD, mat);
 
 	driver->setMaterial(Material);
 
@@ -191,7 +193,7 @@ void CBillboardSceneNode::deserializeAttributes(io::IAttributes* in, io::SAttrib
 void CBillboardSceneNode::setColor(const video::SColor & overallColor)
 {
 	for(u32 vertex = 0; vertex < 4; ++vertex)
-		vertices[vertex].Color = overallColor;
+		vertices[0].Color = overallColor;
 }
 
 
