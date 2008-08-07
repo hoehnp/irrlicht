@@ -63,7 +63,7 @@ IrrlichtDevice::IrrlichtDevice(Video::DriverType driverType, Core::Dimension2D w
 	p.Fullscreen = fullScreen;
 	p.Stencilbuffer = stencilBuffer;
 	p.Vsync = vsync;
-	p.WindowId = (void*)windowHandle;
+	p.WindowId = reinterpret_cast<irr::s32>((void*)windowHandle);
 	p.WindowSize = irr::NativeConverter::getNativeDim(windowSize);
 
 	Device = irr::createDeviceEx(p);
@@ -128,6 +128,7 @@ bool IrrlichtDevice::get_WindowActive()
 void IrrlichtDevice::CloseDevice()
 {
 	Device->closeDevice();
+	Device->run(); // eat WM_QUIT
 }
 
 System::String* IrrlichtDevice::get_Version()

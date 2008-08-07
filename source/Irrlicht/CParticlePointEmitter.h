@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -14,15 +14,15 @@ namespace scene
 {
 
 //! A default point emitter
-class CParticlePointEmitter : public IParticlePointEmitter
+class CParticlePointEmitter : public IParticleEmitter
 {
 public:
 
 	//! constructor
 	CParticlePointEmitter(
-		const core::vector3df& direction = core::vector3df(0.0f,0.03f,0.0f),
+		core::vector3df direction = core::vector3df(0.0f,0.03f,0.0f), 
 		u32 minParticlesPerSecond = 5,
-		u32 maxParticlesPerSecond = 10,
+		u32 maxParticlePerSecond = 10,
 		video::SColor minStartColor = video::SColor(255,0,0,0),
 		video::SColor maxStartColor = video::SColor(255,255,255,255),
 		u32 lifeTimeMin=2000,
@@ -33,49 +33,22 @@ public:
 	//! and returns how much new particles there are.
 	virtual s32 emitt(u32 now, u32 timeSinceLastCall, SParticle*& outArray);
 
-	//! Set direction the emitter emits particles.
-	virtual void setDirection( const core::vector3df& newDirection ) { Direction = newDirection; }
-
-	//! Set minimum number of particles emitted per second.
-	virtual void setMinParticlesPerSecond( u32 minPPS ) { MinParticlesPerSecond = minPPS; }
-
-	//! Set maximum number of particles emitted per second.
-	virtual void setMaxParticlesPerSecond( u32 maxPPS ) { MaxParticlesPerSecond = maxPPS; }
-
-	//! Set minimum start color.
-	virtual void setMinStartColor( const video::SColor& color ) { MinStartColor = color; }
-
-	//! Set maximum start color.
-	virtual void setMaxStartColor( const video::SColor& color ) { MaxStartColor = color; }
-
-	//! Gets direction the emitter emits particles.
-	virtual const core::vector3df& getDirection() const { return Direction; }
-
-	//! Gets minimum number of particles emitted per second.
-	virtual u32 getMinParticlesPerSecond() const { return MinParticlesPerSecond; }
-
-	//! Gets maximum number of particles emitted per second.
-	virtual u32 getMaxParticlesPerSecond() const { return MaxParticlesPerSecond; }
-
-	//! Gets minimum start color.
-	virtual const video::SColor& getMinStartColor() const { return MinStartColor; }
-
-	//! Gets maximum start color.
-	virtual const video::SColor& getMaxStartColor() const { return MaxStartColor; }
-
 	//! Writes attributes of the object.
-	virtual void serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options) const;
+	virtual void serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options);
 
 	//! Reads attributes of the object.
 	virtual s32 deserializeAttributes(s32 startIndex, io::IAttributes* in, io::SAttributeReadWriteOptions* options);
+
+	//! Get emitter type
+	virtual E_PARTICLE_EMITTER_TYPE getType() { return EPET_POINT; }
 
 private:
 
 	SParticle Particle;
 	core::vector3df Direction;
-	u32 MinParticlesPerSecond, MaxParticlesPerSecond;
+	s32 MinParticlesPerSecond, MaxParticlesPerSecond;
 	video::SColor MinStartColor, MaxStartColor;
-	u32 MinLifeTime, MaxLifeTime;
+	s32 MinLifeTime, MaxLifeTime;
 	s32 MaxAngleDegrees;
 
 	u32 Time;

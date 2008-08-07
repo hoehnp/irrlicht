@@ -1,18 +1,16 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt / Thomas Alten
+// Copyright (C) 2002-2006 Nikolaus Gebhardt/Alten Thomas
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #ifndef __C_SOFTWARE_2_TEXTURE_H_INCLUDED__
 #define __C_SOFTWARE_2_TEXTURE_H_INCLUDED__
 
-#include "SoftwareDriver2_compile_config.h"
-
 #include "ITexture.h"
 #include "CImage.h"
 
 namespace irr
 {
-namespace video
+namespace video  
 {
 
 /*!
@@ -23,107 +21,51 @@ class CSoftwareTexture2 : public ITexture
 public:
 
 	//! constructor
-	CSoftwareTexture2(IImage* surface, const char* name, bool generateMipLevels, bool isRenderTarget=false);
+	CSoftwareTexture2(IImage* surface, const char* name);
 
 	//! destructor
 	virtual ~CSoftwareTexture2();
 
 	//! lock function
-	virtual void* lock(bool readOnly = false)
-	{
-		return MipMap[MipMapLOD]->lock();
-	}
+	virtual void* lock();
 
 	//! unlock function
-	virtual void unlock()
-	{
-		MipMap[MipMapLOD]->unlock();
-	}
+	virtual void unlock();
 
 	//! Returns original size of the texture.
-	virtual const core::dimension2d<s32>& getOriginalSize() const
-	{
-		//return MipMap[0]->getDimension();
-		return OrigSize;
-	}
-
-	//! Returns the size of the largest mipmap.
-	f32 getLODFactor( const f32 texArea ) const
-	{
-		return MipMap[0]->getImageDataSizeInPixels () * texArea;
-	}
+	virtual const core::dimension2d<s32>& getOriginalSize();
 
 	//! Returns (=size) of the texture.
-	virtual const core::dimension2d<s32>& getSize() const
-	{
-		return MipMap[MipMapLOD]->getDimension();
-	}
+	virtual const core::dimension2d<s32>& getSize();
 
 	//! returns unoptimized surface
-	virtual CImage* getImage() const
-	{
-		return MipMap[0];
-	}
+	virtual CImage* getImage();
 
 	//! returns texture surface
-	virtual CImage* getTexture() const
-	{
-		return MipMap[MipMapLOD];
-	}
-
+	virtual CImage* getTexture();
 
 	//! returns driver type of texture (=the driver, who created the texture)
-	virtual E_DRIVER_TYPE getDriverType() const
-	{
-		return EDT_BURNINGSVIDEO;
-	}
+	virtual E_DRIVER_TYPE getDriverType();
 
 	//! returns color format of texture
-	virtual ECOLOR_FORMAT getColorFormat() const
-	{
-		return BURNINGSHADER_COLOR_FORMAT;
-	}
+	virtual ECOLOR_FORMAT getColorFormat();
 
 	//! returns pitch of texture (in bytes)
-	virtual u32 getPitch() const
-	{
-		return MipMap[MipMapLOD]->getPitch();
-	}
+	virtual s32 getPitch();
 
 	//! Regenerates the mip map levels of the texture. Useful after locking and 
 	//! modifying the texture
 	virtual void regenerateMipMapLevels();
 
-	//! Select a Mipmap Level
-	virtual void setCurrentMipMapLOD ( s32 lod )
-	{
-		if ( HasMipMaps )
-			MipMapLOD = lod;
-	}
-	
-	//! support mipmaps
-	virtual bool hasMipMaps() const
-	{
-		return HasMipMaps;
-	}
-
-	//! is a render target
-	virtual bool isRenderTarget() const
-	{
-		return IsRenderTarget;
-	}
-
 private:
 
 	//! returns the size of a texture which would be the optimize size for rendering it
-	s32 getTextureSizeFromSurfaceSize(s32 size) const;
+	inline s32 getTextureSizeFromSurfaceSize(s32 size);
 
+	CImage* Image;
+	CImage* Texture;
 	core::dimension2d<s32> OrigSize;
 
-	CImage * MipMap[SOFTWARE_DRIVER_2_MIPMAPPING_MAX];
-
-	s32 MipMapLOD;
-	bool HasMipMaps, IsRenderTarget;
 };
 
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -37,11 +37,6 @@ CD3D9HLSLMaterialRenderer::CD3D9HLSLMaterialRenderer(IDirect3DDevice9* d3ddev,
 	: CD3D9ShaderMaterialRenderer(d3ddev, driver, callback, baseMaterial, userData),
 	VSConstantsTable(0), PSConstantsTable(0)
 {
-
-	#ifdef _DEBUG
-	setDebugName("CD3D9HLSLMaterialRenderer");
-	#endif
-
 	outMaterialTypeNr = -1;
 
 	// now create shaders
@@ -76,8 +71,8 @@ CD3D9HLSLMaterialRenderer::~CD3D9HLSLMaterialRenderer()
 
 
 bool CD3D9HLSLMaterialRenderer::createHLSLVertexShader(const char* vertexShaderProgram,
-			   const char* shaderEntryPointName,
-			   const char* shaderTargetName)
+													   const char* shaderEntryPointName,
+													   const char* shaderTargetName)
 {
 	if (!vertexShaderProgram)
 		return true;
@@ -136,8 +131,6 @@ bool CD3D9HLSLMaterialRenderer::createHLSLVertexShader(const char* vertexShaderP
 		{
 			os::Printer::log((c8*)errors->GetBufferPointer());
 			errors->Release();
-			if (buffer)
-				buffer->Release();
 		}
 		return false;
 	}
@@ -192,8 +185,6 @@ bool CD3D9HLSLMaterialRenderer::createHLSLPixelShader(const char* pixelShaderPro
 		{
 			os::Printer::log((c8*)errors->GetBufferPointer());
 			errors->Release();
-			if (buffer)
-				buffer->Release();
 		}
 		return false;
 	}
@@ -292,5 +283,5 @@ void CD3D9HLSLMaterialRenderer::printHLSLVariables(LPD3DXCONSTANTTABLE table)
 } // end namespace video
 } // end namespace irr
 
-#endif // _IRR_COMPILE_WITH_DIRECT3D_9_
+#endif
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -17,26 +17,42 @@ namespace scene
 CCameraSceneNode::CCameraSceneNode(ISceneNode* parent, ISceneManager* mgr, s32 id, 
 	const core::vector3df& position, const core::vector3df& lookat)
 	: ICameraSceneNode(parent, mgr, id, position, core::vector3df(0.0f, 0.0f, 0.0f),
-			core::vector3df(1.0f, 1.0f, 1.0f)),
-	Target(lookat), UpVector(0.0f, 1.0f, 0.0f), ZNear(1.0f), ZFar(3000.0f),
-	InputReceiverEnabled(true)
+			core::vector3df(1.0f, 1.0f, 1.0f)), InputReceiverEnabled(true)
 {
 	#ifdef _DEBUG
 	setDebugName("CCameraSceneNode");
 	#endif
 
-	// set default projection
-	Fovy = core::PI / 2.5f;	// Field of view, in radians. 
+	BBox.reset(0,0,0);
 
-	const video::IVideoDriver* const d = mgr?mgr->getVideoDriver():0;
+	// set default view
+
+	UpVector.set(0.0f, 1.0f, 0.0f);
+	Target.set(lookat);
+
+	// set default projection
+
+	Fovy = core::PI / 2.5f;	// Field of view, in radians. 
+	Aspect = 4.0f / 3.0f;	// Aspect ratio. 
+	ZNear = 1.0f;		// value of the near view-plane. 
+	ZFar = 3000.0f;		// Z-value of the far view-plane. 
+
+	video::IVideoDriver* d = mgr->getVideoDriver();
 	if (d)
-		Aspect = (f32)d->getCurrentRenderTargetSize().Width /
-			(f32)d->getCurrentRenderTargetSize().Height;
-	else
-		Aspect = 4.0f / 3.0f;	// Aspect ratio. 
+	{
+		screenDim.Width = (f32)d->getScreenSize().Width;
+		screenDim.Height = (f32)d->getScreenSize().Height;
+		Aspect = screenDim.Width / screenDim.Height;
+	}
 
 	recalculateProjectionMatrix();
-	recalculateViewArea();
+}
+
+
+
+//! destructor
+CCameraSceneNode::~CCameraSceneNode()
+{
 }
 
 
@@ -48,7 +64,7 @@ void CCameraSceneNode::setInputReceiverEnabled(bool enabled)
 
 
 //! Returns if the input receiver of the camera is currently enabled.
-bool CCameraSceneNode::isInputReceiverEnabled() const
+bool CCameraSceneNode::isInputReceiverEnabled()
 {
 	_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
 	return InputReceiverEnabled;
@@ -58,51 +74,41 @@ bool CCameraSceneNode::isInputReceiverEnabled() const
 //! Sets the projection matrix of the camera. The core::matrix4 class has some methods
 //! to build a projection matrix. e.g: core::matrix4::buildProjectionMatrixPerspectiveFovLH
 //! \param projection: The new projection matrix of the camera. 
-void CCameraSceneNode::setProjectionMatrix(const core::matrix4& projection, bool isOrthogonal)
+void CCameraSceneNode::setProjectionMatrix(const core::matrix4& projection)
 {
-	IsOrthogonal = isOrthogonal;
-	ViewArea.Matrices [ video::ETS_PROJECTION ] = projection;
-	ViewArea.setTransformState ( video::ETS_PROJECTION );
+	Projection = projection;
 }
+
 
 
 //! Gets the current projection matrix of the camera
 //! \return Returns the current projection matrix of the camera.
-const core::matrix4& CCameraSceneNode::getProjectionMatrix() const
+const core::matrix4& CCameraSceneNode::getProjectionMatrix()
 {
-	return ViewArea.Matrices [ video::ETS_PROJECTION ];
+	return Projection;
 }
+
 
 
 //! Gets the current view matrix of the camera
 //! \return Returns the current view matrix of the camera.
-const core::matrix4& CCameraSceneNode::getViewMatrix() const
+const core::matrix4& CCameraSceneNode::getViewMatrix()
 {
-	return ViewArea.Matrices [ video::ETS_VIEW ];
+	return View;
 }
+
 
 
 //! It is possible to send mouse and key events to the camera. Most cameras
 //! may ignore this input, but camera scene nodes which are created for 
 //! example with scene::ISceneManager::addMayaCameraSceneNode or
-//! scene::ISceneManager::addFPSCameraSceneNode, may want to get this input
+//! scene::ISceneManager::addMeshViewerCameraSceneNode, may want to get this input
 //! for changing their position, look at target or whatever. 
-bool CCameraSceneNode::OnEvent(const SEvent& event)
+bool CCameraSceneNode::OnEvent(SEvent event)
 {
-	if (!InputReceiverEnabled)
-		return false;
-
-	// send events to event receiving animators
-
-	core::list<ISceneNodeAnimator*>::Iterator ait = Animators.begin();
-	
-	for (; ait != Animators.end(); ++ait)
-		if ((*ait)->isEventReceiverEnabled() && (*ait)->OnEvent(event))
-			return true;
-
-	// if nobody processed the event, return false
 	return false;
 }
+
 
 
 //! sets the look at target of the camera
@@ -113,12 +119,14 @@ void CCameraSceneNode::setTarget(const core::vector3df& pos)
 }
 
 
+
 //! Gets the current look at target of the camera
 //! \return Returns the current look at target of the camera
-const core::vector3df& CCameraSceneNode::getTarget() const
+core::vector3df CCameraSceneNode::getTarget() const
 {
 	return Target;
 }
+
 
 
 //! sets the up vector of the camera
@@ -129,37 +137,34 @@ void CCameraSceneNode::setUpVector(const core::vector3df& pos)
 }
 
 
+
 //! Gets the up vector of the camera.
 //! \return Returns the up vector of the camera.
-const core::vector3df& CCameraSceneNode::getUpVector() const
+core::vector3df CCameraSceneNode::getUpVector() const
 {
 	return UpVector;
 }
 
 
-f32 CCameraSceneNode::getNearValue() const 
+f32 CCameraSceneNode::getNearValue()
 {
 	return ZNear;
 }
 
-
-f32 CCameraSceneNode::getFarValue() const 
+f32 CCameraSceneNode::getFarValue()
 {
 	return ZFar;
 }
 
-
-f32 CCameraSceneNode::getAspectRatio() const 
+f32 CCameraSceneNode::getAspectRatio()
 {
 	return Aspect;
 }
 
-
-f32 CCameraSceneNode::getFOV() const 
+f32 CCameraSceneNode::getFOV()
 {
 	return Fovy;
 }
-
 
 void CCameraSceneNode::setNearValue(f32 f)
 {
@@ -167,13 +172,11 @@ void CCameraSceneNode::setNearValue(f32 f)
 	recalculateProjectionMatrix();
 }
 
-
 void CCameraSceneNode::setFarValue(f32 f)
 {
 	ZFar = f;
 	recalculateProjectionMatrix();
 }
-
 
 void CCameraSceneNode::setAspectRatio(f32 f)
 {
@@ -181,49 +184,56 @@ void CCameraSceneNode::setAspectRatio(f32 f)
 	recalculateProjectionMatrix();
 }
 
-
 void CCameraSceneNode::setFOV(f32 f)
 {
 	Fovy = f;
 	recalculateProjectionMatrix();
 }
 
-
 void CCameraSceneNode::recalculateProjectionMatrix()
 {
-	ViewArea.Matrices [ video::ETS_PROJECTION ].buildProjectionMatrixPerspectiveFovLH(Fovy, Aspect, ZNear, ZFar);
-	ViewArea.setTransformState ( video::ETS_PROJECTION );
+	Projection.buildProjectionMatrixPerspectiveFovLH(Fovy, Aspect, ZNear, ZFar);
+	//recalculateViewArea();
 }
 
 
 //! prerender
-void CCameraSceneNode::OnRegisterSceneNode()
+void CCameraSceneNode::OnPreRender()
 {
-	// if upvector and vector to the target are the same, we have a
-	// problem. so solve this problem:
+	video::IVideoDriver* driver = SceneManager->getVideoDriver();
+	if (!driver)
+		return;
 
-	core::vector3df pos = getAbsolutePosition();
-	core::vector3df tgtv = Target - pos;
-	tgtv.normalize();
-
-	core::vector3df up = UpVector;
-	up.normalize();
-
-	f32 dp = tgtv.dotProduct(up);
-
-	if ( core::equals ( fabs ( dp ), 1.f ) )
+	if (SceneManager->getActiveCamera() == this)
 	{
-		up.X += 0.5f;
+		screenDim.Width = (f32)driver->getScreenSize().Width;
+		screenDim.Height = (f32)driver->getScreenSize().Height;
+
+		driver->setTransform(video::ETS_PROJECTION, Projection);
+
+		// if upvector and vector to the target are the same, we have a
+		// problem. so solve this problem:
+
+		core::vector3df pos = getAbsolutePosition();
+		core::vector3df tgtv = Target - pos;
+		tgtv.normalize();
+
+		core::vector3df up = UpVector;
+		up.normalize();
+
+		f32 dp = tgtv.dotProduct(up);
+		if ((dp > -1.0001f && dp < -0.9999f) ||
+			(dp < 1.0001f && dp > 0.9999f))
+			up.X += 1.0f;
+
+		View.buildCameraLookAtMatrixLH(pos, Target, up);
+		recalculateViewArea();
+
+		SceneManager->registerNodeForRendering(this, ESNRP_LIGHT_AND_CAMERA);
 	}
 
-	ViewArea.Matrices [ video::ETS_VIEW ].buildCameraLookAtMatrixLH(pos, Target, up);
-	ViewArea.setTransformState ( video::ETS_VIEW );
-	recalculateViewArea();
-
-	if ( SceneManager->getActiveCamera () == this )
-		SceneManager->registerNodeForRendering(this, ESNRP_CAMERA);
-
-	ISceneNode::OnRegisterSceneNode();
+	if (IsVisible)
+		ISceneNode::OnPreRender();
 }
 
 
@@ -231,23 +241,23 @@ void CCameraSceneNode::OnRegisterSceneNode()
 void CCameraSceneNode::render()
 {	
 	video::IVideoDriver* driver = SceneManager->getVideoDriver();
-	if ( driver)
-	{
-		driver->setTransform(video::ETS_PROJECTION, ViewArea.Matrices [ video::ETS_PROJECTION ] );
-		driver->setTransform(video::ETS_VIEW, ViewArea.Matrices [ video::ETS_VIEW ] );
-	}
+	if (!driver)
+		return;
+
+	driver->setTransform(video::ETS_VIEW, View);
 }
 
 
 //! returns the axis aligned bounding box of this node
 const core::aabbox3d<f32>& CCameraSceneNode::getBoundingBox() const
 {
-	return ViewArea.getBoundingBox();
+	return BBox;
 }
 
 
-//! returns the view frustum. needed sometimes by bsp or lod render nodes.
-const SViewFrustum* CCameraSceneNode::getViewFrustum() const
+
+//! returns the view frustrum. needed sometimes by bsp or lod render nodes.
+const SViewFrustrum* CCameraSceneNode::getViewFrustrum()
 {
 	return &ViewArea;
 }
@@ -255,21 +265,16 @@ const SViewFrustum* CCameraSceneNode::getViewFrustum() const
 
 void CCameraSceneNode::recalculateViewArea()
 {
+	core::matrix4 mat = Projection * View;
+	ViewArea = SViewFrustrum(mat);
+
 	ViewArea.cameraPosition = getAbsolutePosition();
-	ViewArea.setFrom ( ViewArea.Matrices [ SViewFrustum::ETS_VIEW_PROJECTION_3 ] );
-/*
-	video::IVideoDriver* driver = SceneManager->getVideoDriver();
-	if ( driver)
-	{
-		driver->setTransform(video::ETS_PROJECTION, ViewArea.Matrices [ video::ETS_PROJECTION ] );
-		driver->setTransform(video::ETS_VIEW, ViewArea.Matrices [ video::ETS_VIEW ] );
-	}
-*/
+	ViewArea.recalculateBoundingBox();
 }
 
 
 //! Writes attributes of the scene node.
-void CCameraSceneNode::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options) const
+void CCameraSceneNode::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options)
 {
 	ISceneNode::serializeAttributes(out, options);
 

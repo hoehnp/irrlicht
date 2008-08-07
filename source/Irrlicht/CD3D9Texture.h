@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -17,7 +17,6 @@ namespace irr
 namespace video
 {
 
-class CD3D9Driver;
 /*!
 	interface for a Video Driver dependent Texture.
 */
@@ -26,48 +25,48 @@ class CD3D9Texture : public ITexture
 public:
 
 	//! constructor
-	CD3D9Texture(IImage* image, CD3D9Driver* driver,
+	CD3D9Texture(IImage* image, IDirect3DDevice9* device,
 		u32 flags, const char* name);
 
 	//! rendertarget constructor
-	CD3D9Texture(CD3D9Driver* driver, core::dimension2d<s32> size, const char* name);
+	CD3D9Texture(IDirect3DDevice9* device, core::dimension2d<s32> size, const char* name);
 
 	//! destructor
 	virtual ~CD3D9Texture();
 
 	//! lock function
-	virtual void* lock(bool readOnly = false);
+	virtual void* lock();
 
 	//! unlock function
 	virtual void unlock();
 
 	//! Returns original size of the texture.
-	virtual const core::dimension2d<s32>& getOriginalSize() const;
+	virtual const core::dimension2d<s32>& getOriginalSize();
 
 	//! Returns (=size) of the texture.
-	virtual const core::dimension2d<s32>& getSize() const;
+	virtual const core::dimension2d<s32>& getSize();
 
 	//! returns driver type of texture (=the driver, who created the texture)
-	virtual E_DRIVER_TYPE getDriverType() const;
+	virtual E_DRIVER_TYPE getDriverType();
 
 	//! returns color format of texture
-	virtual ECOLOR_FORMAT getColorFormat() const;
+	virtual ECOLOR_FORMAT getColorFormat();
 
 	//! returns pitch of texture (in bytes)
-	virtual u32 getPitch() const;
+	virtual s32 getPitch();
 
 	//! returns the DIRECT3D9 Texture
-	IDirect3DTexture9* getDX9Texture() const;
+	IDirect3DTexture9* getDX9Texture();
 
 	//! returns if texture has mipmap levels
-	bool hasMipMaps() const;
+	bool hasMipMaps();
 
 	//! Regenerates the mip map levels of the texture. Useful after locking and
 	//! modifying the texture
 	virtual void regenerateMipMapLevels();
 
 	//! returns if it is a render target
-	virtual bool isRenderTarget() const;
+	bool isRenderTarget();
 
 	//! Returns pointer to the render target surface
 	IDirect3DSurface9* getRenderTargetSurface();
@@ -77,40 +76,39 @@ private:
 	void createRenderTarget();
 
 	//! returns the size of a texture which would be the optimize size for rendering it
-	inline s32 getTextureSizeFromSurfaceSize(s32 size) const;
+	inline s32 getTextureSizeFromImageSize(s32 size);
 
 	//! creates the hardware texture
-	bool createTexture(u32 flags, IImage * image);
+	void createTexture(u32 flags);
 
 	//! copies the image to the texture
-	bool copyTexture(IImage * image);
+	bool copyTexture();
 
-	//! Get D3D color format from Irrlicht color format.
-	D3DFORMAT getD3DFormatFromColorFormat(ECOLOR_FORMAT format) const;
+	//! optimized for 16 bit to 16 copy. This is in here because before
+	//! version 0.4.2, the engine only used A1R5G5B5 hardware textures,
+	bool copyTo16BitTexture();
 
-	//! Get Irrlicht color format from D3D color format.
-	ECOLOR_FORMAT getColorFormatFromD3DFormat(D3DFORMAT format);
+	//! copies texture to 32 bit hardware texture
+	bool copyTo32BitTexture();
 
-	//! Helper function for mipmap generation.
-	bool createMipMaps(u32 level=1);
+	bool createMipMaps(s32 level=1);
 
-	//! Helper function for mipmap generation.
 	void copy16BitMipMap(char* src, char* tgt,
-		s32 width, s32 height,  s32 pitchsrc, s32 pitchtgt) const;
+		s32 width, s32 height,  s32 pitchsrc, s32 pitchtgt);
 
-	//! Helper function for mipmap generation.
 	void copy32BitMipMap(char* src, char* tgt,
-		s32 width, s32 height,  s32 pitchsrc, s32 pitchtgt) const;
+		s32 width, s32 height,  s32 pitchsrc, s32 pitchtgt);
 
+	IImage* Image;
 	IDirect3DDevice9* Device;
 	IDirect3DTexture9* Texture;
 	IDirect3DSurface9* RTTSurface;
-	CD3D9Driver* Driver;
 	core::dimension2d<s32> TextureSize;
 	core::dimension2d<s32> ImageSize;
 	s32 Pitch;
 	ECOLOR_FORMAT ColorFormat;
 
+	bool SurfaceHasSameSize; // true if image has the same dimension as texture.
 	bool HasMipMaps;
 	bool HardwareMipMaps;
 	bool IsRenderTarget;
@@ -123,5 +121,4 @@ private:
 #endif // _IRR_COMPILE_WITH_DIRECT3D_9_
 
 #endif // __C_DIRECTX9_TEXTURE_H_INCLUDED__
-
 

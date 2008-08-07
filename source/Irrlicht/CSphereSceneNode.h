@@ -1,23 +1,23 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #ifndef __C_SHPERE_SCENE_NODE_H_INCLUDED__
 #define __C_SHPERE_SCENE_NODE_H_INCLUDED__
 
-#include "IMeshSceneNode.h"
-#include "IMesh.h"
+#include "ISceneNode.h"
+#include "S3DVertex.h"
 
 namespace irr
 {
 namespace scene
 {
-	class CSphereSceneNode : public IMeshSceneNode
+	class CSphereSceneNode : public ISceneNode
 	{
 	public:
 
 		//! constructor
-		CSphereSceneNode(f32 size, u32 polyCountX, u32 polyCountY, ISceneNode* parent, ISceneManager* mgr, s32 id,
+		CSphereSceneNode(f32 size, s32 polyCount, ISceneNode* parent, ISceneManager* mgr, s32 id,
 			const core::vector3df& position = core::vector3df(0,0,0),
 			const core::vector3df& rotation = core::vector3df(0,0,0),
 			const core::vector3df& scale = core::vector3df(1.0f, 1.0f, 1.0f));
@@ -25,7 +25,7 @@ namespace scene
 		//! destructor
 		virtual ~CSphereSceneNode();
 
-		virtual void OnRegisterSceneNode();
+		virtual void OnPreRender();
 
 		//! renders the node.
 		virtual void render();
@@ -38,44 +38,35 @@ namespace scene
 		//! This function is needed for inserting the node into the scene hirachy on a
 		//! optimal position for minimizing renderstate changes, but can also be used
 		//! to directly modify the material of a scene node.
-		virtual video::SMaterial& getMaterial(u32 i);
+		virtual video::SMaterial& getMaterial(s32 i);
 
 		//! returns amount of materials used by this scene node.
-		virtual u32 getMaterialCount() const;
+		virtual s32 getMaterialCount();
 
 		//! Returns type of the scene node
-		virtual ESCENE_NODE_TYPE getType() const { return ESNT_SPHERE; }
+		virtual ESCENE_NODE_TYPE getType() { return ESNT_SPHERE; }
 
 		//! Writes attributes of the scene node.
-		virtual void serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options=0) const;
+		virtual void serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options=0);
 
 		//! Reads attributes of the scene node.
 		virtual void deserializeAttributes(io::IAttributes* in, io::SAttributeReadWriteOptions* options=0);
 
-		//! Creates a clone of this scene node and its children.
-		virtual ISceneNode* clone(ISceneNode* newParent=0, ISceneManager* newManager=0);
-
-		//! The mesh cannot be changed
-		virtual void setMesh(IMesh* mesh) {}
-
-		//! Returns the current mesh
-		virtual IMesh* getMesh() { return Mesh; }
-
-		//! Sets if the scene node should not copy the materials of the mesh but use them in a read only style.
-		/* In this way it is possible to change the materials a mesh causing all mesh scene nodes 
-		referencing this mesh to change too. */
-		virtual void setReadOnlyMaterials(bool readonly) {}
-
-		//! Returns if the scene node should not copy the materials of the mesh but use them in a read only style
-		virtual bool isReadOnlyMaterials() const { return false; }
-
 	private:
 
-		IMesh* Mesh;
+		void setSizeAndPolys();
+
 		core::aabbox3d<f32> Box;
+
+		u16* Indices;
+		s32 IndexCount;
+
+		video::S3DVertex* Vertices;
+		s32 VertexCount;
+
+		video::SMaterial Material;
 		f32 Radius;
-		u32 PolyCountX;
-		u32 PolyCountY;
+		s32 PolyCount;
 	};
 
 } // end namespace scene

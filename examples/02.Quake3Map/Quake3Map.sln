@@ -6,14 +6,11 @@ EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
-		Relase - Fast FPU = Relase - Fast FPU
 		Release = Release
 	EndGlobalSection
 	GlobalSection(ProjectConfiguration) = postSolution
 		{AF8861FB-BB79-4562-9F17-34C72F94DCD1}.Debug.ActiveCfg = Debug|Win32
 		{AF8861FB-BB79-4562-9F17-34C72F94DCD1}.Debug.Build.0 = Debug|Win32
-		{AF8861FB-BB79-4562-9F17-34C72F94DCD1}.Relase - Fast FPU.ActiveCfg = Release|Win32
-		{AF8861FB-BB79-4562-9F17-34C72F94DCD1}.Relase - Fast FPU.Build.0 = Release|Win32
 		{AF8861FB-BB79-4562-9F17-34C72F94DCD1}.Release.ActiveCfg = Release|Win32
 		{AF8861FB-BB79-4562-9F17-34C72F94DCD1}.Release.Build.0 = Release|Win32
 	EndGlobalSection

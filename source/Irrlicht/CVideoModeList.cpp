@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -12,13 +12,16 @@ namespace video
 //! constructor
 CVideoModeList::CVideoModeList()
 {
-	#ifdef _DEBUG
-	setDebugName("CVideoModeList");
-	#endif
-
 	Desktop.depth = 0;
 	Desktop.size = core::dimension2d<s32>(0,0);
 }
+
+
+//! destructor
+CVideoModeList::~CVideoModeList()
+{
+}
+
 
 
 void CVideoModeList::setDesktop(s32 desktopDepth, const core::dimension2d<s32>& desktopSize)
@@ -35,6 +38,7 @@ s32 CVideoModeList::getVideoModeCount() const
 }
 
 
+
 //! Returns the screen size of a video mode in pixels.
 core::dimension2d<s32> CVideoModeList::getVideoModeResolution(s32 modeNumber) const
 {
@@ -43,6 +47,7 @@ core::dimension2d<s32> CVideoModeList::getVideoModeResolution(s32 modeNumber) co
 
 	return VideoModes[modeNumber].size;
 }
+
 
 
 //! Returns the pixel depth of a video mode in bits.
@@ -56,7 +61,7 @@ s32 CVideoModeList::getVideoModeDepth(s32 modeNumber) const
 
 
 //! Returns current desktop screen resolution.
-const core::dimension2d<s32>& CVideoModeList::getDesktopResolution() const
+core::dimension2d<s32> CVideoModeList::getDesktopResolution() const
 {
 	return Desktop.size;
 }
@@ -69,6 +74,7 @@ s32 CVideoModeList::getDesktopDepth() const
 }
 
 
+
 //! adds a new mode to the list
 void CVideoModeList::addMode(const core::dimension2d<s32>& size, s32 depth)
 {
@@ -76,7 +82,7 @@ void CVideoModeList::addMode(const core::dimension2d<s32>& size, s32 depth)
 	m.depth = depth;
 	m.size = size;
 
-	for (u32 i=0; i<VideoModes.size(); ++i)
+	for (s32 i=0; i<(s32)VideoModes.size(); ++i)
 	{
 		if (VideoModes[i] == m)
 			return;

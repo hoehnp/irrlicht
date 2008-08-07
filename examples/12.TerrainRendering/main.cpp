@@ -5,8 +5,6 @@ terrain.
 
 Note that the Terrain Renderer in Irrlicht is based on Spintz' GeoMipMapSceneNode, lots 
 of thanks go to him.
-DeusXL provided a new elegant simple solution for building larger area on small heightmaps
--> terrain smoothing.
 In the beginning there is nothing special. We include the needed header files and create
 an event listener to listen if the user presses the 'W' key so we can switch to wireframe
 mode and if he presses 'D' we toggle to material between solid and detail mapped.
@@ -29,7 +27,7 @@ public:
 		Terrain = terrain;
 	}
 
-	bool OnEvent(const SEvent& event)
+	bool OnEvent(SEvent event)
 	{
 		// check if user presses the key 'W' or 'D'
 		if (event.EventType == irr::EET_KEY_INPUT_EVENT && !event.KeyInput.PressedDown)
@@ -72,7 +70,7 @@ int main()
 
 	printf("Please select the driver you want for this example:\n"\
 		" (a) Direct3D 9.0c\n (b) Direct3D 8.1\n (c) OpenGL 1.5\n"\
-		" (d) Software Renderer\n (e) Burning's Software Renderer\n"\
+		" (d) Software Renderer\n (e) Apfelbaum Software Renderer\n"\
 		" (f) NullDevice\n (otherKey) exit\n\n");
 
 	char i;
@@ -84,7 +82,7 @@ int main()
 		case 'b': driverType = video::EDT_DIRECT3D8;break;
 		case 'c': driverType = video::EDT_OPENGL;   break;
 		case 'd': driverType = video::EDT_SOFTWARE; break;
-		case 'e': driverType = video::EDT_BURNINGSVIDEO;break;
+		case 'e': driverType = video::EDT_SOFTWARE2;break;
 		case 'f': driverType = video::EDT_NULL;     break;
 		default: return 1;
 	}	
@@ -110,20 +108,17 @@ int main()
 	driver->setTextureCreationFlag(video::ETCF_ALWAYS_32_BIT, true);
 
 	// add irrlicht logo
-	env->addImage(driver->getTexture("../../media/irrlichtlogo2.png"),
+	env->addImage(driver->getTexture("../../media/irrlichtlogoalpha.tga"),
 		core::position2d<s32>(10,10));
-
-	//set other font
-	env->getSkin()->setFont(env->getFont("../../media/fontlucida.png"));
 
 	// add some help text
 	gui::IGUIStaticText* text = env->addStaticText(
 		L"Press 'W' to change wireframe mode\nPress 'D' to toggle detail map",
-		core::rect<s32>(10,440,250,475), true, true, 0, -1, true);
+		core::rect<s32>(10,453,200,475), true, true, 0, -1, true);
 
 	// add camera
 	scene::ICameraSceneNode* camera = 
-		smgr->addCameraSceneNodeFPS(0,100.0f,1200.f);
+		smgr->addCameraSceneNodeFPS(0,100.0f,1200.0f);
 
 	camera->setPosition(core::vector3df(1900*2,255*2,3700*2));
 	camera->setTarget(core::vector3df(2397*2,343*2,2700*2));
@@ -148,18 +143,9 @@ int main()
 
 	// add terrain scene node
 	scene::ITerrainSceneNode* terrain = smgr->addTerrainSceneNode( 
-		"../../media/terrain-heightmap.bmp",
-		0,										// parent node
-		-1,										// node id
-		core::vector3df(0.f, 0.f, 0.f),			// position
-		core::vector3df(0.f, 0.f, 0.f),			// rotation
-		core::vector3df(40.f, 4.4f, 40.f),		// scale
-		video::SColor ( 255, 255, 255, 255 ),	// vertexColor,
-		5,										// maxLOD
-		scene::ETPS_17,							// patchSize
-		4										// smoothFactor
-		);
+		"../../media/terrain-heightmap.bmp");
 
+	terrain->setScale(core::vector3df(40, 4.4f, 40));
 	terrain->setMaterialFlag(video::EMF_LIGHTING, false);
 
 	terrain->setMaterialTexture(0, driver->getTexture("../../media/terrain-texture.jpg"));
@@ -168,7 +154,6 @@ int main()
 	terrain->setMaterialType(video::EMT_DETAIL_MAP);
 
 	terrain->scaleTexture(1.0f, 20.0f);
-	//terrain->setDebugDataVisible ( true );
 
 	/*
 	To be able to do collision with the terrain, we create a triangle selector.
@@ -183,13 +168,13 @@ int main()
 	scene::ITriangleSelector* selector
 		= smgr->createTerrainTriangleSelector(terrain, 0);
 	terrain->setTriangleSelector(selector);
+	selector->drop();
 
 	// create collision response animator and attach it to the camera
 	scene::ISceneNodeAnimator* anim = smgr->createCollisionResponseAnimator(
 		selector, camera, core::vector3df(60,100,60),
 		core::vector3df(0,0,0), 
 		core::vector3df(0,50,0));
-	selector->drop();
 	camera->addAnimator(anim);
 	anim->drop();
 
@@ -216,7 +201,6 @@ int main()
 
 	driver->setTextureCreationFlag(video::ETCF_CREATE_MIP_MAPS, true);
 
-
 	/*
 	That's it, draw everything. Now you know how to use terrain in Irrlicht.
 	*/
@@ -241,10 +225,6 @@ int main()
 			str += driver->getName();
 			str += "] FPS:";
 			str += fps;
-			// Also print terrain height of current camera position
-			// We can use camera position because terrain is located at coordinate origin
-			str += " Height: ";
-			str += terrain->getHeight(camera->getAbsolutePosition().X, camera->getAbsolutePosition().Z);
 
 			device->setWindowCaption(str.c_str());
 			lastFPS = fps;

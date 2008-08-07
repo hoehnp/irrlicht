@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -16,33 +16,26 @@ namespace scene
 	public:
 
 		//! constructor
-		CSceneNodeAnimatorFlyCircle(u32 time,
-				const core::vector3df& center, f32 radius,
-				f32 speed, const core::vector3df& direction);
+		CSceneNodeAnimatorFlyCircle(u32 time, const core::vector3df& center, f32 radius, f32 speed);
+
+		//! destructor
+		virtual ~CSceneNodeAnimatorFlyCircle();
 
 		//! animates a scene node
 		virtual void animateNode(ISceneNode* node, u32 timeMs);
 
 		//! Writes attributes of the scene node animator.
-		virtual void serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options=0) const;
+		virtual void serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options=0);
 
 		//! Reads attributes of the scene node animator.
 		virtual void deserializeAttributes(io::IAttributes* in, io::SAttributeReadWriteOptions* options=0);
 
 		//! Returns type of the scene node animator
-		virtual ESCENE_NODE_ANIMATOR_TYPE getType() const { return ESNAT_FLY_CIRCLE; }
+		virtual ESCENE_NODE_ANIMATOR_TYPE getType()	{ return ESNAT_FLY_CIRCLE; }
 
 	private:
-		// do some initial calculations
-		void init();
 
-		// circle center
 		core::vector3df Center;
-		// up-vector, normal to the circle's plane
-		core::vector3df Direction;
-		// Two helper vectors
-		core::vector3df VecU;
-		core::vector3df VecV;
 		f32 Radius;
 		f32 Speed;
 		u32 StartTime;

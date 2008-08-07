@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -6,6 +6,7 @@
 #define __C_SHADOW_VOLUME_SCENE_NODE_H_INCLUDED__
 
 #include "IShadowVolumeSceneNode.h"
+#include "SLight.h"
 
 namespace irr
 {
@@ -25,10 +26,10 @@ namespace scene
 		virtual ~CShadowVolumeSceneNode();
 
 		//! sets the mesh from which the shadow volume should be generated.
-		virtual void setMeshToRenderFrom(const IMesh* mesh);
+		virtual void setMeshToRenderFrom(IMesh* mesh);
 
 		//! pre render method
-		virtual void OnRegisterSceneNode();
+		virtual void OnPreRender();
 
 		//! renders the node.
 		virtual void render();
@@ -36,8 +37,14 @@ namespace scene
 		//! returns the axis aligned bounding box of this node
 		virtual const core::aabbox3d<f32>& getBoundingBox() const;
 
+		//! returns the material based on the zero based index i.
+		virtual video::SMaterial& getMaterial(s32 i);
+		
+		//! returns amount of materials used by this scene node.
+		virtual s32 getMaterialCount();
+
 		//! Returns type of the scene node
-		virtual ESCENE_NODE_TYPE getType() const { return ESNT_SHADOW_VOLUME; }
+		virtual ESCENE_NODE_TYPE getType() { return ESNT_SHADOW_VOLUME; }
 
 	private:
 
@@ -49,25 +56,25 @@ namespace scene
 		};
 
 		void createShadowVolume(const core::vector3df& pos);
-		void createZPassVolume(s32 faceCount, s32& numEdges, core::vector3df light, SShadowVolume* svp, bool caps);
-		void createZFailVolume(s32 faceCount, s32& numEdges, const core::vector3df& light, SShadowVolume* svp);
+		void createZPassVolume(s32 faceCount, s32& numEdges, const core::vector3df light, SShadowVolume* svp, bool caps);
+		void createZFailVolume(s32 faceCount, s32& numEdges, const core::vector3df light, SShadowVolume* svp);
 		void addEdge(s32& numEdges, u16 v0, u16 v1);
 
 		//! Generates adjacency information based on mesh indices.
 		void calculateAdjacency(f32 epsilon=0.0001f);
 
+		bool UseZFailMethod;
 		core::aabbox3d<f32> Box;
 
 		u16* Indices;
 		core::vector3df* Vertices;
 		u16* Adjacency;
 		bool* FaceData; // used for zfail method, if face is front facing
-		bool UseZFailMethod;
 
 		s32 IndexCountAllocated;
 		s32 VertexCountAllocated;
 		s32 IndexCount;
-		s32 VertexCount;
+		s32 VertexCount;	
 
 		core::array<SShadowVolume> ShadowVolumes; // a shadow volume for every light
 		s32 ShadowVolumesUsed;

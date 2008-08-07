@@ -1,22 +1,18 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
-
-#include "IrrCompileConfig.h"
-#ifdef _IRR_COMPILE_WITH_MD2_LOADER_
 
 #include "CAnimatedMeshMD2.h"
 #include "os.h"
 #include "SColor.h"
 #include "IReadFile.h"
-#include "irrMath.h"
 
 namespace irr
 {
 namespace scene
 {
 
-#if defined(_MSC_VER) ||  defined(__BORLANDC__) || defined (__BCPLUSPLUS__) 
+#ifdef _MSC_VER
 #	pragma pack( push, packing )
 #	pragma pack( 1 )
 #	define PACK_STRUCT
@@ -31,10 +27,7 @@ namespace scene
 	const s32 MD2_MAGIC_NUMBER = 844121161;
 	const s32 MD2_VERSION		= 8;
 	const s32 MD2_MAX_VERTS		= 2048;
-
-	// TA: private
-	const s32 MD2_FRAME_SHIFT	= 2;
-	const f32 MD2_FRAME_SHIFT_RECIPROCAL = 1.f / ( 1 << MD2_FRAME_SHIFT );
+	const s32 MD2_FRAME_SHIFT	= 3;
 
 	struct SMD2Header
 	{
@@ -73,8 +66,8 @@ namespace scene
 
 	struct SMD2Triangle
 	{
-		u16 vertexIndices[3];
-		u16 textureIndices[3];
+		s16 vertexIndices[3];
+		s16 textureIndices[3];
 	} PACK_STRUCT;
 
 	struct SMD2TextureCoordinate
@@ -90,7 +83,7 @@ namespace scene
 	} PACK_STRUCT;
 
 // Default alignment
-#if defined(_MSC_VER) ||  defined(__BORLANDC__) || defined (__BCPLUSPLUS__) 
+#ifdef _MSC_VER
 #	pragma pack( pop, packing )
 #endif
 
@@ -100,168 +93,168 @@ namespace scene
 const s32 Q2_VERTEX_NORMAL_TABLE_SIZE = 162;
 
 static const f32 Q2_VERTEX_NORMAL_TABLE[Q2_VERTEX_NORMAL_TABLE_SIZE][3] = {
-	{-0.525731f, 0.000000f, 0.850651f},
-	{-0.442863f, 0.238856f, 0.864188f},
-	{-0.295242f, 0.000000f, 0.955423f},
-	{-0.309017f, 0.500000f, 0.809017f},
-	{-0.162460f, 0.262866f, 0.951056f},
-	{0.000000f, 0.000000f, 1.000000f},
-	{0.000000f, 0.850651f, 0.525731f},
-	{-0.147621f, 0.716567f, 0.681718f},
-	{0.147621f, 0.716567f, 0.681718f},
-	{0.000000f, 0.525731f, 0.850651f},
-	{0.309017f, 0.500000f, 0.809017f},
-	{0.525731f, 0.000000f, 0.850651f},
-	{0.295242f, 0.000000f, 0.955423f},
-	{0.442863f, 0.238856f, 0.864188f},
-	{0.162460f, 0.262866f, 0.951056f},
-	{-0.681718f, 0.147621f, 0.716567f},
-	{-0.809017f, 0.309017f, 0.500000f},
-	{-0.587785f, 0.425325f, 0.688191f},
-	{-0.850651f, 0.525731f, 0.000000f},
-	{-0.864188f, 0.442863f, 0.238856f},
-	{-0.716567f, 0.681718f, 0.147621f},
-	{-0.688191f, 0.587785f, 0.425325f},
-	{-0.500000f, 0.809017f, 0.309017f},
-	{-0.238856f, 0.864188f, 0.442863f},
-	{-0.425325f, 0.688191f, 0.587785f},
-	{-0.716567f, 0.681718f, -0.147621f},
-	{-0.500000f, 0.809017f, -0.309017f},
-	{-0.525731f, 0.850651f, 0.000000f},
-	{0.000000f, 0.850651f, -0.525731f},
-	{-0.238856f, 0.864188f, -0.442863f},
-	{0.000000f, 0.955423f, -0.295242f},
-	{-0.262866f, 0.951056f, -0.162460f},
-	{0.000000f, 1.000000f, 0.000000f},
-	{0.000000f, 0.955423f, 0.295242f},
-	{-0.262866f, 0.951056f, 0.162460f},
-	{0.238856f, 0.864188f, 0.442863f},
-	{0.262866f, 0.951056f, 0.162460f},
-	{0.500000f, 0.809017f, 0.309017f},
-	{0.238856f, 0.864188f, -0.442863f},
-	{0.262866f, 0.951056f, -0.162460f},
-	{0.500000f, 0.809017f, -0.309017f},
-	{0.850651f, 0.525731f, 0.000000f},
-	{0.716567f, 0.681718f, 0.147621f},
-	{0.716567f, 0.681718f, -0.147621f},
-	{0.525731f, 0.850651f, 0.000000f},
-	{0.425325f, 0.688191f, 0.587785f},
-	{0.864188f, 0.442863f, 0.238856f},
-	{0.688191f, 0.587785f, 0.425325f},
-	{0.809017f, 0.309017f, 0.500000f},
-	{0.681718f, 0.147621f, 0.716567f},
-	{0.587785f, 0.425325f, 0.688191f},
-	{0.955423f, 0.295242f, 0.000000f},
-	{1.000000f, 0.000000f, 0.000000f},
-	{0.951056f, 0.162460f, 0.262866f},
-	{0.850651f, -0.525731f, 0.000000f},
-	{0.955423f, -0.295242f, 0.000000f},
-	{0.864188f, -0.442863f, 0.238856f},
-	{0.951056f, -0.162460f, 0.262866f},
-	{0.809017f, -0.309017f, 0.500000f},
-	{0.681718f, -0.147621f, 0.716567f},
-	{0.850651f, 0.000000f, 0.525731f},
-	{0.864188f, 0.442863f, -0.238856f},
-	{0.809017f, 0.309017f, -0.500000f},
-	{0.951056f, 0.162460f, -0.262866f},
-	{0.525731f, 0.000000f, -0.850651f},
-	{0.681718f, 0.147621f, -0.716567f},
-	{0.681718f, -0.147621f, -0.716567f},
-	{0.850651f, 0.000000f, -0.525731f},
-	{0.809017f, -0.309017f, -0.500000f},
-	{0.864188f, -0.442863f, -0.238856f},
-	{0.951056f, -0.162460f, -0.262866f},
-	{0.147621f, 0.716567f, -0.681718f},
-	{0.309017f, 0.500000f, -0.809017f},
-	{0.425325f, 0.688191f, -0.587785f},
-	{0.442863f, 0.238856f, -0.864188f},
-	{0.587785f, 0.425325f, -0.688191f},
-	{0.688191f, 0.587785f, -0.425325f},
-	{-0.147621f, 0.716567f, -0.681718f},
-	{-0.309017f, 0.500000f, -0.809017f},
-	{0.000000f, 0.525731f, -0.850651f},
-	{-0.525731f, 0.000000f, -0.850651f},
-	{-0.442863f, 0.238856f, -0.864188f},
-	{-0.295242f, 0.000000f, -0.955423f},
-	{-0.162460f, 0.262866f, -0.951056f},
-	{0.000000f, 0.000000f, -1.000000f},
-	{0.295242f, 0.000000f, -0.955423f},
-	{0.162460f, 0.262866f, -0.951056f},
-	{-0.442863f, -0.238856f, -0.864188f},
-	{-0.309017f, -0.500000f, -0.809017f},
-	{-0.162460f, -0.262866f, -0.951056f},
-	{0.000000f, -0.850651f, -0.525731f},
-	{-0.147621f, -0.716567f, -0.681718f},
-	{0.147621f, -0.716567f, -0.681718f},
-	{0.000000f, -0.525731f, -0.850651f},
-	{0.309017f, -0.500000f, -0.809017f},
-	{0.442863f, -0.238856f, -0.864188f},
-	{0.162460f, -0.262866f, -0.951056f},
-	{0.238856f, -0.864188f, -0.442863f},
-	{0.500000f, -0.809017f, -0.309017f},
-	{0.425325f, -0.688191f, -0.587785f},
-	{0.716567f, -0.681718f, -0.147621f},
-	{0.688191f, -0.587785f, -0.425325f},
-	{0.587785f, -0.425325f, -0.688191f},
-	{0.000000f, -0.955423f, -0.295242f},
-	{0.000000f, -1.000000f, 0.000000f},
-	{0.262866f, -0.951056f, -0.162460f},
-	{0.000000f, -0.850651f, 0.525731f},
-	{0.000000f, -0.955423f, 0.295242f},
-	{0.238856f, -0.864188f, 0.442863f},
-	{0.262866f, -0.951056f, 0.162460f},
-	{0.500000f, -0.809017f, 0.309017f},
-	{0.716567f, -0.681718f, 0.147621f},
-	{0.525731f, -0.850651f, 0.000000f},
-	{-0.238856f, -0.864188f, -0.442863f},
-	{-0.500000f, -0.809017f, -0.309017f},
-	{-0.262866f, -0.951056f, -0.162460f},
-	{-0.850651f, -0.525731f, 0.000000f},
-	{-0.716567f, -0.681718f, -0.147621f},
-	{-0.716567f, -0.681718f, 0.147621f},
-	{-0.525731f, -0.850651f, 0.000000f},
-	{-0.500000f, -0.809017f, 0.309017f},
-	{-0.238856f, -0.864188f, 0.442863f},
-	{-0.262866f, -0.951056f, 0.162460f},
-	{-0.864188f, -0.442863f, 0.238856f},
-	{-0.809017f, -0.309017f, 0.500000f},
-	{-0.688191f, -0.587785f, 0.425325f},
-	{-0.681718f, -0.147621f, 0.716567f},
-	{-0.442863f, -0.238856f, 0.864188f},
-	{-0.587785f, -0.425325f, 0.688191f},
-	{-0.309017f, -0.500000f, 0.809017f},
-	{-0.147621f, -0.716567f, 0.681718f},
-	{-0.425325f, -0.688191f, 0.587785f},
-	{-0.162460f, -0.262866f, 0.951056f},
-	{0.442863f, -0.238856f, 0.864188f},
-	{0.162460f, -0.262866f, 0.951056f},
-	{0.309017f, -0.500000f, 0.809017f},
-	{0.147621f, -0.716567f, 0.681718f},
-	{0.000000f, -0.525731f, 0.850651f},
-	{0.425325f, -0.688191f, 0.587785f},
-	{0.587785f, -0.425325f, 0.688191f},
-	{0.688191f, -0.587785f, 0.425325f},
-	{-0.955423f, 0.295242f, 0.000000f},
-	{-0.951056f, 0.162460f, 0.262866f},
-	{-1.000000f, 0.000000f, 0.000000f},
-	{-0.850651f, 0.000000f, 0.525731f},
-	{-0.955423f, -0.295242f, 0.000000f},
-	{-0.951056f, -0.162460f, 0.262866f},
-	{-0.864188f, 0.442863f, -0.238856f},
-	{-0.951056f, 0.162460f, -0.262866f},
-	{-0.809017f, 0.309017f, -0.500000f},
-	{-0.864188f, -0.442863f, -0.238856f},
-	{-0.951056f, -0.162460f, -0.262866f},
-	{-0.809017f, -0.309017f, -0.500000f},
-	{-0.681718f, 0.147621f, -0.716567f},
-	{-0.681718f, -0.147621f, -0.716567f},
-	{-0.850651f, 0.000000f, -0.525731f},
-	{-0.688191f, 0.587785f, -0.425325f},
-	{-0.587785f, 0.425325f, -0.688191f},
-	{-0.425325f, 0.688191f, -0.587785f},
-	{-0.425325f, -0.688191f, -0.587785f},
-	{-0.587785f, -0.425325f, -0.688191f},
-	{-0.688191f, -0.587785f, -0.425325f},
+	{-0.525731f, 0.000000f, 0.850651f}, 
+	{-0.442863f, 0.238856f, 0.864188f}, 
+	{-0.295242f, 0.000000f, 0.955423f}, 
+	{-0.309017f, 0.500000f, 0.809017f}, 
+	{-0.162460f, 0.262866f, 0.951056f}, 
+	{0.000000f, 0.000000f, 1.000000f}, 
+	{0.000000f, 0.850651f, 0.525731f}, 
+	{-0.147621f, 0.716567f, 0.681718f}, 
+	{0.147621f, 0.716567f, 0.681718f}, 
+	{0.000000f, 0.525731f, 0.850651f}, 
+	{0.309017f, 0.500000f, 0.809017f}, 
+	{0.525731f, 0.000000f, 0.850651f}, 
+	{0.295242f, 0.000000f, 0.955423f}, 
+	{0.442863f, 0.238856f, 0.864188f}, 
+	{0.162460f, 0.262866f, 0.951056f}, 
+	{-0.681718f, 0.147621f, 0.716567f}, 
+	{-0.809017f, 0.309017f, 0.500000f}, 
+	{-0.587785f, 0.425325f, 0.688191f}, 
+	{-0.850651f, 0.525731f, 0.000000f}, 
+	{-0.864188f, 0.442863f, 0.238856f}, 
+	{-0.716567f, 0.681718f, 0.147621f}, 
+	{-0.688191f, 0.587785f, 0.425325f}, 
+	{-0.500000f, 0.809017f, 0.309017f}, 
+	{-0.238856f, 0.864188f, 0.442863f}, 
+	{-0.425325f, 0.688191f, 0.587785f}, 
+	{-0.716567f, 0.681718f, -0.147621f}, 
+	{-0.500000f, 0.809017f, -0.309017f}, 
+	{-0.525731f, 0.850651f, 0.000000f}, 
+	{0.000000f, 0.850651f, -0.525731f}, 
+	{-0.238856f, 0.864188f, -0.442863f}, 
+	{0.000000f, 0.955423f, -0.295242f}, 
+	{-0.262866f, 0.951056f, -0.162460f}, 
+	{0.000000f, 1.000000f, 0.000000f}, 
+	{0.000000f, 0.955423f, 0.295242f}, 
+	{-0.262866f, 0.951056f, 0.162460f}, 
+	{0.238856f, 0.864188f, 0.442863f}, 
+	{0.262866f, 0.951056f, 0.162460f}, 
+	{0.500000f, 0.809017f, 0.309017f}, 
+	{0.238856f, 0.864188f, -0.442863f}, 
+	{0.262866f, 0.951056f, -0.162460f}, 
+	{0.500000f, 0.809017f, -0.309017f}, 
+	{0.850651f, 0.525731f, 0.000000f}, 
+	{0.716567f, 0.681718f, 0.147621f}, 
+	{0.716567f, 0.681718f, -0.147621f}, 
+	{0.525731f, 0.850651f, 0.000000f}, 
+	{0.425325f, 0.688191f, 0.587785f}, 
+	{0.864188f, 0.442863f, 0.238856f}, 
+	{0.688191f, 0.587785f, 0.425325f}, 
+	{0.809017f, 0.309017f, 0.500000f}, 
+	{0.681718f, 0.147621f, 0.716567f}, 
+	{0.587785f, 0.425325f, 0.688191f}, 
+	{0.955423f, 0.295242f, 0.000000f}, 
+	{1.000000f, 0.000000f, 0.000000f}, 
+	{0.951056f, 0.162460f, 0.262866f}, 
+	{0.850651f, -0.525731f, 0.000000f}, 
+	{0.955423f, -0.295242f, 0.000000f}, 
+	{0.864188f, -0.442863f, 0.238856f}, 
+	{0.951056f, -0.162460f, 0.262866f}, 
+	{0.809017f, -0.309017f, 0.500000f}, 
+	{0.681718f, -0.147621f, 0.716567f}, 
+	{0.850651f, 0.000000f, 0.525731f}, 
+	{0.864188f, 0.442863f, -0.238856f}, 
+	{0.809017f, 0.309017f, -0.500000f}, 
+	{0.951056f, 0.162460f, -0.262866f}, 
+	{0.525731f, 0.000000f, -0.850651f}, 
+	{0.681718f, 0.147621f, -0.716567f}, 
+	{0.681718f, -0.147621f, -0.716567f}, 
+	{0.850651f, 0.000000f, -0.525731f}, 
+	{0.809017f, -0.309017f, -0.500000f}, 
+	{0.864188f, -0.442863f, -0.238856f}, 
+	{0.951056f, -0.162460f, -0.262866f}, 
+	{0.147621f, 0.716567f, -0.681718f}, 
+	{0.309017f, 0.500000f, -0.809017f}, 
+	{0.425325f, 0.688191f, -0.587785f}, 
+	{0.442863f, 0.238856f, -0.864188f}, 
+	{0.587785f, 0.425325f, -0.688191f}, 
+	{0.688191f, 0.587785f, -0.425325f}, 
+	{-0.147621f, 0.716567f, -0.681718f}, 
+	{-0.309017f, 0.500000f, -0.809017f}, 
+	{0.000000f, 0.525731f, -0.850651f}, 
+	{-0.525731f, 0.000000f, -0.850651f}, 
+	{-0.442863f, 0.238856f, -0.864188f}, 
+	{-0.295242f, 0.000000f, -0.955423f}, 
+	{-0.162460f, 0.262866f, -0.951056f}, 
+	{0.000000f, 0.000000f, -1.000000f}, 
+	{0.295242f, 0.000000f, -0.955423f}, 
+	{0.162460f, 0.262866f, -0.951056f}, 
+	{-0.442863f, -0.238856f, -0.864188f}, 
+	{-0.309017f, -0.500000f, -0.809017f}, 
+	{-0.162460f, -0.262866f, -0.951056f}, 
+	{0.000000f, -0.850651f, -0.525731f}, 
+	{-0.147621f, -0.716567f, -0.681718f}, 
+	{0.147621f, -0.716567f, -0.681718f}, 
+	{0.000000f, -0.525731f, -0.850651f}, 
+	{0.309017f, -0.500000f, -0.809017f}, 
+	{0.442863f, -0.238856f, -0.864188f}, 
+	{0.162460f, -0.262866f, -0.951056f}, 
+	{0.238856f, -0.864188f, -0.442863f}, 
+	{0.500000f, -0.809017f, -0.309017f}, 
+	{0.425325f, -0.688191f, -0.587785f}, 
+	{0.716567f, -0.681718f, -0.147621f}, 
+	{0.688191f, -0.587785f, -0.425325f}, 
+	{0.587785f, -0.425325f, -0.688191f}, 
+	{0.000000f, -0.955423f, -0.295242f}, 
+	{0.000000f, -1.000000f, 0.000000f}, 
+	{0.262866f, -0.951056f, -0.162460f}, 
+	{0.000000f, -0.850651f, 0.525731f}, 
+	{0.000000f, -0.955423f, 0.295242f}, 
+	{0.238856f, -0.864188f, 0.442863f}, 
+	{0.262866f, -0.951056f, 0.162460f}, 
+	{0.500000f, -0.809017f, 0.309017f}, 
+	{0.716567f, -0.681718f, 0.147621f}, 
+	{0.525731f, -0.850651f, 0.000000f}, 
+	{-0.238856f, -0.864188f, -0.442863f}, 
+	{-0.500000f, -0.809017f, -0.309017f}, 
+	{-0.262866f, -0.951056f, -0.162460f}, 
+	{-0.850651f, -0.525731f, 0.000000f}, 
+	{-0.716567f, -0.681718f, -0.147621f}, 
+	{-0.716567f, -0.681718f, 0.147621f}, 
+	{-0.525731f, -0.850651f, 0.000000f}, 
+	{-0.500000f, -0.809017f, 0.309017f}, 
+	{-0.238856f, -0.864188f, 0.442863f}, 
+	{-0.262866f, -0.951056f, 0.162460f}, 
+	{-0.864188f, -0.442863f, 0.238856f}, 
+	{-0.809017f, -0.309017f, 0.500000f}, 
+	{-0.688191f, -0.587785f, 0.425325f}, 
+	{-0.681718f, -0.147621f, 0.716567f}, 
+	{-0.442863f, -0.238856f, 0.864188f}, 
+	{-0.587785f, -0.425325f, 0.688191f}, 
+	{-0.309017f, -0.500000f, 0.809017f}, 
+	{-0.147621f, -0.716567f, 0.681718f}, 
+	{-0.425325f, -0.688191f, 0.587785f}, 
+	{-0.162460f, -0.262866f, 0.951056f}, 
+	{0.442863f, -0.238856f, 0.864188f}, 
+	{0.162460f, -0.262866f, 0.951056f}, 
+	{0.309017f, -0.500000f, 0.809017f}, 
+	{0.147621f, -0.716567f, 0.681718f}, 
+	{0.000000f, -0.525731f, 0.850651f}, 
+	{0.425325f, -0.688191f, 0.587785f}, 
+	{0.587785f, -0.425325f, 0.688191f}, 
+	{0.688191f, -0.587785f, 0.425325f}, 
+	{-0.955423f, 0.295242f, 0.000000f}, 
+	{-0.951056f, 0.162460f, 0.262866f}, 
+	{-1.000000f, 0.000000f, 0.000000f}, 
+	{-0.850651f, 0.000000f, 0.525731f}, 
+	{-0.955423f, -0.295242f, 0.000000f}, 
+	{-0.951056f, -0.162460f, 0.262866f}, 
+	{-0.864188f, 0.442863f, -0.238856f}, 
+	{-0.951056f, 0.162460f, -0.262866f}, 
+	{-0.809017f, 0.309017f, -0.500000f}, 
+	{-0.864188f, -0.442863f, -0.238856f}, 
+	{-0.951056f, -0.162460f, -0.262866f}, 
+	{-0.809017f, -0.309017f, -0.500000f}, 
+	{-0.681718f, 0.147621f, -0.716567f}, 
+	{-0.681718f, -0.147621f, -0.716567f}, 
+	{-0.850651f, 0.000000f, -0.525731f}, 
+	{-0.688191f, 0.587785f, -0.425325f}, 
+	{-0.587785f, 0.425325f, -0.688191f}, 
+	{-0.425325f, 0.688191f, -0.587785f}, 
+	{-0.425325f, -0.688191f, -0.587785f}, 
+	{-0.587785f, -0.425325f, -0.688191f}, 
+	{-0.688191f, -0.587785f, -0.425325f}, 
 	};
 
 struct SMD2AnimationType
@@ -299,42 +292,44 @@ static const SMD2AnimationType MD2AnimationTypeList[21] =
 
 //! constructor
 CAnimatedMeshMD2::CAnimatedMeshMD2()
-: InterpolationBuffer(0), FrameList(0), FrameCount(0), TriangleCount(0)
+: FrameCount(0), FrameList(0)
 {
 	#ifdef _DEBUG
 	IAnimatedMesh::setDebugName("CAnimatedMeshMD2 IAnimatedMesh");
 	IMesh::setDebugName("CAnimatedMeshMD2 IMesh");
-	#endif
-	InterpolationBuffer = new SMeshBuffer;
+	IMeshBuffer::setDebugName("CAnimatedMeshMD2 IMeshBuffer");
+	#endif	
 }
+
 
 
 //! destructor
 CAnimatedMeshMD2::~CAnimatedMeshMD2()
 {
-	delete [] FrameList;
-	if (InterpolationBuffer)
-		InterpolationBuffer->drop();
+	if (FrameList)
+		delete [] FrameList;
 }
 
 
+
 //! returns the amount of frames in milliseconds. If the amount is 1, it is a static (=non animated) mesh.
-u32 CAnimatedMeshMD2::getFrameCount() const
+s32 CAnimatedMeshMD2::getFrameCount()
 {
 	return FrameCount<<MD2_FRAME_SHIFT;
 }
 
 
+
 //! returns the animated mesh based on a detail level. 0 is the lowest, 255 the highest detail. Note, that some Meshes will ignore the detail level.
 IMesh* CAnimatedMeshMD2::getMesh(s32 frame, s32 detailLevel, s32 startFrameLoop, s32 endFrameLoop)
 {
-	if ((u32)frame > getFrameCount())
-		frame = (frame % getFrameCount());
+	if ((u32)frame > (FrameCount<<MD2_FRAME_SHIFT))
+		frame = (frame % (FrameCount<<MD2_FRAME_SHIFT));
 
 	if (startFrameLoop == -1 && endFrameLoop == -1)
 	{
 		startFrameLoop = 0;
-		endFrameLoop = getFrameCount();
+		endFrameLoop = FrameCount<<MD2_FRAME_SHIFT;
 	}
 
 	updateInterpolationBuffer(frame, startFrameLoop, endFrameLoop);
@@ -343,26 +338,86 @@ IMesh* CAnimatedMeshMD2::getMesh(s32 frame, s32 detailLevel, s32 startFrameLoop,
 
 
 //! returns amount of mesh buffers.
-u32 CAnimatedMeshMD2::getMeshBufferCount() const
+s32 CAnimatedMeshMD2::getMeshBufferCount()
 {
 	return 1;
 }
 
 
 //! returns pointer to a mesh buffer
-IMeshBuffer* CAnimatedMeshMD2::getMeshBuffer(u32 nr) const
+IMeshBuffer* CAnimatedMeshMD2::getMeshBuffer(s32 nr)
 {
-	return InterpolationBuffer;
+	return this;
 }
 
 
-//! Returns pointer to a mesh buffer which fits a material
-IMeshBuffer* CAnimatedMeshMD2::getMeshBuffer(const video::SMaterial &material) const
+
+//! returns the material of this meshbuffer
+const video::SMaterial& CAnimatedMeshMD2::getMaterial() const
 {
-	if (InterpolationBuffer->Material == material)
-		return InterpolationBuffer;
-	else
-		return 0;
+	return Material;
+}
+
+
+//! returns the material of this meshbuffer
+video::SMaterial& CAnimatedMeshMD2::getMaterial()
+{
+	return Material;
+}
+
+
+
+//! returns pointer to vertices
+const void* CAnimatedMeshMD2::getVertices() const
+{
+	return InterpolateBuffer.const_pointer();
+}
+
+
+//! returns pointer to vertices
+void* CAnimatedMeshMD2::getVertices()
+{
+	return InterpolateBuffer.pointer();
+}
+
+
+
+//! returns which type of vertex data is stored.
+video::E_VERTEX_TYPE CAnimatedMeshMD2::getVertexType() const
+{
+	return video::EVT_STANDARD;
+}
+
+
+
+//! returns amount of vertices
+s32 CAnimatedMeshMD2::getVertexCount() const
+{
+	return FrameList[0].size();
+}
+
+
+
+//! returns pointer to Indices
+const u16* CAnimatedMeshMD2::getIndices() const
+{
+	return Indices.const_pointer();
+}
+
+
+
+//! returns pointer to Indices
+u16* CAnimatedMeshMD2::getIndices()
+{
+	return Indices.pointer();
+}
+
+
+
+//! returns amount of indices
+s32 CAnimatedMeshMD2::getIndexCount() const
+{
+	return Indices.size();
 }
 
 
@@ -383,27 +438,41 @@ void CAnimatedMeshMD2::updateInterpolationBuffer(s32 frame, s32 startFrameLoop, 
 	else
 	{
 		// key frames
+#if 1
 		u32 s = startFrameLoop >> MD2_FRAME_SHIFT;
 		u32 e = endFrameLoop >> MD2_FRAME_SHIFT;
 
 		firstFrame = frame >> MD2_FRAME_SHIFT;
-		secondFrame = core::if_c_a_else_b ( firstFrame + 1 > e, s, firstFrame + 1 );
+		// are there reverse anims ?
+		secondFrame = firstFrame + 1;
+		if ( secondFrame > e )
+			secondFrame = s;
 
-		firstFrame = core::s32_min ( FrameCount - 1, firstFrame );
-		secondFrame = core::s32_min ( FrameCount - 1, secondFrame );
+		firstFrame = min ( FrameCount - 1, firstFrame );
+		secondFrame = min ( FrameCount - 1, secondFrame );
 
-		//div = (frame % (1<<MD2_FRAME_SHIFT)) / (f32)(1<<MD2_FRAME_SHIFT);
-		frame &= (1<<MD2_FRAME_SHIFT) - 1;
-		div = frame * MD2_FRAME_SHIFT_RECIPROCAL;
+		div = (frame % (1<<MD2_FRAME_SHIFT)) / (f32)(1<<MD2_FRAME_SHIFT);
+#else
+		firstFrame = frame>>MD2_FRAME_SHIFT;
+
+		if (!((endFrameLoop>>MD2_FRAME_SHIFT) - (startFrameLoop>>MD2_FRAME_SHIFT)))
+			secondFrame = firstFrame;
+		else
+		secondFrame = (startFrameLoop>>MD2_FRAME_SHIFT) + (((frame>>MD2_FRAME_SHIFT)+1 - (startFrameLoop>>MD2_FRAME_SHIFT)) % 
+			((endFrameLoop>>MD2_FRAME_SHIFT) - (startFrameLoop>>MD2_FRAME_SHIFT)));
+
+		div = (frame % (1<<MD2_FRAME_SHIFT)) / (f32)(1<<MD2_FRAME_SHIFT);
+#endif
 	}
-
-	video::S3DVertex* target = static_cast<video::S3DVertex*>(InterpolationBuffer->getVertices());
+		
+	video::S3DVertex* target = &InterpolateBuffer[0];
 	video::S3DVertex* first = FrameList[firstFrame].pointer();
 	video::S3DVertex* second = FrameList[secondFrame].pointer();
 
+	s32 count = FrameList[firstFrame].size();
+
 	// interpolate both frames
-	const u32 count = FrameList[firstFrame].size();
-	for (u32 i=0; i<count; ++i)
+	for (s32 i=0; i<count; ++i)
 	{
 		target->Pos = (second->Pos - first->Pos) * div + first->Pos;
 		target->Normal = (second->Normal - first->Normal) * div + first->Normal;
@@ -414,8 +483,21 @@ void CAnimatedMeshMD2::updateInterpolationBuffer(s32 frame, s32 startFrameLoop, 
 	}
 
 	//update bounding box
-	InterpolationBuffer->setBoundingBox(BoxList[secondFrame].getInterpolated(BoxList[firstFrame], div));
-	InterpolationBuffer->setDirty();
+	BoundingBox = BoxList[secondFrame].getInterpolated(BoxList[firstFrame], div);
+}
+
+
+
+//! returns max element
+inline s32 CAnimatedMeshMD2::max(s32 a, s32 b)
+{
+	return a>b ? a : b;
+}
+
+//! returns min element
+inline s32 CAnimatedMeshMD2::min(s32 a, s32 b)
+{
+	return a<b ? a : b;
 }
 
 
@@ -430,23 +512,23 @@ bool CAnimatedMeshMD2::loadFile(io::IReadFile* file)
 	file->read(&header, sizeof(SMD2Header));
 
 #ifdef __BIG_ENDIAN__
-	header.magic = os::Byteswap::byteswap(header.magic);
-	header.version = os::Byteswap::byteswap(header.version);
-	header.skinWidth = os::Byteswap::byteswap(header.skinWidth);
-	header.skinHeight = os::Byteswap::byteswap(header.skinHeight);
-	header.frameSize = os::Byteswap::byteswap(header.frameSize);
-	header.numSkins = os::Byteswap::byteswap(header.numSkins);
-	header.numVertices = os::Byteswap::byteswap(header.numVertices);
-	header.numTexcoords = os::Byteswap::byteswap(header.numTexcoords);
-	header.numTriangles = os::Byteswap::byteswap(header.numTriangles);
-	header.numGlCommands = os::Byteswap::byteswap(header.numGlCommands);
-	header.numFrames = os::Byteswap::byteswap(header.numFrames);
-	header.offsetSkins = os::Byteswap::byteswap(header.offsetSkins);
-	header.offsetTexcoords = os::Byteswap::byteswap(header.offsetTexcoords);
-	header.offsetTriangles = os::Byteswap::byteswap(header.offsetTriangles);
-	header.offsetFrames = os::Byteswap::byteswap(header.offsetFrames);
-	header.offsetGlCommands = os::Byteswap::byteswap(header.offsetGlCommands);
-	header.offsetEnd = os::Byteswap::byteswap(header.offsetEnd);
+	header.magic = OSReadSwapInt32(&header.magic,0);
+	header.version = OSReadSwapInt32(&header.version,0);
+	header.skinWidth = OSReadSwapInt32(&header.skinWidth,0);
+	header.skinHeight = OSReadSwapInt32(&header.skinHeight,0);
+	header.frameSize = OSReadSwapInt32(&header.frameSize,0);
+	header.numSkins = OSReadSwapInt32(&header.numSkins,0);
+	header.numVertices = OSReadSwapInt32(&header.numVertices,0);
+	header.numTexcoords = OSReadSwapInt32(&header.numTexcoords,0);
+	header.numTriangles = OSReadSwapInt32(&header.numTriangles,0);
+	header.numGlCommands = OSReadSwapInt32(&header.numGlCommands,0);
+	header.numFrames = OSReadSwapInt32(&header.numFrames,0);
+	header.offsetSkins = OSReadSwapInt32(&header.offsetSkins,0);
+	header.offsetTexcoords = OSReadSwapInt32(&header.offsetTexcoords,0);
+	header.offsetTriangles = OSReadSwapInt32(&header.offsetTriangles,0);
+	header.offsetFrames = OSReadSwapInt32(&header.offsetFrames,0);
+	header.offsetGlCommands = OSReadSwapInt32(&header.offsetGlCommands,0);
+	header.offsetEnd = OSReadSwapInt32(&header.offsetEnd,0);
 #endif
 
 	if (header.magic != MD2_MAGIC_NUMBER || header.version != MD2_VERSION)
@@ -458,19 +540,17 @@ bool CAnimatedMeshMD2::loadFile(io::IReadFile* file)
 	// create Memory for indices and frames
 
 	TriangleCount = header.numTriangles;
-	if (FrameList)
-		delete [] FrameList;
 	FrameList = new core::array<video::S3DVertex>[header.numFrames];
 	FrameCount = header.numFrames;
 
 	s32 i;
-
+	
 	for (i=0; i<header.numFrames; ++i)
 		FrameList[i].reallocate(header.numVertices);
 
 	// read TextureCoords
 
-	file->seek(header.offsetTexcoords);
+	file->seek(header.offsetTexcoords, false);
 	SMD2TextureCoordinate* textureCoords = new SMD2TextureCoordinate[header.numTexcoords];
 
 	if (!file->read(textureCoords, sizeof(SMD2TextureCoordinate)*header.numTexcoords))
@@ -482,14 +562,14 @@ bool CAnimatedMeshMD2::loadFile(io::IReadFile* file)
 #ifdef __BIG_ENDIAN__
 	for (i=0; i<header.numTexcoords; ++i)
 	{
-		textureCoords[i].s = os::Byteswap::byteswap(textureCoords[i].s);
-		textureCoords[i].t = os::Byteswap::byteswap(textureCoords[i].t);
+		textureCoords[i].s = OSReadSwapInt16(&textureCoords[i].s,0);
+		textureCoords[i].t = OSReadSwapInt16(&textureCoords[i].t,0);
 	}
 #endif
 
 	// read Triangles
 
-	file->seek(header.offsetTriangles);
+	file->seek(header.offsetTriangles, false);
 
 	SMD2Triangle *triangles = new SMD2Triangle[header.numTriangles];
 	if (!file->read(triangles, header.numTriangles *sizeof(SMD2Triangle)))
@@ -501,38 +581,39 @@ bool CAnimatedMeshMD2::loadFile(io::IReadFile* file)
 #ifdef __BIG_ENDIAN__
 	for (i=0; i<header.numTriangles; ++i)
 	{
-		triangles[i].vertexIndices[0] = os::Byteswap::byteswap(triangles[i].vertexIndices[0]);
-		triangles[i].vertexIndices[1] = os::Byteswap::byteswap(triangles[i].vertexIndices[1]);
-		triangles[i].vertexIndices[2] = os::Byteswap::byteswap(triangles[i].vertexIndices[2]);
-		triangles[i].textureIndices[0] = os::Byteswap::byteswap(triangles[i].textureIndices[0]);
-		triangles[i].textureIndices[1] = os::Byteswap::byteswap(triangles[i].textureIndices[1]);
-		triangles[i].textureIndices[2] = os::Byteswap::byteswap(triangles[i].textureIndices[2]);
+		triangles[i].vertexIndices[0] = OSReadSwapInt16(&triangles[i].vertexIndices[0],0);
+		triangles[i].vertexIndices[1] = OSReadSwapInt16(&triangles[i].vertexIndices[1],0);
+		triangles[i].vertexIndices[2] = OSReadSwapInt16(&triangles[i].vertexIndices[2],0);
+		triangles[i].textureIndices[0] = OSReadSwapInt16(&triangles[i].textureIndices[0],0);
+		triangles[i].textureIndices[1] = OSReadSwapInt16(&triangles[i].textureIndices[1],0);
+		triangles[i].textureIndices[2] = OSReadSwapInt16(&triangles[i].textureIndices[2],0);
 	}
 #endif
 
 	// read Vertices
 
-	u8 buffer[MD2_MAX_VERTS*4+128];
+	s8 buffer[MD2_MAX_VERTS*4+128];
 	SMD2Frame* frame = (SMD2Frame*)buffer;
 
 	core::array< core::vector3df >* vertices = new core::array< core::vector3df >[header.numFrames];
 	core::array< core::vector3df >* normals = new core::array< core::vector3df >[header.numFrames];
 
-	file->seek(header.offsetFrames);
+	file->seek(header.offsetFrames, false);
 
 	for (i = 0; i<header.numFrames; ++i)
 	{
 		// read vertices
 
+		vertices[i].reallocate(header.numVertices);
 		file->read(frame, header.frameSize);
 
 #ifdef __BIG_ENDIAN__
-		frame->scale[0] = os::Byteswap::byteswap(frame->scale[0]);
-		frame->scale[1] = os::Byteswap::byteswap(frame->scale[1]);
-		frame->scale[2] = os::Byteswap::byteswap(frame->scale[2]);
-		frame->translate[0] = os::Byteswap::byteswap(frame->translate[0]);
-		frame->translate[1] = os::Byteswap::byteswap(frame->translate[1]);
-		frame->translate[2] = os::Byteswap::byteswap(frame->translate[2]);
+		*((long*)&frame->scale[0]) = OSReadSwapInt32(&frame->scale[0],0);
+		*((long*)&frame->scale[1]) = OSReadSwapInt32(&frame->scale[1],0);
+		*((long*)&frame->scale[2]) = OSReadSwapInt32(&frame->scale[2],0);
+		*((long*)&frame->translate[0]) = OSReadSwapInt32(&frame->translate[0],0);
+		*((long*)&frame->translate[1]) = OSReadSwapInt32(&frame->translate[1],0);
+		*((long*)&frame->translate[2]) = OSReadSwapInt32(&frame->translate[2],0);
 #endif
 		// store frame data
 
@@ -555,23 +636,22 @@ bool CAnimatedMeshMD2::loadFile(io::IReadFile* file)
 
 		// add vertices
 
-		vertices[i].reallocate(header.numVertices);
 		for (s32 j=0; j<header.numVertices; ++j)
 		{
 			core::vector3df v;
-			v.X = frame->vertices[j].vertex[0] * frame->scale[0] + frame->translate[0];
-			v.Z = frame->vertices[j].vertex[1] * frame->scale[1] + frame->translate[1];
-			v.Y = frame->vertices[j].vertex[2] * frame->scale[2] + frame->translate[2];
+			v.X = (f32)frame->vertices[j].vertex[0] * frame->scale[0] + frame->translate[0];
+			v.Z = (f32)frame->vertices[j].vertex[1] * frame->scale[1] + frame->translate[1];
+			v.Y = (f32)frame->vertices[j].vertex[2] * frame->scale[2] + frame->translate[2];
 
 			vertices[i].push_back(v);
 
-			u8 normalidx = frame->vertices[j].lightNormalIndex;
-			if (normalidx < Q2_VERTEX_NORMAL_TABLE_SIZE)
+			s32 normalidx = frame->vertices[j].lightNormalIndex;
+			if (normalidx > 0 && normalidx < Q2_VERTEX_NORMAL_TABLE_SIZE)
 			{
 				v.X = Q2_VERTEX_NORMAL_TABLE[normalidx][0];
-				v.Z = Q2_VERTEX_NORMAL_TABLE[normalidx][1];
-				v.Y = Q2_VERTEX_NORMAL_TABLE[normalidx][2];
-			}
+				v.Y = Q2_VERTEX_NORMAL_TABLE[normalidx][1];
+				v.Z = Q2_VERTEX_NORMAL_TABLE[normalidx][2];
+			}	
 
 			normals[i].push_back(v);
 		}
@@ -591,13 +671,13 @@ bool CAnimatedMeshMD2::loadFile(io::IReadFile* file)
 	}
 
 	// put triangles into frame list
-
+	
 	f32 dmaxs = 1.0f/(header.skinWidth);
 	f32 dmaxt = 1.0f/(header.skinHeight);
 
 	video::S3DVertex vtx;
 	vtx.Color = video::SColor(255,255,255,255);
-
+	
 	for (s32 f = 0; f<header.numFrames; ++f)
 	{
 		core::array< core::vector3df >& vert = vertices[f];
@@ -607,9 +687,9 @@ bool CAnimatedMeshMD2::loadFile(io::IReadFile* file)
 			for (s32 n=0; n<3; ++n)
 			{
 				vtx.Pos = vert[triangles[t].vertexIndices[n]];
-				vtx.Normal = normals[f].pointer()[triangles[t].vertexIndices[n]];
 				vtx.TCoords.X = (textureCoords[triangles[t].textureIndices[n]].s + 0.5f) * dmaxs;
 				vtx.TCoords.Y = (textureCoords[triangles[t].textureIndices[n]].t + 0.5f) * dmaxt;
+				vtx.Normal = normals[f].pointer()[triangles[t].vertexIndices[n]];
 				FrameList[f].push_back(vtx);
 			}
 		}
@@ -617,25 +697,25 @@ bool CAnimatedMeshMD2::loadFile(io::IReadFile* file)
 
 	// create indices
 
-	InterpolationBuffer->Indices.reallocate(header.numVertices);
-	const u32 count = TriangleCount*3;
-	for (u32 n=0; n<count; n+=3)
+	Indices.reallocate(header.numVertices);
+	s16 count = TriangleCount*3;
+	for (s16 n=0; n<count; n+=3)
 	{
-		InterpolationBuffer->Indices.push_back(n);
-		InterpolationBuffer->Indices.push_back(n+1);
-		InterpolationBuffer->Indices.push_back(n+2);
+		Indices.push_back(n);
+		Indices.push_back(n+1);
+		Indices.push_back(n+2);
 	}
 
 	// reallocate interpolate buffer
 	if (header.numFrames)
 	{
-		const u32 currCount = FrameList[0].size();
-		InterpolationBuffer->Vertices.set_used(currCount);
+		s32 currCount = FrameList[0].size();
+		InterpolateBuffer.set_used(currCount);
 
-		for (u32 num=0; num<currCount; ++num)
+		for (i=0; i<currCount; ++i)
 		{
-			InterpolationBuffer->Vertices[num].TCoords = FrameList[0].pointer()[num].TCoords;
-			InterpolationBuffer->Vertices[num].Color = vtx.Color;
+			InterpolateBuffer[i].TCoords = FrameList[0].pointer()[i].TCoords;
+			InterpolateBuffer[i].Color = vtx.Color;
 		}
 	}
 
@@ -654,10 +734,11 @@ bool CAnimatedMeshMD2::loadFile(io::IReadFile* file)
 }
 
 
+
 //! calculates the bounding box
 void CAnimatedMeshMD2::calculateBoundingBox()
 {
-	InterpolationBuffer->BoundingBox.reset(0,0,0);
+	BoundingBox.reset(0,0,0);
 
 	if (FrameCount)
 	{
@@ -666,8 +747,8 @@ void CAnimatedMeshMD2::calculateBoundingBox()
 		if (defaultFrame>=FrameCount)
 			defaultFrame = 0;
 
-		for (u32 j=0; j<FrameList[defaultFrame].size(); ++j)
-			InterpolationBuffer->BoundingBox.addInternalPoint(FrameList[defaultFrame].pointer()[j].Pos);
+			for (u32 j=0; j<FrameList[defaultFrame].size(); ++j)
+				BoundingBox.addInternalPoint(FrameList[defaultFrame].pointer()[j].Pos);
 	}
 }
 
@@ -675,21 +756,44 @@ void CAnimatedMeshMD2::calculateBoundingBox()
 //! sets a flag of all contained materials to a new value
 void CAnimatedMeshMD2::setMaterialFlag(video::E_MATERIAL_FLAG flag, bool newvalue)
 {
-	InterpolationBuffer->Material.setFlag(flag, newvalue);
+	Material.Flags[flag] = newvalue;
 }
+
 
 
 //! returns an axis aligned bounding box
 const core::aabbox3d<f32>& CAnimatedMeshMD2::getBoundingBox() const
 {
-	return InterpolationBuffer->BoundingBox;
+	return BoundingBox;
 }
 
 
-//! set user axis aligned bounding box
-void CAnimatedMeshMD2::setBoundingBox( const core::aabbox3df& box)
+
+//! returns an axis aligned bounding box
+core::aabbox3d<f32>& CAnimatedMeshMD2::getBoundingBox()
 {
-	InterpolationBuffer->BoundingBox = box;
+	return BoundingBox;
+}
+
+
+
+//! calculates normals
+void CAnimatedMeshMD2::calculateNormals()
+{
+	for (u32 i=0; i<FrameCount; ++i)
+	{
+		video::S3DVertex* vtx = FrameList[i].pointer();
+
+		for (u32 j=0; j<Indices.size(); j+=3)
+		{
+			core::plane3d<f32> plane(
+				vtx[Indices[j]].Pos, vtx[Indices[j+1]].Pos,	vtx[Indices[j+2]].Pos);
+
+			vtx[Indices[j]].Normal = plane.Normal;
+			vtx[Indices[j+1]].Normal = plane.Normal;
+			vtx[Indices[j+2]].Normal = plane.Normal;
+		}
+	}
 }
 
 
@@ -701,7 +805,7 @@ E_ANIMATED_MESH_TYPE CAnimatedMeshMD2::getMeshType() const
 
 
 //! Returns frame loop data for a special MD2 animation type.
-void CAnimatedMeshMD2::getFrameLoop(EMD2_ANIMATION_TYPE l,
+void CAnimatedMeshMD2::getFrameLoop(EMD2_ANIMATION_TYPE l, 
 									s32& outBegin, s32& outEnd, s32& outFPS) const
 {
 	if (l < 0 || l >= EMAT_COUNT)
@@ -710,18 +814,18 @@ void CAnimatedMeshMD2::getFrameLoop(EMD2_ANIMATION_TYPE l,
 	outBegin = MD2AnimationTypeList[l].begin << MD2_FRAME_SHIFT;
 	outEnd = MD2AnimationTypeList[l].end << MD2_FRAME_SHIFT;
 
-	// correct to anim between last->first frame
+	// TA:correct to anim between last->first frame
 	outEnd += MD2_FRAME_SHIFT == 0 ? 1 : ( 1 << MD2_FRAME_SHIFT ) - 1;
-	outFPS = MD2AnimationTypeList[l].fps << MD2_FRAME_SHIFT;
+	//TA: don't know about * 5...
+	outFPS = MD2AnimationTypeList[l].fps << MD2_FRAME_SHIFT; // * 5;
 }
 
 
 //! Returns frame loop data for a special MD2 animation type.
-bool CAnimatedMeshMD2::getFrameLoop(const c8* name,
+bool CAnimatedMeshMD2::getFrameLoop(const c8* name, 
 	s32& outBegin, s32&outEnd, s32& outFPS) const
 {
-	for (u32 i=0; i<FrameData.size(); ++i)
-	{
+	for (s32 i=0; i<(s32)FrameData.size(); ++i)
 		if (FrameData[i].name == name)
 		{
 			outBegin = FrameData[i].begin << MD2_FRAME_SHIFT;
@@ -730,10 +834,10 @@ bool CAnimatedMeshMD2::getFrameLoop(const c8* name,
 			outFPS = FrameData[i].fps << MD2_FRAME_SHIFT;
 			return true;
 		}
-	}
-
+	
 	return false;
 }
+
 
 
 //! Returns amount of md2 animations in this file.
@@ -743,10 +847,10 @@ s32 CAnimatedMeshMD2::getAnimationCount() const
 }
 
 
-//! Returns name of md2 animation.
+//! Returns name of md2 animation. 
 const c8* CAnimatedMeshMD2::getAnimationName(s32 nr) const
 {
-	if ((u32)nr >= FrameData.size())
+	if (nr < 0 || nr >= (s32)FrameData.size())
 		return 0;
 
 	return FrameData[nr].name.c_str();
@@ -755,6 +859,4 @@ const c8* CAnimatedMeshMD2::getAnimationName(s32 nr) const
 
 } // end namespace scene
 } // end namespace irr
-
-#endif // _IRR_COMPILE_WITH_MD2_LOADER_
 

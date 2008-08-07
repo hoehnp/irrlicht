@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -17,16 +17,15 @@ namespace video
 	an the Screen. Usually only implemented by an IrrDevice for
 	presenting Software Device Rendered images.
 
-	This class should be used only internally.
+	This class should be used internal only.
 */
 
 	class IImagePresenter
 	{
 	public:
 
-		virtual ~IImagePresenter() {};
 		//! presents a surface in the client area
-		virtual void present(video::IImage* surface, void* windowId=0, core::rect<s32>* src=0 ) = 0;
+		virtual void present(video::IImage* surface, s32 windowId=0, core::rect<s32>* src=0 ) = 0;
 	};
 
 } // end namespace video

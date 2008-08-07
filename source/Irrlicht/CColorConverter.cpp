@@ -1,11 +1,10 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #include "CColorConverter.h"
 #include "SColor.h"
-#include "os.h"
-#include "irrString.h"
+#include <string.h>
 
 namespace irr
 {
@@ -13,173 +12,270 @@ namespace video
 {
 
 //! converts a monochrome bitmap to A1R5G5B5 data
-void CColorConverter::convert1BitTo16Bit(const u8* in, s16* out, s32 width, s32 height, s32 linepad, bool flip)
+void CColorConverter::convert1BitTo16BitFlipMirror(const c8* in, s16* out, s32 width, s32 height, s32 pitch)
 {
-	if (!in || !out)
-		return;
-
-	if (flip)
-		out += width * height;
+	s16* p = out + width * height;
 
 	for (s32 y=0; y<height; ++y)
 	{
 		s32 shift = 7;
-		if (flip)
-			out -= width;
+		out = p - y * width - width;
 
 		for (s32 x=0; x<width; ++x)
 		{
-			out[x] = *in>>shift & 0x01 ? (s16)0xffff : (s16)0x8000;
-
-			if ((--shift)<0) // 8 pixel done
+			*out = *in>>shift & 0x01 ? (s16)0xffff : (s16)0x0000;
+			++out;
+							
+			--shift;
+			if (shift<0)
 			{
 				shift=7;
 				++in;
 			}
 		}
 
-		if (shift != 7) // width did not fill last byte
+		if (shift != 7)
 			++in;
 
-		if (!flip)
-			out += width;
-		in += linepad;
+		in += pitch;
 	}
 }
 
 
-
-//! converts a 4 bit palettized image to A1R5G5B5
-void CColorConverter::convert4BitTo16Bit(const u8* in, s16* out, s32 width, s32 height, const s32* palette, s32 linepad, bool flip)
+//! converts a 4 bit palettized image into R5G5B5
+void CColorConverter::convert4BitTo16BitFlipMirror(const c8* in, s16* out, s32 width, s32 height, s32 pitch, const s32* palette)
 {
-	if (!in || !out || !palette)
-		return;
-
-	if (flip)
-		out += width*height;
+	s32 shift = 0;
+	out += width*height;
+	s16* oout = out;
 
 	for (s32 y=0; y<height; ++y)
 	{
-		s32 shift = 4;
-		if (flip)
-			out -= width;
+		shift = 4;
+
+		out = oout - (y*width) - width;
 
 		for (s32 x=0; x<width; ++x)
 		{
-			out[x] = X8R8G8B8toA1R5G5B5(palette[(u8)((*in >> shift) & 0xf)]);
+			*out = X8R8G8B8toA1R5G5B5(palette[(u8)((*in >> shift) & 0xf)]);
+			++out;
 
-			if (shift==0)
+			shift -= 4;
+			if (shift<0)
 			{
 				shift = 4;
 				++in;
 			}
-			else
-				shift = 0;
 		}
 
-		if (shift == 0) // odd width
+		if (shift !=4)
 			++in;
 
-		if (!flip)
-			out += width;
-		in += linepad;
+		in+=pitch;
 	}
 }
 
 
-
-//! converts a 8 bit palettized image into A1R5G5B5
-void CColorConverter::convert8BitTo16Bit(const u8* in, s16* out, s32 width, s32 height, const s32* palette, s32 linepad, bool flip)
+//! converts a 8 bit palettized image into R5G5B5
+void CColorConverter::convert8BitTo16Bit(const c8* in, s16* out, s32 width, s32 height, s32 pitch, const s32* palette)
 {
-	if (!in || !out || !palette)
-		return;
+	s32 lineWidth = width + pitch;
+	const c8* p = in;
 
-	if (flip)
-		out += width * height;
-
-	for (s32 y=0; y<height; ++y)
+	for (s32 y=1; y<=height; ++y)
 	{
-		if (flip)
-			out -= width; // one line back
 		for (s32 x=0; x<width; ++x)
 		{
-			out[x] = X8R8G8B8toA1R5G5B5(palette[(u8)(*in)]);
-			++in;
+			
+			*out = X8R8G8B8toA1R5G5B5(palette[(u8)(*p)]);
+
+			++out;
+			++p;
 		}
-		if (!flip)
-			out += width;
-		in += linepad;
+
+		p= in + y*lineWidth + pitch;
 	}
 }
 
 
 
-//! converts 16bit data to 16bit data
-void CColorConverter::convert16BitTo16Bit(const s16* in, s16* out, s32 width, s32 height, s32 linepad, bool flip)
+//! converts a 8 bit palettized image into R5G5B5
+void CColorConverter::convert8BitTo16BitFlipMirror(const c8* in, s16* out, s32 width, s32 height, s32 pitch, const s32* palette)
 {
-	if (!in || !out)
-		return;
+	out += width * height;
+	s32 lineWidth = width + pitch;
+	const c8* p = in;
 
-	if (flip)
-		out += width * height;
-
-	for (s32 y=0; y<height; ++y)
+	for (s32 y=1; y<=height; ++y)
 	{
-		if (flip)
-			out -= width;
-#ifdef __BIG_ENDIAN__
+		p= in + lineWidth*y - pitch;
+
 		for (s32 x=0; x<width; ++x)
-			out[x]=os::Byteswap::byteswap(in[x]);
-#else
-		memcpy(out, in, width*sizeof(s16));
-#endif
-		if (!flip)
-			out += width;
-		in += width;
-		in += linepad;
+		{
+			--out;
+			--p;
+			*out = X8R8G8B8toA1R5G5B5(palette[(u8)(*p)]);
+		}
 	}
 }
 
 
-
-//! copies R8G8B8 24bit data to 24bit data
-void CColorConverter::convert24BitTo24Bit(const u8* in, u8* out, s32 width, s32 height, s32 linepad, bool flip, bool bgr)
+//! converts R8G8B8 16 bit data to A1R5G5B5 data, and flips and 
+//! mirrors the image during the process.
+void CColorConverter::convert16BitTo16BitFlipMirror(const s16* in, s16* out, s32 width, s32 height, s32 pitch)
 {
-	if (!in || !out)
-		return;
-
-	const s32 lineWidth = 3 * width;
-	if (flip)
-		out += lineWidth * height;
+	const s16 *p = in;
+	const s32 lineWidth = width + pitch;
+	out += width * height;
 
 	for (s32 y=0; y<height; ++y)
 	{
-		if (flip)
-			out -= lineWidth;
-		if (bgr)
+		for (s32 x=0; x<width; ++x)
 		{
-			for (s32 x=0; x<lineWidth; x+=3)
-			{
-				out[x+0] = in[x+2];
-				out[x+1] = in[x+1];
-				out[x+2] = in[x+0];
-			}
+			p = in + (width-x-1);
+			--out;
+			*out = *p;
 		}
-		else
-		{
-			memcpy(out,in,lineWidth);
-		}
-		if (!flip)
-			out += lineWidth;
+
 		in += lineWidth;
-		in += linepad;
 	}
 }
 
+
+//! converts R8G8B8 24 bit data to A1R5G5B5 data, and flips and 
+//! mirrors the image during the process.
+void CColorConverter::convert24BitTo16BitFlipMirror(const c8* in, s16* out, s32 width, s32 height, s32 pitch)
+{
+	const c8 *p = in;
+	const s32 lineWidth = 3 * width + pitch;
+	out += width * height;
+
+	for (s32 y=0; y<height; ++y)
+	{
+		for (s32 x=0; x<width; ++x)
+		{
+			p = in + (width-x-1)*3;
+			--out;
+			*out = RGB16(p[2], p[1], *p);
+		}
+
+		in += lineWidth;
+	}
+}
+
+
+
+//! converts R8G8B8 24 bit data to A1R5G5B5 data (used e.g for JPG to A1R5G5B5)
+void CColorConverter::convert24BitTo16BitColorShuffle(const c8* in, s16* out, s32 width, s32 height, s32 pitch)
+{
+	const c8 *p = in;
+	const s32 lineWidth = 3 * width + pitch;
+
+	for (s32 y=0; y<height; ++y)
+	{
+		for (s32 x=0; x<width; ++x)
+		{
+			p = in + (width-x-1)*3;
+			*out = RGB16(*p, p[1], p[2]);
+			++out;
+		}
+
+		in += lineWidth;
+	}
+}
+
+
+//! converts R8G8B8 24 bit data to A1R5G5B5 data (used e.g for JPG to A1R5G5B5)
+//! accepts colors in different order.
+void CColorConverter::convert24BitTo16BitFlipColorShuffle(const c8* in, s16* out, s32 width, s32 height, s32 pitch)
+{
+	const c8 *p = in;
+	const s32 lineWidth = 3 * width + pitch;
+
+	for (s32 y=0; y<height; ++y)
+	{
+		for (s32 x=0; x<width; ++x)
+		{
+			p = in + (x)*3;
+			*out = RGB16(*p, p[1], p[2]);
+			++out;
+		}
+
+		in += lineWidth;
+	}
+}
+
+
+//! converts X8R8G8B8 32 bit data to A1R5G5B5 data, and flips and 
+//! mirrors the image during the process.
+void CColorConverter::convert32BitTo16BitColorShuffle(const c8* in, s16* out, s32 width, s32 height, s32 pitch)
+{
+	const c8 *p = in;
+	const s32 lineWidth = 4 * width + pitch;
+
+	for (s32 y=0; y<height; ++y)
+	{
+		for (s32 x=0; x<width; ++x)
+		{
+			p = in + (width-x-1)*4;
+			*out = RGB16(p[2], p[1], p[0]);
+			++out;
+		}
+
+		in += lineWidth;
+	}
+}
+
+
+//! converts X8R8G8B8 32 bit data to A1R5G5B5 data, and flips and 
+//! mirrors the image during the process.
+void CColorConverter::convert32BitTo16BitFlipMirrorColorShuffle(const c8* in, s16* out, s32 width, s32 height, s32 pitch)
+{
+	const c8 *p = in;
+	const s32 lineWidth = 4 * width + pitch;
+	out += (width+pitch) * height;
+
+	for (s32 y=0; y<height; ++y)
+	{
+		for (s32 x=0; x<width; ++x)
+		{
+			p = in + (width-x-1)*4;
+			--out;
+			*out = RGB16(p[2], p[1], p[0]);
+		}
+
+		in += lineWidth;
+	}
+}
+
+
+//! copies R8G8B8 24 bit data to 24 data, and flips and 
+//! mirrors the image during the process.
+void CColorConverter::convert24BitTo24BitFlipMirrorColorShuffle(const c8* in, c8* out, s32 width, s32 height, s32 pitch)
+{
+	const c8 *p = in;
+	const s32 lineWidth = 3 * width + pitch;
+	out += width * height * 3;
+
+	for (s32 y=0; y<height; ++y)
+	{
+		for (s32 x=0; x<width; ++x)
+		{
+			p = in + (width-x-1)*3;
+			out -= 3;
+			out[0] = p[2];
+			out[1] = p[1];
+			out[2] = p[0];
+		}
+
+		in += lineWidth;
+	}
+}
 
 
 //! Resizes the surface to a new size and converts it at the same time
 //! to an A8R8G8B8 format, returning the pointer to the new buffer.
+//! The returned pointer has to be deleted.
 void CColorConverter::convert16bitToA8R8G8B8andResize(const s16* in, s32* out, s32 newWidth, s32 newHeight, s32 currentWidth, s32 currentHeight)
 {
 	if (!newWidth || !newHeight)
@@ -210,33 +306,40 @@ void CColorConverter::convert16bitToA8R8G8B8andResize(const s16* in, s32* out, s
 }
 
 
-
-//! copies X8R8G8B8 32 bit data
-void CColorConverter::convert32BitTo32Bit(const s32* in, s32* out, s32 width, s32 height, s32 linepad, bool flip)
+//! copies X8R8G8B8 32 bit data, and flips and 
+//! mirrors the image during the process.
+void CColorConverter::convert32BitTo32BitFlipMirror(const s32* in, s32* out, s32 width, s32 height, s32 pitch)
 {
-	if (!in || !out)
-		return;
-
-	if (flip)
-		out += width * height;
+	const s32 *p = in;
+	const s32 lineWidth = width;
+	out += height * width;
 
 	for (s32 y=0; y<height; ++y)
 	{
-		if (flip)
-			out -= width;
-#ifdef __BIG_ENDIAN__
 		for (s32 x=0; x<width; ++x)
-			out[x]=os::Byteswap::byteswap(in[x]);
+		{
+			p = in + (width-x-1);
+			--out;
+
+#ifdef __BIG_ENDIAN__
+			{
+				char	*zi = (char *)p;
+				char	*zo = (char *)out;
+
+				zo[0] = zi[2];
+				zo[1] = zi[1];
+				zo[2] = zi[0];
+				zo[3] = zi[3];
+
+			}
 #else
-		memcpy(out, in, width*sizeof(s32));
+			*out = *p;
 #endif
-		if (!flip)
-			out += width;
-		in += width;
-		in += linepad;
+		}
+
+		in += lineWidth;
 	}
 }
-
 
 
 void CColorConverter::convert_A1R5G5B5toR8G8B8(const void* sP, s32 sN, void* dP)
@@ -244,27 +347,12 @@ void CColorConverter::convert_A1R5G5B5toR8G8B8(const void* sP, s32 sN, void* dP)
 	u16* sB = (u16*)sP;
 	u8 * dB = (u8 *)dP;
 
-	for (s32 x = 0; x < sN; ++x)
+	s32 x;
+	for (x = 0; x < sN; ++x)
 	{
-		dB[2] = (*sB & 0x7c00) >> 7;
-		dB[1] = (*sB & 0x03e0) >> 2;
-		dB[0] = (*sB & 0x1f) << 3;
-
-		sB += 1;
-		dB += 3;
-	}
-}
-
-void CColorConverter::convert_A1R5G5B5toB8G8R8(const void* sP, s32 sN, void* dP)
-{
-	u16* sB = (u16*)sP;
-	u8 * dB = (u8 *)dP;
-
-	for (s32 x = 0; x < sN; ++x)
-	{
-		dB[0] = (*sB & 0x7c00) >> 7;
-		dB[1] = (*sB & 0x03e0) >> 2;
-		dB[2] = (*sB & 0x1f) << 3;
+		dB[2] = ((*sB >> 10) & 0x1f) << 3;
+		dB[1] = ((*sB >>  5) & 0x1f) << 3;
+		dB[0] = ((*sB >>  0) & 0x1f) << 3;
 
 		sB += 1;
 		dB += 3;
@@ -274,7 +362,7 @@ void CColorConverter::convert_A1R5G5B5toB8G8R8(const void* sP, s32 sN, void* dP)
 void CColorConverter::convert_A1R5G5B5toA8R8G8B8(const void* sP, s32 sN, void* dP)
 {
 	u16* sB = (u16*)sP;
-	u32* dB = (u32*)dP;
+	u32* dB = (u32 *)dP;
 
 	for (s32 x = 0; x < sN; ++x)
 		*dB++ = A1R5G5B5toA8R8G8B8(*sB++);
@@ -299,24 +387,8 @@ void CColorConverter::convert_A8R8G8B8toR8G8B8(const void* sP, s32 sN, void* dP)
 	u8* sB = (u8*)sP;
 	u8* dB = (u8*)dP;
 
-	for (s32 x = 0; x < sN; ++x)
-	{
-		// sB[3] is alpha
-		dB[0] = sB[2];
-		dB[1] = sB[1];
-		dB[2] = sB[0];
-
-		sB += 4;
-		dB += 3;
-	}
-}
-
-void CColorConverter::convert_A8R8G8B8toB8G8R8(const void* sP, s32 sN, void* dP)
-{
-	u8* sB = (u8*)sP;
-	u8* dB = (u8*)dP;
-
-	for (s32 x = 0; x < sN; ++x)
+	s32 x;
+	for (x = 0; x < sN; ++x)
 	{
 		// sB[3] is alpha
 		dB[0] = sB[0];
@@ -347,31 +419,14 @@ void CColorConverter::convert_A8R8G8B8toR5G6B5(const void* sP, s32 sN, void* dP)
 	u8 * sB = (u8 *)sP;
 	u16* dB = (u16*)dP;
 
-	for (s32 x = 0; x < sN; ++x)
+	s32 x;
+	for (x = 0; x < sN; ++x)
 	{
 		s32 r = sB[2] >> 3;
 		s32 g = sB[1] >> 2;
 		s32 b = sB[0] >> 3;
 
 		dB[0] = (r << 11) | (g << 5) | (b);
-
-		sB += 4;
-		dB += 1;
-	}
-}
-
-void CColorConverter::convert_A8R8G8B8toR3G3B2(const void* sP, s32 sN, void* dP)
-{
-	u8* sB = (u8*)sP;
-	u8* dB = (u8*)dP;
-
-	for (s32 x = 0; x < sN; ++x)
-	{
-		u8 r = sB[2] & 0xe0;
-		u8 g = (sB[1] & 0xe0) >> 3;
-		u8 b = (sB[0] & 0xc0) >> 6;
-
-		dB[0] = (r | g | b);
 
 		sB += 4;
 		dB += 1;
@@ -385,15 +440,16 @@ void CColorConverter::convert_R8G8B8toR8G8B8(const void* sP, s32 sN, void* dP)
 
 void CColorConverter::convert_R8G8B8toA8R8G8B8(const void* sP, s32 sN, void* dP)
 {
-	u8*  sB = (u8* )sP;
+	u8 * sB = (u8 *)sP;
 	u32* dB = (u32*)dP;
 
-	for (s32 x = 0; x < sN; ++x)
+	s32 x;
+	for (x = 0; x < sN; ++x)
 	{
-		*dB = 0xff000000 | (sB[0]<<16) | (sB[1]<<8) | sB[2];
+		dB[0] = (0xff000000) | (sB[2] << 16) | (sB[1] << 8) | sB[0];
 
 		sB += 3;
-		++dB;
+		dB += 1;
 	}
 }
 
@@ -402,11 +458,12 @@ void CColorConverter::convert_R8G8B8toA1R5G5B5(const void* sP, s32 sN, void* dP)
 	u8 * sB = (u8 *)sP;
 	u16* dB = (u16*)dP;
 
-	for (s32 x = 0; x < sN; ++x)
+	s32 x;
+	for (x = 0; x < sN; ++x)
 	{
-		s32 r = sB[0] >> 3;
+		s32 r = sB[2] >> 3;
 		s32 g = sB[1] >> 3;
-		s32 b = sB[2] >> 3;
+		s32 b = sB[0] >> 3;
 
 		dB[0] = (0x8000) | (r << 10) | (g << 5) | (b);
 
@@ -420,11 +477,12 @@ void CColorConverter::convert_R8G8B8toR5G6B5(const void* sP, s32 sN, void* dP)
 	u8 * sB = (u8 *)sP;
 	u16* dB = (u16*)dP;
 
-	for (s32 x = 0; x < sN; ++x)
+	s32 x;
+	for (x = 0; x < sN; ++x)
 	{
-		s32 r = sB[0] >> 3;
+		s32 r = sB[2] >> 3;
 		s32 g = sB[1] >> 2;
-		s32 b = sB[2] >> 3;
+		s32 b = sB[0] >> 3;
 
 		dB[0] = (r << 11) | (g << 5) | (b);
 
@@ -443,27 +501,12 @@ void CColorConverter::convert_R5G6B5toR8G8B8(const void* sP, s32 sN, void* dP)
 	u16* sB = (u16*)sP;
 	u8 * dB = (u8 *)dP;
 
-	for (s32 x = 0; x < sN; ++x)
+	s32 x;
+	for (x = 0; x < sN; ++x)
 	{
-		dB[0] = (*sB & 0xf800) << 8;
-		dB[1] = (*sB & 0x07e0) << 2;
-		dB[2] = (*sB & 0x001f) << 3;
-
-		sB += 4;
-		dB += 3;
-	}
-}
-
-void CColorConverter::convert_R5G6B5toB8G8R8(const void* sP, s32 sN, void* dP)
-{
-	u16* sB = (u16*)sP;
-	u8 * dB = (u8 *)dP;
-
-	for (s32 x = 0; x < sN; ++x)
-	{
-		dB[2] = (*sB & 0xf800) << 8;
-		dB[1] = (*sB & 0x07e0) << 2;
-		dB[0] = (*sB & 0x001f) << 3;
+		dB[2] = ((*sB >> 11) & 0x1f) << 3;
+		dB[1] = ((*sB >>  5) & 0x3f) << 2;
+		dB[0] = ((*sB >>  0) & 0x1f) << 3;
 
 		sB += 4;
 		dB += 3;
@@ -486,83 +529,6 @@ void CColorConverter::convert_R5G6B5toA1R5G5B5(const void* sP, s32 sN, void* dP)
 
 	for (s32 x = 0; x < sN; ++x)
 		*dB++ = R5G6B5toA1R5G5B5(*sB++);
-}
-
-
-void CColorConverter::convert_viaFormat(const void* sP, ECOLOR_FORMAT sF, s32 sN,
-				void* dP, ECOLOR_FORMAT dF)
-{
-	switch (sF)
-	{
-		case ECF_A1R5G5B5:
-			switch (dF)
-			{
-				case ECF_A1R5G5B5:
-					convert_A1R5G5B5toA1R5G5B5(sP, sN, dP);
-				break;
-				case ECF_R5G6B5:
-					convert_A1R5G5B5toR5G6B5(sP, sN, dP);
-				break;
-				case ECF_A8R8G8B8:
-					convert_A1R5G5B5toA8R8G8B8(sP, sN, dP);
-				break;
-				case ECF_R8G8B8:
-					convert_A1R5G5B5toR8G8B8(sP, sN, dP);
-				break;
-			}
-		break;
-		case ECF_R5G6B5:
-			switch (dF)
-			{
-				case ECF_A1R5G5B5:
-					convert_R5G6B5toA1R5G5B5(sP, sN, dP);
-				break;
-				case ECF_R5G6B5:
-					convert_R5G6B5toR5G6B5(sP, sN, dP);
-				break;
-				case ECF_A8R8G8B8:
-					convert_R5G6B5toA8R8G8B8(sP, sN, dP);
-				break;
-				case ECF_R8G8B8:
-					convert_R5G6B5toR8G8B8(sP, sN, dP);
-				break;
-			}
-		break;
-		case ECF_A8R8G8B8:
-			switch (dF)
-			{
-				case ECF_A1R5G5B5:
-					convert_A8R8G8B8toA1R5G5B5(sP, sN, dP);
-				break;
-				case ECF_R5G6B5:
-					convert_A8R8G8B8toR5G6B5(sP, sN, dP);
-				break;
-				case ECF_A8R8G8B8:
-					convert_A8R8G8B8toA8R8G8B8(sP, sN, dP);
-				break;
-				case ECF_R8G8B8:
-					convert_A8R8G8B8toR8G8B8(sP, sN, dP);
-				break;
-			}
-		break;
-		case ECF_R8G8B8:
-			switch (dF)
-			{
-				case ECF_A1R5G5B5:
-					convert_R8G8B8toA1R5G5B5(sP, sN, dP);
-				break;
-				case ECF_R5G6B5:
-					convert_R8G8B8toR5G6B5(sP, sN, dP);
-				break;
-				case ECF_A8R8G8B8:
-					convert_R8G8B8toA8R8G8B8(sP, sN, dP);
-				break;
-				case ECF_R8G8B8:
-					convert_R8G8B8toR8G8B8(sP, sN, dP);
-				break;
-			}
-		break;
-	}
 }
 
 

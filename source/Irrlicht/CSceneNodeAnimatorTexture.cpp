@@ -1,9 +1,8 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #include "CSceneNodeAnimatorTexture.h"
-#include "ITexture.h"
 
 namespace irr
 {
@@ -13,8 +12,8 @@ namespace scene
 
 //! constructor
 CSceneNodeAnimatorTexture::CSceneNodeAnimatorTexture(const core::array<video::ITexture*>& textures, 
-					 s32 timePerFrame, bool loop, u32 now)
-: TimePerFrame(timePerFrame), StartTime(now), Loop(loop)
+													 s32 timePerFrame, bool loop, u32 now)
+: Loop(loop), StartTime(now), TimePerFrame(timePerFrame)
 {
 	#ifdef _DEBUG
 	setDebugName("CSceneNodeAnimatorTexture");
@@ -40,7 +39,6 @@ CSceneNodeAnimatorTexture::~CSceneNodeAnimatorTexture()
 }
 
 
-
 void CSceneNodeAnimatorTexture::clearTextures()
 {
 	for (u32 i=0; i<Textures.size(); ++i)
@@ -55,22 +53,23 @@ void CSceneNodeAnimatorTexture::animateNode(ISceneNode* node, u32 timeMs)
 {
 	if (Textures.size())
 	{
-		const u32 t = (timeMs-StartTime);
+		u32 t = (timeMs-StartTime);
 
-		u32 idx = 0;
+		s32 idx = 0;
+
 		if (!Loop && timeMs >= EndTime)
 			idx = Textures.size() - 1;
 		else
 			idx = (t/TimePerFrame) % Textures.size();
 
-		if (idx < Textures.size())
+		if (idx < (s32)Textures.size())
 			node->setMaterialTexture(0, Textures[idx]);
 	}
 }
 
 
 //! Writes attributes of the scene node animator.
-void CSceneNodeAnimatorTexture::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options) const
+void CSceneNodeAnimatorTexture::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options)
 {
 	out->addInt("TimePerFrame", TimePerFrame);
 	out->addBool("Loop", Loop);
@@ -119,6 +118,6 @@ void CSceneNodeAnimatorTexture::deserializeAttributes(io::IAttributes* in, io::S
 }
 
 
+
 } // end namespace scene
 } // end namespace irr
-

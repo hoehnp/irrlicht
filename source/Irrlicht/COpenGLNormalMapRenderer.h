@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -13,7 +13,7 @@
 
 namespace irr
 {
-namespace video
+namespace video  
 {
 
 //! Class for rendering normal maps with OpenGL
@@ -22,7 +22,7 @@ class COpenGLNormalMapRenderer : public COpenGLShaderMaterialRenderer, public IS
 public:
 
 	//! Constructor
-	COpenGLNormalMapRenderer(video::COpenGLDriver* driver,
+	COpenGLNormalMapRenderer(video::COpenGLDriver* driver, 
 		s32& outMaterialTypeNr, IMaterialRenderer* baseMaterial);
 
 	//! Destructor
@@ -32,12 +32,12 @@ public:
 	//! material renderer should be set.
 	virtual void OnSetConstants(IMaterialRendererServices* services, s32 userData);
 
-	//! Returns the render capability of the material.
-	virtual s32 getRenderCapability() const;
+	//! Returns the render capability of the material. 
+	virtual s32 getRenderCapability();
 
 protected:
 
-	bool CompiledShaders;
+	bool CompiledShaders;	
 };
 
 

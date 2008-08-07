@@ -1,5 +1,5 @@
 [Project]
-FileName=demo.dev
+FileName=example.dev
 Name=Irrlicht Tech Demo
 UnitCount=5
 Type=1
@@ -7,7 +7,7 @@ Ver=1
 ObjFiles=
 Includes=..\..\include
 Libs=
-PrivateResource=
+PrivateResource=example_private.rc
 ResourceIncludes=
 MakeIncludes=
 Compiler=
@@ -16,7 +16,7 @@ Linker=../../lib/Win32-gcc/libIrrlicht.a_@@_
 IsCpp=1
 Icon=
 ExeOutput=../../bin/Win32-gcc
-ObjectOutput=obj
+ObjectOutput=
 OverrideOutput=1
 OverrideOutputName=Demo.exe
 HostApplication=

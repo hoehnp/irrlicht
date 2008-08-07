@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -21,33 +21,33 @@ namespace io
 	{
 	public:
 
-		//! Constructor
-		CMemoryReadFile(void* memory, long len, const c8* fileName, bool deleteMemoryWhenDropped);
+		CMemoryReadFile(void* memory, s32 len, const c8* fileName, bool deleteMemoryWhenDropped);
 
-		//! Destructor
 		virtual ~CMemoryReadFile();
 
 		//! returns how much was read
-		virtual s32 read(void* buffer, u32 sizeToRead);
+		virtual s32 read(void* buffer, s32 sizeToRead);
 
 		//! changes position in file, returns true if successful
-		virtual bool seek(long finalPos, bool relativeMovement = false);
+		//! if relativeMovement==true, the pos is changed relative to current pos,
+		//! otherwise from begin of file
+		virtual bool seek(s32 finalPos, bool relativeMovement = false);
 
 		//! returns size of file
-		virtual long getSize() const;
+		virtual s32 getSize();
 
 		//! returns where in the file we are.
-		virtual long getPos() const;
+		virtual s32 getPos();
 
 		//! returns name of file
-		virtual const c8* getFileName() const;
+		virtual const c8* getFileName();
 
 	private:
 
-		void *Buffer;
-		long Len;
-		long Pos;
 		core::stringc Filename;
+		void *Buffer;
+		u32 Len;
+		u32 Pos;
 		bool deleteMemoryWhenDropped;
 	};
 

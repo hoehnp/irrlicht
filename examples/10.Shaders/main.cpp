@@ -57,9 +57,9 @@ public:
 		invWorld.makeInverse();
 
 		if (UseHighLevelShaders)
-			services->setVertexShaderConstant("mInvWorld", invWorld.pointer(), 16);
+			services->setVertexShaderConstant("mInvWorld", &invWorld.M[0], 16);
 		else
-			services->setVertexShaderConstant(invWorld.pointer(), 0, 4);
+			services->setVertexShaderConstant(&invWorld.M[0], 0, 4);
 
 		// set clip matrix
 
@@ -69,9 +69,9 @@ public:
 		worldViewProj *= driver->getTransform(video::ETS_WORLD);
 
 		if (UseHighLevelShaders)
-			services->setVertexShaderConstant("mWorldViewProj", worldViewProj.pointer(), 16);
+			services->setVertexShaderConstant("mWorldViewProj", &worldViewProj.M[0], 16);
 		else
-			services->setVertexShaderConstant(worldViewProj.pointer(), 4, 4);		
+			services->setVertexShaderConstant(&worldViewProj.M[0], 4, 4);		
 
 		// set camera position
 
@@ -98,9 +98,9 @@ public:
 		world = world.getTransposed();
 
 		if (UseHighLevelShaders)
-			services->setVertexShaderConstant("mTransWorld", world.pointer(), 16);
+			services->setVertexShaderConstant("mTransWorld", &world.M[0], 16);
 		else
-			services->setVertexShaderConstant(world.pointer(), 10, 4);
+			services->setVertexShaderConstant(&world.M[0], 10, 4);
 	}
 };
 
@@ -117,7 +117,7 @@ int main()
 
 	printf("Please select the driver you want for this example:\n"\
 		" (a) Direct3D 9.0c\n (b) Direct3D 8.1\n (c) OpenGL 1.5\n"\
-		" (d) Software Renderer\n (e) Burning's Software Renderer\n"\
+		" (d) Software Renderer\n (e) Apfelbaum Software Renderer\n"\
 		" (f) NullDevice\n (otherKey) exit\n\n");
 
 	char i;
@@ -129,7 +129,7 @@ int main()
 		case 'b': driverType = video::EDT_DIRECT3D8;break;
 		case 'c': driverType = video::EDT_OPENGL;   break;
 		case 'd': driverType = video::EDT_SOFTWARE; break;
-		case 'e': driverType = video::EDT_BURNINGSVIDEO;break;
+		case 'e': driverType = video::EDT_SOFTWARE2;break;
 		case 'f': driverType = video::EDT_NULL;     break;
 		default: return 1;
 	}	
@@ -269,12 +269,12 @@ int main()
 			// create material from high level shaders (hlsl or glsl)
 
 			newMaterialType1 = gpu->addHighLevelShaderMaterialFromFiles(
-				vsFileName, "vertexMain", video::EVST_VS_1_1,
+				vsFileName,	"vertexMain", video::EVST_VS_1_1,
 				psFileName, "pixelMain", video::EPST_PS_1_1,
 				mc, video::EMT_SOLID);
 
 			newMaterialType2 = gpu->addHighLevelShaderMaterialFromFiles(
-				vsFileName, "vertexMain", video::EVST_VS_1_1,
+				vsFileName,	"vertexMain", video::EVST_VS_1_1,
 				psFileName, "pixelMain", video::EPST_PS_1_1,
 				mc, video::EMT_TRANSPARENT_ADD_COLOR);
 		}

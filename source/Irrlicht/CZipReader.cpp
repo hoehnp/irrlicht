@@ -1,10 +1,9 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
+#include <string.h>
 #include "CZipReader.h"
-#include "CFileList.h"
-#include "CReadFile.h"
 #include "os.h"
 
 #include "IrrCompileConfig.h"
@@ -86,11 +85,7 @@ void CZipReader::extractFilename(SZipFileEntry* entry)
 	if (thereIsAPath)
 	{
 		lorfn = (s32)(p - entry->zipFileName.c_str());
-		
-		entry->path = entry->zipFileName.subString ( 0, lorfn );
-
-		//entry->path.append(entry->zipFileName, lorfn);
-		//entry->path.append ( "" );
+		entry->path.append(entry->zipFileName, lorfn);
 	}
 
 	if (!IgnorePaths)
@@ -111,17 +106,17 @@ bool CZipReader::scanLocalHeader()
 	File->read(&entry.header, sizeof(SZIPFileHeader));
 
 #ifdef __BIG_ENDIAN__
-		entry.header.Sig = os::Byteswap::byteswap(entry.header.Sig);
-		entry.header.VersionToExtract = os::Byteswap::byteswap(entry.header.VersionToExtract);
-		entry.header.GeneralBitFlag = os::Byteswap::byteswap(entry.header.GeneralBitFlag);
-		entry.header.CompressionMethod = os::Byteswap::byteswap(entry.header.CompressionMethod);
-		entry.header.LastModFileTime = os::Byteswap::byteswap(entry.header.LastModFileTime);
-		entry.header.LastModFileDate = os::Byteswap::byteswap(entry.header.LastModFileDate);
-		entry.header.DataDescriptor.CRC32 = os::Byteswap::byteswap(entry.header.DataDescriptor.CRC32);
-		entry.header.DataDescriptor.CompressedSize = os::Byteswap::byteswap(entry.header.DataDescriptor.CompressedSize);
-		entry.header.DataDescriptor.UncompressedSize = os::Byteswap::byteswap(entry.header.DataDescriptor.UncompressedSize);
-		entry.header.FilenameLength = os::Byteswap::byteswap(entry.header.FilenameLength);
-		entry.header.ExtraFieldLength = os::Byteswap::byteswap(entry.header.ExtraFieldLength);
+		entry.header.Sig = OSReadSwapInt32(&entry.header.Sig,0);
+		entry.header.VersionToExtract = OSReadSwapInt16(&entry.header.VersionToExtract,0);
+		entry.header.GeneralBitFlag = OSReadSwapInt16(&entry.header.GeneralBitFlag,0);
+		entry.header.CompressionMethod = OSReadSwapInt16(&entry.header.CompressionMethod,0);
+		entry.header.LastModFileTime = OSReadSwapInt16(&entry.header.LastModFileTime,0);
+		entry.header.LastModFileDate = OSReadSwapInt16(&entry.header.LastModFileDate,0);
+		entry.header.DataDescriptor.CRC32 = OSReadSwapInt32(&entry.header.DataDescriptor.CRC32,0);
+		entry.header.DataDescriptor.CompressedSize = OSReadSwapInt32(&entry.header.DataDescriptor.CompressedSize,0);
+		entry.header.DataDescriptor.UncompressedSize = OSReadSwapInt32(&entry.header.DataDescriptor.UncompressedSize,0);
+		entry.header.FilenameLength = OSReadSwapInt16(&entry.header.FilenameLength,0);
+		entry.header.ExtraFieldLength = OSReadSwapInt16(&entry.header.ExtraFieldLength,0);
 #endif
 
 	if (entry.header.Sig != 0x04034b50)
@@ -146,9 +141,9 @@ bool CZipReader::scanLocalHeader()
 		// read data descriptor
 		File->read(&entry.header.DataDescriptor, sizeof(entry.header.DataDescriptor));
 #ifdef __BIG_ENDIAN__
-		entry.header.DataDescriptor.CRC32 = os::Byteswap::byteswap(entry.header.DataDescriptor.CRC32);
-		entry.header.DataDescriptor.CompressedSize = os::Byteswap::byteswap(entry.header.DataDescriptor.CompressedSize);
-		entry.header.DataDescriptor.UncompressedSize = os::Byteswap::byteswap(entry.header.DataDescriptor.UncompressedSize);
+		entry.header.DataDescriptor.CRC32 = OSReadSwapInt32(&entry.header.DataDescriptor.CRC32,0);
+		entry.header.DataDescriptor.CompressedSize = OSReadSwapInt32(&entry.header.DataDescriptor.CompressedSize,0);
+		entry.header.DataDescriptor.UncompressedSize = OSReadSwapInt32(&entry.header.DataDescriptor.UncompressedSize,0);
 #endif
 	}
 
@@ -208,8 +203,8 @@ IReadFile* CZipReader::openFile(s32 index)
 		{
   			#ifdef _IRR_COMPILE_WITH_ZLIB_
 			
-			const u32 uncompressedSize = FileList[index].header.DataDescriptor.UncompressedSize;			
-			const u32 compressedSize = FileList[index].header.DataDescriptor.CompressedSize;
+			u32 uncompressedSize = FileList[index].header.DataDescriptor.UncompressedSize;			
+			u32 compressedSize = FileList[index].header.DataDescriptor.CompressedSize;
 
 			void* pBuf = new c8[ uncompressedSize ];
 			if (!pBuf)
@@ -248,6 +243,7 @@ IReadFile* CZipReader::openFile(s32 index)
 				inflateEnd(&stream);
 				if (err == Z_STREAM_END)
 					err = Z_OK;
+
 				err = Z_OK;
 				inflateEnd(&stream);
 			}
@@ -262,7 +258,7 @@ IReadFile* CZipReader::openFile(s32 index)
 				return 0;
 			}
 			else
-				return io::createMemoryReadFile(pBuf, uncompressedSize, FileList[index].zipFileName.c_str(), true);
+				return io::createMemoryReadFile ( pBuf, uncompressedSize, FileList[index].simpleFileName.c_str(), true);
 			
 			#else
 			return 0; // zlib not compiled, we cannot decompress the data.
@@ -298,10 +294,12 @@ void CZipReader::deletePathFromFilename(core::stringc& filename)
 	// delete path from filename
 	const c8* p = filename.c_str() + filename.size();
 
-	// search for path separator or beginning
+	// suche ein slash oder den anfang.
 
 	while (*p!='/' && *p!='\\' && p!=filename.c_str())
 		--p;
+
+	core::stringc newName;
 
 	if (p != filename.c_str())
 	{
@@ -341,140 +339,6 @@ s32 CZipReader::findFile(const c8* simpleFilename)
 	return res;
 }
 
-
-// -----------------------------------------------------------------------------
-#if 1
-
-class CUnzipReadFile : public CReadFile
-{
-	public:
-		CUnzipReadFile ( const core::stringc &realName, const c8 * hashName )
-			: CReadFile( realName.c_str ())
-		{
-			CallFileName = hashName;
-		}
-		virtual ~CUnzipReadFile () {}
-
-		virtual const c8* getFileName() const
-		{
-			return CallFileName.c_str ();
-		}
-
-		core::stringc CallFileName;
-};
-
-CUnZipReader::CUnZipReader( IFileSystem * parent, const c8* basename, bool ignoreCase, bool ignorePaths)
-:CZipReader ( 0, ignoreCase, ignorePaths ), Parent ( parent )
-{
-	Base = basename;
-	if (	Base [ Base.size() - 1 ] != '\\' ||
-			Base [ Base.size() - 1 ] != '/'
-		)
-	{
-		Base += "/";
-	}
-
-}
-
-void CUnZipReader::buildDirectory ( )
-{
-}
-
-//! opens a file by file name
-IReadFile* CUnZipReader::openFile(const c8* filename)
-{
-	core::stringc fname;
-	fname = Base;
-	fname += filename;
-
-
-	CUnzipReadFile* file = new CUnzipReadFile( fname, filename);
-	if (file->isOpen())
-		return file;
-
-	file->drop();
-	return 0;
-
-}
-
-//! returns fileindex
-s32 CUnZipReader::findFile(const c8* filename)
-{
-	IReadFile *file = openFile ( filename );
-	if ( 0 == file )
-		return -1;
-	file->drop ();
-	return 1;
-}
-
-#else
-
-CUnZipReader::CUnZipReader( IFileSystem * parent, const c8* basename, bool ignoreCase, bool ignorePaths)
-	: CZipReader( 0, ignoreCase, ignorePaths ), Parent ( parent )
-{
-	strcpy ( Buf, Parent->getWorkingDirectory () );
-
-	Parent->changeWorkingDirectoryTo ( basename );
-	buildDirectory ( );
-	Parent->changeWorkingDirectoryTo ( Buf );
-
-	FileList.sort();
-}
-
-void CUnZipReader::buildDirectory ( )
-{
-	IFileList * list = new CFileList();
-
-	SZipFileEntry entry;
-
-	const u32 size = list->getFileCount();
-	for (u32 i = 0; i!= size; ++i)
-	{
-		if ( false == list->isDirectory( i ) )
-		{
-			entry.zipFileName = list->getFullFileName ( i );
-			entry.header.FilenameLength = entry.zipFileName.size ();
-			extractFilename(&entry);
-			FileList.push_back(entry);
-		}
-		else
-		{
-			const c8 * rel = list->getFileName ( i );
-
-			if (strcmp( rel, "." ) && strcmp( rel, ".." ))
-			{
-				Parent->changeWorkingDirectoryTo ( rel );
-				buildDirectory ();
-				Parent->changeWorkingDirectoryTo ( ".." );
-			}
-		}
-	}
-
-	list->drop ();
-}
-
-//! opens a file by file name
-IReadFile* CUnZipReader::openFile(const c8* filename)
-{
-	s32 index = -1;
-
-	if ( IgnorePaths )
-	{
-		index = findFile(filename);
-	}
-	else
-	if ( FileList.size () )
-	{
-		const core::stringc search = FileList[0].path + filename;
-		index = findFile( search.c_str() );
-	}
-
-	if (index == -1)
-		return 0;
-
-	return createReadFile(FileList[index].zipFileName.c_str() );
-}
-#endif
 
 
 } // end namespace io

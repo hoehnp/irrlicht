@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -14,7 +14,7 @@ namespace gui
 {
 
 	//! Element for fading out or in
-	/** Here is a small example on how the class is used. In this example we fade
+	/**	Here is a small example on how the class is used. In this example we fade
 	in from a total red screen in the beginning. As you can see, the fader is not
 	only useful for dramatic in and out fading, but also to show that the player
 	is hit in a first person shooter game for example.
@@ -33,7 +33,7 @@ namespace gui
 			: IGUIElement(EGUIET_IN_OUT_FADER, environment, parent, id, rectangle) {}
 
 		//! destructor
-		virtual ~IGUIInOutFader() {}
+		~IGUIInOutFader() {};
 
 		//! Gets the color to fade out to or to fade in from.
 		virtual video::SColor getColor() const = 0;
@@ -41,7 +41,6 @@ namespace gui
 		//! Sets the color to fade out to or to fade in from.
 		//! \param color: Color to where it is faded out od from it is faded in.
 		virtual void setColor(video::SColor color) = 0;
-		virtual void setColor(video::SColor source, video::SColor dest) = 0;
 
 		//! Starts the fade in process. In the beginning the whole rect is drawn by
 		//! the set color (black by default) and at the end of the overgiven

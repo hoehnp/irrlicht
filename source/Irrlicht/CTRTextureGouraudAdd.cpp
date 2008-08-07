@@ -1,11 +1,10 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
-#include "IrrCompileConfig.h"
 #include "CTRTextureGouraud.h"
-
-#ifdef _IRR_COMPILE_WITH_SOFTWARE_
+#include "os.h"
+#include "SColor.h"
 
 namespace irr
 {
@@ -41,18 +40,18 @@ void CTRTextureGouraudAdd::drawIndexedTriangleList(S2DVertex* vertices, s32 vert
 {
 	const S2DVertex *v1, *v2, *v3;
 
-	u16 color;
+	s16 color;
 	f32 tmpDiv; // temporary division factor
 	f32 longest; // saves the longest span
 	s32 height; // saves height of triangle
-	u16* targetSurface; // target pointer where to plot pixels
+	s16* targetSurface; // target pointer where to plot pixels
 	s32 spanEnd; // saves end of spans
 	f32 leftdeltaxf; // amount of pixels to increase on left side of triangle
 	f32 rightdeltaxf; // amount of pixels to increase on right side of triangle
 	s32 leftx, rightx; // position where we are 
 	f32 leftxf, rightxf; // same as above, but as f32 values
 	s32 span; // current span
-	u16 *hSpanBegin, *hSpanEnd; // pointer used when plotting pixels
+	s16 *hSpanBegin, *hSpanEnd; // pointer used when plotting pixels
 	s32 leftR, leftG, leftB, rightR, rightG, rightB; // color values
 	s32 leftStepR, leftStepG, leftStepB,
 		rightStepR, rightStepG, rightStepB; // color steps
@@ -67,9 +66,9 @@ void CTRTextureGouraudAdd::drawIndexedTriangleList(S2DVertex* vertices, s32 vert
 	s32 spanZValue, spanZStep; // ZValues when drawing a span
 	TZBufferType* zTarget, *spanZTarget; // target of ZBuffer;
 
-	lockedSurface = (u16*)RenderTarget->lock();
+	lockedSurface = (s16*)RenderTarget->lock();
 	lockedZBuffer = ZBuffer->lock();
-	lockedTexture = (u16*)Texture->lock();
+	lockedTexture = (s16*)Texture->lock();
 	
 	for (s32 i=0; i<triangleCount; ++i)
 	{
@@ -120,7 +119,8 @@ void CTRTextureGouraudAdd::drawIndexedTriangleList(S2DVertex* vertices, s32 vert
 		if (!TriangleRect.isRectCollided(ViewPortRect))
 			continue;
 
-		// calculate height of triangle
+
+		// höhe des dreiecks berechnen
 		height = v3->Pos.Y - v1->Pos.Y;
 		if (!height)
 			continue;
@@ -259,7 +259,7 @@ void CTRTextureGouraudAdd::drawIndexedTriangleList(S2DVertex* vertices, s32 vert
 				// draw the span
 				if (rightx + tDiffRight - leftx - tDiffLeft)
 				{
-					tmpDiv = 1.0f / (f32)(rightx - leftx);
+					f32 tmpDiv = 1.0f / (f32)(rightx - leftx);
 					spanZStep = (s32)((rightZValue - leftZValue) * tmpDiv);
 					spanZValue = leftZValue+tDiffLeft*spanZStep;
 
@@ -393,24 +393,13 @@ void CTRTextureGouraudAdd::drawIndexedTriangleList(S2DVertex* vertices, s32 vert
 	Texture->unlock();
 }
 
-} // end namespace video
-} // end namespace irr
-
-#endif // _IRR_COMPILE_WITH_SOFTWARE_
-
-namespace irr
-{
-namespace video
-{
 
 ITriangleRenderer* createTriangleRendererTextureGouraudAdd(IZBuffer* zbuffer)
 {
-	#ifdef _IRR_COMPILE_WITH_SOFTWARE_
 	return new CTRTextureGouraudAdd(zbuffer);
-	#else
-	return 0;
-	#endif // _IRR_COMPILE_WITH_SOFTWARE_
 }
+
+
 
 } // end namespace video
 } // end namespace irr

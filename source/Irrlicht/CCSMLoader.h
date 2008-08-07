@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 //
@@ -60,20 +60,20 @@ namespace scene
 
 		//! returns true if the file maybe is able to be loaded by this class
 		//! based on the file extension (e.g. ".bsp")
-		virtual bool isALoadableFileExtension(const c8* fileName) const;
+		virtual bool isALoadableFileExtension(const c8* fileName);
 
 		//! creates/loads an animated mesh from the file.
-		virtual IAnimatedMesh* createMesh(io::IReadFile* file);
+		virtual IAnimatedMesh* createMesh(irr::io::IReadFile* file);
 
 	private:
 
-		scene::IMesh* createCSMMesh(io::IReadFile* file);
+		scene::IMesh* createCSMMesh(irr::io::IReadFile* file);
 
 		scene::IMesh* createIrrlichtMesh(const CSMFile* csmFile,
 			core::stringc textureRoot, const c8* lmprefix);
 
-		io::IFileSystem* FileSystem;
 		scene::ISceneManager* SceneManager;
+		io::IFileSystem* FileSystem;
 	};
 
 } // end namespace

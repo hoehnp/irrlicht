@@ -1,13 +1,14 @@
 #ifndef __C_SCENE_COLLISION_MANAGER_H_INCLUDED__
 #define __C_SCENE_COLLISION_MANAGER_H_INCLUDED__
 
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #include "ISceneCollisionManager.h"
 #include "ISceneManager.h"
 #include "IVideoDriver.h"
+#include <math.h>
 
 namespace irr
 {
@@ -67,12 +68,13 @@ namespace scene
 	private:
 
 		//! recursive method for going through all scene nodes
-		void getPickedNodeBB(ISceneNode* root,
-					   const core::line3df& ray,
-					   s32 bits,
-					   bool bNoDebugObjects,
-					   f32& outbestdistance,
-					   ISceneNode*& outbestnode);
+		void getPickedNodeBB(ISceneNode* root, const core::vector3df& linemiddle, 
+				const core::vector3df& linevect,
+				const core::vector3df& pos, 
+				f32 halflength, s32 bits, 
+				bool bNoDebugObjects,
+				f32& outdist,
+				ISceneNode*& outbest);
 
 		struct SCollisionData
 		{
@@ -86,7 +88,7 @@ namespace scene
 			core::vector3df basePoint;
 
 			bool foundCollision;
-			f32 nearestDistance;
+			f64 nearestDistance;
 			core::vector3df intersectionPoint;
 
 			core::triangle3df intersectionTriangle;
@@ -111,7 +113,40 @@ namespace scene
 		core::vector3df collideWithWorld(s32 recursionDepth, SCollisionData &colData,
 			core::vector3df pos, core::vector3df vel);
 
-		inline bool getLowestRoot(f32 a, f32 b, f32 c, f32 maxR, f32* root);
+		inline bool getLowestRoot(f32 a, f32 b, f32 c, f32 maxR, f32* root)
+		{
+			// check if solution exists
+			f32 determinant = b*b - 4.0f*a*c;
+
+			// if determinant is negative, no solution
+			if (determinant < 0.0f) return false;
+
+			// calculate two roots: (if det==0 then x1==x2
+			// but lets disregard that slight optimization)
+
+			f32 sqrtD = (f32)sqrt(determinant);
+			f32 r1 = (-b - sqrtD) / (2*a);
+			f32 r2 = (-b + sqrtD) / (2*a);
+
+			// sort so x1 <= x2
+			if (r1 > r2) { f32 tmp=r2; r2=r1; r1=tmp; }
+
+			// get lowest root
+			if (r1 > 0 && r1 < maxR)
+			{
+				*root = r1;
+				return true;
+			}
+
+			// its possible that we want x2, this can happen if x1 < 0
+			if (r2 > 0 && r2 < maxR)
+			{
+				*root = r2;
+				return true;
+			}
+
+			return false;
+		}
 
 		ISceneManager* SceneManager;
 		video::IVideoDriver* Driver;

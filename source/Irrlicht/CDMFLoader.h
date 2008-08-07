@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 // 
@@ -19,9 +19,12 @@
   This loader is used to load DMF files in Irrlicht.
   Look at the documentation for a sample application.
   
-  Parts of this code are from Murphy McCauley COCTLoader just like
-  GetFaceNormal() or indexes creation routines and a routine to add faces. So
-  please refer to COCTLoader.h to know more about rights granted.
+  Parts of this code are from Irrlicht's CQ3LevelMesh and C3DSMeshFileLoader,
+  and are Copyright (C) 2002-2004 Nikolaus Gebhardt.
+  
+  Parts of this code are from Murphy McCauley COCTLoader just like GetFaceNormal() or indexes
+  creation routines and a routine to add faces. So please refer to COCTLoader.h to know more
+  about rights granted.
   
   You can use this software as you wish but you must not remove these notes about license nor
   credits to others for parts of this code.
@@ -47,23 +50,26 @@ namespace scene
 	public:
 
 		/** constructor*/
-		CDMFLoader(ISceneManager* smgr);
+		CDMFLoader(video::IVideoDriver* driver,irr::scene::ISceneManager* smgr);
+
+		/** destructor*/
+		virtual ~CDMFLoader();
 
 		//! returns true if the file maybe is able to be loaded by this class
 		//! based on the file extension (e.g. ".cob")
-		virtual bool isALoadableFileExtension(const c8* fileName) const;
+		virtual bool isALoadableFileExtension(const c8* fileName);
 
 		/** creates/loads an animated mesh from the file.
 		 \return Pointer to the created mesh. Returns 0 if loading failed.
 		 If you no longer need the mesh, you should call IAnimatedMesh::drop().
-		 See IReferenceCounted::drop() for more information.*/
-		virtual IAnimatedMesh* createMesh(io::IReadFile* file);
+		 See IUnknown::drop() for more information.*/
+		virtual IAnimatedMesh* createMesh(irr::io::IReadFile* file);
 		
 		/** loads dynamic lights present in this scene.
         Note that loaded lights from DeleD must have the suffix \b dynamic_ and must be \b pointlight.
         Irrlicht correctly loads specular color, diffuse color , position and distance of object affected by light.
         \return number of lights loaded or 0 if loading failed.*/
-        int loadLights(const c8 * filename, ISceneManager* smgr,
+        int loadLights(const c8 * filename, irr::scene::ISceneManager* smgr,
 			ISceneNode*  parent = 0, s32 base_id = 1000);
 
         /** loads water plains present in this scene.
@@ -71,7 +77,7 @@ namespace scene
         Irrlicht correctly loads position and rotation of water plain as well as texture layers.
         \return number of water plains loaded or 0 if loading failed.*/
         int loadWaterPlains ( const c8 *filename,
-                              ISceneManager* smgr,
+                              irr::scene::ISceneManager* smgr,
                               ISceneNode * parent = 0,
                               s32 base_id = 2000,
                               bool mode = true);
@@ -81,7 +87,7 @@ namespace scene
         void GetFaceNormal(f32 a[3], f32 b[3], f32 c[3], f32 out[3]);
 
 		video::IVideoDriver* Driver;
-		ISceneManager* SceneMgr;
+		scene::ISceneManager* SceneMgr;
 	};
 
 } // end namespace scene

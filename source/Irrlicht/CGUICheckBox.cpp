@@ -1,16 +1,13 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #include "CGUICheckBox.h"
-
-#ifdef _IRR_COMPILE_WITH_GUI_
-
 #include "IGUISkin.h"
 #include "IGUIEnvironment.h"
 #include "IVideoDriver.h"
 #include "IGUIFont.h"
-#include "os.h"
+#include "GUIIcons.h"
 
 namespace irr
 {
@@ -19,107 +16,64 @@ namespace gui
 
 //! constructor
 CGUICheckBox::CGUICheckBox(bool checked, IGUIEnvironment* environment, IGUIElement* parent, s32 id, core::rect<s32> rectangle)
-: IGUICheckBox(environment, parent, id, rectangle), Pressed(false), Checked(checked), checkTime(0)
+: IGUICheckBox(environment, parent, id, rectangle), Pressed(false), Checked(checked)
 {
 	#ifdef _DEBUG
 	setDebugName("CGUICheckBox");
 	#endif
+}
 
-	// this element can be tabbed into
-	setTabStop(true);
-	setTabOrder(-1);
+
+
+//! destructor
+CGUICheckBox::~CGUICheckBox()
+{
 }
 
 
 
 //! called if an event happened.
-bool CGUICheckBox::OnEvent(const SEvent& event)
+bool CGUICheckBox::OnEvent(SEvent event)
 {
-	if (IsEnabled)
+	switch(event.EventType)
 	{
-		switch(event.EventType)
+	case EET_GUI_EVENT:
+		if (event.GUIEvent.EventType == EGET_ELEMENT_FOCUS_LOST)
 		{
-		case EET_KEY_INPUT_EVENT:
-			if (event.KeyInput.PressedDown &&
-				(event.KeyInput.Key == KEY_RETURN || 
-				 event.KeyInput.Key == KEY_SPACE))
-			{
-				Pressed = true;
-				return true;
-			}
-			else
-			if (Pressed && event.KeyInput.PressedDown && event.KeyInput.Key == KEY_ESCAPE)
-			{
-				Pressed = false;
-				return true;
-			}
-			else
-			if (!event.KeyInput.PressedDown && Pressed &&
-				(event.KeyInput.Key == KEY_RETURN || 
-				 event.KeyInput.Key == KEY_SPACE))
-			{
-				Pressed = false;
-				if (Parent)
-				{
-					SEvent newEvent;
-					newEvent.EventType = EET_GUI_EVENT;
-					newEvent.GUIEvent.Caller = this;
-					newEvent.GUIEvent.Element = 0;
-					Checked = !Checked;
-					newEvent.GUIEvent.EventType = EGET_CHECKBOX_CHANGED;
-					Parent->OnEvent(newEvent);
-				}
-				return true;
-			}
-			break;
-		case EET_GUI_EVENT:
-			if (event.GUIEvent.EventType == EGET_ELEMENT_FOCUS_LOST)
-			{
-				if (event.GUIEvent.Caller == this)
-					Pressed = false;
-			}
-			break;
-		case EET_MOUSE_INPUT_EVENT:
-			if (event.MouseInput.Event == EMIE_LMOUSE_PRESSED_DOWN)
-			{
-				Pressed = true;
-				checkTime = os::Timer::getTime();
-				Environment->setFocus(this);
-				return true;
-			}
-			else
-			if (event.MouseInput.Event == EMIE_LMOUSE_LEFT_UP)
-			{
-				bool wasPressed = Pressed;
-				Environment->removeFocus(this);
-				Pressed = false;
-
-				if (wasPressed && Parent)
-				{
-					if ( !AbsoluteClippingRect.isPointInside( core::position2d<s32>(event.MouseInput.X, event.MouseInput.Y) ) )
-					{
-						Pressed = false;
-						return true;
-					}
-
-					SEvent newEvent;
-					newEvent.EventType = EET_GUI_EVENT;
-					newEvent.GUIEvent.Caller = this;
-					newEvent.GUIEvent.Element = 0;
-					Checked = !Checked;
-					newEvent.GUIEvent.EventType = EGET_CHECKBOX_CHANGED;
-					Parent->OnEvent(newEvent);
-				}
-
-				return true;
-			}
-			break;
-		default:
-			break;
+			Pressed = false;
+			return true;
 		}
+		break;
+	case EET_MOUSE_INPUT_EVENT:
+		if (event.MouseInput.Event == EMIE_LMOUSE_PRESSED_DOWN)
+		{
+			Pressed = true;
+			Environment->setFocus(this);
+			return true;
+		}
+		else
+		if (event.MouseInput.Event == EMIE_LMOUSE_LEFT_UP)
+		{
+			bool wasPressed = Pressed;
+			Environment->removeFocus(this);
+			Pressed = false;
+
+			if (wasPressed && Parent)
+			{
+				SEvent newEvent;
+				newEvent.EventType = EET_GUI_EVENT;
+				newEvent.GUIEvent.Caller = this;
+				Checked = !Checked;
+				newEvent.GUIEvent.EventType = EGET_CHECKBOX_CHANGED;
+				Parent->OnEvent(newEvent);
+			}
+
+			return true;
+		}
+		break;
 	}
 
-	return IGUIElement::OnEvent(event);
+	return Parent ? Parent->OnEvent(event) : false;
 }
 
 
@@ -143,12 +97,12 @@ void CGUICheckBox::draw()
 	checkRect.LowerRightCorner.X = checkRect.UpperLeftCorner.X + height;
 	checkRect.LowerRightCorner.Y = checkRect.UpperLeftCorner.Y + height;
 
-	skin->draw3DSunkenPane(this, skin->getColor(Pressed || !IsEnabled ? EGDC_3D_FACE : EGDC_ACTIVE_CAPTION),
+	skin->draw3DSunkenPane(this, skin->getColor(Pressed ? EGDC_3D_FACE : EGDC_ACTIVE_CAPTION),
 		false, true, checkRect, &AbsoluteClippingRect);
 
-	if (Checked && Environment->getSkin())
-		Environment->getSkin()->drawIcon(this, EGDI_CHECK_BOX_CHECKED, checkRect.getCenter(), 
-			checkTime, os::Timer::getTime(), false, &AbsoluteClippingRect);
+	if (Checked && Environment->getBuiltInFont())
+		Environment->getBuiltInFont()->draw(GUI_ICON_CHECK_BOX_CHECKED, 
+			checkRect, skin->getColor(EGDC_BUTTON_TEXT), true, true, &AbsoluteClippingRect);
 
 	if (Text.size())
 	{
@@ -173,29 +127,13 @@ void CGUICheckBox::setChecked(bool checked)
 
 
 //! returns if box is checked
-bool CGUICheckBox::isChecked() const
+bool CGUICheckBox::isChecked()
 {
 	_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
 	return Checked;
 }
 
-//! Writes attributes of the element.
-void CGUICheckBox::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options=0) const
-{
-	IGUICheckBox::serializeAttributes(out,options);
-	out->addBool	("Checked",	Checked );
-}
-
-//! Reads attributes of the element
-void CGUICheckBox::deserializeAttributes(io::IAttributes* in, io::SAttributeReadWriteOptions* options=0)
-{
-	Checked = in->getAttributeAsBool ("Checked");
-
-	IGUICheckBox::deserializeAttributes(in,options);
-}
 
 
 } // end namespace gui
 } // end namespace irr
-
-#endif // _IRR_COMPILE_WITH_GUI_

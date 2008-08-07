@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -15,7 +15,6 @@ namespace io
 
 	class CZipReader;
 	class CPakReader;
-	class CUnZipReader;
 	const s32 FILE_SYSTEM_MAX_PATH = 1024;
 
 /*!
@@ -34,16 +33,12 @@ public:
 	//! opens a file for read access
 	virtual IReadFile* createAndOpenFile(const c8* filename);
 
-	//! Creates an IReadFile interface for accessing memory like a file.
-	virtual IReadFile* createMemoryReadFile(void* memory, s32 len, const c8* fileName, bool deleteMemoryWhenDropped = false);
-
 	//! Opens a file for write access.
 	virtual IWriteFile* createAndWriteFile(const c8* filename, bool append=false);
 
 	//! adds an zip archive to the filesystem
 	virtual bool addZipFileArchive(const c8* filename, bool ignoreCase = true, bool ignorePaths = true);
-	virtual bool addFolderFileArchive(const c8* filename, bool ignoreCase = true, bool ignorePaths = true);
-
+	
 	//! adds an pak archive to the filesystem
 	virtual bool addPakFileArchive(const c8* filename, bool ignoreCase = true, bool ignorePaths = true);
 
@@ -55,24 +50,12 @@ public:
 	//! like this: "drive:\directory\sudirectory\"
 	virtual bool changeWorkingDirectoryTo(const c8* newDirectory);
 
-	//! Converts a relative path to an absolute (unique) path, resolving symbolic links
-	virtual core::stringc getAbsolutePath(const core::stringc& filename) const;
-
-	//! Returns the directory a file is located in.
-	/** \param filename: The file to get the directory from */
-	virtual core::stringc getFileDir(const core::stringc& filename) const;
-
-	//! Returns the base part of a filename, i.e. the name without the directory
-	//! part. If no directory is prefixed, the full name is returned.
-	/** \param filename: The file to get the basename from */
-	core::stringc getFileBasename(const core::stringc& filename) const;
-
 	//! Creates a list of files and directories in the current working directory 
 	//! and returns it.
-	virtual IFileList* createFileList() const;
+	virtual IFileList* createFileList();
 
 	//! determinates if a file exists and would be able to be opened.
-	virtual bool existFile(const c8* filename) const;
+	virtual bool existFile(const c8* filename);
 
 	//! Creates a XML Reader from a file.
 	virtual IXMLReader* createXMLReader(const c8* filename);
@@ -99,9 +82,9 @@ private:
 
 	core::array<CZipReader*> ZipFileSystems;
 	core::array<CPakReader*> PakFileSystems;
-	core::array<CUnZipReader*> UnZipFileSystems;
 	c8 WorkingDirectory[FILE_SYSTEM_MAX_PATH];
 };
+
 
 
 } // end namespace irr

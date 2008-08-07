@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -14,16 +14,13 @@
 #include "os.h"
 #include "IrrCompileConfig.h"
 #include "CAttributes.h"
-#include "CMemoryReadFile.h"
 
-#if defined (_IRR_WINDOWS_API_)
-	#if !defined ( _WIN32_WCE )
-		#include <direct.h> // for _chdir
-	#endif
-#else
-	#include <unistd.h>
-	#include <limits.h>
-	#include <stdlib.h>
+#ifdef _IRR_WINDOWS_
+#include <direct.h> // for _chdir
+#endif
+
+#if (defined(LINUX) || defined(MACOSX))
+#include <unistd.h>
 #endif
 
 namespace irr
@@ -45,16 +42,11 @@ CFileSystem::CFileSystem()
 //! destructor
 CFileSystem::~CFileSystem()
 {
-	u32 i;
-
-	for ( i=0; i<ZipFileSystems.size(); ++i)
+	for (u32 i=0; i<ZipFileSystems.size(); ++i)
 		ZipFileSystems[i]->drop();
 
-	for ( i=0; i<PakFileSystems.size(); ++i)
-		PakFileSystems[i]->drop();
-
-	for ( i= 0; i<UnZipFileSystems.size(); ++i)
-		UnZipFileSystems[i]->drop();
+	for (u32 f=0; f<PakFileSystems.size(); ++f)
+		PakFileSystems[f]->drop();
 }
 
 
@@ -63,25 +55,17 @@ CFileSystem::~CFileSystem()
 IReadFile* CFileSystem::createAndOpenFile(const c8* filename)
 {
 	IReadFile* file = 0;
-	u32 i;
 
-	for ( i=0; i<ZipFileSystems.size(); ++i)
+	for (u32 i=0; i<ZipFileSystems.size(); ++i)
 	{
 		file = ZipFileSystems[i]->openFile(filename);
 		if (file)
 			return file;
 	}
 
-	for ( i = 0; i<PakFileSystems.size(); ++i)
+	for (u32 f=0; f<PakFileSystems.size(); ++f)
 	{
-		file = PakFileSystems[i]->openFile(filename);
-		if (file)
-			return file;
-	}
-
-	for ( i = 0; i<UnZipFileSystems.size(); ++i)
-	{
-		file = UnZipFileSystems[i]->openFile(filename);
+		file = PakFileSystems[f]->openFile(filename);
 		if (file)
 			return file;
 	}
@@ -90,15 +74,6 @@ IReadFile* CFileSystem::createAndOpenFile(const c8* filename)
 	return file;
 }
 
-//! Creates an IReadFile interface for treating memory like a file.
-IReadFile* CFileSystem::createMemoryReadFile(void* memory, s32 len, 
-			const c8* fileName, bool deleteMemoryWhenDropped)
-{
-	if (!memory)
-		return 0;
-	else
-		return new CMemoryReadFile(memory, len, fileName, deleteMemoryWhenDropped);
-}
 
 //! Opens a file for write access.
 IWriteFile* CFileSystem::createAndWriteFile(const c8* filename, bool append)
@@ -106,28 +81,6 @@ IWriteFile* CFileSystem::createAndWriteFile(const c8* filename, bool append)
 	return createWriteFile(filename, append);
 }
 
-
-bool CFileSystem::addFolderFileArchive(const c8* filename, bool ignoreCase, bool ignorePaths)
-{
-	bool ret = false;
-
-	CUnZipReader* zr = new CUnZipReader( this, filename, ignoreCase, ignorePaths);
-	if (zr)
-	{
-		UnZipFileSystems.push_back(zr);
-		ret = true;
-	}
-
-	#ifdef _DEBUG
-	if ( false == ret )
-	{
-		os::Printer::log("Could not open file. UnZipfile not added", filename, ELL_ERROR);
-	}
-	#endif
-
-	return ret;
-
-}
 
 
 //! adds an zip archive to the filesystem
@@ -185,97 +138,46 @@ bool CFileSystem::addPakFileArchive(const c8* filename, bool ignoreCase, bool ig
 //! Returns the string of the current working directory
 const c8* CFileSystem::getWorkingDirectory()
 {
-#ifdef _IRR_WINDOWS_API_
-	#if !defined ( _WIN32_WCE )
-		_getcwd(WorkingDirectory, FILE_SYSTEM_MAX_PATH);
-	#endif
+#ifdef _IRR_WINDOWS_
+	_getcwd(WorkingDirectory, FILE_SYSTEM_MAX_PATH);
 #endif
 
-#if (defined(_IRR_POSIX_API_) || defined(_IRR_OSX_PLATFORM_))
+#if (defined(LINUX) || defined(MACOSX))
 	getcwd(WorkingDirectory, (size_t)FILE_SYSTEM_MAX_PATH);
 #endif
 	return WorkingDirectory;
 }
 
 
-//! Changes the current Working Directory to the given string.
+
+//! Changes the current Working Directory to the string given.
 //! The string is operating system dependent. Under Windows it will look
 //! like this: "drive:\directory\sudirectory\"
-//! \return Returns true if successful, otherwise false.
+//! \return
+//! Returns true if successful, otherwise false.
 bool CFileSystem::changeWorkingDirectoryTo(const c8* newDirectory)
 {
 	bool success=false;
-#ifdef _MSC_VER
-	#if !defined ( _WIN32_WCE )
-		success=(_chdir(newDirectory) == 0);
-	#endif
-#else
-	success=(chdir(newDirectory) == 0);
+#ifdef _IRR_WINDOWS_
+	success=(_chdir(newDirectory) == 0);
+#endif
+
+#if (defined(LINUX) || defined(MACOSX))
+	success=(chdir(newDirectory) != 0);
 #endif
 	return success;
 }
 
-core::stringc CFileSystem::getAbsolutePath(const core::stringc& filename) const
-{
-	c8 *p=0;
-
-#ifdef _IRR_WINDOWS_API_
-	#if !defined ( _WIN32_WCE )
-		c8 fpath[_MAX_PATH];
-		p = _fullpath( fpath, filename.c_str(), _MAX_PATH);
-	#endif
-
-#elif (defined(_IRR_POSIX_API_) || defined(_IRR_OSX_PLATFORM_))
-	c8 fpath[4096];
-	p = realpath(filename.c_str(), fpath);
-#endif
-
-	return core::stringc(p);
-}
-
-
-//! returns the directory part of a filename, i.e. all until the first
-//! slash or backslash, excluding it. If no directory path is prefixed, a '.'
-//! is returned.
-core::stringc CFileSystem::getFileDir(const core::stringc& filename) const
-{
-	// find last forward or backslash
-	s32 lastSlash = filename.findLast('/');
-	const s32 lastBackSlash = filename.findLast('\\');
-	lastSlash = lastSlash > lastBackSlash ? lastSlash : lastBackSlash;
-
-	if ((u32)lastSlash < filename.size())
-		return filename.subString(0, lastSlash);
-	else
-		return ".";
-}
-
-
-//! returns the base part of a filename, i.e. all except for the directory
-//! part. If no directory path is prefixed, the full name is returned.
-core::stringc CFileSystem::getFileBasename(const core::stringc& filename) const
-{
-	// find last forward or backslash
-	s32 lastSlash = filename.findLast('/');
-	const s32 lastBackSlash = filename.findLast('\\');
-	lastSlash = lastSlash > lastBackSlash ? lastSlash : lastBackSlash;
-
-	if ((u32)lastSlash < filename.size())
-		return filename.subString(lastSlash+1, filename.size()-lastSlash);
-	else
-		return filename;
-}
-
 
 //! Creates a list of files and directories in the current working directory 
-IFileList* CFileSystem::createFileList() const
+IFileList* CFileSystem::createFileList()
 {
 	return new CFileList();
 }
 
 
 //! determines if a file exists and would be able to be opened.
-bool CFileSystem::existFile(const c8* filename) const
+bool CFileSystem::existFile(const c8* filename)
 {
 	u32 i;
 
@@ -285,10 +187,6 @@ bool CFileSystem::existFile(const c8* filename) const
 
 	for (i=0; i<PakFileSystems.size(); ++i)
 		if (PakFileSystems[i]->findFile(filename)!=-1)
-			return true;
-
-	for (i=0; i<UnZipFileSystems.size(); ++i)
-		if (UnZipFileSystems[i]->findFile(filename)!=-1)
 			return true;
 
 	FILE* f = fopen(filename, "rb");

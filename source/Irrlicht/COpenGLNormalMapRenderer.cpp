@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -11,6 +11,8 @@
 #include "IVideoDriver.h"
 #include "os.h"
 #include "COpenGLDriver.h"
+#include <stdio.h>
+#include <string.h>
 
 namespace irr
 {
@@ -18,16 +20,16 @@ namespace video
 {
 
 // Irrlicht Engine OpenGL render path normal map vertex shader
-// I guess it could be optimized a lot, because I wrote it in D3D ASM and
-// transferred it 1:1 to OpenGL
-const char OPENGL_NORMAL_MAP_VSH[] =
+// I guess it could be optimized a lot, because I wrote it in D3D ASM and 
+// transfered it 1:1 to OpenGL
+const char OPENGL_NORMAL_MAP_VSH[] = 
 	"!!ARBvp1.0\n"\
 	"#input\n"\
 	"# 0-3: transposed world matrix;\n"\
 	"#;12: Light01 position \n"\
-	"#;13: x,y,z: Light01 color; .w: 1/LightRadius^2 \n"\
+	"#;13: x,y,z: Light01 color; .w: 1/LightRadius² \n"\
 	"#;14: Light02 position \n"\
-	"#;15: x,y,z: Light02 color; .w: 1/LightRadius^2 \n"\
+	"#;15: x,y,z: Light02 color; .w: 1/LightRadius² \n"\
 	"\n"\
 	"ATTRIB InPos = vertex.position;\n"\
 	"ATTRIB InColor = vertex.color;\n"\
@@ -132,9 +134,9 @@ const char OPENGL_NORMAL_MAP_VSH[] =
 	"END\n";
 
 // Irrlicht Engine OpenGL render path normal map pixel shader
-// I guess it could be optimized a bit, because I wrote it in D3D ASM and
+// I guess it could be optimized a bit, because I wrote it in D3D ASM and 
 // transfered it 1:1 to OpenGL
-const char OPENGL_NORMAL_MAP_PSH[] =
+const char OPENGL_NORMAL_MAP_PSH[] = 
 	"!!ARBfp1.0\n"\
 	"\n"\
 	"#Input\n"\
@@ -163,7 +165,7 @@ const char OPENGL_NORMAL_MAP_PSH[] =
 	"\n"\
 	"# calculate color of light2; \n"\
 	"MAD temp2, light2Vector, {2,2,2,2}, {-1,-1,-1,-1}; \n"\
-	"DP3_SAT temp2, normalMapColor, temp2; \n"\
+	"DP3_SAT temp2, normalMapColor, light2Vector; \n"\
 	"MAD temp, light2Color, temp2, temp; \n"\
 	"\n"\
 	"# luminance * base color; \n"\
@@ -173,21 +175,16 @@ const char OPENGL_NORMAL_MAP_PSH[] =
 	"END\n";
 
 //! Constructor
-COpenGLNormalMapRenderer::COpenGLNormalMapRenderer(video::COpenGLDriver* driver,
+COpenGLNormalMapRenderer::COpenGLNormalMapRenderer(video::COpenGLDriver* driver, 
 	s32& outMaterialTypeNr, IMaterialRenderer* baseMaterial)
 	: COpenGLShaderMaterialRenderer(driver, 0, baseMaterial), CompiledShaders(true)
 {
-
-	#ifdef _DEBUG
-	setDebugName("COpenGLNormalMapRenderer");
-	#endif
-
-	// set this as callback. We could have done this in
+	// set this as callback. We could have done this in 
 	// the initialization list, but some compilers don't like it.
 
 	CallBack = this;
 
-	// basically, this thing simply compiles the hardcoded shaders if the
+	// basicly, this thing simply compiles these hardcoded shaders if the
 	// hardware is able to do them, otherwise it maps to the base material
 
 	if (!driver->queryFeature(video::EVDF_ARB_FRAGMENT_PROGRAM_1) ||
@@ -205,8 +202,8 @@ COpenGLNormalMapRenderer::COpenGLNormalMapRenderer(video::COpenGLDriver* driver,
 
 	if (renderer)
 	{
-		// use the already compiled shaders
-		video::COpenGLNormalMapRenderer* nmr = reinterpret_cast<video::COpenGLNormalMapRenderer*>(renderer);
+		// use the already compiled shaders 
+		video::COpenGLNormalMapRenderer* nmr = (video::COpenGLNormalMapRenderer*)renderer;
 		CompiledShaders = false;
 
 		VertexShader = nmr->VertexShader;
@@ -218,11 +215,7 @@ COpenGLNormalMapRenderer::COpenGLNormalMapRenderer(video::COpenGLDriver* driver,
 	{
 		// compile shaders on our own
 		init(outMaterialTypeNr, OPENGL_NORMAL_MAP_VSH, OPENGL_NORMAL_MAP_PSH, EVT_TANGENTS);
-	}
-
-	// fallback if compilation has failed
-	if (-1==outMaterialTypeNr)
-		outMaterialTypeNr = driver->addMaterialRenderer(this);
+	}	
 }
 
 
@@ -234,15 +227,15 @@ COpenGLNormalMapRenderer::~COpenGLNormalMapRenderer()
 
 	if (!CompiledShaders)
 	{
-		// prevent this from deleting shaders we did not create
+		// prevent this from deleting shaders we did not create 
 		VertexShader = 0;
 		PixelShader = 0;
 	}
 }
 
 
-//! Returns the render capability of the material.
-s32 COpenGLNormalMapRenderer::getRenderCapability() const
+//! Returns the render capability of the material. 
+s32 COpenGLNormalMapRenderer::getRenderCapability()
 {
 	if (Driver->queryFeature(video::EVDF_ARB_FRAGMENT_PROGRAM_1) &&
 		Driver->queryFeature(video::EVDF_ARB_VERTEX_PROGRAM_1))
@@ -260,23 +253,23 @@ void COpenGLNormalMapRenderer::OnSetConstants(IMaterialRendererServices* service
 
 	// set transposed world matrix
 	const core::matrix4& tWorld = driver->getTransform(video::ETS_WORLD).getTransposed();
-	services->setVertexShaderConstant(tWorld.pointer(), 0, 4);
+	services->setVertexShaderConstant(&tWorld.M[0], 0, 4);
 
 	// set transposed worldViewProj matrix
 	core::matrix4 worldViewProj(driver->getTransform(video::ETS_PROJECTION));
 	worldViewProj *= driver->getTransform(video::ETS_VIEW);
 	worldViewProj *= driver->getTransform(video::ETS_WORLD);
 	core::matrix4 tr(worldViewProj.getTransposed());
-	services->setVertexShaderConstant(tr.pointer(), 8, 4);
+	services->setVertexShaderConstant(&tr.M[0], 8, 4);
 
-	// here we fetch the fixed function lights from the driver
+	// here we've got to fetch the fixed function lights from the driver
 	// and set them as constants
 
-	u32 cnt = driver->getDynamicLightCount();
-
-	for (u32 i=0; i<2; ++i)
+	int cnt = driver->getDynamicLightCount();
+	
+	for (int i=0; i<2; ++i)
 	{
-		video::SLight light;
+		video::SLight light; 
 
 		if (i<cnt)
 			light = driver->getDynamicLight(i);

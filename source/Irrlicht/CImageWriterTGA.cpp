@@ -1,15 +1,9 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
-// This file is part of the "Irrlicht Engine".
-// For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #include "CImageWriterTGA.h"
-
-#ifdef _IRR_COMPILE_WITH_TGA_WRITER_
-
 #include "CImageLoaderTGA.h"
 #include "IWriteFile.h"
 #include "CColorConverter.h"
-#include "irrString.h"
+#include "string.h"
 
 namespace irr
 {
@@ -28,12 +22,12 @@ CImageWriterTGA::CImageWriterTGA()
 #endif
 }
 
-bool CImageWriterTGA::isAWriteableFileExtension(const c8* fileName) const
+bool CImageWriterTGA::isAWriteableFileExtension(const c8* fileName)
 {
 	return strstr(fileName, ".tga") != 0;
 }
 
-bool CImageWriterTGA::writeImage(io::IWriteFile *file, IImage *image,u32 param) const
+bool CImageWriterTGA::writeImage(io::IWriteFile *file, IImage *image)
 {
 	STGAHeader imageHeader;
 	imageHeader.IdLength = 0;
@@ -81,7 +75,7 @@ bool CImageWriterTGA::writeImage(io::IWriteFile *file, IImage *image,u32 param) 
 	case ECF_R8G8B8:
 		CColorConverter_convertFORMATtoFORMAT
 			= CColorConverter::convert_R8G8B8toR8G8B8;
-		imageHeader.PixelDepth = 24;
+		imageHeader.PixelDepth = 16;
 		imageHeader.ImageDescriptor |= 0;
 		break;
 	}
@@ -113,10 +107,7 @@ bool CImageWriterTGA::writeImage(io::IWriteFile *file, IImage *image,u32 param) 
 	for (y = 0; y < imageHeader.ImageHeight; ++y)
 	{
 		// source, length [pixels], destination
-		if (image->getColorFormat()==ECF_R8G8B8)
-			CColorConverter::convert24BitTo24Bit(&scan_lines[y * row_stride], row_pointer, imageHeader.ImageWidth, 1, 0, 0, true);
-		else
-			CColorConverter_convertFORMATtoFORMAT(&scan_lines[y * row_stride], imageHeader.ImageWidth, row_pointer);
+		CColorConverter_convertFORMATtoFORMAT(&scan_lines[y * row_stride], imageHeader.ImageWidth, row_pointer);
 		if (file->write(row_pointer, row_size) != row_size)
 			break;
 	}
@@ -130,14 +121,11 @@ bool CImageWriterTGA::writeImage(io::IWriteFile *file, IImage *image,u32 param) 
 	imageFooter.DeveloperOffset = 0;
 	strncpy(imageFooter.Signature, "TRUEVISION-XFILE.", 18);
 
-	if (file->write(&imageFooter, sizeof(imageFooter)) < (s32)sizeof(imageFooter))
+	if (file->write(&imageFooter, sizeof(imageFooter)) != sizeof(imageFooter))
 		return false;
 
 	return imageHeader.ImageHeight < y;
 }
 
-} // namespace video
-} // namespace irr
-
-#endif
-
+}; // namespace video
+}; // namespace irr

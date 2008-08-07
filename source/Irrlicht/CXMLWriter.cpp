@@ -1,11 +1,10 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #include "CXMLWriter.h"
 #include <wchar.h>
 #include "irrString.h"
-#include "IrrCompileConfig.h"
 
 namespace irr
 {
@@ -15,12 +14,8 @@ namespace io
 
 //! Constructor
 CXMLWriter::CXMLWriter(IWriteFile* file)
-: File(file), Tabs(0), TextWrittenLast(false)
+: File(file), Tabs(0)
 {
-	#ifdef _DEBUG
-	setDebugName("CXMLWriter");
-	#endif
-	
 	if (File)
 		File->grab();
 }
@@ -42,22 +37,13 @@ void CXMLWriter::writeXMLHeader()
 	if (!File)
 		return;
 
-	if (sizeof(wchar_t)==2)
-	{
-		const u16 h = 0xFEFF;
-		File->write(&h, 2);
-	}
-	else
-	{
-		const u32 h = 0x0000FEFF;
-		File->write(&h, sizeof(wchar_t));
-	}
+	u16 h = 0xFEFF;
+	File->write(&h, 2);
 
-	const wchar_t* const p = L"<?xml version=\"1.0\"?>";
-	File->write(p, wcslen(p)*sizeof(wchar_t));
+	wchar_t* p = L"<?xml version=\"1.0\"?>";
+	File->write(p, wcslen(p)*2);
 
 	writeLineBreak();
-	TextWrittenLast = false;
 }
 
 
@@ -76,13 +62,13 @@ void CXMLWriter::writeElement(const wchar_t* name, bool empty,
 	if (Tabs > 0)
 	{
 		for (int i=0; i<Tabs; ++i)
-			File->write(L"\t", sizeof(wchar_t));
+			File->write("\t", 2);
 	}
 	
 	// write name
 
-	File->write(L"<", sizeof(wchar_t));
-	File->write(name, wcslen(name)*sizeof(wchar_t));
+	File->write(L"<", 2);
+    File->write(name, wcslen(name)*2);
 
 	// write attributes
 
@@ -94,50 +80,12 @@ void CXMLWriter::writeElement(const wchar_t* name, bool empty,
 
 	// write closing tag
 	if (empty)
-		File->write(L" />", 3*sizeof(wchar_t));
+		File->write(L" />", 6);
 	else
 	{
-		File->write(L">", sizeof(wchar_t));
+		File->write(L">", 2);
 		++Tabs;
 	}
-	
-	TextWrittenLast = false;
-}
-
-//! Writes an xml element with any number of attributes
-void CXMLWriter::writeElement(const wchar_t* name, bool empty,
-				  core::array<core::stringw> &names,
-				  core::array<core::stringw> &values)
-{
-	if (!File || !name)
-		return;
-
-	if (Tabs > 0)
-	{
-		for (int i=0; i<Tabs; ++i)
-			File->write(L"\t", sizeof(wchar_t));
-	}
-	
-	// write name
-
-	File->write(L"<", sizeof(wchar_t));
-	File->write(name, wcslen(name)*sizeof(wchar_t));
-
-	// write attributes
-	u32 i=0;
-	for (; i < names.size() && i < values.size(); ++i)
-		writeAttribute(names[i].c_str(), values[i].c_str());
-
-	// write closing tag
-	if (empty)
-		File->write(L" />", 3*sizeof(wchar_t));
-	else
-	{
-		File->write(L">", sizeof(wchar_t));
-		++Tabs;
-	}
-	
-	TextWrittenLast = false;
 }
 
 
@@ -146,11 +94,11 @@ void CXMLWriter::writeAttribute(const wchar_t* name, const wchar_t* value)
 	if (!name || !value)
 		return;
 
-	File->write(L" ", sizeof(wchar_t));
-	File->write(name, wcslen(name)*sizeof(wchar_t));
-	File->write(L"=\"", 2*sizeof(wchar_t));
-	writeText(value);
-	File->write(L"\"", sizeof(wchar_t));
+	File->write(L" ", 2);
+	File->write(name, wcslen(name)*2);
+	File->write(L"=\"", 4);
+	File->write(value, wcslen(value)*2); // TODO: replace special characters
+	File->write(L"\"", 2);
 }
 
 
@@ -160,9 +108,9 @@ void CXMLWriter::writeComment(const wchar_t* comment)
 	if (!File || !comment)
 		return;
 
-	File->write(L"<!--", 4*sizeof(wchar_t));
-	writeText(comment);
-	File->write(L"-->", 3*sizeof(wchar_t));
+	File->write(L"<!--", 8);
+    File->write(comment, wcslen(comment)*2); // TODO: replace special characters
+	File->write(L"-->", 6);
 }
 
 
@@ -174,16 +122,15 @@ void CXMLWriter::writeClosingTag(const wchar_t* name)
 
 	--Tabs;
 
-	if (Tabs > 0 && !TextWrittenLast)
+	if (Tabs > 0)
 	{
 		for (int i=0; i<Tabs; ++i)
-			File->write(L"\t", sizeof(wchar_t));
+			File->write("\t", 2);
 	}
 
-	File->write(L"</", 2*sizeof(wchar_t));
-	File->write(name, wcslen(name)*sizeof(wchar_t));
-	File->write(L">", sizeof(wchar_t));
-	TextWrittenLast = false;
+	File->write(L"</", 4);
+    File->write(name, wcslen(name)*2);
+	File->write(L">", 2);
 }
 
 
@@ -194,7 +141,7 @@ const CXMLWriter::XMLSpecialCharacters XMLWSChar[] =
 	{ L'<', L"&lt;" },
 	{ L'>', L"&gt;" },
 	{ L'"', L"&quot;" },
-	{ L'\0', 0 }
+	{ L'\0', 0}
 };
 
 
@@ -226,8 +173,7 @@ void CXMLWriter::writeText(const wchar_t* text)
 	}
 
 	// write new string
-	File->write(s.c_str(), s.size()*sizeof(wchar_t));
-	TextWrittenLast = true;
+	File->write(s.c_str(), s.size()*2);
 }
 
 
@@ -237,14 +183,7 @@ void CXMLWriter::writeLineBreak()
 	if (!File)
 		return;
 
-#if defined(_IRR_OSX_PLATFORM_)
-	File->write(L"\r", sizeof(wchar_t));
-#elif defined(_IRR_WINDOWS_API_)
-	File->write(L"\r\n", 2*sizeof(wchar_t));
-#else
-	File->write(L"\n", sizeof(wchar_t));
-#endif
-
+	File->write("\n", 2);
 }
 
 

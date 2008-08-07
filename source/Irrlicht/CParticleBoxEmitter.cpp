@@ -1,11 +1,11 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #include "CParticleBoxEmitter.h"
 #include "os.h"
 #include "IAttributes.h"
-#include "irrMath.h"
+#include <math.h>
 
 namespace irr
 {
@@ -14,20 +14,18 @@ namespace scene
 
 //! constructor
 CParticleBoxEmitter::CParticleBoxEmitter(
-	const core::aabbox3df& box,
-	const core::vector3df& direction, u32 minParticlesPerSecond,
-	u32 maxParticlesPerSecond,	video::SColor minStartColor,
+	core::aabbox3d<f32> box,
+	core::vector3df direction, 	u32 minParticlesPerSecond,
+	u32 maxParticlePerSecond,	video::SColor minStartColor,
 	video::SColor maxStartColor, u32 lifeTimeMin, u32 lifeTimeMax,
 	s32 maxAngleDegrees)
  : Box(box), Direction(direction), MinParticlesPerSecond(minParticlesPerSecond),
-	MaxParticlesPerSecond(maxParticlesPerSecond),
+	MaxParticlesPerSecond(maxParticlePerSecond), 
 	MinStartColor(minStartColor), MaxStartColor(maxStartColor),
 	MinLifeTime(lifeTimeMin), MaxLifeTime(lifeTimeMax), Time(0), Emitted(0),
 	MaxAngleDegrees(maxAngleDegrees)
 {
-	#ifdef _DEBUG
-	setDebugName("CParticleBoxEmitter");
-	#endif
+
 }
 
 
@@ -45,19 +43,19 @@ s32 CParticleBoxEmitter::emitt(u32 now, u32 timeSinceLastCall, SParticle*& outAr
 	if (Time > everyWhatMillisecond)
 	{
 		Particles.set_used(0);
-		u32 amount = (u32)((Time / everyWhatMillisecond) + 0.5f);
+		s32 amount = (s32)((Time / everyWhatMillisecond) + 0.5f);
 		Time = 0;
 		SParticle p;
-		const core::vector3df& extent = Box.getExtent();
+		core::vector3df extend = Box.getExtent();
 
-		if (amount > MaxParticlesPerSecond*2)
+		if (amount > (s32)MaxParticlesPerSecond*2)
 			amount = MaxParticlesPerSecond * 2;
 
-		for (u32 i=0; i<amount; ++i)
+		for (s32 i=0; i<amount; ++i)
 		{
-			p.pos.X = Box.MinEdge.X + fmodf((f32)os::Randomizer::rand(), extent.X);
-			p.pos.Y = Box.MinEdge.Y + fmodf((f32)os::Randomizer::rand(), extent.Y);
-			p.pos.Z = Box.MinEdge.Z + fmodf((f32)os::Randomizer::rand(), extent.Z);
+			p.pos.X = Box.MinEdge.X + fmodf((f32)os::Randomizer::rand(), extend.X);
+			p.pos.Y = Box.MinEdge.Y + fmodf((f32)os::Randomizer::rand(), extend.Y);
+			p.pos.Z = Box.MinEdge.Z + fmodf((f32)os::Randomizer::rand(), extend.Z);
 
 			p.startTime = now;
 			p.vector = Direction;
@@ -65,9 +63,8 @@ s32 CParticleBoxEmitter::emitt(u32 now, u32 timeSinceLastCall, SParticle*& outAr
 			if (MaxAngleDegrees)
 			{
 				core::vector3df tgt = Direction;
-				tgt.rotateXYBy((os::Randomizer::rand()%(MaxAngleDegrees*2)) - MaxAngleDegrees, core::vector3df());
-				tgt.rotateYZBy((os::Randomizer::rand()%(MaxAngleDegrees*2)) - MaxAngleDegrees, core::vector3df());
-				tgt.rotateXZBy((os::Randomizer::rand()%(MaxAngleDegrees*2)) - MaxAngleDegrees, core::vector3df());
+				tgt.rotateXYBy((os::Randomizer::rand()%(MaxAngleDegrees*2)) - MaxAngleDegrees, core::vector3df(0,0,0));
+				tgt.rotateYZBy((os::Randomizer::rand()%(MaxAngleDegrees*2)) - MaxAngleDegrees, core::vector3df(0,0,0));
 				p.vector = tgt;
 			}
 
@@ -95,11 +92,10 @@ s32 CParticleBoxEmitter::emitt(u32 now, u32 timeSinceLastCall, SParticle*& outAr
 
 
 //! Writes attributes of the object.
-void CParticleBoxEmitter::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options) const
+void CParticleBoxEmitter::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options)
 {
 	core::vector3df b = Box.getExtent();
-	b *= 0.5f;
-	out->addVector3d("Box", b);
+	out->addVector3d("Box", core::vector3df(b.X/2, b.Y/2, b.Z/2));
 	out->addVector3d("Direction", Direction);
 	out->addInt("MinParticlesPerSecond", MinParticlesPerSecond);
 	out->addInt("MaxParticlesPerSecond", MaxParticlesPerSecond);
@@ -139,10 +135,10 @@ s32 CParticleBoxEmitter::deserializeAttributes(s32 startIndex, io::IAttributes* 
 	MinParticlesPerSecond = in->getAttributeAsInt("MinParticlesPerSecond");
 	MaxParticlesPerSecond = in->getAttributeAsInt("MaxParticlesPerSecond");
 
-	MinParticlesPerSecond = core::max_(1u, MinParticlesPerSecond);
-	MaxParticlesPerSecond = core::max_(MaxParticlesPerSecond, 1u);
-	MaxParticlesPerSecond = core::min_(MaxParticlesPerSecond, 200u);
-	MinParticlesPerSecond = core::min_(MinParticlesPerSecond, MaxParticlesPerSecond);
+	MinParticlesPerSecond = core::max_<s32>(1, MinParticlesPerSecond);
+	MaxParticlesPerSecond = core::max_<s32>(MaxParticlesPerSecond, 1);
+	MaxParticlesPerSecond = core::min_<s32>(MaxParticlesPerSecond, 200);
+	MinParticlesPerSecond = core::min_<s32>(MinParticlesPerSecond, MaxParticlesPerSecond);
 
 	MinStartColor = in->getAttributeAsColor("MinStartColor");
 	MaxStartColor = in->getAttributeAsColor("MaxStartColor");
@@ -150,9 +146,9 @@ s32 CParticleBoxEmitter::deserializeAttributes(s32 startIndex, io::IAttributes* 
 	MaxLifeTime = in->getAttributeAsInt("MaxLifeTime");
 	MaxAngleDegrees = in->getAttributeAsInt("MaxAngleDegrees");
 
-	MinLifeTime = core::max_(0u, MinLifeTime);
-	MaxLifeTime = core::max_(MaxLifeTime, MinLifeTime);
-	MinLifeTime = core::min_(MinLifeTime, MaxLifeTime);
+	MinLifeTime = core::max_<s32>(0, MinLifeTime);
+	MaxLifeTime = core::max_<s32>(MaxLifeTime, MinLifeTime);
+	MinLifeTime = core::min_<s32>(MinLifeTime, MaxLifeTime);
 
 	return in->findAttribute("MaxAngleDegrees");
 }

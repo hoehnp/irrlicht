@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -30,22 +30,17 @@ CSceneNodeAnimatorRotation::~CSceneNodeAnimatorRotation()
 void CSceneNodeAnimatorRotation::animateNode(ISceneNode* node, u32 timeMs)
 {
 	if (node) // thanks to warui for this fix
-	{
-		u32 diffTime = timeMs - StartTime;
-
-		if (diffTime != 0)
-		{
-			core::vector3df NewRotation = node->getRotation(); 
-			NewRotation += Rotation* ((diffTime)/10.0f); 
-			node->setRotation(NewRotation); 
-			StartTime=timeMs; 
-		}
+	{ 
+		core::vector3df NewRotation = node->getRotation(); 
+		NewRotation += Rotation* ((timeMs-StartTime)/10.0f); 
+		node->setRotation(NewRotation); 
+		StartTime=timeMs; 
 	}
 }
 
 
 //! Writes attributes of the scene node animator.
-void CSceneNodeAnimatorRotation::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options) const
+void CSceneNodeAnimatorRotation::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options)
 {
 	out->addVector3d("Rotation", Rotation);
 }

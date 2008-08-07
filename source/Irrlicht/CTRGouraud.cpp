@@ -1,17 +1,14 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
-#include "IrrCompileConfig.h"
 #include "CTRTextureGouraud.h"
-
-#ifdef _IRR_COMPILE_WITH_SOFTWARE_
+#include "SColor.h"
 
 namespace irr
 {
 namespace video
 {
-
 
 class CTRGouraud : public CTRTextureGouraud
 {
@@ -33,14 +30,14 @@ public:
 		f32 tmpDiv; // temporary division factor
 		f32 longest; // saves the longest span
 		s32 height; // saves height of triangle
-		u16* targetSurface; // target pointer where to plot pixels
+		s16* targetSurface; // target pointer where to plot pixels
 		s32 spanEnd; // saves end of spans
 		f32 leftdeltaxf; // amount of pixels to increase on left side of triangle
 		f32 rightdeltaxf; // amount of pixels to increase on right side of triangle
 		s32 leftx, rightx; // position where we are 
 		f32 leftxf, rightxf; // same as above, but as f32 values
 		s32 span; // current span
-		u16 *hSpanBegin, *hSpanEnd; // pointer used when plotting pixels
+		s16 *hSpanBegin, *hSpanEnd; // pointer used when plotting pixels
 		s32 leftR, leftG, leftB, rightR, rightG, rightB; // color values
 		s32 leftStepR, leftStepG, leftStepB,
 			rightStepR, rightStepG, rightStepB; // color steps
@@ -53,7 +50,7 @@ public:
 		s32 spanZValue, spanZStep; // ZValues when drawing a span
 		TZBufferType* zTarget, *spanZTarget; // target of ZBuffer;
 
-		lockedSurface = (u16*)RenderTarget->lock();
+		lockedSurface = (s16*)RenderTarget->lock();
 		lockedZBuffer = ZBuffer->lock();
 
 		for (s32 i=0; i<triangleCount; ++i)
@@ -105,7 +102,8 @@ public:
 			if (!TriangleRect.isRectCollided(ViewPortRect))
 				continue;
 
-			// calculate height of triangle
+
+			// höhe des dreiecks berechnen
 			height = v3->Pos.Y - v1->Pos.Y;
 			if (!height)
 				continue;
@@ -122,9 +120,9 @@ public:
 			leftZValue = v1->ZValue;
 			rightZValue = v1->ZValue;
 
-			leftR = rightR = video::getRedSigned(v1->Color)<<3;
-			leftG = rightG = video::getGreenSigned(v1->Color)<<3;
-			leftB = rightB = video::getBlueSigned(v1->Color)<<3;
+			leftR = rightR = video::getRed(v1->Color)<<8;
+			leftG = rightG = video::getGreen(v1->Color)<<8;
+			leftB = rightB = video::getBlue(v1->Color)<<8;
 
 			targetSurface = lockedSurface + span * SurfaceWidth;
 			zTarget = lockedZBuffer + span * SurfaceWidth;
@@ -134,32 +132,32 @@ public:
 				tmpDiv = 1.0f / (f32)(v2->Pos.Y - v1->Pos.Y);
 				rightdeltaxf = (v2->Pos.X - v1->Pos.X) * tmpDiv;
 				rightZStep = (s32)((v2->ZValue - v1->ZValue) * tmpDiv);
-				rightStepR = (s32)(((video::getRedSigned(v2->Color)<<3) - rightR) * tmpDiv);
-				rightStepG = (s32)(((video::getGreenSigned(v2->Color)<<3) - rightG) * tmpDiv);
-				rightStepB = (s32)(((video::getBlueSigned(v2->Color)<<3) - rightB) * tmpDiv);
+				rightStepR = (s32)(((video::getRed(v2->Color)<<8) - rightR) * tmpDiv);
+				rightStepG = (s32)(((video::getGreen(v2->Color)<<8) - rightG) * tmpDiv);
+				rightStepB = (s32)(((video::getBlue(v2->Color)<<8) - rightB) * tmpDiv);
 
 				tmpDiv = 1.0f / (f32)height;
 				leftdeltaxf = (v3->Pos.X - v1->Pos.X) * tmpDiv;
 				leftZStep = (s32)((v3->ZValue - v1->ZValue) * tmpDiv);
-				leftStepR = (s32)(((video::getRedSigned(v3->Color)<<3) - leftR) * tmpDiv);
-				leftStepG = (s32)(((video::getGreenSigned(v3->Color)<<3) - leftG) * tmpDiv);
-				leftStepB = (s32)(((video::getBlueSigned(v3->Color)<<3) - leftB) * tmpDiv);
+				leftStepR = (s32)(((video::getRed(v3->Color)<<8) - leftR) * tmpDiv);
+				leftStepG = (s32)(((video::getGreen(v3->Color)<<8) - leftG) * tmpDiv);
+				leftStepB = (s32)(((video::getBlue(v3->Color)<<8) - leftB) * tmpDiv);
 			}
 			else
 			{
 				tmpDiv = 1.0f / (f32)height;
 				rightdeltaxf = (v3->Pos.X - v1->Pos.X) * tmpDiv;
 				rightZStep = (s32)((v3->ZValue - v1->ZValue) * tmpDiv);
-				rightStepR = (s32)(((video::getRedSigned(v3->Color)<<3) - rightR) * tmpDiv);
-				rightStepG = (s32)(((video::getGreenSigned(v3->Color)<<3) - rightG) * tmpDiv);
-				rightStepB = (s32)(((video::getBlueSigned(v3->Color)<<3) - rightB) * tmpDiv);
+				rightStepR = (s32)(((video::getRed(v3->Color)<<8) - rightR) * tmpDiv);
+				rightStepG = (s32)(((video::getGreen(v3->Color)<<8) - rightG) * tmpDiv);
+				rightStepB = (s32)(((video::getBlue(v3->Color)<<8) - rightB) * tmpDiv);
 
 				tmpDiv = 1.0f / (f32)(v2->Pos.Y - v1->Pos.Y);
 				leftdeltaxf = (v2->Pos.X - v1->Pos.X) * tmpDiv;
 				leftZStep = (s32)((v2->ZValue - v1->ZValue) * tmpDiv);
-				leftStepR = (s32)(((video::getRedSigned(v2->Color)<<3) - leftR) * tmpDiv);
-				leftStepG = (s32)(((video::getGreenSigned(v2->Color)<<3) - leftG) * tmpDiv);
-				leftStepB = (s32)(((video::getBlueSigned(v2->Color)<<3) - leftB) * tmpDiv);
+				leftStepR = (s32)(((video::getRed(v2->Color)<<8) - leftR) * tmpDiv);
+				leftStepG = (s32)(((video::getGreen(v2->Color)<<8) - leftG) * tmpDiv);
+				leftStepB = (s32)(((video::getBlue(v2->Color)<<8) - leftB) * tmpDiv);
 			}
 
 
@@ -250,7 +248,7 @@ public:
 							if (spanZValue > *spanZTarget)
 							{
 								*spanZTarget = spanZValue;
-								*hSpanBegin = video::RGB16(spanR, spanG, spanB);
+								*hSpanBegin = (((spanR>>8) & 0x1F)<<10) | (((spanG>>8) & 0x1F)<<5) | ((spanB>>8) & 0x1F);
 							}
 
 							spanR += spanStepR;
@@ -295,12 +293,12 @@ public:
 					rightZValue = v2->ZValue;
 					rightZStep = (s32)((v3->ZValue - v2->ZValue) * tmpDiv);
 
-					rightR = video::getRedSigned(v2->Color)<<3;
-					rightG = video::getGreenSigned(v2->Color)<<3;
-					rightB = video::getBlueSigned(v2->Color)<<3;
-					rightStepR = (s32)(((video::getRedSigned(v3->Color)<<3) - rightR) * tmpDiv);
-					rightStepG = (s32)(((video::getGreenSigned(v3->Color)<<3) - rightG) * tmpDiv);
-					rightStepB = (s32)(((video::getBlueSigned(v3->Color)<<3) - rightB) * tmpDiv);
+					rightR = video::getRed(v2->Color)<<8;
+					rightG = video::getGreen(v2->Color)<<8;
+					rightB = video::getBlue(v2->Color)<<8;
+					rightStepR = (s32)(((video::getRed(v3->Color)<<8) - rightR) * tmpDiv);
+					rightStepG = (s32)(((video::getGreen(v3->Color)<<8) - rightG) * tmpDiv);
+					rightStepB = (s32)(((video::getBlue(v3->Color)<<8) - rightB) * tmpDiv);
 				}
 				else
 				{
@@ -312,12 +310,12 @@ public:
 					leftZValue = v2->ZValue;
 					leftZStep = (s32)((v3->ZValue - v2->ZValue) * tmpDiv);
 
-					leftR = video::getRedSigned(v2->Color)<<3;
-					leftG = video::getGreenSigned(v2->Color)<<3;
-					leftB = video::getBlueSigned(v2->Color)<<3;
-					leftStepR = (s32)(((video::getRedSigned(v3->Color)<<3) - leftR) * tmpDiv);
-					leftStepG = (s32)(((video::getGreenSigned(v3->Color)<<3) - leftG) * tmpDiv);
-					leftStepB = (s32)(((video::getBlueSigned(v3->Color)<<3) - leftB) * tmpDiv);
+					leftR = video::getRed(v2->Color)<<8;
+					leftG = video::getGreen(v2->Color)<<8;
+					leftB = video::getBlue(v2->Color)<<8;
+					leftStepR = (s32)(((video::getRed(v3->Color)<<8) - leftR) * tmpDiv);
+					leftStepG = (s32)(((video::getGreen(v3->Color)<<8) - leftG) * tmpDiv);
+					leftStepB = (s32)(((video::getBlue(v3->Color)<<8) - leftB) * tmpDiv);
 				}
 
 
@@ -332,27 +330,12 @@ public:
 
 };
 
-} // end namespace video
-} // end namespace irr
-
-#endif // _IRR_COMPILE_WITH_SOFTWARE_
-
-namespace irr
-{
-namespace video
-{
 
 //! creates a flat triangle renderer
 ITriangleRenderer* createTriangleRendererGouraud(IZBuffer* zbuffer)
 {
-	#ifdef _IRR_COMPILE_WITH_SOFTWARE_
 	return new CTRGouraud(zbuffer);
-	#else
-	return 0;
-	#endif // _IRR_COMPILE_WITH_SOFTWARE_
 }
 
 } // end namespace video
 } // end namespace irr
-
-

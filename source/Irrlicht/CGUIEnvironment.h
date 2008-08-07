@@ -1,12 +1,9 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
-#ifndef __C_GUI_ENVIRONMENT_H_INCLUDED__
-#define __C_GUI_ENVIRONMENT_H_INCLUDED__
-
-#include "IrrCompileConfig.h"
-#ifdef _IRR_COMPILE_WITH_GUI_
+#ifndef __C_GUI_ENVIRNMENT_H_INCLUDED__
+#define __C_GUI_ENVIRNMENT_H_INCLUDED__
 
 #include "IGUIEnvironment.h"
 #include "IGUIElement.h"
@@ -16,10 +13,6 @@
 
 namespace irr
 {
-namespace io
-{
-	class IXMLWriter;
-}
 namespace gui
 {
 
@@ -37,57 +30,39 @@ public:
 	virtual void drawAll();
 
 	//! returns the current video driver
-	virtual video::IVideoDriver* getVideoDriver() const;
-
-	//! returns pointer to the filesystem
-	virtual io::IFileSystem* getFileSystem() const;
-
-	//! returns a pointer to the OS operator
-	virtual IOSOperator* getOSOperator() const;
+	virtual video::IVideoDriver* getVideoDriver();
 
 	//! posts an input event to the environment
-	virtual bool postEventFromUser(const SEvent& event);
+	virtual bool postEventFromUser(SEvent event);
 
 	//! This sets a new event receiver for gui events. Usually you do not have to
 	//! use this method, it is used by the internal engine.
 	virtual void setUserEventReceiver(IEventReceiver* evr);
 
-	//! removes all elements from the environment
-	virtual void clear();
-
 	//! called if an event happened.
-	virtual bool OnEvent(const SEvent& event);
+	virtual bool OnEvent(SEvent event);
 
 	//! returns the current gui skin
-	virtual IGUISkin* getSkin() const;
+	virtual IGUISkin* getSkin();
 
 	//! Sets a new GUI Skin
 	virtual void setSkin(IGUISkin* skin);
 
 	//! Creates a new GUI Skin based on a template.
 	/** \return Returns a pointer to the created skin.
-	If you no longer need the skin, you should call IGUISkin::drop().
-	See IReferenceCounted::drop() for more information. */
+	If you no longer need the image, you should call IGUISkin::drop().
+	See IUnknown::drop() for more information. */
 	virtual IGUISkin* createSkin(EGUI_SKIN_TYPE type);
 
 	//! returns the font
 	virtual IGUIFont* getFont(const c8* filename);
 
-	//! returns the sprite bank
-	virtual IGUISpriteBank* getSpriteBank(const c8* filename);
-
-	//! returns the sprite bank
-	virtual IGUISpriteBank* addEmptySpriteBank(const c8* name);
-
 	//! adds an button. The returned pointer must not be dropped.
-	virtual IGUIButton* addButton(const core::rect<s32>& rectangle, IGUIElement* parent=0, s32 id=-1, const wchar_t* text=0,const wchar_t* tooltiptext = 0);
+	virtual IGUIButton* addButton(const core::rect<s32>& rectangle, IGUIElement* parent=0, s32 id=-1, const wchar_t* text=0);
 
 	//! adds a window. The returned pointer must not be dropped.
 	virtual IGUIWindow* addWindow(const core::rect<s32>& rectangle, bool modal = false, 
 		const wchar_t* text=0, IGUIElement* parent=0, s32 id=-1);
-
-	//! adds a modal screen. The returned pointer must not be dropped.
-	virtual IGUIElement* addModalScreen(IGUIElement* parent);
 
 	//! Adds a message box.
 	virtual IGUIWindow* addMessageBox(const wchar_t* caption, const wchar_t* text=0,
@@ -117,9 +92,6 @@ public:
 	//! Adds a file open dialog.
 	virtual IGUIFileOpenDialog* addFileOpenDialog(const wchar_t* title = 0, bool modal=true, IGUIElement* parent=0, s32 id=-1);
 
-	//! Adds a color select dialog.
-	virtual IGUIColorSelectDialog* addColorSelectDialog(const wchar_t* title = 0, bool modal=true, IGUIElement* parent=0, s32 id=-1);
-
 	//! adds a static text. The returned pointer must not be dropped.
 	virtual IGUIStaticText* addStaticText(const wchar_t* text, const core::rect<s32>& rectangle,
 		bool border=false, bool wordWrap=true, IGUIElement* parent=0, s32 id=-1, bool drawBackground = false);
@@ -127,10 +99,6 @@ public:
 	//! Adds an edit box. The returned pointer must not be dropped.
 	virtual IGUIEditBox* addEditBox(const wchar_t* text, const core::rect<s32>& rectangle, 
 		bool border=false, IGUIElement* parent=0, s32 id=-1);
-
-	//! Adds a spin box to the environment
-	virtual IGUISpinBox* addSpinBox(const wchar_t* text, const core::rect<s32>& rectangle, 
-		IGUIElement* parent=0, s32 id=-1);
 
 	//! Adds a tab control to the environment.
 	virtual IGUITabControl* addTabControl(const core::rect<s32>& rectangle,
@@ -155,94 +123,25 @@ public:
 	virtual IGUIComboBox* addComboBox(const core::rect<s32>& rectangle,
 		IGUIElement* parent=0, s32 id=-1);
 
-	//! Adds a table element.
-	virtual IGUITable* addTable(const core::rect<s32>& rectangle, 
-		IGUIElement* parent=0, s32 id=-1, bool drawBackground=false);
-
 	//! sets the focus to an element
-	virtual bool setFocus(IGUIElement* element);
+	virtual void setFocus(IGUIElement* element);
 
 	//! removes the focus from an element
-	virtual bool removeFocus(IGUIElement* element);
+	virtual void removeFocus(IGUIElement* element);
 
 	//! Returns if the element has focus
-	virtual bool hasFocus(IGUIElement* element) const;
-
-	//! Returns the element with the focus
-	virtual IGUIElement* getFocus() const;
+	virtual bool hasFocus(IGUIElement* element);
 
 	//! returns default font
-	virtual IGUIFont* getBuiltInFont() const;
+	virtual IGUIFont* getBuiltInFont();
 
 	//! Adds an element for fading in or out.
 	virtual IGUIInOutFader* addInOutFader(const core::rect<s32>* rectangle=0, IGUIElement* parent=0, s32 id=-1);
 
 	//! Returns the root gui element. 
-	virtual IGUIElement* getRootGUIElement();
-
-	virtual void OnPostRender( u32 time );
-
-	//! Returns the default element factory which can create all built in elements
-	virtual IGUIElementFactory* getDefaultGUIElementFactory() const;
-
-	//! Adds an element factory to the gui environment.
-	/** Use this to extend the gui environment with new element types which it should be
-	able to create automaticly, for example when loading data from xml files. */
-	virtual void registerGUIElementFactory(IGUIElementFactory* factoryToAdd);
-
-	//! Returns amount of registered scene node factories.
-	virtual u32 getRegisteredGUIElementFactoryCount() const;
-
-	//! Returns a scene node factory by index
-	virtual IGUIElementFactory* getGUIElementFactory(u32 index) const;
-
-	//! Adds a GUI Element by its name
-	virtual IGUIElement* addGUIElement(const c8* elementName, IGUIElement* parent=0);
-
-	//! Saves the current gui into a file.
-	/** \param filename: Name of the file.
-	\param start: The element to start saving from. 
-	if not specified, the root element will be used */ 
-	virtual bool saveGUI(const c8* filename, IGUIElement* start=0);
-
-	//! Saves the current gui into a file.
-	/** \param file: The file to save the GUI to.
-	\param start: The element to start saving from. 
-	if not specified, the root element will be used */
-	virtual bool saveGUI(io::IWriteFile* file, IGUIElement* start=0);
-
-	//! Loads the gui. Note that the current gui is not cleared before.
-	/** \param filename: Name of the file.
-	\param parent: The parent of all loaded GUI elements, 
-	if not specified, the root element will be used */
-	virtual bool loadGUI(const c8* filename, IGUIElement* parent=0);
-
-	//! Loads the gui. Note that the current gui is not cleared before.
-	/** \param file: IReadFile to load the GUI from
-	\param parent: The parent of all loaded GUI elements, 
-	if not specified, the root element will be used */
-	virtual bool loadGUI(io::IReadFile* file, IGUIElement* parent=0);	
-
-	//! Writes attributes of the environment
-	virtual void serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options=0) const;
-
-	//! Reads attributes of the environment.
-	virtual void deserializeAttributes(io::IAttributes* in, io::SAttributeReadWriteOptions* options=0);
-
-	//! writes an element
-	virtual void writeGUIElement(io::IXMLWriter* writer, IGUIElement* node);
-
-	//! reads an element
-	virtual void readGUIElement(io::IXMLReader* reader, IGUIElement* parent);
-
+    virtual IGUIElement* getRootGUIElement();
 
 private:
-
-	IGUIElement* getNextElement(bool reverse=false, bool group=false);
-
-	void updateHoveredElement(core::position2d<s32> mousePos);
-
-	void loadBuiltInFont();
 
 	struct SFont
 	{
@@ -255,34 +154,14 @@ private:
 		}
 	};
 
-	struct SSpriteBank
-	{
-		core::stringc Filename;
-		IGUISpriteBank* Bank;
+	void updateHoveredElement(core::position2d<s32> mousePos);
 
-		bool operator < (const SSpriteBank& other) const
-		{
-			return (Filename < other.Filename);
-		}
-	};
-
-	struct SToolTip
-	{
-		u32 LastTime;
-		u32 LaunchTime;
-		IGUIStaticText* Element;
-	};
-
-	SToolTip ToolTip;
-
-	core::array<IGUIElementFactory*> GUIElementFactoryList;
+	void loadBuidInFont();
 
 	core::array<SFont> Fonts;
-	core::array<SSpriteBank> Banks;
 	video::IVideoDriver* Driver;
 	IGUIElement* Hovered;
 	IGUIElement* Focus;
-	core::position2d<s32> LastHoveredMousePos;
 	IGUISkin* CurrentSkin;
 	io::IFileSystem* FileSystem;
 	IEventReceiver* UserReceiver;
@@ -292,8 +171,5 @@ private:
 } // end namespace gui
 } // end namespace irr
 
-#endif // _IRR_COMPILE_WITH_GUI_
-
-#endif // __C_GUI_ENVIRONMENT_H_INCLUDED__
-
+#endif
 

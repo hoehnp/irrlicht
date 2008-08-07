@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 // Code for this scene node has been contributed by Anders la Cour-Harbo (alc)
@@ -31,7 +31,7 @@ namespace scene
 
 CSkyDomeSceneNode::CSkyDomeSceneNode(video::ITexture* sky, u32 horiRes, u32 vertRes,
 			f64 texturePercentage, f64 spherePercentage, ISceneNode* parent, ISceneManager* mgr, s32 id)
-			: ISceneNode(parent, mgr, id), Buffer(0)
+			: ISceneNode(parent, mgr, id)
 {
 	#ifdef _DEBUG
 	setDebugName("CSkyDomeSceneNode");
@@ -40,19 +40,17 @@ CSkyDomeSceneNode::CSkyDomeSceneNode(video::ITexture* sky, u32 horiRes, u32 vert
 	f64 radius = 1000.0; /* Adjust this to get more or less perspective distorsion. */
 	f64 azimuth, azimuth_step;
 	f64 elevation, elevation_step;
-	u32 k;
+	u32 k, c;
 
 	video::S3DVertex vtx;
 
-	AutomaticCullingState = scene::EAC_OFF;
-
-	Buffer = new SMeshBuffer();
-	Buffer->Material.Lighting = false;
-	Buffer->Material.ZBuffer = false;
-	Buffer->Material.ZWriteEnable = false;
-	Buffer->Material.setTexture(0, sky);
-	Buffer->BoundingBox.MaxEdge.set(0,0,0);
-	Buffer->BoundingBox.MinEdge.set(0,0,0);
+	AutomaticCullingEnabled = false;
+	Material.Lighting = false;
+	Material.ZBuffer = false;
+	Material.ZWriteEnable = false;
+	Material.Texture1 = sky;
+	Box.MaxEdge.set(0,0,0);
+	Box.MinEdge.set(0,0,0);
 
 	azimuth_step = 2.*core::PI64/(f64)horiRes;
 	if (spherePercentage<0.)
@@ -61,58 +59,61 @@ CSkyDomeSceneNode::CSkyDomeSceneNode(video::ITexture* sky, u32 horiRes, u32 vert
 		spherePercentage=2.;
 	elevation_step = spherePercentage*core::PI64/2./(f64)vertRes;
 
-	Buffer->Vertices.reallocate((horiRes+1)*(vertRes+1));
-	Buffer->Indices.reallocate(3*(2*vertRes-1)*horiRes);
+	NumOfVertices = (horiRes+1)*(vertRes+1);
+	NumOfFaces = (2*vertRes-1)*horiRes;
+
+	Vertices = new video::S3DVertex[NumOfVertices];
+	Indices = new u16[3*NumOfFaces];
 
 	vtx.Color.set(255,255,255,255);
 	vtx.Normal.set(0.0f,0.0f,0.0f);
 
-	const f32 tcV = (f32)texturePercentage/(f32)vertRes;
+	c = 0;
 	for (k = 0, azimuth = 0; k <= horiRes; ++k)
 	{
 		elevation = core::PI64/2.;
-		const f32 tcU = (f32)k/(f32)horiRes;
-		const f64 sinA = sin(azimuth);
-		const f64 cosA = cos(azimuth);
 		for (u32 j = 0; j <= vertRes; ++j)
 		{
-			const f64 cosEr = radius*cos(elevation);
-			vtx.Pos.set((f32) (cosEr*sinA),
-					(f32) (radius*sin(elevation)+50.0f),
-					(f32) (cosEr*cosA));
+			vtx.Pos.set((f32) (radius*cos(elevation)*sin(azimuth)),
+						(f32) (radius*sin(elevation)+50.0f),
+						(f32) (radius*cos(elevation)*cos(azimuth)));
 
-			vtx.TCoords.set(tcU, (f32)j*tcV);
+			vtx.TCoords.set((f32)k/(f32)horiRes, (f32)j/(f32)vertRes*(f32)texturePercentage);
 
-			Buffer->Vertices.push_back(vtx);
+			Vertices[c++] = vtx;
 			elevation -= elevation_step;
 		}
 		azimuth += azimuth_step;
 	}
 
+	c = 0;
 	for (k = 0; k < horiRes; ++k)
 	{
-		Buffer->Indices.push_back(vertRes+2+(vertRes+1)*k);
-		Buffer->Indices.push_back(1+(vertRes+1)*k);
-		Buffer->Indices.push_back(0+(vertRes+1)*k);
+		Indices[c++] = vertRes+2+(vertRes+1)*k;
+		Indices[c++] = 1+(vertRes+1)*k;
+		Indices[c++] = 0+(vertRes+1)*k;
 
 		for (u32 j = 1; j < vertRes; ++j)
 		{
-			Buffer->Indices.push_back(vertRes+2+(vertRes+1)*k+j);
-			Buffer->Indices.push_back(1+(vertRes+1)*k+j);
-			Buffer->Indices.push_back(0+(vertRes+1)*k+j);
+			Indices[c++] = vertRes+2+(vertRes+1)*k+j;
+			Indices[c++] = 1+(vertRes+1)*k+j;
+			Indices[c++] = 0+(vertRes+1)*k+j;
 
-			Buffer->Indices.push_back(vertRes+1+(vertRes+1)*k+j);
-			Buffer->Indices.push_back(vertRes+2+(vertRes+1)*k+j);
-			Buffer->Indices.push_back(0+(vertRes+1)*k+j);
+			Indices[c++] = vertRes+1+(vertRes+1)*k+j;
+			Indices[c++] = vertRes+2+(vertRes+1)*k+j;
+			Indices[c++] = 0+(vertRes+1)*k+j;
 		}
 	}
 }
 
 
+//! destructor
 CSkyDomeSceneNode::~CSkyDomeSceneNode()
 {
-	if (Buffer)
-		Buffer->drop();
+	if (Vertices)
+		delete [] Vertices;
+	if (Indices)
+		delete [] Indices;
 }
 
 
@@ -127,30 +128,30 @@ void CSkyDomeSceneNode::render()
 
 	if ( !camera->isOrthogonal() )
 	{
-		core::matrix4 mat(AbsoluteTransformation);
+		core::matrix4 mat;
 		mat.setTranslation(camera->getAbsolutePosition());
 
 		driver->setTransform(video::ETS_WORLD, mat);
 
-		driver->setMaterial(Buffer->Material);
-		driver->drawMeshBuffer(Buffer);
+		driver->setMaterial(Material);
+		driver->drawIndexedTriangleList(Vertices, NumOfVertices, Indices, NumOfFaces);
 	}
 }
-
 
 //! returns the axis aligned bounding box of this node
 const core::aabbox3d<f32>& CSkyDomeSceneNode::getBoundingBox() const
 {
-	return Buffer->BoundingBox;
+	return Box;
 }
 
 
-void CSkyDomeSceneNode::OnRegisterSceneNode()
+void CSkyDomeSceneNode::OnPreRender()
 {
 	if (IsVisible)
+	{
 		SceneManager->registerNodeForRendering(this, ESNRP_SKY_BOX);
-
-	ISceneNode::OnRegisterSceneNode();
+		ISceneNode::OnPreRender();
+	}
 }
 
 
@@ -159,14 +160,14 @@ void CSkyDomeSceneNode::OnRegisterSceneNode()
 //! This function is needed for inserting the node into the scene hirachy on a
 //! optimal position for minimizing renderstate changes, but can also be used
 //! to directly modify the material of a scene node.
-video::SMaterial& CSkyDomeSceneNode::getMaterial(u32 i)
+video::SMaterial& CSkyDomeSceneNode::getMaterial(s32 i)
 {
-	return Buffer->Material;
+	return Material;
 }
 
 
 //! returns amount of materials used by this scene node.
-u32 CSkyDomeSceneNode::getMaterialCount() const
+s32 CSkyDomeSceneNode::getMaterialCount()
 {
 	return 1;
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 // orginally written by Christian Stehno, modified by Nikolaus Gebhardt
@@ -12,16 +12,34 @@
 #include "irrString.h"
 #include "SMesh.h"
 #include "SMeshBuffer.h"
-#include "SMeshBufferLightMap.h"
 #include "IMeshManipulator.h"
 #include "matrix4.h"
+
+#include "IrrCompileConfig.h"
+#ifdef _IRR_WINDOWS_
+	#if defined(__GNUC__) || (defined(_MSC_VER) && (_MSC_VER < 1299))
+		#define bswap_16(X) (((u8)(X) << 8) | (((u16)(X)) >> 8))
+		#define bswap_32(X) ( ((X)<<24) | (((u16)(X)) >> 24) | (((X) &0x0000ff00) << 8) | (((X) & 0x00ff0000) >> 8))
+	#else
+		#include <stdlib.h>
+		#define bswap_16(X) _byteswap_ushort(X)
+		#define bswap_32(X) _byteswap_ulong(X)
+	#endif
+#else
+	#ifdef MACOSX
+		#define bswap_16(X) OSReadSwapInt16(&X,0)
+		#define bswap_32(X) OSReadSwapInt32(&X,0)
+	#else
+		#include "byteswap.h"
+	#endif
+#endif
 
 namespace irr
 {
 namespace scene
 {
 
-//! Meshloader capable of loading ogre meshes.
+//! Meshloader capable of loading 3ds meshes.
 class COgreMeshFileLoader : public IMeshLoader
 {
 public:
@@ -34,18 +52,18 @@ public:
 
 	//! returns true if the file maybe is able to be loaded by this class
 	//! based on the file extension (e.g. ".cob")
-	virtual bool isALoadableFileExtension(const c8* fileName) const;
+	virtual bool isALoadableFileExtension(const c8* fileName);
 
 	//! creates/loads an animated mesh from the file.
 	//! \return Pointer to the created mesh. Returns 0 if loading failed.
 	//! If you no longer need the mesh, you should call IAnimatedMesh::drop().
-	//! See IReferenceCounted::drop() for more information.
-	virtual IAnimatedMesh* createMesh(io::IReadFile* file);
+	//! See IUnknown::drop() for more information.
+	virtual IAnimatedMesh* createMesh(irr::io::IReadFile* file);
 
 private:
 
 	// byte-align structures
-	#if defined(_MSC_VER) ||  defined(__BORLANDC__) || defined (__BCPLUSPLUS__) 
+	#ifdef _MSC_VER
 	#	pragma pack( push, packing )
 	#	pragma pack( 1 )
 	#	define PACK_STRUCT
@@ -62,7 +80,7 @@ private:
 	} PACK_STRUCT;
 
 	// Default alignment
-	#if defined(_MSC_VER) ||  defined(__BORLANDC__) || defined (__BCPLUSPLUS__) 
+	#ifdef _MSC_VER
 	#	pragma pack( pop, packing )
 	#endif
 
@@ -135,7 +153,7 @@ private:
 	struct OgreVertexBuffer
 	{
 		OgreVertexBuffer() : BindIndex(0), VertexSize(0), Data(0) {}
-		void destroy() { delete [] Data; Data = 0; }
+		void destroy() { delete [] Data; Data = 0; };
 
 		u16 BindIndex,
 		VertexSize;
@@ -197,6 +215,7 @@ private:
 	bool readVertexDeclaration(io::IReadFile* file, ChunkData& parent, OgreGeometry& geometry);
 	bool readVertexBuffer(io::IReadFile* file, ChunkData& parent, OgreGeometry& geometry);
 	bool readSubMesh(io::IReadFile* file, ChunkData& parent, OgreSubMesh& subMesh);
+	bool readPercentageChunk(io::IReadFile* file, ChunkData& chunk, float&percentage);
 
 	void readChunkData(io::IReadFile* file, ChunkData& data);
 	void readString(io::IReadFile* file, ChunkData& data, core::stringc& out);
@@ -206,9 +225,7 @@ private:
 	void readFloat(io::IReadFile* file, ChunkData& data, f32& out);
 	void readVector(io::IReadFile* file, ChunkData& data, core::vector3df& out);
 
-	void composeMeshBufferMaterial(scene::IMeshBuffer* mb, const core::stringc& materialName);
-	scene::SMeshBuffer* composeMeshBuffer(const core::array<s32>& indices, const OgreGeometry& geom);
-	scene::SMeshBufferLightMap* composeMeshBufferLightMap(const core::array<s32>& indices, const OgreGeometry& geom);
+	scene::SMeshBuffer* composeMeshBuffer(const core::array<s32>& indices, const OgreGeometry& geom, const core::stringc& material);
 	void composeObject(void);
 	bool readColor(io::IReadFile* meshFile, video::SColor& col);
 	void getMaterialToken(io::IReadFile* file, core::stringc& token, bool noNewLine=false);
@@ -231,7 +248,6 @@ private:
 
 	SMesh* Mesh;
 	IMeshManipulator* Manipulator;
-	u32 NumUV;
 };
 
 } // end namespace scene

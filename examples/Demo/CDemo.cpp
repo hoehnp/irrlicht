@@ -2,20 +2,14 @@
 // This file is not documentated.
 
 #include "CDemo.h"
+#include <stdio.h>
 
 CDemo::CDemo(bool f, bool m, bool s, bool a, bool v, video::E_DRIVER_TYPE d)
-: fullscreen(f), music(m), shadows(s), additive(a), vsync(v),
- driverType(d), device(0),
-#ifdef USE_IRRKLANG
-	irrKlang(0), ballSound(0), impactSound(0),
-#endif
-#ifdef USE_SDL_MIXER
-	stream(0), ballSound(0), impactSound(0),
-#endif
- currentScene(-2), backColor(0), statusText(0), inOutFader(0),
- quakeLevelMesh(0), quakeLevelNode(0), skyboxNode(0), model1(0), model2(0),
- campFire(0), metaSelector(0), mapSelector(0), sceneStartTime(0),
- timeForThisScene(0)
+: fullscreen(f), driverType(d), currentScene(-2),
+ model1(0), model2(0), music(m), 
+shadows(s), quakeLevelMesh(0), quakeLevelNode(0), timeForThisScene(0),
+skyboxNode(0), mapSelector(0), metaSelector(0), campFire(0), device(0),
+additive(a), vsync(v)
 {
 }
 
@@ -27,36 +21,18 @@ CDemo::~CDemo()
 
 	if (metaSelector)
 		metaSelector->drop();
-
-#ifdef USE_IRRKLANG
-	if (irrKlang)
-		irrKlang->drop();
-#endif
 }
 
 
 void CDemo::run()
 {
-	core::dimension2d<s32> resolution ( 800, 600 );
+	device = createDevice(driverType,
+		core::dimension2d<s32>(640, 480), 32, fullscreen, shadows, vsync, this);;
 
-	if ( driverType == video::EDT_BURNINGSVIDEO || driverType == video::EDT_SOFTWARE )
-	{
-		resolution.Width = 640;
-		resolution.Height = 480;
-	}
-
-	device = createDevice(driverType,resolution, 32, fullscreen, shadows, vsync, this);
-	if ( 0 == device )
-		return;
-
-	if (device->getFileSystem()->existFile("irrlicht.dat"))
-		device->getFileSystem()->addZipFileArchive("irrlicht.dat");
-	else
-		device->getFileSystem()->addZipFileArchive("../../media/irrlicht.dat");
-	if (device->getFileSystem()->existFile("map-20kdm2.pk3"))
-		device->getFileSystem()->addZipFileArchive("map-20kdm2.pk3");
-	else
-		device->getFileSystem()->addZipFileArchive("../../media/map-20kdm2.pk3");
+	device->getFileSystem()->addZipFileArchive("irrlicht.dat");
+	device->getFileSystem()->addZipFileArchive("../../media/irrlicht.dat");
+	device->getFileSystem()->addZipFileArchive("map-20kdm2.pk3");
+	device->getFileSystem()->addZipFileArchive("../../media/map-20kdm2.pk3");
 
 	video::IVideoDriver* driver = device->getVideoDriver();
 	scene::ISceneManager* smgr = device->getSceneManager();
@@ -64,35 +40,22 @@ void CDemo::run()
 
 	device->setWindowCaption(L"Irrlicht Engine Demo");
 
-	// set ambient light
-	smgr->setAmbientLight ( video::SColorf ( 0x00c0c0c0 ) );
-
-
 	wchar_t tmp[255];
 
-	// draw everything
-
-	s32 now = 0;
-	sceneStartTime = device->getTimer()->getTime();
 	while(device->run() && driver)
 	{
 		if (device->isWindowActive())
 		{
-			#ifdef USE_IRRKLANG
-			// update 3D position for sound engine
-			scene::ICameraSceneNode* cam = smgr->getActiveCamera();
-			if (cam && irrKlang)
-				irrKlang->setListenerPosition(cam->getAbsolutePosition(), cam->getTarget());
-			#endif
-
 			// load next scene if necessary
-			now = device->getTimer()->getTime();
+			u32 now = device->getTimer()->getTime();
 			if (now - sceneStartTime > timeForThisScene && timeForThisScene!=-1)
 				switchToNextScene();
 
 			createParticleImpacts();
 
-			driver->beginScene(timeForThisScene != -1, true, backColor);
+			// draw everything
+
+			driver->beginScene(true, true, backColor);
 
 			smgr->drawAll();
 			guienv->drawAll();
@@ -100,21 +63,10 @@ void CDemo::run()
 			driver->endScene();
 
 			// write statistics
-			static s32 lastfps = 0;
-			s32 nowfps = driver->getFPS();
 
-			swprintf(tmp, 255, L"%ls fps:%3d triangles:%0.3f mio", 
-								driver->getName(),
-								driver->getFPS(),
-								(f32) driver->getPrimitiveCountDrawn( 1 ) * ( 1.f / 1000000.f )
-								);
+			swprintf(tmp, 255, L"%ls fps:%d", driver->getName(),	driver->getFPS());
 
 			statusText->setText(tmp);
-			if ( nowfps != lastfps )
-			{
-				device->setWindowCaption ( tmp );
-				lastfps = nowfps;
-			}
 		}
 	}
 
@@ -122,7 +74,7 @@ void CDemo::run()
 }
 
 
-bool CDemo::OnEvent(const SEvent& event)
+bool CDemo::OnEvent(SEvent event)
 {
 	if (!device)
 		return false;
@@ -145,7 +97,7 @@ bool CDemo::OnEvent(const SEvent& event)
 		event.MouseInput.Event == EMIE_LMOUSE_LEFT_UP) &&
 		currentScene == 3)
 	{
-		// shoot
+		// shoot 
 		shoot();
 	}
 	else
@@ -155,14 +107,8 @@ bool CDemo::OnEvent(const SEvent& event)
 	{
 		video::IImage* image = device->getVideoDriver()->createScreenShot();
 		if (image)
-		{
 			device->getVideoDriver()->writeImageToFile(image, "screenshot.bmp");
-			device->getVideoDriver()->writeImageToFile(image, "screenshot.png");
-			device->getVideoDriver()->writeImageToFile(image, "screenshot.tga");
-			device->getVideoDriver()->writeImageToFile(image, "screenshot.ppm");
-			device->getVideoDriver()->writeImageToFile(image, "screenshot.jpg");
-			image->drop();
-		}
+		image->drop();
 	}
 	else
 	if (device->getSceneManager()->getActiveCamera())
@@ -190,7 +136,6 @@ void CDemo::switchToNextScene()
 	{
 		sm->setActiveCamera(0);
 		camera->remove();
-		camera = 0;
 	}
 
 	switch(currentScene)
@@ -203,16 +148,21 @@ void CDemo::switchToNextScene()
 	case 0: // load scene
 		timeForThisScene = 0;
 		loadSceneData();
+		//currentScene += 2;
 		break;
 
 	case 1: // panorama camera
 		{
+			#if 0
+			camera = sm->addCameraSceneNodeFPS(0, 100, 500);
+			timeForThisScene = 14000000;
+			#else
 			currentScene += 1;
-			//camera = sm->addCameraSceneNode(0, core::vector3df(0,0,0), core::vector3df(-586,708,52));
-			//camera->setTarget(core::vector3df(0,400,0));
-
+			camera = sm->addCameraSceneNode(0, core::vector3df(0,0,0), core::vector3df(-586,708,52));
+			camera->setTarget(core::vector3df(0,400,0));
+			
 			core::array<core::vector3df> points;
-
+		 
 			points.push_back(core::vector3df(-931.473755f, 138.300003f, 987.279114f)); // -49873
 			points.push_back(core::vector3df(-847.902222f, 136.757553f, 915.792725f)); // -50559
 			points.push_back(core::vector3df(-748.680420f, 152.254501f, 826.418945f)); // -51964
@@ -253,31 +203,29 @@ void CDemo::switchToNextScene()
 			points.push_back(core::vector3df(99.612457f, 102.463669f, 347.603210f));
 			points.push_back(core::vector3df(99.612457f, 102.463669f, 347.603210f));
 
+
 			timeForThisScene = (points.size()-3)* 1000;
-
-			camera = sm->addCameraSceneNode(0, points[0], core::vector3df(0 ,400,0));
-			//camera->setTarget(core::vector3df(0,400,0));
-
-			sa = sm->createFollowSplineAnimator(device->getTimer()->getTime(),
+			
+			sa = sm->createFollowSplineAnimator(device->getTimer()->getTime(), 
 				points);
 			camera->addAnimator(sa);
-			sa->drop();
-
-			model1->setVisible(false);
-			model2->setVisible(false);
-			campFire->setVisible(false);
-			inOutFader->fadeIn(7000);
-		}
+			sa->drop();			
+			#endif
+		model1->setVisible(false);
+		model2->setVisible(false);
+		campFire->setVisible(false);
+		inOutFader->fadeIn(7000);
+	
 		break;
-
+		}
 	case 2:	// down fly anim camera
 		camera = sm->addCameraSceneNode(0, core::vector3df(100,40,-80), core::vector3df(844,670,-885));
-		sa = sm->createFlyStraightAnimator(core::vector3df(94, 1002, 127),
+		sa = sm->createFlyStraightAnimator(	core::vector3df(94, 1002, 127),
 			core::vector3df(108, 15, -60), 10000, true);
 		camera->addAnimator(sa);
 		timeForThisScene = 9900;
 		model1->setVisible(true);
-		model2->setVisible(false);
+		model2->setVisible(false);		
 		campFire->setVisible(false);
 		sa->drop();
 		break;
@@ -287,41 +235,38 @@ void CDemo::switchToNextScene()
 			model1->setVisible(true);
 			model2->setVisible(true);
 			campFire->setVisible(true);
-			timeForThisScene = -1;
+			timeForThisScene = (u32)-1;
 
-			SKeyMap keyMap[9];
+			SKeyMap keyMap[8];
 			keyMap[0].Action = EKA_MOVE_FORWARD;
 			keyMap[0].KeyCode = KEY_UP;
 			keyMap[1].Action = EKA_MOVE_FORWARD;
 			keyMap[1].KeyCode = KEY_KEY_W;
-
+	        
 			keyMap[2].Action = EKA_MOVE_BACKWARD;
 			keyMap[2].KeyCode = KEY_DOWN;
 			keyMap[3].Action = EKA_MOVE_BACKWARD;
 			keyMap[3].KeyCode = KEY_KEY_S;
-
+	        
 			keyMap[4].Action = EKA_STRAFE_LEFT;
 			keyMap[4].KeyCode = KEY_LEFT;
 			keyMap[5].Action = EKA_STRAFE_LEFT;
 			keyMap[5].KeyCode = KEY_KEY_A;
-
+	        
 			keyMap[6].Action = EKA_STRAFE_RIGHT;
 			keyMap[6].KeyCode = KEY_RIGHT;
 			keyMap[7].Action = EKA_STRAFE_RIGHT;
 			keyMap[7].KeyCode = KEY_KEY_D;
 
-			keyMap[8].Action = EKA_JUMP_UP;
-			keyMap[8].KeyCode = KEY_KEY_J;
-
-			camera = sm->addCameraSceneNodeFPS(0, 100.0f, 400.0f, -1, keyMap, 9, false, 0.f);
+			camera = sm->addCameraSceneNodeFPS(0, 100.0f, 300.0f, -1, keyMap, 8);
 			camera->setPosition(core::vector3df(108,140,-140));
-
-			scene::ISceneNodeAnimatorCollisionResponse* collider =
+			
+			scene::ISceneNodeAnimatorCollisionResponse* collider = 
 				sm->createCollisionResponseAnimator(
-				metaSelector, camera, core::vector3df(25,50,25),
-				core::vector3df(0, quakeLevelMesh ? -2.5f : 0.0f,0),
-					core::vector3df(0,45,0), 0.005f);
-
+				metaSelector, camera, core::vector3df(30,50,30), 
+				core::vector3df(0, quakeLevelMesh ? -3.0f : 0.0f,0), 
+					core::vector3df(0,40,0), 0.0005f);
+		    
 			camera->addAnimator(collider);
 			collider->drop();
 		}
@@ -330,6 +275,11 @@ void CDemo::switchToNextScene()
 
 	sceneStartTime = device->getTimer()->getTime();
 
+	// if we've got a new created camera, we call OnPostRender to let all animators
+	// set the right position of the camera, otherwise the camera would
+	// be at a wrong position in the first frame
+	if (device->getSceneManager()->getActiveCamera())
+		device->getSceneManager()->getActiveCamera()->OnPostRender(sceneStartTime);
 }
 
 
@@ -340,66 +290,24 @@ void CDemo::loadSceneData()
 	video::IVideoDriver* driver = device->getVideoDriver();
 	scene::ISceneManager* sm = device->getSceneManager();
 
-	quakeLevelMesh = (scene::IQ3LevelMesh*) sm->getMesh("maps/20kdm2.bsp");
-
+	quakeLevelMesh = sm->getMesh("20kdm2.bsp");
+	
 	if (quakeLevelMesh)
 	{
-		u32 i;
-
-		//move all quake level meshes (non-realtime)
-		core::matrix4 m;
-		m.setTranslation ( core::vector3df(-1300,-70,-1249) );
-
-		for ( i = 0; i!= scene::quake3::E_Q3_MESH_SIZE; ++i )
-		{
-			sm->getMeshManipulator()->transformMesh ( quakeLevelMesh->getMesh(i), m );
-		}
-
-		quakeLevelNode = sm->addOctTreeSceneNode( 
-			quakeLevelMesh->getMesh( scene::quake3::E_Q3_MESH_GEOMETRY)
-									);
+		quakeLevelNode = sm->addOctTreeSceneNode(quakeLevelMesh->getMesh(0));
 		if (quakeLevelNode)
 		{
-			//quakeLevelNode->setPosition(core::vector3df(-1300,-70,-1249));
+			quakeLevelNode->setPosition(core::vector3df(-1300,-70,-1249));
 			quakeLevelNode->setVisible(true);
-
+			
 			// create map triangle selector
 			mapSelector = sm->createOctTreeTriangleSelector(quakeLevelMesh->getMesh(0),
 				quakeLevelNode, 128);
-
-			// if not using shader and no gamma it's better to use more lighting, because
-			// quake3 level are usually dark
-			quakeLevelNode->setMaterialType ( video::EMT_LIGHTMAP_M4 );
 
 			// set additive blending if wanted
 			if (additive)
 				quakeLevelNode->setMaterialType(video::EMT_LIGHTMAP_ADD);
 		}
-
-		// the additional mesh can be quite huge and is unoptimized
-		scene::IMesh * additional_mesh = quakeLevelMesh->getMesh ( scene::quake3::E_Q3_MESH_ITEMS );
-
-		for ( i = 0; i!= additional_mesh->getMeshBufferCount (); ++i )
-		{
-			scene::IMeshBuffer *meshBuffer = additional_mesh->getMeshBuffer ( i );
-			const video::SMaterial &material = meshBuffer->getMaterial();
-
-			//! The ShaderIndex is stored in the material parameter
-			s32 shaderIndex = (s32) material.MaterialTypeParam2;
-
-			// the meshbuffer can be rendered without additional support, or it has no shader
-			const scene::quake3::SShader *shader = quakeLevelMesh->getShader ( shaderIndex );
-			if ( 0 == shader )
-			{
-				continue;
-			}
-			// Now add the MeshBuffer(s) with the current Shader to the Manager
-			sm->addQuake3SceneNode ( meshBuffer, shader );
-		}
-
-		// original mesh is not needed anymore
-		quakeLevelMesh->releaseMesh ( scene::quake3::E_Q3_MESH_ITEMS );
-
 	}
 
 	// load sydney model and create 2 instances
@@ -418,7 +326,6 @@ void CDemo::loadSceneData()
 			model1->setMaterialFlag(video::EMF_LIGHTING, false);
 			model1->setMaterialType(video::EMT_SPHERE_MAP);
 			model1->addShadowVolumeSceneNode();
-			model1->setAutomaticCulling ( scene::EAC_BOX );
 		}
 
 		model2 = sm->addAnimatedMeshSceneNode(mesh);
@@ -427,17 +334,19 @@ void CDemo::loadSceneData()
 			model2->setPosition(core::vector3df(180,15,-60));
 			model2->setScale(core::vector3df(2,2,2));
 			model2->setMD2Animation(scene::EMAT_RUN);
+			//model2->setAnimationSpeed(1);
 			model2->setMaterialTexture(0, device->getVideoDriver()->getTexture("../../media/sydney.bmp"));
 			model2->setMaterialFlag(video::EMF_LIGHTING, true);
 			model2->addShadowVolumeSceneNode();
-			model2->setAutomaticCulling ( scene::EAC_BOX );
 		}
 	}
 
 	scene::ISceneNodeAnimator* anim = 0;
 
 	// create sky box
-	driver->setTextureCreationFlag(video::ETCF_CREATE_MIP_MAPS, false);
+
+	//driver->setTextureCreationFlag(video::ETCF_CREATE_MIP_MAPS, false);
+
 	skyboxNode = sm->addSkyBoxSceneNode(
 		driver->getTexture("../../media/irrlicht2_up.jpg"),
 		driver->getTexture("../../media/irrlicht2_dn.jpg"),
@@ -445,7 +354,6 @@ void CDemo::loadSceneData()
 		driver->getTexture("../../media/irrlicht2_rt.jpg"),
 		driver->getTexture("../../media/irrlicht2_ft.jpg"),
 		driver->getTexture("../../media/irrlicht2_bk.jpg"));
-	driver->setTextureCreationFlag(video::ETCF_CREATE_MIP_MAPS, true);
 
 	//driver->setTextureCreationFlag(video::ETCF_CREATE_MIP_MAPS, true);
 
@@ -457,7 +365,7 @@ void CDemo::loadSceneData()
 
 	if (model2)
 	{
-		anim = device->getSceneManager()->createFlyStraightAnimator(waypoint[0],
+		anim = device->getSceneManager()->createFlyStraightAnimator(waypoint[0], 
 			waypoint[1], 2000, true);
 		model2->addAnimator(anim);
 		anim->drop();
@@ -468,11 +376,9 @@ void CDemo::loadSceneData()
 	core::array<video::ITexture*> textures;
 	for (s32 g=1; g<8; ++g)
 	{
-		core::stringc tmp;
-		tmp = "../../media/portal";
-		tmp += g;
-		tmp += ".bmp";
-		video::ITexture* t = driver->getTexture( tmp.c_str () );
+		char tmp[64];
+		sprintf(tmp, "../../media/portal%d.bmp", g);
+		video::ITexture* t = driver->getTexture(tmp);
 		textures.push_back(t);
 	}
 
@@ -498,10 +404,10 @@ void CDemo::loadSceneData()
 
 	scene::ILightSceneNode* light = 0;
 
-	light = sm->addLightSceneNode(0,
-		core::vector3df(0,0,0),	video::SColorf(1.0f, 1.0f, 1.f, 1.0f), 500.f);
+	light = device->getSceneManager()->addLightSceneNode(0,
+		core::vector3df(0,0,0),	video::SColorf(1.0f, 0.5f, 0.5f, 1.0f), 1500);
 
-	anim = sm->createFlyCircleAnimator(
+	anim = device->getSceneManager()->createFlyCircleAnimator(
 		core::vector3df(100,150,80), 80.0f, 0.0005f);
 
 	light->addAnimator(anim);
@@ -526,7 +432,7 @@ void CDemo::loadSceneData()
 	campFire->setParticleSize(core::dimension2d<f32>(20.0f, 10.0f));
 
 	scene::IParticleEmitter* em = campFire->createBoxEmitter(
-		core::aabbox3d<f32>(-7,0,-7,7,1,7),
+		core::aabbox3d<f32>(-7,0,-7,7,1,7), 
 		core::vector3df(0.0f,0.06f,0.0f),
 		80,100, video::SColor(0,255,255,255),video::SColor(0,255,255,255), 800,2000);
 
@@ -538,21 +444,23 @@ void CDemo::loadSceneData()
 	paf->drop();
 
 	campFire->setMaterialFlag(video::EMF_LIGHTING, false);
-	campFire->setMaterialFlag(video::EMF_ZWRITE_ENABLE, false);
 	campFire->setMaterialTexture(0, driver->getTexture("../../media/fireball.bmp"));
 	campFire->setMaterialType(video::EMT_TRANSPARENT_VERTEX_ALPHA);
 
 	// load music
 
-	#ifdef USE_IRRKLANG
+	#ifdef USE_AUDIERE
 	if (music)
-		startIrrKlang();
+		startAudiere();
 	#endif
 	#ifdef USE_SDL_MIXER
 	if (music)
 		startSound();
 	#endif
 
+	// set background color
+
+	backColor.set(0,0,0,0);
 }
 
 
@@ -570,19 +478,25 @@ void CDemo::createLoadingScreen()
 	// create in fader
 
 	inOutFader = device->getGUIEnvironment()->addInOutFader();
-	inOutFader->setColor(backColor,	video::SColor ( 0, 230, 230, 230 ));
+	inOutFader->setColor(backColor);
 
 	// irrlicht logo
-	device->getGUIEnvironment()->addImage(device->getVideoDriver()->getTexture("../../media/irrlichtlogo2.png"),
+/*
+	gui::IGUIImage* img = device->getGUIEnvironment()->addImage(
+		core::rect<int>(10,10,98,41));
+	img->setImage(
+		device->getVideoDriver()->getTexture("../../media/irrlichtlogoaligned.jpg"));
+*/
+	device->getGUIEnvironment()->addImage(device->getVideoDriver()->getTexture("../../media/irrlichtlogoalpha2.tga"),
 		core::position2d<s32>(5,5));
 
 	// loading text
 
-	const int lwidth = size.Width - 20;
-	const int lheight = 16;
+	const int lwidth = 220;
+	const int lheight = 15;
 
 	core::rect<int> pos(10, size.Height-lheight-10, 10+lwidth, size.Height-10);
-
+	
 	device->getGUIEnvironment()->addImage(pos);
 	statusText = device->getGUIEnvironment()->addStaticText(L"Loading...",	pos, true);
 	statusText->setOverrideColor(video::SColor(255,205,200,200));
@@ -608,7 +522,7 @@ void CDemo::shoot()
 	if (!camera || !mapSelector)
 		return;
 
-	SParticleImpact imp;
+	SParticleImpact imp; 
 	imp.when = 0;
 
 	// get line of camera
@@ -616,8 +530,9 @@ void CDemo::shoot()
 	core::vector3df start = camera->getPosition();
 	core::vector3df end = (camera->getTarget() - start);
 	end.normalize();
-	start += end*8.0f;
+	start += end*5.0f;
 	end = start + (end * camera->getFarValue());
+	
 
 	core::triangle3df triangle;
 
@@ -639,11 +554,9 @@ void CDemo::shoot()
 	else
 	{
 		// doesnt collide with wall
-		core::vector3df start = camera->getPosition();
-		core::vector3df end = (camera->getTarget() - start);
+		end = (camera->getTarget() - start);
 		end.normalize();
-		start += end*8.0f;
-		end = start + (end * camera->getFarValue());
+		end = start + (end * 1000);
 	}
 
 	// create fire ball
@@ -654,7 +567,7 @@ void CDemo::shoot()
 	node->setMaterialFlag(video::EMF_LIGHTING, false);
 	node->setMaterialTexture(0, device->getVideoDriver()->getTexture("../../media/fireball.bmp"));
 	node->setMaterialType(video::EMT_TRANSPARENT_ADD_COLOR);
-
+		
 	f32 length = (f32)(end - start).getLength();
 	const f32 speed = 0.6f;
 	u32 time = (u32)(length / speed);
@@ -664,7 +577,7 @@ void CDemo::shoot()
 	// set flight line
 
 	anim = sm->createFlyStraightAnimator(start, end, time);
-	node->addAnimator(anim);
+	node->addAnimator(anim);	
 	anim->drop();
 
 	anim = sm->createDeleteAnimator(time);
@@ -679,9 +592,9 @@ void CDemo::shoot()
 	}
 
 	// play sound
-	#ifdef USE_IRRKLANG
+	#ifdef USE_AUDIERE
 	if (ballSound)
-		irrKlang->play2D(ballSound);
+		ballSound->play();
 	#endif
 	#ifdef USE_SDL_MIXER
 	if (ballSound)
@@ -726,62 +639,57 @@ void CDemo::createParticleImpacts()
 			pas->addAnimator(anim);
 			anim->drop();
 
+			// delete entry
+			Impacts.erase(i);
+			i--;			
+
 			// play impact sound
-			#ifdef USE_IRRKLANG
-			if (irrKlang)
-			{
-				audio::ISound* sound = 
-					irrKlang->play3D(impactSound, Impacts[i].pos, false, false, true);
-
-				if (sound)
-				{
-					// adjust max value a bit to make to sound of an impact louder
-					sound->setMinDistance(400);
-					sound->drop();
-				}
-			}
+			#ifdef USE_AUDIERE
+			if (impactSound)
+				impactSound->play();
 			#endif
-
 			#ifdef USE_SDL_MIXER
 			if (impactSound)
 				playSound(impactSound);
 			#endif
-
-			// delete entry
-			Impacts.erase(i);
-			i--;
 		}
 }
 
 
 
-#ifdef USE_IRRKLANG
-void CDemo::startIrrKlang()
-{
-	irrKlang = audio::createIrrKlangDevice();
 
-	if (!irrKlang)
+#ifdef USE_AUDIERE
+void CDemo::startAudiere()
+{
+	audiereDevice = OpenDevice();
+	if (!audiereDevice) 
 		return;
 
-	// play music
-
-	audio::ISound* snd = irrKlang->play2D("../../media/IrrlichtTheme.ogg", true, false, true);
-	if ( !snd )
-		snd = irrKlang->play2D("IrrlichtTheme.ogg", true, false, true);
-
-	if (snd)
+	stream = OpenSound(audiereDevice.get(), "IrrlichtTheme.mp3", true);
+	if (!stream) 
 	{
-		snd->setVolume(0.5f); // 50% volume
-		snd->drop();
+		stream = OpenSound(audiereDevice.get(), "../../media/IrrlichtTheme.mp3", true);
+		if (!stream)
+			return;
 	}
 
-	// preload both sound effects
+	ballSound = OpenSound(audiereDevice.get(), "ball.wav", false);
+	if (!ballSound) 
+	{
+		ballSound = OpenSound(audiereDevice.get(), "../../media/ball.wav", false);
+	}
 
-	ballSound = irrKlang->getSoundSource("../../media/ball.wav");
-	impactSound = irrKlang->getSoundSource("../../media/impact.wav");
+	impactSound = OpenSound(audiereDevice.get(), "impact.wav", false);
+	if (!impactSound) 
+	{
+		impactSound = OpenSound(audiereDevice.get(), "../../media/impact.wav", false);
+	}
+		
+	stream->setRepeat(true);
+	//stream->setVolume(0.5f); // 50% volume
+	stream->play();
 }
 #endif
-
 
 #ifdef USE_SDL_MIXER
 void CDemo::startSound()
@@ -795,7 +703,7 @@ void CDemo::startSound()
 	if (Mix_OpenAudio(22050, AUDIO_S16, 2, 128))
 		return;
 
-	stream = Mix_LoadMUS("../../media/IrrlichtTheme.ogg");
+	stream = Mix_LoadMUS("../../media/IrrlichtTheme.mp3");
 	if (stream)
 		Mix_PlayMusic(stream, -1);
 

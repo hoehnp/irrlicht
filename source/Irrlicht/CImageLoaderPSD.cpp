@@ -1,16 +1,11 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #include "CImageLoaderPSD.h"
-
-#ifdef _IRR_COMPILE_WITH_PSD_LOADER_
-
-#include "IReadFile.h"
+#include <string.h>
 #include "os.h"
 #include "CImage.h"
-#include "irrString.h"
-
 
 namespace irr
 {
@@ -20,6 +15,7 @@ namespace video
 
 //! constructor
 CImageLoaderPSD::CImageLoaderPSD()
+: imageData(0)
 {
 	#ifdef _DEBUG
 	setDebugName("CImageLoaderPSD");
@@ -27,9 +23,18 @@ CImageLoaderPSD::CImageLoaderPSD()
 }
 
 
+
+//! destructor
+CImageLoaderPSD::~CImageLoaderPSD()
+{
+	delete [] imageData;
+}
+
+
+
 //! returns true if the file maybe is able to be loaded by this class
 //! based on the file extension (e.g. ".tga")
-bool CImageLoaderPSD::isALoadableFileExtension(const c8* fileName) const
+bool CImageLoaderPSD::isALoadableFileExtension(const c8* fileName)
 {
 	return strstr(fileName, ".psd") != 0;
 }
@@ -37,7 +42,7 @@ bool CImageLoaderPSD::isALoadableFileExtension(const c8* fileName) const
 
 
 //! returns true if the file maybe is able to be loaded by this class
-bool CImageLoaderPSD::isALoadableFileFormat(io::IReadFile* file) const
+bool CImageLoaderPSD::isALoadableFileFormat(irr::io::IReadFile* file)
 {
 	if (!file)
 		return false;
@@ -50,21 +55,19 @@ bool CImageLoaderPSD::isALoadableFileFormat(io::IReadFile* file) const
 
 
 //! creates a surface from the file
-IImage* CImageLoaderPSD::loadImage(io::IReadFile* file) const
+IImage* CImageLoaderPSD::loadImage(irr::io::IReadFile* file)
 {
-	u32* imageData = 0;
+	delete [] imageData;
+	imageData = 0;
 
-	PsdHeader header;
 	file->read(&header, sizeof(PsdHeader));
 
-#ifndef __BIG_ENDIAN__
-	header.version = os::Byteswap::byteswap(header.version);
-	header.channels = os::Byteswap::byteswap(header.channels);
-	header.height = os::Byteswap::byteswap(header.height);
-	header.width = os::Byteswap::byteswap(header.width);
-	header.depth = os::Byteswap::byteswap(header.depth);
-	header.mode = os::Byteswap::byteswap(header.mode);
-#endif
+	header.version = convert2le(header.version);
+	header.channels = convert2le(header.channels);
+	header.height = convert2le(header.height);
+	header.width = convert2le(header.width);
+	header.depth = convert2le(header.depth);
+	header.mode = convert2le(header.mode);
 
 	if (header.signature[0] != '8' ||
 		header.signature[1] != 'B' ||
@@ -87,10 +90,8 @@ IImage* CImageLoaderPSD::loadImage(io::IReadFile* file) const
 	// skip color mode data
 
 	u32 l;
-	file->read(&l, sizeof(u32));
-#ifndef __BIG_ENDIAN__
-	l = os::Byteswap::byteswap(l);
-#endif
+	file->read(&l, sizeof(s32));
+	l = convert2le(l);
 	if (!file->seek(l, true))
 	{
 		os::Printer::log("Error seeking file pos to image resources.\n", file->getFileName(), ELL_ERROR);
@@ -99,10 +100,8 @@ IImage* CImageLoaderPSD::loadImage(io::IReadFile* file) const
 
 	// skip image resources
 
-	file->read(&l, sizeof(u32));
-#ifndef __BIG_ENDIAN__
-	l = os::Byteswap::byteswap(l);
-#endif
+	file->read(&l, sizeof(s32));
+	l = convert2le(l);
 	if (!file->seek(l, true))
 	{
 		os::Printer::log("Error seeking file pos to layer and mask.\n", file->getFileName(), ELL_ERROR);
@@ -111,10 +110,8 @@ IImage* CImageLoaderPSD::loadImage(io::IReadFile* file) const
 
 	// skip layer & mask
 
-	file->read(&l, sizeof(u32));
-#ifndef __BIG_ENDIAN__
-	l = os::Byteswap::byteswap(l);
-#endif
+	file->read(&l, sizeof(s32));
+	l = convert2le(l);
 	if (!file->seek(l, true))
 	{
 		os::Printer::log("Error seeking file pos to image data section.\n", file->getFileName(), ELL_ERROR);
@@ -125,9 +122,7 @@ IImage* CImageLoaderPSD::loadImage(io::IReadFile* file) const
 
 	u16 compressionType;
 	file->read(&compressionType, sizeof(u16));
-#ifndef __BIG_ENDIAN__
-	compressionType = os::Byteswap::byteswap(compressionType);
-#endif
+	compressionType = convert2le(compressionType);
 
 	if (compressionType != 1 && compressionType != 0)
 	{
@@ -142,9 +137,9 @@ IImage* CImageLoaderPSD::loadImage(io::IReadFile* file) const
 	bool res = false;
 
 	if (compressionType == 0)
-		res = readRawImageData(file, header, imageData); // RAW image data
+		res = readRawImageData(file); // RAW image data
 	else
-		res = readRLEImageData(file, header, imageData); // RLE compressed data
+		res = readRLEImageData(file); // RLE compressed data
 
 	video::IImage* image = 0;
 
@@ -163,7 +158,8 @@ IImage* CImageLoaderPSD::loadImage(io::IReadFile* file) const
 }
 
 
-bool CImageLoaderPSD::readRawImageData(io::IReadFile* file, const PsdHeader& header, u32* imageData) const
+
+bool CImageLoaderPSD::readRawImageData(irr::io::IReadFile* file)
 {
 	u8* tmpData = new u8[header.width * header.height];
 
@@ -175,30 +171,28 @@ bool CImageLoaderPSD::readRawImageData(io::IReadFile* file, const PsdHeader& hea
 			break;
 		}
 
-		s16 shift = getShiftFromChannel(channel, header);
+		c8 shift = getShiftFromChannel(channel);
 		if (shift != -1)
 		{
 			u32 mask = 0xff << shift;
 
 			for (u32 x=0; x<header.width; ++x)
-			{
 				for (u32 y=0; y<header.height; ++y)
 				{
 					s32 index = x + y*header.width;
 					imageData[index] = ~(~imageData[index] | mask);
 					imageData[index] |= tmpData[index] << shift;
 				}
-			}
 		}
 
 	}
-
+		
 	delete [] tmpData;
 	return true;
 }
 
 
-bool CImageLoaderPSD::readRLEImageData(io::IReadFile* file, const PsdHeader& header, u32* imageData) const
+bool CImageLoaderPSD::readRLEImageData(irr::io::IReadFile* file)
 {
 	/*	If the compression code is 1, the image data
 		starts with the byte counts for all the scan lines in the channel
@@ -239,8 +233,8 @@ bool CImageLoaderPSD::readRLEImageData(io::IReadFile* file, const PsdHeader& hea
 	u8* tmpData = new u8[header.width * header.height];
 	u16 *rleCount= new u16 [header.height * header.channels];
 
-	s32 size=0;
-
+	s32 size=0;      
+      
 	for (u32 y=0; y<header.height * header.channels; ++y)
 	{
 		if (!file->read(&rleCount[y], sizeof(u16)))
@@ -251,13 +245,11 @@ bool CImageLoaderPSD::readRLEImageData(io::IReadFile* file, const PsdHeader& hea
 			return false;
 		}
 
-#ifndef __BIG_ENDIAN__
-		rleCount[y] = os::Byteswap::byteswap(rleCount[y]);
-#endif
+		rleCount[y] = convert2le (rleCount[y]);
 		size += rleCount[y];
 	}
 
-	s8 *buf = new s8[size];
+	s8 *buf = new s8[size];       
 	if (!file->read(buf, size))
 	{
 		delete [] rleCount;
@@ -267,39 +259,39 @@ bool CImageLoaderPSD::readRLEImageData(io::IReadFile* file, const PsdHeader& hea
 		return false;
 	}
 
-	u16 *rcount=rleCount;
-
+	u16 *rcount=rleCount; 
+	
 	s8 rh;
 	u16 bytesRead;
 	u8 *dest;
 	s8 *pBuf = buf;
 
-	// decompress packbit rle
+	// decompress packbit rle 
 
 	for (s32 channel=0; channel<header.channels; channel++)
 	{
-		for (u32 y=0; y<header.height; ++y, ++rcount)
+		for (u32 y=0; y<header.height; ++y, ++rcount) 
 		{
 			bytesRead=0;
 			dest = &tmpData[y*header.width];
-
+			
 			while (bytesRead < *rcount)
 			{
 				rh = *pBuf++;
 				++bytesRead;
-
+				
 				if (rh >= 0)
 				{
 					++rh;
 
 					while (rh--)
-					{
+					{ 
 						*dest = *pBuf++;
 						++bytesRead;
 						++dest;
-					}
+					} 
 				}
-				else
+				else 
 				if (rh > -128)
 				{
 					rh = -rh +1;
@@ -315,8 +307,8 @@ bool CImageLoaderPSD::readRLEImageData(io::IReadFile* file, const PsdHeader& hea
 				}
 			}
 		}
-
-		s16 shift = getShiftFromChannel(channel, header);
+		
+		s8 shift = getShiftFromChannel(channel);
 
 		if (shift != -1)
 		{
@@ -331,7 +323,7 @@ bool CImageLoaderPSD::readRLEImageData(io::IReadFile* file, const PsdHeader& hea
 				}
 		}
 	}
-
+       
 	delete [] rleCount;
 	delete [] buf;
 	delete [] tmpData;
@@ -340,7 +332,7 @@ bool CImageLoaderPSD::readRLEImageData(io::IReadFile* file, const PsdHeader& hea
 }
 
 
-s16 CImageLoaderPSD::getShiftFromChannel(c8 channelNr, const PsdHeader& header) const
+c8 CImageLoaderPSD::getShiftFromChannel(c8 channelNr)
 {
 	switch(channelNr)
 	{
@@ -370,6 +362,4 @@ IImageLoader* createImageLoaderPSD()
 
 } // end namespace video
 } // end namespace irr
-
-#endif
 

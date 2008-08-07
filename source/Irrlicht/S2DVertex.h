@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -16,10 +16,10 @@ namespace video
 
 	struct S2DVertex
 	{
-		core::vector2d<s32> Pos;	// position
+		core::vector2d<s32> Pos;		// position
 		core::vector2d<s32> TCoords;	// texture coordinates
-		TZBufferType ZValue;		// zvalue
-		u16 Color;
+		TZBufferType ZValue;			// zvalue
+		s16 Color;
 	};
 
 

@@ -72,9 +72,7 @@ To be able to use the Irrlicht.DLL file, we need to link with the
 Irrlicht.lib. We could set this option in the project settings, but
 to make it easy, we use a pragma comment lib:
 */
-#ifdef _IRR_WINDOWS_
 #pragma comment(lib, "Irrlicht.lib")
-#endif
 
 
 /*
@@ -93,8 +91,8 @@ int main()
 	createDevice() has 7 paramters:
 	deviceType: Type of the device. This can currently be the Null-device,
 	   the Software device, the second software renderer, D3D8, D3D9, or OpenGL. 
-	   In this example we use EDT_SOFTWARE, but to try out, you might want to change it to
-	   EDT_BURNINGSVIDEO, EDT_NULL, EDT_DIRECT3D8 , EDT_DIRECT3D9, or EDT_OPENGL. 
+	   In this example we use EDT_SOFTWARE2, but to try out, you might want to change it to
+	   EDT_SOFTWARE, EDT_NULL, EDT_DIRECT3D8 , EDT_DIRECT3D9, or EDT_OPENGL. 
 	windowSize: Size of the Window or FullscreenMode to be created. In this 
 	   example we use 640x480.
 	bits: Amount of bits per pixel when in fullscreen mode. This should 
@@ -109,13 +107,8 @@ int main()
 	*/
 
 	IrrlichtDevice *device =
-#ifdef _IRR_OSX_PLATFORM_
-		createDevice( video::EDT_OPENGL, dimension2d<s32>(640, 480), 16,
+		createDevice( video::EDT_SOFTWARE2, dimension2d<s32>(640, 480), 16,
 			false, false, false, 0);
-#else
-		createDevice( video::EDT_SOFTWARE, dimension2d<s32>(640, 480), 16,
-			false, false, false, 0);
-#endif
 
 	/*
 	Set the caption of the window to some nice text. Note that there is 
@@ -137,8 +130,8 @@ int main()
 	/*
 	We add a hello world label to the window, using the GUI environment.
 	*/
-	guienv->addStaticText(L"Hello World! This is the Irrlicht Software renderer!",
-		rect<s32>(10,10,260,22), true);
+	guienv->addStaticText(L"Hello World! This is the Irrlicht Apfelbaum Software renderer!",
+		rect<int>(10,10,260,22), true);
 
 	/*
 	To display something interesting, we load a Quake 2 model 
