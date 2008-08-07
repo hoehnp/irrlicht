@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -9,6 +9,7 @@
 #include "IVideoDriver.h"
 #include "IAnimatedMesh.h"
 #include "IMesh.h"
+#include "irrMath.h"
 #include "os.h"
 #include "IGUISkin.h"
 
@@ -46,16 +47,18 @@ void CGUIMeshViewer::setMesh(scene::IAnimatedMesh* mesh)
 	Mesh = mesh;
 	if (!Mesh)
 		return;
-	else
-		Mesh->grab();
 
-	/* This might be used for proper transformation etc.
 	core::vector3df center(0.0f,0.0f,0.0f);
 	core::aabbox3d<f32> box;
 
-	box = Mesh->getMesh(0)->getBoundingBox();
-	center = (box.MaxEdge + box.MinEdge) / 2;
-	*/
+	if (mesh->getFrameCount())
+	{
+		box = mesh->getMesh(0)->getBoundingBox();
+		center = (box.MaxEdge + box.MinEdge) / 2;
+	}
+
+	if (Mesh)
+		Mesh->grab();
 }
 
 
@@ -83,7 +86,7 @@ const video::SMaterial& CGUIMeshViewer::getMaterial() const
 //! called if an event happened.
 bool CGUIMeshViewer::OnEvent(const SEvent& event)
 {
-	return IGUIElement::OnEvent(event);
+	return Parent ? Parent->OnEvent(event) : false;
 }
 
 
@@ -147,17 +150,11 @@ void CGUIMeshViewer::draw()
 
 		driver->setMaterial(Material);
 
-		u32 frame = 0;
-		if(Mesh->getFrameCount())
-			frame = (os::Timer::getTime()/20)%Mesh->getFrameCount();
-		const scene::IMesh* const m = Mesh->getMesh(frame);
+		scene::IMesh* m = Mesh->getMesh(os::Timer::getTime()/20);
 		for (u32 i=0; i<m->getMeshBufferCount(); ++i)
 		{
 			scene::IMeshBuffer* mb = m->getMeshBuffer(i);
-			driver->drawVertexPrimitiveList(mb->getVertices(),
-					mb->getVertexCount(), mb->getIndices(),
-					mb->getIndexCount()/ 3, mb->getVertexType(),
-					scene::EPT_TRIANGLES);
+			driver->drawVertexPrimitiveList(mb->getVertices(), mb->getVertexCount(), mb->getIndices(), mb->getIndexCount()/ 3, mb->getVertexType(), scene::EPT_TRIANGLES);
 		}
 
 		driver->setViewPort(oldViewPort);

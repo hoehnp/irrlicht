@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -219,8 +219,6 @@ public:
 			pID3DDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCCOLOR);
 		}
 
-		((SMaterial&)material).ZWriteEnable = false;
-
 		services->setBasicRenderStates(material, lastMaterial, resetAllRenderstates);
 	}
 
@@ -256,8 +254,6 @@ public:
 			pID3DDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ONE);
 			pID3DDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
 		}
-
-		((SMaterial&)material).ZWriteEnable = false;
 
 		services->setBasicRenderStates(material, lastMaterial, resetAllRenderstates);
 	}
@@ -305,8 +301,6 @@ public:
             pID3DDevice->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATEREQUAL);
 			pID3DDevice->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
 		}
-
-		((SMaterial&)material).ZWriteEnable = false;
 
 		services->setBasicRenderStates(material, lastMaterial, resetAllRenderstates);
 	}
@@ -356,8 +350,6 @@ public:
             pID3DDevice->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATEREQUAL);
 			pID3DDevice->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
 		}
-
-		((SMaterial&)material).ZWriteEnable = false;
 
 		services->setBasicRenderStates(material, lastMaterial, resetAllRenderstates);
 	}

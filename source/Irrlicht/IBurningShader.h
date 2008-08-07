@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt / Thomas Alten
+// Copyright (C) 2002-2007 Nikolaus Gebhardt / Thomas Alten
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -13,9 +13,6 @@
 #include "rect.h"
 #include "IDepthBuffer.h"
 #include "S4DVertex.h"
-#include "irrArray.h"
-#include "SLight.h"
-#include "SMaterial.h"
 
 
 namespace irr
@@ -23,39 +20,6 @@ namespace irr
 
 namespace video
 {
-
-	struct SBurningShaderLight
-	{
-		SLight org;
-
-		sVec4 posEyeSpace;
-
-		f32 constantAttenuation;
-		f32 linearAttenuation;
-		f32 quadraticAttenuation;
-
-		sVec4 AmbientColor;
-		sVec4 DiffuseColor;
-		sVec4 SpecularColor;
-	};
-
-	struct SBurningShaderLightSpace
-	{
-		core::array<SBurningShaderLight> Light;
-		sVec4 Global_AmbientLight;
-	};
-
-	struct SBurningShaderMaterial
-	{
-		SMaterial org;
-
-		sVec4 AmbientColor;
-		sVec4 DiffuseColor;
-		sVec4 SpecularColor;
-		sVec4 EmissiveColor;
-
-		u32 SpecularEnabled;	// == Power2
-	};
 
 	enum EBurningFFShader
 	{
@@ -89,12 +53,10 @@ namespace video
 		ETR_TEXTURE_GOURAUD_ALPHA_NOZ,
 
 		ETR_TEXTURE_BLEND,
-		ETR_REFERENCE,
 		ETR_INVALID,
 
 		ETR2_COUNT
 	};
-
 
 	class IBurningShader : public virtual IReferenceCounted
 	{
@@ -108,24 +70,24 @@ namespace video
 		virtual void setRenderTarget(video::IImage* surface, const core::rect<s32>& viewPort);
 
 		//! sets the Texture
-		virtual void setTextureParam( u32 stage, video::CSoftwareTexture2* texture, s32 lodLevel);
+		virtual void setTexture( u32 stage, video::CSoftwareTexture2* texture, s32 lodLevel);
 		virtual void drawTriangle ( const s4DVertex *a,const s4DVertex *b,const s4DVertex *c ) = 0;
 		virtual void drawLine ( const s4DVertex *a,const s4DVertex *b) {};
 
 		virtual void setParam ( u32 index, f32 value) {};
 		virtual void setZCompareFunc ( u32 func) {};
 
-		virtual void setMaterial ( const SBurningShaderMaterial &material ) {};
-
 	protected:
 
 		video::IImage* RenderTarget;
-		IDepthBuffer* DepthBuffer;
 
-		fp24* lockedDepthBuffer;
+		IDepthBuffer* ZBuffer;
+
+		s32 SurfaceWidth;
+		fp24* lockedZBuffer;
 		tVideoSample* lockedSurface;
 
-		sInternalTexture IT[ BURNING_MATERIAL_MAX_TEXTURES ];
+		sInternalTexture IT[2];
 
 		static const tFixPointu dithermask[ 4 * 4];
 	};
@@ -158,9 +120,6 @@ namespace video
 	IBurningShader* createTRTextureGouraudAlphaNoZ(IDepthBuffer* zbuffer);
 	IBurningShader* createTRTextureBlend(IDepthBuffer* zbuffer);
 	IBurningShader* createTRTextureInverseAlphaBlend(IDepthBuffer* zbuffer);
-
-	IBurningShader* createTriangleRendererReference(IDepthBuffer* zbuffer);
-
 
 
 } // end namespace video

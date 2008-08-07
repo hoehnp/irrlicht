@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -175,7 +175,7 @@ void CGUISkin::setColor(EGUI_DEFAULT_COLOR which, video::SColor newColor)
 }
 
 
-//! returns size for the given size type
+//! returns default color
 s32 CGUISkin::getSize(EGUI_DEFAULT_SIZE size) const
 {
 	if ((u32)size < EGDS_COUNT)
@@ -183,6 +183,7 @@ s32 CGUISkin::getSize(EGUI_DEFAULT_SIZE size) const
 	else
 		return 0;
 }
+
 
 
 //! sets a default size
@@ -280,7 +281,7 @@ It uses the colors EGDC_3D_DARK_SHADOW, EGDC_3D_HIGH_LIGHT, EGDC_3D_SHADOW and
 EGDC_3D_FACE for this. See EGUI_DEFAULT_COLOR for details.
 \param rect: Defining area where to draw.
 \param clip: Clip area.
-\param element: Pointer to the element which wishes to draw this. This parameter
+\param element: Pointer to the element which whiches to draw this. This parameter
 is usually not used by ISkin, but can be used for example by more complex
 implementations to find out how to draw the part exactly. */
 void CGUISkin::draw3DButtonPaneStandard(IGUIElement* element,
@@ -336,7 +337,7 @@ It uses the colors EGDC_3D_DARK_SHADOW, EGDC_3D_HIGH_LIGHT, EGDC_3D_SHADOW and
 EGDC_3D_FACE for this. See EGUI_DEFAULT_COLOR for details.
 \param rect: Defining area where to draw.
 \param clip: Clip area.
-\param element: Pointer to the element which wishes to draw this. This parameter
+\param element: Pointer to the element which whiches to draw this. This parameter
 is usually not used by ISkin, but can be used for example by more complex
 implementations to find out how to draw the part exactly. */
 void CGUISkin::draw3DButtonPanePressed(IGUIElement* element,
@@ -375,7 +376,7 @@ void CGUISkin::draw3DButtonPanePressed(IGUIElement* element,
 
 //! draws a sunken 3d pane
 /** Used for drawing the background of edit, combo or check boxes.
-\param element: Pointer to the element which wishes to draw this. This parameter
+\param element: Pointer to the element which whiches to draw this. This parameter
 is usually not used by ISkin, but can be used for example by more complex
 implementations to find out how to draw the part exactly.
 \param bgcolor: Background color.
@@ -442,7 +443,7 @@ void CGUISkin::draw3DSunkenPane(IGUIElement* element, video::SColor bgcolor,
 
 //! draws a window background
 /** Used for drawing the background of dialogs and windows.
-\param element: Pointer to the element which wishes to draw this. This parameter
+\param element: Pointer to the element which whiches to draw this. This parameter
 is usually not used by ISkin, but can be used for example by more complex
 implementations to find out how to draw the part exactly.
 \param titleBarColor: Title color.
@@ -548,7 +549,7 @@ core::rect<s32> CGUISkin::draw3DWindowBackground(IGUIElement* element,
 /**	Used for drawing for menus and context menus.
 It uses the colors EGDC_3D_DARK_SHADOW, EGDC_3D_HIGH_LIGHT, EGDC_3D_SHADOW and
 EGDC_3D_FACE for this. See EGUI_DEFAULT_COLOR for details.
-\param element: Pointer to the element which wishes to draw this. This parameter
+\param element: Pointer to the element which whiches to draw this. This parameter
 is usually not used by ISkin, but can be used for example by more complex
 implementations to find out how to draw the part exactly.
 \param rect: Defining area where to draw.
@@ -626,7 +627,7 @@ void CGUISkin::draw3DMenuPane(IGUIElement* element,
 
 //! draws a standard 3d tool bar
 /**	Used for drawing for toolbars and menus.
-\param element: Pointer to the element which wishes to draw this. This parameter
+\param element: Pointer to the element which whiches to draw this. This parameter
 is usually not used by ISkin, but can be used for example by more complex
 implementations to find out how to draw the part exactly.
 \param rect: Defining area where to draw.
@@ -673,91 +674,53 @@ void CGUISkin::draw3DToolBar(IGUIElement* element,
 
 //! draws a tab button
 /**	Used for drawing for tab buttons on top of tabs.
-\param element: Pointer to the element which wishes to draw this. This parameter
+\param element: Pointer to the element which whiches to draw this. This parameter
 is usually not used by ISkin, but can be used for example by more complex
 implementations to find out how to draw the part exactly.
 \param active: Specifies if the tab is currently active.
 \param rect: Defining area where to draw.
 \param clip: Clip area.	*/
 void CGUISkin::draw3DTabButton(IGUIElement* element, bool active,
-	const core::rect<s32>& frameRect, const core::rect<s32>* clip, EGUI_ALIGNMENT alignment)
+				const core::rect<s32>& frameRect,
+				const core::rect<s32>* clip)
 {
 	if (!Driver)
 		return;
 
 	core::rect<s32> tr = frameRect;
 
-	if ( alignment == EGUIA_UPPERLEFT )
-	{
-		tr.LowerRightCorner.X -= 2;
-		tr.LowerRightCorner.Y = tr.UpperLeftCorner.Y + 1;
-		tr.UpperLeftCorner.X += 1;
-		Driver->draw2DRectangle(getColor(EGDC_3D_HIGH_LIGHT), tr, clip);
-		
-		// draw left highlight
-		tr = frameRect;
-		tr.LowerRightCorner.X = tr.UpperLeftCorner.X + 1;
-		tr.UpperLeftCorner.Y += 1;
-		Driver->draw2DRectangle(getColor(EGDC_3D_HIGH_LIGHT), tr, clip);
+	tr.LowerRightCorner.X -= 2;
+	tr.LowerRightCorner.Y = tr.UpperLeftCorner.Y + 1;
+	tr.UpperLeftCorner.X += 1;
+	Driver->draw2DRectangle(getColor(EGDC_3D_HIGH_LIGHT), tr, clip);
 
-		// draw grey background
-		tr = frameRect;
-		tr.UpperLeftCorner.X += 1;
-		tr.UpperLeftCorner.Y += 1;
-		tr.LowerRightCorner.X -= 2;
-		Driver->draw2DRectangle(getColor(EGDC_3D_FACE), tr, clip);
+	// draw left highlight
+	tr = frameRect;
+	tr.LowerRightCorner.X = tr.UpperLeftCorner.X + 1;
+	tr.UpperLeftCorner.Y += 1;
+	Driver->draw2DRectangle(getColor(EGDC_3D_HIGH_LIGHT), tr, clip);
 
-		
-		// draw right middle gray shadow
-		tr.LowerRightCorner.X += 1;
-		tr.UpperLeftCorner.X = tr.LowerRightCorner.X - 1;
-		Driver->draw2DRectangle(getColor(EGDC_3D_SHADOW), tr, clip);
+	// draw grey background
+	tr = frameRect;
+	tr.UpperLeftCorner.X += 1;
+	tr.UpperLeftCorner.Y += 1;
+	tr.LowerRightCorner.X -= 2;
+	Driver->draw2DRectangle(getColor(EGDC_3D_FACE), tr, clip);
 
-		
-		tr.LowerRightCorner.X += 1;
-		tr.UpperLeftCorner.X += 1;
-		tr.UpperLeftCorner.Y += 1;
-		Driver->draw2DRectangle(getColor(EGDC_3D_DARK_SHADOW), tr, clip);		
-	}
-	else
-	{
-		tr.LowerRightCorner.X -= 2;
-		tr.UpperLeftCorner.Y = tr.LowerRightCorner.Y - 1;
-		tr.UpperLeftCorner.X += 1;
-		Driver->draw2DRectangle(getColor(EGDC_3D_HIGH_LIGHT), tr, clip);
-		
-		// draw left highlight
-		tr = frameRect;
-		tr.LowerRightCorner.X = tr.UpperLeftCorner.X + 1;
-		tr.LowerRightCorner.Y -= 1;
-		Driver->draw2DRectangle(getColor(EGDC_3D_HIGH_LIGHT), tr, clip);
+	// draw right middle gray shadow
+	tr.LowerRightCorner.X += 1;
+	tr.UpperLeftCorner.X = tr.LowerRightCorner.X - 1;
+	Driver->draw2DRectangle(getColor(EGDC_3D_SHADOW), tr, clip);
 
-		// draw grey background
-		tr = frameRect;
-		tr.UpperLeftCorner.X += 1;
-		tr.UpperLeftCorner.Y -= 1;
-		tr.LowerRightCorner.X -= 2;
-		tr.LowerRightCorner.Y -= 1;
-		Driver->draw2DRectangle(getColor(EGDC_3D_FACE), tr, clip);
-		
-		// draw right middle gray shadow
-		tr.LowerRightCorner.X += 1;
-		tr.UpperLeftCorner.X = tr.LowerRightCorner.X - 1;
-		//tr.LowerRightCorner.Y -= 1;
-		Driver->draw2DRectangle(getColor(EGDC_3D_SHADOW), tr, clip);
-
-		
-		tr.LowerRightCorner.X += 1;
-		tr.UpperLeftCorner.X += 1;
-		tr.LowerRightCorner.Y -= 1;
-		Driver->draw2DRectangle(getColor(EGDC_3D_DARK_SHADOW), tr, clip);		
-	}
-
+	tr.LowerRightCorner.X += 1;
+	tr.UpperLeftCorner.X += 1;
+	tr.UpperLeftCorner.Y += 1;
+	Driver->draw2DRectangle(getColor(EGDC_3D_DARK_SHADOW), tr, clip);
 }
 
 
 //! draws a tab control body
-/**	\param element: Pointer to the element which wishes to draw this. This parameter
+/**	\param element: Pointer to the element which whiches to draw this. This parameter
 is usually not used by ISkin, but can be used for example by more complex
 implementations to find out how to draw the part exactly.
 \param border: Specifies if the border should be drawn.
@@ -765,85 +728,46 @@ implementations to find out how to draw the part exactly.
 \param rect: Defining area where to draw.
 \param clip: Clip area.	*/
 void CGUISkin::draw3DTabBody(IGUIElement* element, bool border, bool background,
-	const core::rect<s32>& rect, const core::rect<s32>* clip, s32 tabHeight, EGUI_ALIGNMENT alignment)
+	const core::rect<s32>& rect, const core::rect<s32>* clip)
 {
 	if (!Driver)
 		return;
 
 	core::rect<s32> tr = rect;
 
-	if ( tabHeight == -1 )
-		tabHeight = getSize(gui::EGDS_BUTTON_HEIGHT);
-
 	// draw border.
 	if (border)
 	{
-		if ( alignment == EGUIA_UPPERLEFT )
-		{
-			// draw left hightlight
-			tr.UpperLeftCorner.Y += tabHeight + 2;
-			tr.LowerRightCorner.X = tr.UpperLeftCorner.X + 1;
-			Driver->draw2DRectangle(getColor(EGDC_3D_HIGH_LIGHT), tr, clip);
+		// draw left hightlight
+		tr.UpperLeftCorner.Y += getSize(gui::EGDS_BUTTON_HEIGHT) + 2;
+		tr.LowerRightCorner.X = tr.UpperLeftCorner.X + 1;
+		Driver->draw2DRectangle(getColor(EGDC_3D_HIGH_LIGHT), tr, clip);
 
-			
-			// draw right shadow
-			tr.UpperLeftCorner.X = rect.LowerRightCorner.X - 1;
-			tr.LowerRightCorner.X = tr.UpperLeftCorner.X + 1;
-			Driver->draw2DRectangle(getColor(EGDC_3D_SHADOW), tr, clip);
+		// draw right shadow
+		tr.UpperLeftCorner.X = rect.LowerRightCorner.X - 1;
+		tr.LowerRightCorner.X = tr.UpperLeftCorner.X + 1;
+		Driver->draw2DRectangle(getColor(EGDC_3D_SHADOW), tr, clip);
 
-			// draw lower shadow
-			tr = rect;
-			tr.UpperLeftCorner.Y = tr.LowerRightCorner.Y - 1;
-			Driver->draw2DRectangle(getColor(EGDC_3D_SHADOW), tr, clip);
-			
-		}
-		else
-		{
-			// draw left hightlight
-			tr.LowerRightCorner.Y -= tabHeight + 2;
-			tr.LowerRightCorner.X = tr.UpperLeftCorner.X + 1;
-			Driver->draw2DRectangle(getColor(EGDC_3D_HIGH_LIGHT), tr, clip);
-			
-			// draw right shadow
-			tr.UpperLeftCorner.X = rect.LowerRightCorner.X - 1;
-			tr.LowerRightCorner.X = tr.UpperLeftCorner.X + 1;
-			Driver->draw2DRectangle(getColor(EGDC_3D_SHADOW), tr, clip);
-			
-			// draw lower shadow
-			tr = rect;
-			tr.LowerRightCorner.Y = tr.UpperLeftCorner.Y + 1;
-			Driver->draw2DRectangle(getColor(EGDC_3D_HIGH_LIGHT), tr, clip);
-			
-		}
+		// draw lower shadow
+		tr = rect;
+		tr.UpperLeftCorner.Y = tr.LowerRightCorner.Y - 1;
+		Driver->draw2DRectangle(getColor(EGDC_3D_SHADOW), tr, clip);
 	}
 
 	if (background)
 	{
-		
-		if ( alignment == EGUIA_UPPERLEFT )
-		{
-			tr = rect;
-			tr.UpperLeftCorner.Y += tabHeight + 2;
-			tr.LowerRightCorner.X -= 1;
-			tr.UpperLeftCorner.X += 1;
-			tr.LowerRightCorner.Y -= 1;
-		}
-		else
-		{
-			tr = rect;
-			tr.UpperLeftCorner.X += 1;
-			tr.UpperLeftCorner.Y -= 1;
-			tr.LowerRightCorner.X -= 1;
-			tr.LowerRightCorner.Y -= tabHeight + 2;
-			//tr.UpperLeftCorner.X += 1;
-		}
+		tr = rect;
+		tr.UpperLeftCorner.Y += getSize(gui::EGDS_BUTTON_HEIGHT) + 2;
+		tr.LowerRightCorner.X -= 1;
+		tr.UpperLeftCorner.X += 1;
+		tr.LowerRightCorner.Y -= 1;
 
 		if (!UseGradient)
 			Driver->draw2DRectangle(getColor(EGDC_3D_FACE), tr, clip);
 		else
 		{
-			video::SColor c1 = getColor(EGDC_3D_FACE);
-			video::SColor c2 = getColor(EGDC_3D_SHADOW);
+			const video::SColor c1 = getColor(EGDC_3D_FACE);
+			const video::SColor c2 = getColor(EGDC_3D_SHADOW);
 			Driver->draw2DRectangle(tr, c1, c1, c2, c2, clip);
 		}
 	}
@@ -932,5 +856,4 @@ void CGUISkin::deserializeAttributes(io::IAttributes* in, io::SAttributeReadWrit
 } // end namespace irr
 
 #endif // _IRR_COMPILE_WITH_GUI_
-
 

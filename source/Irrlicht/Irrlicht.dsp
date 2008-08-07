@@ -826,14 +826,6 @@ SOURCE=.\CImageWriterTGA.cpp
 
 SOURCE=.\CImageWriterTGA.h
 # End Source File
-# Begin Source File
-
-SOURCE=.\CImageWriterWAL.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CImageWriterWAL.h
-# End Source File
 # End Group
 # Begin Source File
 
@@ -1214,10 +1206,6 @@ SOURCE=.\CColladaFileLoader.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CColladaMeshWriter.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=.\CCSMLoader.cpp
 # End Source File
 # Begin Source File
@@ -1290,23 +1278,11 @@ SOURCE=.\CGUISpinBox.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CImageLoaderPPM.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=.\CIrrDeviceSDL.cpp
 # End Source File
 # Begin Source File
 
 SOURCE=.\CIrrDeviceSDL.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\CIrrMeshFileLoader.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CIrrMeshWriter.cpp
 # End Source File
 # Begin Source File
 
@@ -1323,14 +1299,6 @@ SOURCE=.\CLMTSMeshFileLoader.cpp
 # Begin Source File
 
 SOURCE=.\CLMTSMeshFileLoader.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\CLWOMeshFileLoader.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CLWOMeshFileLoader.h
 # End Source File
 # Begin Source File
 
@@ -1399,6 +1367,10 @@ SOURCE=.\CMY3DMeshFileLoader.cpp
 # Begin Source File
 
 SOURCE=.\CMY3DMeshFileLoader.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\CMY3DStuff.h
 # End Source File
 # Begin Source File
 
@@ -1666,14 +1638,6 @@ SOURCE=.\CSphereSceneNode.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CSTLMeshFileLoader.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CSTLMeshWriter.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=.\CTerrainSceneNode.cpp
 # End Source File
 # Begin Source File
@@ -1695,14 +1659,6 @@ SOURCE=.\CTextSceneNode.cpp
 # Begin Source File
 
 SOURCE=.\CTextSceneNode.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\CVolumeLightSceneNode.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CVolumeLightSceneNode.h
 # End Source File
 # Begin Source File
 
@@ -2380,10 +2336,6 @@ SOURCE=.\changes.txt
 # Begin Source File
 
 SOURCE=.\glxext.h
-# End Source File
-# End Target
-
-SOURCE=.\CBurningShader_Raster_Reference.cpp
 # End Source File
 # End Target
 # End Project

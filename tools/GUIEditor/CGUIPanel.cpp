@@ -1,4 +1,4 @@
-// Copyright 2006-2008 Asger Feldthaus
+// Copyright 2006-2007 Asger Feldthaus
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -93,10 +93,11 @@ void CGUIPanel::draw()
 	}
 
     video::IVideoDriver* driver = Environment->getVideoDriver();
-    IGUISkin* skin = Environment->getSkin();
-    if (Border && skin)
+    
+    if (Border)
     {
-        skin->draw3DSunkenPane( this, skin->getColor( EGDC_APP_WORKSPACE), false, true, AbsoluteRect, &AbsoluteClippingRect );
+        IGUISkin* skin = Environment->getSkin();
+        skin->draw3DSunkenPane( this, skin->getColor( EGDC_APP_WORKSPACE), true,true, AbsoluteRect, &AbsoluteClippingRect );
     }
 
 	IGUIElement::draw();
@@ -230,14 +231,14 @@ void CGUIPanel::resizeInnerPane()
 	// get desired size (total size of all children)
 	core::rect<s32> totalRect(0,0,0,0);
 
-	core::list<IGUIElement*>::ConstIterator it;
-       
-	for ( it = InnerPane->getChildren().begin();
-		it != InnerPane->getChildren().end(); ++it )
+	core::list<IGUIElement*>::Iterator it = InnerPane->getChildren().begin();
+
+	while ( it != InnerPane->getChildren().end() )
 	{
 		core::rect<s32> rct = (*it)->getRelativePosition();
 		totalRect.addInternalPoint(rct.UpperLeftCorner);
 		totalRect.addInternalPoint(rct.LowerRightCorner);
+		it++;
 	}
 
 	// move children if pane needs to grow
@@ -252,10 +253,11 @@ void CGUIPanel::resizeInnerPane()
 	{
 		totalRect += adjustedMovement;
 
-		for (it = InnerPane->getChildren().begin();
-			it != InnerPane->getChildren().end(); ++it )
+		it = InnerPane->getChildren().begin();
+		while ( it != InnerPane->getChildren().end() )
 		{
 			(*it)->move(adjustedMovement);
+			it++;
 		}
 	}
 

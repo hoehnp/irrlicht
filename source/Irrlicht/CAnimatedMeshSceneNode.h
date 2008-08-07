@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -82,9 +82,6 @@ namespace scene
 		//! same as getJointNode(const c8* jointName), but based on id
 		virtual IBoneSceneNode* getJointNode(u32 jointID);
 
-		//! Gets joint count.
-		virtual u32 getJointCount() const;
-
 		//! Redundant command, please use getJointNode.
 		virtual ISceneNode* getMS3DJointNode(const c8* jointName);
 
@@ -141,17 +138,14 @@ namespace scene
 
 
 		//! Set the joint update mode (0-unused, 1-get joints only, 2-set joints only, 3-move and set)
-		virtual void setJointMode(E_JOINT_UPDATE_ON_RENDER mode);
+		virtual void setJointMode(s32 mode);
 
 		//! Sets the transition time in seconds (note: This needs to enable joints, and setJointmode maybe set to 2)
 		//! you must call animateJoints(), or the mesh will not animate
 		virtual void setTransitionTime(f32 Time);
 
 		//! updates the joint positions of this mesh
-		virtual void animateJoints(bool CalculateAbsolutePositions=true);
-
-		//! render mesh ignoring it's transformation. Used with ragdolls. (culling is unaffected)
-		virtual void setRenderFromIdentity( bool On );
+		virtual void animateJoints();
 
 	private:
 
@@ -169,7 +163,7 @@ namespace scene
 		f32 FramesPerSecond;
 		f32 CurrentFrameNr;
 
-		E_JOINT_UPDATE_ON_RENDER JointMode; //0-unused, 1-get joints only, 2-set joints only, 3-move and set
+		s32 JointMode; //0-unused, 1-get joints only, 2-set joints only, 3-move and set
 		bool JointsUsed;
 
 		u32 TransitionTime; //Transition time in millisecs
@@ -188,7 +182,6 @@ namespace scene
 		core::array<IBoneSceneNode* > JointChildSceneNodes;
 		core::array<core::matrix4> PretransitingSave;
 
-		bool RenderFromIdentity;
 
 		struct SMD3Special
 		{

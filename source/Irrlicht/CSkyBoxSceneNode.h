@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -13,7 +13,7 @@ namespace irr
 namespace scene
 {
 
-	// Skybox, rendered with zbuffer turned off, before all other nodes.
+	// Skybox, rendererd with zbuffer turned off, before all other nodes.
 	class CSkyBoxSceneNode : public ISceneNode
 	{
 	public:
@@ -22,6 +22,9 @@ namespace scene
 		CSkyBoxSceneNode(video::ITexture* top, video::ITexture* bottom, video::ITexture* left,
 			video::ITexture* right, video::ITexture* front, video::ITexture* back,
 			ISceneNode* parent, ISceneManager* mgr, s32 id);
+
+		//! destructor
+		virtual ~CSkyBoxSceneNode();
 
 		virtual void OnRegisterSceneNode();
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -67,17 +67,14 @@ CGUIToolBar::CGUIToolBar(IGUIEnvironment* environment, IGUIElement* parent, s32 
 //! called if an event happened.
 bool CGUIToolBar::OnEvent(const SEvent& event)
 {
-	if (IsEnabled)
+	if (event.EventType == EET_MOUSE_INPUT_EVENT && 
+		event.MouseInput.Event == EMIE_LMOUSE_PRESSED_DOWN)
 	{
-		if (event.EventType == EET_MOUSE_INPUT_EVENT && 
-			event.MouseInput.Event == EMIE_LMOUSE_PRESSED_DOWN)
-		{
-			if (AbsoluteClippingRect.isPointInside(core::position2di(event.MouseInput.X, event.MouseInput.Y)))
-				return true;
-		}
+		if (AbsoluteClippingRect.isPointInside(core::position2di(event.MouseInput.X, event.MouseInput.Y)))
+			return true;
 	}
 
-	return IGUIElement::OnEvent(event);
+	return Parent ? Parent->OnEvent(event) : false;
 }
 
 
@@ -92,7 +89,7 @@ void CGUIToolBar::draw()
 		return;
 
 	core::rect<s32> rect = AbsoluteRect;
-	core::rect<s32>* clip = &AbsoluteClippingRect;
+	core::rect<s32>* clip = 0;
 
 	// draw frame
 	skin->draw3DToolBar(this, rect, clip);

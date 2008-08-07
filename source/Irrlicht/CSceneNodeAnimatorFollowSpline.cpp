@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -11,7 +11,7 @@ namespace scene
 
 //! constructor
 CSceneNodeAnimatorFollowSpline::CSceneNodeAnimatorFollowSpline(u32 time,
-	const core::array<core::vector3df>& points, f32 speed,
+	const core::array< core::vector3df >& points, f32 speed,
 	f32 tightness)
 : Points(points), Speed(speed), Tightness(tightness), StartTime(time)
 {
@@ -19,6 +19,14 @@ CSceneNodeAnimatorFollowSpline::CSceneNodeAnimatorFollowSpline(u32 time,
 	setDebugName("CSceneNodeAnimatorFollowSpline");
 	#endif
 }
+
+
+
+//! destructor
+CSceneNodeAnimatorFollowSpline::~CSceneNodeAnimatorFollowSpline()
+{
+}
+
 
 
 inline s32 CSceneNodeAnimatorFollowSpline::clamp(s32 idx, s32 size)
@@ -30,37 +38,36 @@ inline s32 CSceneNodeAnimatorFollowSpline::clamp(s32 idx, s32 size)
 //! animates a scene node
 void CSceneNodeAnimatorFollowSpline::animateNode(ISceneNode* node, u32 timeMs)
 {
+	core::vector3df p, p0, p1, p2, p3;
+	core::vector3df t1, t2;
+
 	const u32 pSize = Points.size();
-	if (pSize==0)
-		return;
-	if (pSize==1)
-	{
-		node->setPosition(Points[0]);
-		return;
-	}
 
 	const f32 dt = ( (timeMs-StartTime) * Speed * 0.001f );
 	const f32 u = core::fract ( dt );
-	const s32 idx = core::floor32( dt ) % pSize;
-	//const f32 u = 0.001f * fmodf( dt, 1000.0f );
+	s32 idx = core::floor32( dt ) % pSize;
+	//f32 u = 0.001f * fmodf( dt, 1000.0f );
 	
-	const core::vector3df& p0 = Points[ clamp( idx - 1, pSize ) ];
-	const core::vector3df& p1 = Points[ clamp( idx + 0, pSize ) ]; // starting point
-	const core::vector3df& p2 = Points[ clamp( idx + 1, pSize ) ]; // end point
-	const core::vector3df& p3 = Points[ clamp( idx + 2, pSize ) ];
+
+	p0 = Points[ clamp( idx - 1, pSize ) ];
+	p1 = Points[ clamp( idx + 0, pSize ) ];
+	p2 = Points[ clamp( idx + 1, pSize ) ];
+	p3 = Points[ clamp( idx + 2, pSize ) ];
 
 	// hermite polynomials
-	const f32 h1 = 2.0f * u * u * u - 3.0f * u * u + 1.0f;
-	const f32 h2 = -2.0f * u * u * u + 3.0f * u * u;
-	const f32 h3 = u * u * u - 2.0f * u * u + u;
-	const f32 h4 = u * u * u - u * u;
+	f32 h1 = 2.0f * u * u * u - 3.0f * u * u + 1.0f;
+	f32 h2 = -2.0f * u * u * u + 3.0f * u * u;
+	f32 h3 = u * u * u - 2.0f * u * u + u;
+	f32 h4 = u * u * u - u * u;
 
 	// tangents
-	const core::vector3df t1 = ( p2 - p0 ) * Tightness;
-	const core::vector3df t2 = ( p3 - p1 ) * Tightness;
+	t1 = ( p2 - p0 ) * Tightness;
+	t2 = ( p3 - p1 ) * Tightness;
 
 	// interpolated point
-	node->setPosition(p1 * h1 + p2 * h2 + t1 * h3 + t2 * h4);
+	p = p1 * h1 + p2 * h2 + t1 * h3 + t2 * h4;
+
+	node->setPosition(p);
 }
 
 
@@ -88,7 +95,6 @@ void CSceneNodeAnimatorFollowSpline::serializeAttributes(io::IAttributes* out, i
 	}
 }
 
-
 //! Reads attributes of the scene node animator.
 void CSceneNodeAnimatorFollowSpline::deserializeAttributes(io::IAttributes* in, io::SAttributeReadWriteOptions* options)
 {
@@ -99,10 +105,13 @@ void CSceneNodeAnimatorFollowSpline::deserializeAttributes(io::IAttributes* in, 
 	for(u32 i=1; true; ++i)
 	{
 		core::stringc pname = "Point";
-		pname += i;
+		pname += (int)i;
 
 		if (in->existsAttribute(pname.c_str()))
-			Points.push_back(in->getAttributeAsVector3d(pname.c_str()));
+		{
+			core::vector3df pos = in->getAttributeAsVector3d(pname.c_str());
+			Points.push_back(pos);
+		}
 		else
 			break;
 	}

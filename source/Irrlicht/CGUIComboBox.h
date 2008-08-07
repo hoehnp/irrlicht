@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -9,7 +9,6 @@
 #ifdef _IRR_COMPILE_WITH_GUI_
 
 #include "IGUIComboBox.h"
-#include "IGUIStaticText.h"
 #include "irrString.h"
 #include "irrArray.h"
 
@@ -51,10 +50,10 @@ namespace gui
 		virtual s32 getSelected() const;
 
 		//! sets the selected item. Set this to -1 if no item should be selected
-		virtual void setSelected(s32 idx);
+		virtual void setSelected(s32 id);
 
-		//! sets the text alignment of the text part
-		virtual void setTextAlignment(EGUI_ALIGNMENT horizontal, EGUI_ALIGNMENT vertical);
+		//! update the position
+		virtual void updateAbsolutePosition();
 
 		//! called if an event happened.
 		virtual bool OnEvent(const SEvent& event);
@@ -74,13 +73,11 @@ namespace gui
 		void sendSelectionChangedEvent();
 
 		IGUIButton* ListButton;
-		IGUIStaticText* SelectedText;
 		IGUIListBox* ListBox;
 		core::array< core::stringw > Items;
 		s32 Selected;
 		bool HasFocus;
 		IGUIElement *LastFocus;
-		EGUI_ALIGNMENT HAlign, VAlign;
 	};
 
 

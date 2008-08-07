@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -11,7 +11,7 @@ namespace scene
 {
 
 //! constructor
-CTriangleBBSelector::CTriangleBBSelector(const ISceneNode* node)
+CTriangleBBSelector::CTriangleBBSelector(ISceneNode* node)
 : CTriangleSelector(node)
 {
 	#ifdef _DEBUG
@@ -32,7 +32,7 @@ void CTriangleBBSelector::getTriangles(core::triangle3df* triangles,
 		return;
 
 	// construct triangles
-	const core::aabbox3d<f32>& box = SceneNode->getBoundingBox();
+	core::aabbox3d<f32> box = SceneNode->getBoundingBox();
 	core::vector3df edges[8];
 	box.getEdges(edges);
 

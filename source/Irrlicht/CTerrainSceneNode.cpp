@@ -1,11 +1,10 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 // The code for the TerrainSceneNode is based on the GeoMipMapSceneNode
 // developed by Spintz. He made it available for Irrlicht and allowed it to be
-// distributed under this licence. I only modified some parts. A lot of thanks
-// go to him.
+// distributed under this licence. I only modified some parts. A lot of thanks go to him.
 
 #include "CTerrainSceneNode.h"
 #include "CTerrainTriangleSelector.h"
@@ -19,7 +18,6 @@
 #include "IGUIFont.h"
 #include "IFileSystem.h"
 #include "IReadFile.h"
-#include "ITextSceneNode.h"
 
 namespace irr
 {
@@ -30,10 +28,10 @@ namespace scene
 	CTerrainSceneNode::CTerrainSceneNode(ISceneNode* parent, ISceneManager* mgr,
 			io::IFileSystem* fs, s32 id, s32 maxLOD, E_TERRAIN_PATCH_SIZE patchSize,
 			const core::vector3df& position,
-			const core::vector3df& rotation,
+			const core::vector3df& rotation, 
 			const core::vector3df& scale)
 	: ITerrainSceneNode(parent, mgr, id, position, rotation, scale),
-	TerrainData(patchSize, maxLOD, position, rotation, scale), RenderBuffer(0),
+	TerrainData(patchSize, maxLOD, position, rotation, scale),
 	VerticesToRender(0), IndicesToRender(0), DynamicSelectorUpdate(false),
 	OverrideDistanceThreshold(false), UseDefaultRotationPivot(true), ForceRecalculation(false),
 	OldCameraPosition(core::vector3df(-99999.9f, -99999.9f, -99999.9f)),
@@ -45,29 +43,24 @@ namespace scene
 		setDebugName("CTerrainSceneNode");
 		#endif
 
-		RenderBuffer = new SMeshBufferLightMap();
-
 		if (FileSystem)
 			FileSystem->grab();
 
 		setAutomaticCulling( scene::EAC_OFF );
 	}
 
-
 	//! destructor
 	CTerrainSceneNode::~CTerrainSceneNode ( )
 	{
-		delete [] TerrainData.LODDistanceThreshold;
+		if (TerrainData.LODDistanceThreshold)
+			delete [] TerrainData.LODDistanceThreshold;
 
-		delete [] TerrainData.Patches;
+		if (TerrainData.Patches)
+			delete [] TerrainData.Patches;
 
 		if (FileSystem)
 			FileSystem->drop();
-
-		if (RenderBuffer)
-			RenderBuffer->drop();
 	}
-
 
 	//! Initializes the terrain data.  Loads the vertices from the heightMapFile
 	bool CTerrainSceneNode::loadHeightMap( io::IReadFile* file, video::SColor vertexColor, s32 smoothFactor )
@@ -91,42 +84,42 @@ namespace scene
 
 		switch( TerrainData.PatchSize )
 		{
-			case ETPS_9:
-				if( TerrainData.MaxLOD > 3 )
-				{
-					TerrainData.MaxLOD = 3;
-				}
+		    case ETPS_9:
+			if( TerrainData.MaxLOD > 3 )
+			{
+				TerrainData.MaxLOD = 3;
+			}
 			break;
-			case ETPS_17:
-				if( TerrainData.MaxLOD > 4 )
-				{
-					TerrainData.MaxLOD = 4;
-				}
+		    case ETPS_17:
+			if( TerrainData.MaxLOD > 4 )
+			{
+				TerrainData.MaxLOD = 4;
+			}
 			break;
-			case ETPS_33:
-				if( TerrainData.MaxLOD > 5 )
-				{
-					TerrainData.MaxLOD = 5;
-				}
+		    case ETPS_33:
+			if( TerrainData.MaxLOD > 5 )
+			{
+				TerrainData.MaxLOD = 5;
+			}
 			break;
-			case ETPS_65:
-				if( TerrainData.MaxLOD > 6 )
-				{
-					TerrainData.MaxLOD = 6;
-				}
+		    case ETPS_65:
+			if( TerrainData.MaxLOD > 6 )
+			{
+				TerrainData.MaxLOD = 6;
+			}
 			break;
-			case ETPS_129:
-				if( TerrainData.MaxLOD > 7 )
-				{
-					TerrainData.MaxLOD = 7;
-				}
+		    case ETPS_129:
+			if( TerrainData.MaxLOD > 7 )
+			{
+				TerrainData.MaxLOD = 7;
+			}
 			break;
 		}
 
 		// --- Generate vertex data from heightmap ----
 		// resize the vertex array for the mesh buffer one time ( makes loading faster )
-		SMeshBufferLightMap* mb = new SMeshBufferLightMap();
-		mb->Vertices.set_used( TerrainData.Size * TerrainData.Size );
+		SMeshBufferLightMap* pMeshBuffer = new SMeshBufferLightMap();
+		pMeshBuffer->Vertices.set_used( TerrainData.Size * TerrainData.Size );
 
 		video::S3DVertex2TCoords vertex;
 		vertex.Normal.set( 0.0f, 1.0f, 0.0f );
@@ -148,7 +141,7 @@ namespace scene
 				vertex.TCoords.X = vertex.TCoords2.X = x * tdSize;
 				vertex.TCoords.Y = vertex.TCoords2.Y = z * tdSize;
 
-				mb->Vertices[index] = vertex;
+				pMeshBuffer->Vertices[index] = vertex;
 				++index;
 			}
 		}
@@ -156,27 +149,51 @@ namespace scene
 		// drop heightMap, no longer needed
 		heightMap->drop();
 
-		smoothTerrain(mb, smoothFactor);
+		//! Terrain smoothing. Applause to DeusXL!
+		// http://irrlicht.sourceforge.net/phpBB2/viewtopic.php?p=91272#91272
 
-		// calculate smooth normals for the vertices
-		calculateNormals( mb );
+		s32 run;
 
-		// add the MeshBuffer to the mesh
-		Mesh.addMeshBuffer( mb );
-		const u32 vertexCount = mb->getVertexCount();
-
-		// We copy the data to the renderBuffer, after the normals have been calculated.
-		RenderBuffer->Vertices.set_used( vertexCount );
-
-		for( u32 i = 0; i < vertexCount; ++i )
+		for( run = 0; run < smoothFactor; ++run )
 		{
-			RenderBuffer->Vertices[i] = mb->Vertices[i];
-			RenderBuffer->Vertices[i].Pos *= TerrainData.Scale;
-			RenderBuffer->Vertices[i].Pos += TerrainData.Position;
+			for( index = 2; index < (TerrainData.Size * TerrainData.Size - 2); ++index)
+			{
+				pMeshBuffer->Vertices[index].Pos.Y =
+					(pMeshBuffer->Vertices[index - 2].Pos.Y + pMeshBuffer->Vertices[index - 1].Pos.Y +
+					pMeshBuffer->Vertices[index + 1].Pos.Y + pMeshBuffer->Vertices[index + 2].Pos.Y) / 4.0f;
+			}
 		}
 
-		// We no longer need the mb
-		mb->drop();
+		for( run = 0; run < smoothFactor; ++run)
+		{
+			for( index = TerrainData.Size; index < (TerrainData.Size * (TerrainData.Size - 1)); ++index)
+			{
+				pMeshBuffer->Vertices[index].Pos.Y =
+					(pMeshBuffer->Vertices[index - TerrainData.Size].Pos.Y +
+					pMeshBuffer->Vertices[index + TerrainData.Size].Pos.Y ) / 2.0f;
+			}
+		}
+
+
+		// calculate smooth normals for the vertices
+		calculateNormals( pMeshBuffer );
+
+		// add the MeshBuffer to the mesh
+		Mesh.addMeshBuffer( pMeshBuffer );
+		s32 vertexCount = pMeshBuffer->getVertexCount();
+
+		// We copy the data to the renderBuffer, after the normals have been calculated.
+		RenderBuffer.Vertices.set_used( vertexCount );
+
+		for( s32 i = 0; i < vertexCount; ++i )
+		{
+			RenderBuffer.Vertices[i] = pMeshBuffer->Vertices[i];
+			RenderBuffer.Vertices[i].Pos *= TerrainData.Scale;
+			RenderBuffer.Vertices[i].Pos += TerrainData.Position;
+		}
+
+		// We no longer need the pMeshBuffer
+		pMeshBuffer->drop();
 
 		// calculate all the necessary data for the patches and the terrain
 		calculateDistanceThresholds();
@@ -186,18 +203,16 @@ namespace scene
 		// set the default rotation pivot point to the terrain nodes center
 		TerrainData.RotationPivot = TerrainData.Center;
 
-		// Rotate the vertices of the terrain by the rotation
-		// specified.  Must be done after calculating the terrain data,
-		// so we know what the current center of the terrain is.
+		// Rotate the vertices of the terrain by the rotation specified.  Must be done
+		// after calculating the terrain data, so we know what the current center of the
+		// terrain is.
 		setRotation( TerrainData.Rotation );
 
 		// Pre-allocate memory for indices
-		RenderBuffer->Indices.set_used( TerrainData.PatchCount * TerrainData.PatchCount *
+		RenderBuffer.Indices.set_used( TerrainData.PatchCount * TerrainData.PatchCount *
 			TerrainData.CalcPatchSize * TerrainData.CalcPatchSize * 6 );
 
-		RenderBuffer->setDirty();
-
-		const u32 endTime = os::Timer::getRealTime();
+		u32 endTime = os::Timer::getRealTime();
 
 		c8 tmp[255];
 		sprintf(tmp, "Generated terrain data (%dx%d) in %.4f seconds",
@@ -206,7 +221,6 @@ namespace scene
 
 		return true;
 	}
-
 
 	//! Initializes the terrain data.  Loads the vertices from the heightMapFile
 	bool CTerrainSceneNode::loadHeightMapRAW( io::IReadFile* file, s32 bitsPerPixel, video::SColor vertexColor, s32 smoothFactor )
@@ -226,42 +240,42 @@ namespace scene
 
 		switch( TerrainData.PatchSize )
 		{
-			case ETPS_9:
-				if( TerrainData.MaxLOD > 3 )
-				{
-					TerrainData.MaxLOD = 3;
-				}
+		    case ETPS_9:
+			if( TerrainData.MaxLOD > 3 )
+			{
+				TerrainData.MaxLOD = 3;
+			}
 			break;
-			case ETPS_17:
-				if( TerrainData.MaxLOD > 4 )
-				{
-					TerrainData.MaxLOD = 4;
-				}
+		    case ETPS_17:
+			if( TerrainData.MaxLOD > 4 )
+			{
+				TerrainData.MaxLOD = 4;
+			}
 			break;
-			case ETPS_33:
-				if( TerrainData.MaxLOD > 5 )
-				{
-					TerrainData.MaxLOD = 5;
-				}
+		    case ETPS_33:
+			if( TerrainData.MaxLOD > 5 )
+			{
+				TerrainData.MaxLOD = 5;
+			}
 			break;
-			case ETPS_65:
-				if( TerrainData.MaxLOD > 6 )
-				{
-					TerrainData.MaxLOD = 6;
-				}
+		    case ETPS_65:
+			if( TerrainData.MaxLOD > 6 )
+			{
+				TerrainData.MaxLOD = 6;
+			}
 			break;
-			case ETPS_129:
-				if( TerrainData.MaxLOD > 7 )
-				{
-					TerrainData.MaxLOD = 7;
-				}
+		    case ETPS_129:
+			if( TerrainData.MaxLOD > 7 )
+			{
+				TerrainData.MaxLOD = 7;
+			}
 			break;
 		}
 
 		// --- Generate vertex data from heightmap ----
 		// resize the vertex array for the mesh buffer one time ( makes loading faster )
-		SMeshBufferLightMap* mb = new SMeshBufferLightMap();
-		mb->Vertices.reallocate( TerrainData.Size * TerrainData.Size );
+		SMeshBufferLightMap* pMeshBuffer = new SMeshBufferLightMap();
+		pMeshBuffer->Vertices.reallocate( TerrainData.Size * TerrainData.Size );
 
 		video::S3DVertex2TCoords vertex;
 		vertex.Normal.set( 0.0f, 1.0f, 0.0f );
@@ -279,7 +293,7 @@ namespace scene
 				if( file->read( &vertex.Pos.Y, bytesPerPixel ) != bytesPerPixel )
 				{
 					os::Printer::print("Error reading heightmap RAW file.");
-					mb->drop();
+					pMeshBuffer->drop();
 					return false;
 				}
 
@@ -288,31 +302,55 @@ namespace scene
 				vertex.TCoords.X = vertex.TCoords2.X = x * tdSize;
 				vertex.TCoords.Y = vertex.TCoords2.Y = z * tdSize;
 
-				mb->Vertices.push_back( vertex );
+				pMeshBuffer->Vertices.push_back( vertex );
 			}
 		}
 
-		smoothTerrain(mb, smoothFactor);
+		//! Terrain smoothing. Applause to DeusXL!
+		// http://irrlicht.sourceforge.net/phpBB2/viewtopic.php?p=91272#91272
 
-		// calculate smooth normals for the vertices
-		calculateNormals( mb );
+		s32 run;
+		s32 index;
 
-		// add the MeshBuffer to the mesh
-		Mesh.addMeshBuffer( mb );
-		const u32 vertexCount = mb->getVertexCount();
-
-		// We copy the data to the renderBuffer, after the normals have been calculated.
-		RenderBuffer->Vertices.set_used( vertexCount );
-
-		for( u32 i = 0; i < vertexCount; i++ )
+		for( run = 0; run < smoothFactor; ++run )
 		{
-			RenderBuffer->Vertices[i] = mb->Vertices[i];
-			RenderBuffer->Vertices[i].Pos *= TerrainData.Scale;
-			RenderBuffer->Vertices[i].Pos += TerrainData.Position;
+			for( index = 2; index < (TerrainData.Size * TerrainData.Size - 2); ++index)
+			{
+				pMeshBuffer->Vertices[index].Pos.Y =
+					(pMeshBuffer->Vertices[index - 2].Pos.Y + pMeshBuffer->Vertices[index - 1].Pos.Y +
+					pMeshBuffer->Vertices[index + 1].Pos.Y + pMeshBuffer->Vertices[index + 2].Pos.Y) / 4.0f;
+			}
 		}
 
-		// We no longer need the mb
-		mb->drop();
+		for( run = 0; run < smoothFactor; ++run)
+		{
+			for( index = TerrainData.Size; index < (TerrainData.Size * (TerrainData.Size - 1)); ++index)
+			{
+				pMeshBuffer->Vertices[index].Pos.Y =
+					(pMeshBuffer->Vertices[index - TerrainData.Size].Pos.Y +
+					pMeshBuffer->Vertices[index + TerrainData.Size].Pos.Y ) / 2.0f;
+			}
+		}
+
+		// calculate smooth normals for the vertices
+		calculateNormals( pMeshBuffer );
+
+		// add the MeshBuffer to the mesh
+		Mesh.addMeshBuffer( pMeshBuffer );
+		s32 vertexCount = pMeshBuffer->getVertexCount();
+
+		// We copy the data to the renderBuffer, after the normals have been calculated.
+		RenderBuffer.Vertices.set_used( vertexCount );
+
+		for( s32 i = 0; i < vertexCount; i++ )
+		{
+			RenderBuffer.Vertices[i] = pMeshBuffer->Vertices[i];
+			RenderBuffer.Vertices[i].Pos *= TerrainData.Scale;
+			RenderBuffer.Vertices[i].Pos += TerrainData.Position;
+		}
+
+		// We no longer need the pMeshBuffer
+		pMeshBuffer->drop();
 
 		// calculate all the necessary data for the patches and the terrain
 		calculateDistanceThresholds();
@@ -328,7 +366,7 @@ namespace scene
 		setRotation( TerrainData.Rotation );
 
 		// Pre-allocate memory for indices
-		RenderBuffer->Indices.set_used( TerrainData.PatchCount * TerrainData.PatchCount *
+		RenderBuffer.Indices.set_used( TerrainData.PatchCount * TerrainData.PatchCount *
 			TerrainData.CalcPatchSize * TerrainData.CalcPatchSize * 6 );
 
 		u32 endTime = os::Timer::getTime();
@@ -340,7 +378,6 @@ namespace scene
 
 		return true;
 	}
-
 
 	//! Sets the scale of the scene node.
 	//! \param scale: New scale of the node
@@ -393,18 +430,15 @@ namespace scene
 
 		for( s32 i = 0; i < vtxCount; ++i )
 		{
-			RenderBuffer->Vertices[i].Pos = meshVertices[i].Pos * TerrainData.Scale + TerrainData.Position;
+			RenderBuffer.Vertices[i].Pos = meshVertices[i].Pos * TerrainData.Scale + TerrainData.Position;
 
-			RenderBuffer->Vertices[i].Pos -= TerrainData.RotationPivot;
-			rotMatrix.inverseRotateVect( RenderBuffer->Vertices[i].Pos );
-			RenderBuffer->Vertices[i].Pos += TerrainData.RotationPivot;
+			RenderBuffer.Vertices[i].Pos -= TerrainData.RotationPivot;
+			rotMatrix.inverseRotateVect( RenderBuffer.Vertices[i].Pos );
+			RenderBuffer.Vertices[i].Pos += TerrainData.RotationPivot;
 		}
 
 		calculateDistanceThresholds( true );
 		calculatePatchData();
-
-		RenderBuffer->setDirty(EBT_VERTEX);
-
 	}
 
 	//! Updates the scene nodes indices if the camera has moved or rotated by a certain
@@ -429,8 +463,11 @@ namespace scene
 		// Do Not call ISceneNode::OnRegisterSceneNode ( ), this node should have no children
 
 		// Determine the camera rotation, based on the camera direction.
-		const core::vector3df cameraPosition = SceneManager->getActiveCamera()->getAbsolutePosition();
-		const core::vector3df cameraRotation = core::line3d<f32>(cameraPosition, SceneManager->getActiveCamera()->getTarget()).getVector().getHorizontalAngle();
+		core::line3d<f32> line;
+		line.start = SceneManager->getActiveCamera()->getAbsolutePosition();
+		line.end = SceneManager->getActiveCamera()->getTarget();
+		core::vector3df cameraRotation = line.getVector().getHorizontalAngle();
+		core::vector3df cameraPosition = SceneManager->getActiveCamera()->getPosition ( );
 
 		// Only check on the Camera's Y Rotation
 		if (!ForceRecalculation)
@@ -453,12 +490,11 @@ namespace scene
 
 		// Determine each patches LOD based on distance from camera ( and whether or not they are in
 		// the view frustum ).
-		const s32 count = TerrainData.PatchCount * TerrainData.PatchCount;
-		for( s32 j = 0; j < count; ++j )
+		for( s32 j = 0; j < TerrainData.PatchCount * TerrainData.PatchCount; ++j )
 		{
 			if( frustum->getBoundingBox().intersectsWithBox( TerrainData.Patches[j].BoundingBox ) )
 			{
-				const f32 distance = (cameraPosition.X - TerrainData.Patches[j].Center.X) * (cameraPosition.X - TerrainData.Patches[j].Center.X) +
+				f32 distance = (cameraPosition.X - TerrainData.Patches[j].Center.X) * (cameraPosition.X - TerrainData.Patches[j].Center.X) +
 					(cameraPosition.Y - TerrainData.Patches[j].Center.Y) * (cameraPosition.Y - TerrainData.Patches[j].Center.Y) +
 					(cameraPosition.Z - TerrainData.Patches[j].Center.Z) * (cameraPosition.Z - TerrainData.Patches[j].Center.Z);
 
@@ -483,6 +519,67 @@ namespace scene
 			}
 		}
 	}
+
+	void CTerrainSceneNode::preRenderLODCalculations_old()
+	{
+		SceneManager->registerNodeForRendering( this );
+		// Do Not call ISceneNode::OnRegisterSceneNode ( ), this node should have no children
+
+		// Determine the camera rotation, based on the camera direction.
+		core::line3d<f32> line;
+		line.start = SceneManager->getActiveCamera()->getAbsolutePosition();
+		line.end = SceneManager->getActiveCamera()->getTarget();
+		core::vector3df cameraRotation = line.getVector().getHorizontalAngle();
+		core::vector3df cameraPosition = SceneManager->getActiveCamera()->getPosition ( );
+
+		// Only check on the Camera's Y Rotation
+		if (( fabs(cameraRotation.X - OldCameraRotation.X) < CameraRotationDelta) &&
+			( fabs(cameraRotation.Y - OldCameraRotation.Y) < CameraRotationDelta))
+		{
+			if ((fabs(cameraPosition.X - OldCameraPosition.X) < CameraMovementDelta) &&
+				(fabs(cameraPosition.Y - OldCameraPosition.Y) < CameraMovementDelta) &&
+				(fabs(cameraPosition.Z - OldCameraPosition.Z) < CameraMovementDelta))
+			{
+				return;
+			}
+		}
+
+		OldCameraPosition = cameraPosition;
+		OldCameraRotation = cameraRotation;
+		const SViewFrustum* frustum = SceneManager->getActiveCamera()->getViewFrustum();
+
+		// Determine each patches LOD based on distance from camera ( and whether or not they are in
+		// the view frustum ).
+		for( s32 j = 0; j < TerrainData.PatchCount * TerrainData.PatchCount; ++j )
+		{
+			if( frustum->getBoundingBox().intersectsWithBox( TerrainData.Patches[j].BoundingBox ) )
+			{
+				f32 distance = (cameraPosition.X - TerrainData.Patches[j].Center.X) * (cameraPosition.X - TerrainData.Patches[j].Center.X) +
+					(cameraPosition.Y - TerrainData.Patches[j].Center.Y) * (cameraPosition.Y - TerrainData.Patches[j].Center.Y) +
+					(cameraPosition.Z - TerrainData.Patches[j].Center.Z) * (cameraPosition.Z - TerrainData.Patches[j].Center.Z);
+
+				for( s32 i = TerrainData.MaxLOD - 1; i >= 0; --i )
+				{
+					if( distance >= TerrainData.LODDistanceThreshold[i] )
+					{
+						TerrainData.Patches[j].CurrentLOD = i;
+						break;
+					}
+					//else if( i == 0 )
+					{
+						// If we've turned off a patch from viewing, because of the frustum, and now we turn around and it's
+						// too close, we need to turn it back on, at the highest LOD.  The if above doesn't catch this.
+						TerrainData.Patches[j].CurrentLOD = 0;
+					}
+				}
+			}
+			else
+			{
+				TerrainData.Patches[j].CurrentLOD = -1;
+			}
+		}
+	}
+
 
 	void CTerrainSceneNode::preRenderIndicesCalculations()
 	{
@@ -514,12 +611,12 @@ namespace scene
 						index12 = getIndex( j, i, index, x, z + step );
 						index22 = getIndex( j, i, index, x + step, z + step );
 
-						RenderBuffer->Indices[IndicesToRender++] = index12;
-						RenderBuffer->Indices[IndicesToRender++] = index11;
-						RenderBuffer->Indices[IndicesToRender++] = index22;
-						RenderBuffer->Indices[IndicesToRender++] = index22;
-						RenderBuffer->Indices[IndicesToRender++] = index11;
-						RenderBuffer->Indices[IndicesToRender++] = index21;
+						RenderBuffer.Indices[IndicesToRender++] = index12;
+						RenderBuffer.Indices[IndicesToRender++] = index11;
+						RenderBuffer.Indices[IndicesToRender++] = index22;
+						RenderBuffer.Indices[IndicesToRender++] = index22;
+						RenderBuffer.Indices[IndicesToRender++] = index11;
+						RenderBuffer.Indices[IndicesToRender++] = index21;
 
 						// increment index position horizontally
 						x += step;
@@ -533,8 +630,6 @@ namespace scene
 				}
 			}
 		}
-
-		RenderBuffer->setDirty(EBT_INDEX);
 
 		if ( DynamicSelectorUpdate && TriangleSelector )
 		{
@@ -560,12 +655,11 @@ namespace scene
 
 		driver->setMaterial(Mesh.getMeshBuffer(0)->getMaterial());
 
-		RenderBuffer->Indices.set_used(IndicesToRender);
-
 		// For use with geomorphing
-		driver->drawMeshBuffer(RenderBuffer);
-
-		RenderBuffer->Indices.set_used( RenderBuffer->Indices.allocated_size() );
+		driver->drawVertexPrimitiveList(
+			RenderBuffer.getVertices(), RenderBuffer.getVertexCount(),
+			RenderBuffer.getIndices(), IndicesToRender / 3,
+			video::EVT_2TCOORDS, EPT_TRIANGLES);
 
 		// for debug purposes only:
 		if (DebugDataVisible)
@@ -765,8 +859,7 @@ namespace scene
 		s32 numLODs;
 		LODs.clear ( );
 
-		const s32 count = TerrainData.PatchCount * TerrainData.PatchCount;
-		for ( numLODs = 0; numLODs < count; numLODs++ )
+		for ( numLODs = 0; numLODs < TerrainData.PatchCount * TerrainData.PatchCount; numLODs++ )
 			LODs.push_back ( TerrainData.Patches[numLODs].CurrentLOD );
 
 		return LODs.size();
@@ -815,17 +908,17 @@ namespace scene
 			zval=z2val=0;
 			for (s32 z=0; z<TerrainData.Size; ++z)
 			{
-				RenderBuffer->Vertices[index].TCoords.X = xval;
-				RenderBuffer->Vertices[index].TCoords.Y = zval;
+				RenderBuffer.Vertices[index].TCoords.X = xval;
+				RenderBuffer.Vertices[index].TCoords.Y = zval;
 
 				if ( resolution2 == 0 )
 				{
-					RenderBuffer->Vertices[index].TCoords2 = RenderBuffer->Vertices[index].TCoords;
+					RenderBuffer.Vertices[index].TCoords2 = RenderBuffer.Vertices[index].TCoords;
 				}
 				else
 				{
-					RenderBuffer->Vertices[index].TCoords2.X = x2val;
-					RenderBuffer->Vertices[index].TCoords2.Y = z2val;
+					RenderBuffer.Vertices[index].TCoords2.X = x2val;
+					RenderBuffer.Vertices[index].TCoords2.Y = z2val;
 				}
 				++index;
 				zval += resBySize;
@@ -834,13 +927,11 @@ namespace scene
 			xval += resBySize;
 			x2val += res2BySize;
 		}
-
-		RenderBuffer->setDirty(EBT_VERTEX);
 	}
 
 	//! used to get the indices when generating index data for patches at varying levels of detail.
-	u32 CTerrainSceneNode::getIndex(const s32 PatchX, const s32 PatchZ,
-					const s32 PatchIndex, u32 vX, u32 vZ) const
+	u32 CTerrainSceneNode::getIndex(const s32& PatchX, const s32& PatchZ,
+					const s32& PatchIndex, u32 vX, u32 vZ) const
 	{
 		// top border
 		if (vZ == 0)
@@ -849,7 +940,7 @@ namespace scene
 				TerrainData.Patches[PatchIndex].CurrentLOD < TerrainData.Patches[PatchIndex].Top->CurrentLOD &&
 				(vX % ( 1 << TerrainData.Patches[PatchIndex].Top->CurrentLOD)) != 0 )
 			{
-				vX -= vX % ( 1 << TerrainData.Patches[PatchIndex].Top->CurrentLOD );
+				vX = vX - vX % ( 1 << TerrainData.Patches[PatchIndex].Top->CurrentLOD );
 			}
 		}
 		else
@@ -859,7 +950,7 @@ namespace scene
 				TerrainData.Patches[PatchIndex].CurrentLOD < TerrainData.Patches[PatchIndex].Bottom->CurrentLOD &&
 				(vX % ( 1 << TerrainData.Patches[PatchIndex].Bottom->CurrentLOD)) != 0)
 			{
-				vX -= vX % ( 1 << TerrainData.Patches[PatchIndex].Bottom->CurrentLOD );
+				vX = vX - vX % ( 1 << TerrainData.Patches[PatchIndex].Bottom->CurrentLOD );
 			}
 		}
 
@@ -870,7 +961,7 @@ namespace scene
 				TerrainData.Patches[PatchIndex].CurrentLOD < TerrainData.Patches[PatchIndex].Left->CurrentLOD &&
 				( vZ % ( 1 << TerrainData.Patches[PatchIndex].Left->CurrentLOD ) ) != 0)
 			{
-				vZ -= vZ % ( 1 << TerrainData.Patches[PatchIndex].Left->CurrentLOD );
+				vZ = vZ - vZ % ( 1 << TerrainData.Patches[PatchIndex].Left->CurrentLOD );
 			}
 		}
 		else
@@ -880,7 +971,7 @@ namespace scene
 				TerrainData.Patches[PatchIndex].CurrentLOD < TerrainData.Patches[PatchIndex].Right->CurrentLOD &&
 				( vZ %  ( 1 << TerrainData.Patches[PatchIndex].Right->CurrentLOD ) ) != 0)
 			{
-				vZ -= vZ % ( 1 << TerrainData.Patches[PatchIndex].Right->CurrentLOD );
+				vZ = vZ - vZ % ( 1 << TerrainData.Patches[PatchIndex].Right->CurrentLOD );
 			}
 		}
 
@@ -894,35 +985,13 @@ namespace scene
 			(vX + ((TerrainData.CalcPatchSize) * PatchX));
 	}
 
-	//! smooth the terrain
-	void CTerrainSceneNode::smoothTerrain(SMeshBufferLightMap* mb, s32 smoothFactor)
-	{
-		for (s32 run = 0; run < smoothFactor; ++run)
-		{
-			s32 yd = TerrainData.Size;
-			for (s32 y = 1; y < TerrainData.Size - 1; ++y)
-			{
-				for (s32 x = 1; x < TerrainData.Size - 1; ++x)
-				{
-					mb->Vertices[x + yd].Pos.Y =
-						(mb->Vertices[x-1 + yd].Pos.Y +
-						mb->Vertices[x+1 + yd].Pos.Y +
-						mb->Vertices[x   + yd - TerrainData.Size].Pos.Y +
-						mb->Vertices[x   + yd - TerrainData.Size].Pos.Y) * 0.25f;
-				}
-				yd += TerrainData.Size;
-			}
-		}
-	}
-
 	//! calculate smooth normals
-	void CTerrainSceneNode::calculateNormals ( SMeshBufferLightMap* mb )
+	void CTerrainSceneNode::calculateNormals ( SMeshBufferLightMap* pMeshBuffer )
 	{
 		s32 count;
 		core::vector3df a, b, c, t;
 
 		for (s32 x=0; x<TerrainData.Size; ++x)
-		{
 			for (s32 z=0; z<TerrainData.Size; ++z)
 			{
 				count = 0;
@@ -931,18 +1000,18 @@ namespace scene
 				// top left
 				if (x>0 && z>0)
 				{
-					a = mb->Vertices[(x-1)*TerrainData.Size+z-1].Pos;
-					b = mb->Vertices[(x-1)*TerrainData.Size+z].Pos;
-					c = mb->Vertices[x*TerrainData.Size+z].Pos;
+					a = pMeshBuffer->Vertices[(x-1)*TerrainData.Size+z-1].Pos;
+					b = pMeshBuffer->Vertices[(x-1)*TerrainData.Size+z].Pos;
+					c = pMeshBuffer->Vertices[x*TerrainData.Size+z].Pos;
 					b -= a;
 					c -= a;
 					t = b.crossProduct ( c );
 					t.normalize ( );
 					normal += t;
 
-					a = mb->Vertices[(x-1)*TerrainData.Size+z-1].Pos;
-					b = mb->Vertices[x*TerrainData.Size+z-1].Pos;
-					c = mb->Vertices[x*TerrainData.Size+z].Pos;
+					a = pMeshBuffer->Vertices[(x-1)*TerrainData.Size+z-1].Pos;
+					b = pMeshBuffer->Vertices[x*TerrainData.Size+z-1].Pos;
+					c = pMeshBuffer->Vertices[x*TerrainData.Size+z].Pos;
 					b -= a;
 					c -= a;
 					t = b.crossProduct ( c );
@@ -955,18 +1024,18 @@ namespace scene
 				// top right
 				if (x>0 && z<TerrainData.Size-1)
 				{
-					a = mb->Vertices[(x-1)*TerrainData.Size+z].Pos;
-					b = mb->Vertices[(x-1)*TerrainData.Size+z+1].Pos;
-					c = mb->Vertices[x*TerrainData.Size+z+1].Pos;
+					a = pMeshBuffer->Vertices[(x-1)*TerrainData.Size+z].Pos;
+					b = pMeshBuffer->Vertices[(x-1)*TerrainData.Size+z+1].Pos;
+					c = pMeshBuffer->Vertices[x*TerrainData.Size+z+1].Pos;
 					b -= a;
 					c -= a;
 					t = b.crossProduct ( c );
 					t.normalize ( );
 					normal += t;
 
-					a = mb->Vertices[(x-1)*TerrainData.Size+z].Pos;
-					b = mb->Vertices[x*TerrainData.Size+z+1].Pos;
-					c = mb->Vertices[x*TerrainData.Size+z].Pos;
+					a = pMeshBuffer->Vertices[(x-1)*TerrainData.Size+z].Pos;
+					b = pMeshBuffer->Vertices[x*TerrainData.Size+z+1].Pos;
+					c = pMeshBuffer->Vertices[x*TerrainData.Size+z].Pos;
 					b -= a;
 					c -= a;
 					t = b.crossProduct ( c );
@@ -979,18 +1048,18 @@ namespace scene
 				// bottom right
 				if (x<TerrainData.Size-1 && z<TerrainData.Size-1)
 				{
-					a = mb->Vertices[x*TerrainData.Size+z+1].Pos;
-					b = mb->Vertices[x*TerrainData.Size+z].Pos;
-					c = mb->Vertices[(x+1)*TerrainData.Size+z+1].Pos;
+					a = pMeshBuffer->Vertices[x*TerrainData.Size+z+1].Pos;
+					b = pMeshBuffer->Vertices[x*TerrainData.Size+z].Pos;
+					c = pMeshBuffer->Vertices[(x+1)*TerrainData.Size+z+1].Pos;
 					b -= a;
 					c -= a;
 					t = b.crossProduct ( c );
 					t.normalize ( );
 					normal += t;
 
-					a = mb->Vertices[x*TerrainData.Size+z+1].Pos;
-					b = mb->Vertices[(x+1)*TerrainData.Size+z+1].Pos;
-					c = mb->Vertices[(x+1)*TerrainData.Size+z].Pos;
+					a = pMeshBuffer->Vertices[x*TerrainData.Size+z+1].Pos;
+					b = pMeshBuffer->Vertices[(x+1)*TerrainData.Size+z+1].Pos;
+					c = pMeshBuffer->Vertices[(x+1)*TerrainData.Size+z].Pos;
 					b -= a;
 					c -= a;
 					t = b.crossProduct ( c );
@@ -1003,18 +1072,18 @@ namespace scene
 				// bottom left
 				if (x<TerrainData.Size-1 && z>0)
 				{
-					a = mb->Vertices[x*TerrainData.Size+z-1].Pos;
-					b = mb->Vertices[x*TerrainData.Size+z].Pos;
-					c = mb->Vertices[(x+1)*TerrainData.Size+z].Pos;
+					a = pMeshBuffer->Vertices[x*TerrainData.Size+z-1].Pos;
+					b = pMeshBuffer->Vertices[x*TerrainData.Size+z].Pos;
+					c = pMeshBuffer->Vertices[(x+1)*TerrainData.Size+z].Pos;
 					b -= a;
 					c -= a;
 					t = b.crossProduct ( c );
 					t.normalize ( );
 					normal += t;
 
-					a = mb->Vertices[x*TerrainData.Size+z-1].Pos;
-					b = mb->Vertices[(x+1)*TerrainData.Size+z].Pos;
-					c = mb->Vertices[(x+1)*TerrainData.Size+z-1].Pos;
+					a = pMeshBuffer->Vertices[x*TerrainData.Size+z-1].Pos;
+					b = pMeshBuffer->Vertices[(x+1)*TerrainData.Size+z].Pos;
+					c = pMeshBuffer->Vertices[(x+1)*TerrainData.Size+z-1].Pos;
 					b -= a;
 					c -= a;
 					t = b.crossProduct ( c );
@@ -1033,9 +1102,8 @@ namespace scene
 					normal.set( 0.0f, 1.0f, 0.0f );
 				}
 
-				mb->Vertices[x * TerrainData.Size + z].Normal = normal;
+				pMeshBuffer->Vertices[x * TerrainData.Size + z].Normal = normal;
 			}
-		}
 	}
 
 	//! create patches, stuff that needs to be done only once for patches goes here.
@@ -1068,7 +1136,7 @@ namespace scene
 
 				for( s32 xx = x*(TerrainData.CalcPatchSize); xx <= ( x + 1 ) * TerrainData.CalcPatchSize; ++xx )
 					for( s32 zz = z*(TerrainData.CalcPatchSize); zz <= ( z + 1 ) * TerrainData.CalcPatchSize; ++zz )
-						TerrainData.Patches[index].BoundingBox.addInternalPoint( RenderBuffer->Vertices[xx * TerrainData.Size + zz].Pos );
+						TerrainData.Patches[index].BoundingBox.addInternalPoint( RenderBuffer.Vertices[xx * TerrainData.Size + zz].Pos );
 
 				// Reconfigure the bounding box of the terrain as a whole
 				TerrainData.BoundingBox.addInternalBox( TerrainData.Patches[index].BoundingBox );
@@ -1100,6 +1168,12 @@ namespace scene
 					TerrainData.Patches[index].Right = &TerrainData.Patches[x * TerrainData.PatchCount + z + 1];
 				else
 					TerrainData.Patches[index].Right = 0;
+
+				if ( TerrainData.Patches[index].DebugText )
+				{
+					TerrainData.Patches[index].DebugText->setPosition ( TerrainData.Patches[index].Center );
+				}
+				
 			}
 		}
 
@@ -1140,15 +1214,13 @@ namespace scene
 
 	void CTerrainSceneNode::setCurrentLODOfPatches(s32 lod)
 	{
-		const s32 count = TerrainData.PatchCount * TerrainData.PatchCount;
-		for (s32 i=0; i< count; ++i)
+		for (s32 i=0; i< TerrainData.PatchCount * TerrainData.PatchCount; ++i)
 			TerrainData.Patches[i].CurrentLOD = lod;
 	}
 
-	void CTerrainSceneNode::setCurrentLODOfPatches(const core::array<s32>& lodarray)
+	void CTerrainSceneNode::setCurrentLODOfPatches(core::array<s32>& lodarray)
 	{
-		const s32 count = TerrainData.PatchCount * TerrainData.PatchCount;
-		for (s32 i=0; i<count; ++i)
+		for (s32 i=0; i<TerrainData.PatchCount * TerrainData.PatchCount; ++i)
 			TerrainData.Patches[i].CurrentLOD = lodarray[i];
 	}
 
@@ -1171,7 +1243,7 @@ namespace scene
 		s32 X(core::floor32( pos.X ));
 		s32 Z(core::floor32( pos.Z ));
 
-		if( X >= 0 && X < TerrainData.Size && Z >= 0 && Z < TerrainData.Size )
+		if( X >= 0 && X < TerrainData.Size && Z >= 0 && Z <= TerrainData.Size )
 		{
 			const video::S3DVertex2TCoords* Vertices = (const video::S3DVertex2TCoords*)Mesh.getMeshBuffer( 0 )->getVertices();
 			const core::vector3df& a = Vertices[ X * TerrainData.Size + Z ].Pos;
@@ -1210,7 +1282,7 @@ namespace scene
 
 	//! Reads attributes of the scene node.
 	void CTerrainSceneNode::deserializeAttributes(io::IAttributes* in,
-													io::SAttributeReadWriteOptions* options)
+												  io::SAttributeReadWriteOptions* options)
 	{
 		core::stringc newHeightmap = in->getAttributeAsString("Heightmap");
 		f32 tcoordScale1 = in->getAttributeAsFloat("TextureScale1");
@@ -1218,7 +1290,7 @@ namespace scene
 
 		// set possible new heightmap
 
-		if (newHeightmap.size() > 0 &&
+		if (newHeightmap.size() > 0 && 
 			newHeightmap != HeightmapFile)
 		{
 			io::IReadFile* file = FileSystem->createAndOpenFile(newHeightmap.c_str());
@@ -1226,7 +1298,7 @@ namespace scene
 			{
 				loadHeightMap(file, video::SColor(255,255,255,255), 0);
 				file->drop();
-			}
+			}	
 			else
 				os::Printer::log("could not open heightmap", newHeightmap.c_str());
 		}
@@ -1252,17 +1324,15 @@ namespace scene
 	//! Creates a clone of this scene node and its children.
 	ISceneNode* CTerrainSceneNode::clone(ISceneNode* newParent, ISceneManager* newManager)
 	{
-		if (!newParent)
-			newParent = Parent;
-		if (!newManager)
-			newManager = SceneManager;
+		if (!newParent) newParent = Parent;
+		if (!newManager) newManager = SceneManager;
 
 		CTerrainSceneNode* nb = new CTerrainSceneNode(
-			newParent, newManager, FileSystem, ID,
-			4, ETPS_17, getPosition(), getRotation(), getScale());
+			newParent, newManager, FileSystem, ID, 
+			4, ETPS_17,	getPosition(), getRotation(), getScale());
 
 		nb->cloneMembers(this, newManager);
-
+		
 		// instead of cloning the data structures, recreate the terrain.
 		// (temporary solution)
 
@@ -1273,7 +1343,7 @@ namespace scene
 		{
 			nb->loadHeightMap(file, video::SColor(255,255,255,255), 0);
 			file->drop();
-		}
+		}	
 
 		// scale textures
 
@@ -1287,12 +1357,12 @@ namespace scene
 				nb->Mesh.getMeshBuffer(m) &&
 				Mesh.getMeshBuffer(m))
 			{
-				nb->Mesh.getMeshBuffer(m)->getMaterial() =
+				nb->Mesh.getMeshBuffer(m)->getMaterial() = 
 					Mesh.getMeshBuffer(m)->getMaterial();
 			}
 		}
 
-		nb->RenderBuffer->Material = RenderBuffer->Material;
+		nb->RenderBuffer.Material = RenderBuffer.Material;
 
 		// finish
 

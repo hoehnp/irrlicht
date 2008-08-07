@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -77,10 +77,7 @@ namespace video
 		EVDF_TEXTURE_NPOT,
 
 		//! Are framebuffer objects supported?
-		EVDF_FRAMEBUFFER_OBJECT,
-
-		//! Are vertex buffer objects supported?
-		EVDF_VERTEX_BUFFER_OBJECT
+		EVDF_FRAMEBUFFER_OBJECT
 	};
 
 } // end namespace video
@@ -88,5 +85,4 @@ namespace video
 
 
 #endif
-
 

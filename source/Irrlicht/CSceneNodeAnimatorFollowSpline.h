@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -22,6 +22,9 @@ namespace scene
 		CSceneNodeAnimatorFollowSpline(u32 startTime, 
 			const core::array< core::vector3df >& points,
 			f32 speed = 1.0f, f32 tightness = 0.5f);
+
+		//! destructor
+		virtual ~CSceneNodeAnimatorFollowSpline();
 
 		//! animates a scene node
 		virtual void animateNode(ISceneNode* node, u32 timeMs);

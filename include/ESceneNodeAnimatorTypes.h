@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -33,12 +33,6 @@ namespace scene
 
 		//! Collision respose scene node animator
 		ESNAT_COLLISION_RESPONSE,
-
-		//! FPS camera animator
-		ESNAT_CAMERA_FPS,
-
-		//! Maya camera animator
-		ESNAT_CAMERA_MAYA,
 
 		//! Amount of built-in scene node animators
 		ESNAT_COUNT,

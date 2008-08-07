@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -16,14 +16,13 @@ namespace scene
 	struct SSharedMeshBuffer : public IMeshBuffer
 	{
 		//! constructor
-		SSharedMeshBuffer() : IMeshBuffer(), ChangedID_Vertex(1), ChangedID_Index(1), MappingHint(Never), Vertices(0)
+		SSharedMeshBuffer() : IMeshBuffer(), Vertices(0)
 		{
 			#ifdef _DEBUG
 			setDebugName("SSharedMeshBuffer");
 			#endif
 		}
 
-		//! constructor
 		SSharedMeshBuffer(core::array<video::S3DVertex> *vertices) : IMeshBuffer(), Vertices(vertices)
 		{
 			#ifdef _DEBUG
@@ -128,53 +127,10 @@ namespace scene
 		//! append the meshbuffer to the current buffer
 		virtual void append(const IMeshBuffer* const other) {}
 
-
-		//! get the current hardware mapping hint
-		virtual const E_HARDWARE_MAPPING getHardwareMappingHint() const
-		{
-			return MappingHint;
-		}
-
-		//! set the hardware mapping hint, for driver
-		virtual void setHardwareMappingHint( E_HARDWARE_MAPPING NewMappingHint )
-		{
-			MappingHint=NewMappingHint;
-		}
-
-		//! flags the mesh as changed, reloads hardware buffers
-		virtual void setDirty(E_BUFFER_TYPE Buffer=EBT_VERTEX_AND_INDEX)
-		{
-			if (E_BUFFER_TYPE Buffer==EBT_VERTEX_AND_INDEX || E_BUFFER_TYPE Buffer==EBT_VERTEX)
-				++ChangedID_Vertex;
-			if (E_BUFFER_TYPE Buffer==EBT_VERTEX_AND_INDEX || E_BUFFER_TYPE Buffer==EBT_INDEX)
-				++ChangedID_Index;
-		}
-
-		//! Get the currently used ID for identification of changes.
-		/** This shouldn't be used for anything outside the VideoDriver. */
-		virtual const u32 getChangedID_Vertex() const {return ChangedID_Vertex;}
-
-		//! Get the currently used ID for identification of changes.
-		/** This shouldn't be used for anything outside the VideoDriver. */
-		virtual const u32 getChangedID_Index() const {return ChangedID_Index;}
-
-		//! ID used for hardware buffer management
-		u32 ChangedID_Vertex;
-
-		//! ID used for hardware buffer management
-		u32 ChangedID_Index;
-
-		//! Material of this meshBuffer
-		video::SMaterial Material;
-		//! Shared Array of vertices
-		core::array<video::S3DVertex> *Vertices;
-		//! Array of Indices
-		core::array<u16> Indices;
-		//! Bounding box
-		core::aabbox3df BoundingBox;
-		//! hardware mapping hint
-		E_HARDWARE_MAPPING MappingHint;
-
+		video::SMaterial Material;		//! material of this meshBuffer
+		core::array<video::S3DVertex> *Vertices;//! Shared Array of vertices
+		core::array<u16> Indices;		//! Array of Indices
+		core::aabbox3df BoundingBox;		//! Bounding box
 	};
 
 

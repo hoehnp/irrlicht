@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -81,9 +81,6 @@ namespace scene
 		virtual ESCENE_NODE_ANIMATOR_TYPE getType() const { return ESNAT_COLLISION_RESPONSE; }
 
 	private:
-
-		void setNode(ISceneNode* node);
-
 		core::vector3df LastPosition;
 		core::vector3df Radius;
 		core::vector3df Gravity;
@@ -96,8 +93,6 @@ namespace scene
 		u32 FallStartTime;
 		f32 SlidingSpeed;
 		bool Falling;
-		bool IsCamera;
-		bool AnimateCameraTarget;
 
 		core::triangle3df RefTriangle;
 	};

@@ -1,15 +1,11 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
-// This file is part of the "Irrlicht Engine".
-// For conditions of distribution and use, see copyright notice in irrlicht.h
-
-#include "IrrCompileConfig.h"
-
-#ifdef _IRR_COMPILE_WITH_OPENGL_
-
 #include "COpenGLExtensionHandler.h"
 #include "irrString.h"
 #include "SMaterial.h" // for MATERIAL_MAX_TEXTURES
 #include "fast_atof.h"
+
+#include "IrrCompileConfig.h"
+
+#ifdef _IRR_COMPILE_WITH_OPENGL_
 
 namespace irr
 {
@@ -19,7 +15,9 @@ namespace video
 COpenGLExtensionHandler::COpenGLExtensionHandler() :
 		StencilBuffer(false),
 		MultiTextureExtension(false), MultiSamplingExtension(false), AnisotropyExtension(false),
+		SeparateStencilExtension(false),
 		TextureCompressionExtension(false),
+		PackedDepthStencilExtension(false),
 		MaxTextureUnits(1), MaxLights(1), MaxIndices(65535),
 		MaxAnisotropy(1.0f), MaxUserClipPlanes(0),
 		Version(0), ShaderLanguageVersion(0)
@@ -44,12 +42,7 @@ COpenGLExtensionHandler::COpenGLExtensionHandler() :
 	pGlBindFramebufferEXT(0), pGlDeleteFramebuffersEXT(0), pGlGenFramebuffersEXT(0),
 	pGlCheckFramebufferStatusEXT(0), pGlFramebufferTexture2DEXT(0),
 	pGlBindRenderbufferEXT(0), pGlDeleteRenderbuffersEXT(0), pGlGenRenderbuffersEXT(0),
-	pGlRenderbufferStorageEXT(0), pGlFramebufferRenderbufferEXT(0),
-	pGlGenBuffersARB(0), pGlBindBufferARB(0), pGlBufferDataARB(0), pGlDeleteBuffersARB(0),
-	pGlBufferSubDataARB(0), pGlGetBufferSubDataARB(0), pGlMapBufferARB(0), pGlUnmapBufferARB(0),
-	pGlIsBufferARB(0), pGlGetBufferParameterivARB(0), pGlGetBufferPointervARB(0)
-
-
+	pGlRenderbufferStorageEXT(0), pGlFramebufferRenderbufferEXT(0)
 #endif // _IRR_OPENGL_USE_EXTPOINTER_
 {
 	for (u32 i=0; i<IRR_OpenGL_Feature_Count; ++i)
@@ -104,7 +97,9 @@ void COpenGLExtensionHandler::initExtensions(bool stencilBuffer)
 	MultiTextureExtension = FeatureAvailable[IRR_ARB_multitexture];
 	MultiSamplingExtension = FeatureAvailable[IRR_ARB_multisample];
 	AnisotropyExtension = FeatureAvailable[IRR_EXT_texture_filter_anisotropic];
+	SeparateStencilExtension = FeatureAvailable[IRR_ATI_separate_stencil];
 	TextureCompressionExtension = FeatureAvailable[IRR_ARB_texture_compression];
+	PackedDepthStencilExtension = FeatureAvailable[IRR_EXT_packed_depth_stencil];
 	StencilBuffer=stencilBuffer;
 
 #ifdef _IRR_WINDOWS_API_
@@ -152,31 +147,17 @@ void COpenGLExtensionHandler::initExtensions(bool stencilBuffer)
 	// compressed textures
 	pGlCompressedTexImage2D = (PFNGLCOMPRESSEDTEXIMAGE2DPROC) wglGetProcAddress("glCompressedTexImage2D");
 
-	// FrameBufferObjects
-	pGlBindFramebufferEXT = (PFNGLBINDFRAMEBUFFEREXTPROC) wglGetProcAddress("glBindFramebufferEXT");
-	pGlDeleteFramebuffersEXT = (PFNGLDELETEFRAMEBUFFERSEXTPROC) wglGetProcAddress("glDeleteFramebuffersEXT");
-	pGlGenFramebuffersEXT = (PFNGLGENFRAMEBUFFERSEXTPROC) wglGetProcAddress("glGenFramebuffersEXT");
-	pGlCheckFramebufferStatusEXT = (PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC) wglGetProcAddress("glCheckFramebufferStatusEXT");
-	pGlFramebufferTexture2DEXT = (PFNGLFRAMEBUFFERTEXTURE2DEXTPROC) wglGetProcAddress("glFramebufferTexture2DEXT");
-	pGlBindRenderbufferEXT = (PFNGLBINDRENDERBUFFEREXTPROC) wglGetProcAddress("glBindRenderbufferEXT");
-	pGlDeleteRenderbuffersEXT = (PFNGLDELETERENDERBUFFERSEXTPROC) wglGetProcAddress("glDeleteRenderbuffersEXT");
-	pGlGenRenderbuffersEXT = (PFNGLGENRENDERBUFFERSEXTPROC) wglGetProcAddress("glGenRenderbuffersEXT");
-	pGlRenderbufferStorageEXT = (PFNGLRENDERBUFFERSTORAGEEXTPROC) wglGetProcAddress("glRenderbufferStorageEXT");
-	pGlFramebufferRenderbufferEXT = (PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC) wglGetProcAddress("glFramebufferRenderbufferEXT");
-
-	// get vertex buffer extension
-	pGlGenBuffersARB = (PFNGLGENBUFFERSARBPROC) wglGetProcAddress("glGenBuffersARB");
-	pGlBindBufferARB = (PFNGLBINDBUFFERARBPROC) wglGetProcAddress("glBindBufferARB");
-	pGlBufferDataARB = (PFNGLBUFFERDATAARBPROC) wglGetProcAddress("glBufferDataARB");
-	pGlDeleteBuffersARB = (PFNGLDELETEBUFFERSARBPROC) wglGetProcAddress("glDeleteBuffersARB");
-	pGlBufferSubDataARB= (PFNGLBUFFERSUBDATAARBPROC) wglGetProcAddress("glBufferSubDataARB");
-	pGlGetBufferSubDataARB= (PFNGLGETBUFFERSUBDATAARBPROC)wglGetProcAddress("glGetBufferSubDataARB");
-	pGlMapBufferARB= (PFNGLMAPBUFFERARBPROC) wglGetProcAddress("glMapBufferARB");
-	pGlUnmapBufferARB= (PFNGLUNMAPBUFFERARBPROC) wglGetProcAddress("glUnmapBufferARB");
-	pGlIsBufferARB= (PFNGLISBUFFERARBPROC) wglGetProcAddress("glIsBufferARB");
-	pGlGetBufferParameterivARB= (PFNGLGETBUFFERPARAMETERIVARBPROC) wglGetProcAddress("glGetBufferParameterivARB");
-	pGlGetBufferPointervARB= (PFNGLGETBUFFERPOINTERVARBPROC) wglGetProcAddress("glGetBufferPointervARB");
-
+        // FrameBufferObjects
+        pGlBindFramebufferEXT = (PFNGLBINDFRAMEBUFFEREXTPROC) wglGetProcAddress("glBindFramebufferEXT");
+        pGlDeleteFramebuffersEXT = (PFNGLDELETEFRAMEBUFFERSEXTPROC) wglGetProcAddress("glDeleteFramebuffersEXT");
+        pGlGenFramebuffersEXT = (PFNGLGENFRAMEBUFFERSEXTPROC) wglGetProcAddress("glGenFramebuffersEXT");
+        pGlCheckFramebufferStatusEXT = (PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC) wglGetProcAddress("glCheckFramebufferStatusEXT");
+        pGlFramebufferTexture2DEXT = (PFNGLFRAMEBUFFERTEXTURE2DEXTPROC) wglGetProcAddress("glFramebufferTexture2DEXT");
+        pGlBindRenderbufferEXT = (PFNGLBINDRENDERBUFFEREXTPROC) wglGetProcAddress("glBindRenderbufferEXT");
+        pGlDeleteRenderbuffersEXT = (PFNGLDELETERENDERBUFFERSEXTPROC) wglGetProcAddress("glDeleteRenderbuffersEXT");
+        pGlGenRenderbuffersEXT = (PFNGLGENRENDERBUFFERSEXTPROC) wglGetProcAddress("glGenRenderbuffersEXT");
+        pGlRenderbufferStorageEXT = (PFNGLRENDERBUFFERSTORAGEEXTPROC) wglGetProcAddress("glRenderbufferStorageEXT");
+        pGlFramebufferRenderbufferEXT = (PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC) wglGetProcAddress("glFramebufferRenderbufferEXT");
 
 	// vsync extension
 	wglSwapIntervalEXT = (PFNWGLSWAPINTERVALFARPROC) wglGetProcAddress("wglSwapIntervalEXT");
@@ -352,40 +333,6 @@ void COpenGLExtensionHandler::initExtensions(bool stencilBuffer)
 	pGlFramebufferRenderbufferEXT = (PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC)
 	IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glFramebufferRenderbufferEXT"));
 
-	pGlGenBuffersARB = (PFNGLGENBUFFERSARBPROC)
-	IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glGenBuffersARB"));
-
-	pGlBindBufferARB = (PFNGLBINDBUFFERARBPROC)
-	IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glBindBufferARB"));
-
-	pGlBufferDataARB = (PFNGLBUFFERDATAARBPROC)
-	IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glBufferDataARB"));
-
-	pGlDeleteBuffersARB = (PFNGLDELETEBUFFERSARBPROC)
-	IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glDeleteBuffersARB"));
-
-	pGlBufferSubDataARB = (PFNGLBUFFERSUBDATAARBPROC)
-	IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glBufferSubDataARB"));
-
-	pGlGetBufferSubDataARB = (PFNGLGETBUFFERSUBDATAARBPROC)
-	IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glGetBufferSubDataARB"));
-
-	pGlMapBufferARB = (PFNGLMAPBUFFERARBPROC)
-	IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glMapBufferARB"));
-
-	pGlUnmapBufferARB = (PFNGLUNMAPBUFFERARBPROC)
-	IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glUnmapBufferARB"));
-
-	pGlIsBufferARB = (PFNGLISBUFFERARBPROC)
-	IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glIsBufferARB"));
-
-	pGlGetBufferParameterivARB = (PFNGLGETBUFFERPARAMETERIVARBPROC)
-	IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glGetBufferParameterivARB"));
-
-	pGlGetBufferPointervARB = (PFNGLGETBUFFERPOINTERVARBPROC)
-	IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glGetBufferPointervARB"));
-
-
 	#endif // _IRR_OPENGL_USE_EXTPOINTER_
 #endif // _IRR_WINDOWS_API_
 
@@ -465,17 +412,11 @@ bool COpenGLExtensionHandler::queryFeature(E_VIDEO_DRIVER_FEATURE feature) const
 	case EVDF_ARB_FRAGMENT_PROGRAM_1:
 		return FeatureAvailable[IRR_ARB_fragment_program];
 	case EVDF_ARB_GLSL:
-		return (FeatureAvailable[IRR_ARB_shading_language_100]||Version>=200);
+		return FeatureAvailable[IRR_ARB_shading_language_100];
 	case EVDF_TEXTURE_NPOT:
-		// Some ATI cards seem to have only SW support in OpenGL 2.0
-		// drivers if the extension is not exposed, so we skip this
-		// extra test for now!
-		// return (FeatureAvailable[IRR_ARB_texture_non_power_of_two]||Version>=200);
-		return (FeatureAvailable[IRR_ARB_texture_non_power_of_two]);
+		return FeatureAvailable[IRR_ARB_texture_non_power_of_two];
 	case EVDF_FRAMEBUFFER_OBJECT:
 		return FeatureAvailable[IRR_EXT_framebuffer_object];
-	case EVDF_VERTEX_BUFFER_OBJECT:
-		return FeatureAvailable[IRR_ARB_vertex_buffer_object];
 	default:
 		return false;
 	};
@@ -486,5 +427,4 @@ bool COpenGLExtensionHandler::queryFeature(E_VIDEO_DRIVER_FEATURE feature) const
 }
 
 #endif
-
 

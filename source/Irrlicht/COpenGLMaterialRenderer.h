@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -10,50 +10,6 @@
 
 #include "COpenGLDriver.h"
 #include "IMaterialRenderer.h"
-#include "IMaterialRenderer.h"
-#if defined(_IRR_USE_OSX_DEVICE_)
-	#define GL_COMBINE_EXT                    0x8570
-	#define GL_COMBINE_RGB_EXT                0x8571
-	#define GL_COMBINE_ALPHA_EXT              0x8572
-	#define GL_RGB_SCALE_EXT                  0x8573
-	#define GL_ADD_SIGNED_EXT                 0x8574
-	#define GL_INTERPOLATE_EXT                0x8575
-	#define GL_CONSTANT_EXT                   0x8576
-	#define GL_PRIMARY_COLOR_EXT              0x8577
-	#define GL_PREVIOUS_EXT                   0x8578
-	#define GL_SOURCE0_RGB_EXT                0x8580
-	#define GL_SOURCE1_RGB_EXT                0x8581
-	#define GL_SOURCE2_RGB_EXT                0x8582
-	#define GL_SOURCE3_RGB_EXT                0x8583
-	#define GL_SOURCE4_RGB_EXT                0x8584
-	#define GL_SOURCE5_RGB_EXT                0x8585
-	#define GL_SOURCE6_RGB_EXT                0x8586
-	#define GL_SOURCE7_RGB_EXT                0x8587
-	#define GL_SOURCE0_ALPHA_EXT              0x8588
-	#define GL_SOURCE1_ALPHA_EXT              0x8589
-	#define GL_SOURCE2_ALPHA_EXT              0x858A
-	#define GL_SOURCE3_ALPHA_EXT              0x858B
-	#define GL_SOURCE4_ALPHA_EXT              0x858C
-	#define GL_SOURCE5_ALPHA_EXT              0x858D
-	#define GL_SOURCE6_ALPHA_EXT              0x858E
-	#define GL_SOURCE7_ALPHA_EXT              0x858F
-	#define GL_OPERAND0_RGB_EXT               0x8590
-	#define GL_OPERAND1_RGB_EXT               0x8591
-	#define GL_OPERAND2_RGB_EXT               0x8592
-	#define GL_OPERAND3_RGB_EXT               0x8593
-	#define GL_OPERAND4_RGB_EXT               0x8594
-	#define GL_OPERAND5_RGB_EXT               0x8595
-	#define GL_OPERAND6_RGB_EXT               0x8596
-	#define GL_OPERAND7_RGB_EXT               0x8597
-	#define GL_OPERAND0_ALPHA_EXT             0x8598
-	#define GL_OPERAND1_ALPHA_EXT             0x8599
-	#define GL_OPERAND2_ALPHA_EXT             0x859A
-	#define GL_OPERAND3_ALPHA_EXT             0x859B
-	#define GL_OPERAND4_ALPHA_EXT             0x859C
-	#define GL_OPERAND5_ALPHA_EXT             0x859D
-	#define GL_OPERAND6_ALPHA_EXT             0x859E
-	#define GL_OPERAND7_ALPHA_EXT             0x859F
-#endif
 
 namespace irr
 {
@@ -91,7 +47,7 @@ public:
 		Driver->setTexture(0, material.getTexture(0));
 		Driver->setBasicRenderStates(material, lastMaterial, resetAllRenderstates);
 
-		if (resetAllRenderstates || (material.MaterialType != lastMaterial.MaterialType))
+		if (material.MaterialType != lastMaterial.MaterialType || resetAllRenderstates)
 		{
 			// thanks to Murphy, the following line removed some
 			// bugs with several OpenGL implementations.
@@ -135,7 +91,7 @@ public:
 			glEnable(GL_ALPHA_TEST);
 			glEnable(GL_BLEND);
 
-			if ( getTexelAlpha(srcFact) || getTexelAlpha(dstFact) )
+			if ( getTexelAlpha ( srcFact ) + getTexelAlpha ( dstFact ) )
 			{
 				glTexEnvf(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_EXT, GL_REPLACE);
 				glTexEnvf(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_EXT, GL_TEXTURE);
@@ -147,7 +103,6 @@ public:
 
 	virtual void OnUnsetMaterial()
 	{
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 		glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.f );
 		glTexEnvf(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, GL_PREVIOUS_EXT);
 
@@ -215,26 +170,12 @@ public:
 			if (Driver->queryFeature(EVDF_MULTITEXTURE))
 			{
 				Driver->extGlActiveTexture(GL_TEXTURE1_ARB);
-				glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
-				glTexEnvf(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_EXT, GL_REPLACE);
-				glTexEnvf(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_EXT, GL_PRIMARY_COLOR_EXT);
-				glTexEnvf(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT, GL_INTERPOLATE);
-				glTexEnvf(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, GL_PREVIOUS_EXT);
-				glTexEnvf(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, GL_TEXTURE);
-				glTexEnvf(GL_TEXTURE_ENV, GL_SOURCE2_RGB_EXT, GL_PRIMARY_COLOR);
-				glTexEnvf(GL_TEXTURE_ENV, GL_OPERAND2_RGB_EXT, GL_SRC_ALPHA);
-			}
-		}
-	}
+				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
-	virtual void OnUnsetMaterial()
-	{
-		if (Driver->queryFeature(EVDF_MULTITEXTURE))
-		{
-			Driver->extGlActiveTexture(GL_TEXTURE1_ARB);
+				Driver->extGlActiveTexture(GL_TEXTURE0_ARB);
+			}
+
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-			glTexEnvf(GL_TEXTURE_ENV, GL_OPERAND2_RGB_EXT, GL_SRC_COLOR);
-			Driver->extGlActiveTexture(GL_TEXTURE0_ARB);
 		}
 	}
 };
@@ -439,21 +380,26 @@ public:
 		{
 			// diffuse map
 
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
 			switch (material.MaterialType)
 			{
 				case EMT_LIGHTMAP_LIGHTING:
 				case EMT_LIGHTMAP_LIGHTING_M2:
 				case EMT_LIGHTMAP_LIGHTING_M4:
-					glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+					glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT, GL_MODULATE);
 					break;
 				case EMT_LIGHTMAP_ADD:
 				case EMT_LIGHTMAP:
 				case EMT_LIGHTMAP_M2:
 				case EMT_LIGHTMAP_M4:
 				default:
-					glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+					glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT, GL_REPLACE);
 					break;
 			}
+			glTexEnvf(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, GL_TEXTURE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_EXT, GL_SRC_COLOR);
+			glTexEnvf(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, GL_PREVIOUS_EXT);
+			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_EXT, GL_SRC_COLOR );
 
 			if (Driver->queryFeature(EVDF_MULTITEXTURE))
 			{
@@ -468,11 +414,15 @@ public:
 					glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT, GL_MODULATE);
 
 				glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, GL_PREVIOUS_EXT);
+				glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_EXT, GL_SRC_COLOR);
 				glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, GL_TEXTURE);
+				glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_EXT, GL_SRC_COLOR);
 
 				glTexEnvf(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_EXT, GL_MODULATE);
 				glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_EXT, GL_PREVIOUS_ARB);
+				glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_EXT, GL_SRC_ALPHA);
 				glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_EXT, GL_PREVIOUS_ARB);
+				glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA_EXT, GL_SRC_ALPHA);
 
 				switch (material.MaterialType)
 				{
@@ -497,9 +447,7 @@ public:
 		{
 			Driver->extGlActiveTexture(GL_TEXTURE1_ARB);
 			glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.f );
-			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 			Driver->extGlActiveTexture(GL_TEXTURE0_ARB);
-			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 		}
 	}
 };
@@ -526,15 +474,23 @@ public:
 		{
 			// diffuse map
 
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
+			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT, GL_MODULATE);
+
 			if (Driver->queryFeature(EVDF_MULTITEXTURE))
 			{
-				// detail map
+				// detailmap
+
 				Driver->extGlActiveTexture(GL_TEXTURE1_ARB);
 
 				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
 				glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT, GL_ADD_SIGNED_EXT);
+
 				glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_EXT,GL_PREVIOUS_EXT);
+				glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND0_RGB_EXT,GL_SRC_COLOR);
+
 				glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_EXT, GL_TEXTURE);
+				glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND1_RGB_EXT,GL_SRC_COLOR);
 				Driver->extGlActiveTexture(GL_TEXTURE0_ARB);
 			}
 		}
@@ -559,6 +515,8 @@ public:
 
 		if (material.MaterialType != lastMaterial.MaterialType || resetAllRenderstates)
 		{
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
 			glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
 			glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
 
@@ -595,11 +553,20 @@ public:
 		{
 			if (Driver->queryFeature(EVDF_MULTITEXTURE))
 			{
-				Driver->extGlActiveTexture(GL_TEXTURE1_ARB);
 				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
 				glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT, GL_MODULATE);
+				glTexEnvf(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, GL_TEXTURE );
+				glTexEnvf(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, GL_PRIMARY_COLOR_EXT );
+
+				Driver->extGlActiveTexture(GL_TEXTURE1_ARB);
+
+				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
+
+				glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT, GL_MODULATE);
 				glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, GL_PREVIOUS_EXT);
+				glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_EXT, GL_SRC_COLOR);
 				glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, GL_TEXTURE);
+				glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_EXT, GL_SRC_COLOR);
 
 			}
 			glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
@@ -621,6 +588,8 @@ public:
 		if (Driver->queryFeature(EVDF_MULTITEXTURE))
 		{
 			Driver->extGlActiveTexture(GL_TEXTURE0_ARB);
+
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 		}
 	}
 };
@@ -646,11 +615,20 @@ public:
 		{
 			if (Driver->queryFeature(EVDF_MULTITEXTURE))
 			{
-				Driver->extGlActiveTexture(GL_TEXTURE1_ARB);
 				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
 				glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT, GL_MODULATE);
+				glTexEnvf(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, GL_TEXTURE );
+				glTexEnvf(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, GL_PRIMARY_COLOR_EXT );
+
+				Driver->extGlActiveTexture(GL_TEXTURE1_ARB);
+
+				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
+
+				glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT, GL_MODULATE);
 				glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, GL_PREVIOUS_EXT);
+				glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_EXT, GL_SRC_COLOR);
 				glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, GL_TEXTURE);
+				glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_EXT, GL_SRC_COLOR);
 			}
 			glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
 			glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
@@ -674,6 +652,7 @@ public:
 		if (Driver->queryFeature(EVDF_MULTITEXTURE))
 		{
 			Driver->extGlActiveTexture(GL_TEXTURE0_ARB);
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 		}
 		glDisable(GL_BLEND);
 	}

@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -211,17 +211,12 @@ COpenGLParallaxMapRenderer::COpenGLParallaxMapRenderer(video::COpenGLDriver* dri
 	s32& outMaterialTypeNr, IMaterialRenderer* baseMaterial)
 	: COpenGLShaderMaterialRenderer(driver, 0, baseMaterial), CompiledShaders(true)
 {
-
-	#ifdef _DEBUG
-	setDebugName("COpenGLParallaxMapRenderer");
-	#endif
-
 	// set this as callback. We could have done this in
 	// the initialization list, but some compilers don't like it.
 
 	CallBack = this;
 
-	// basically, this simply compiles the hard coded shaders if the
+	// basicly, this thing simply compiles these hardcoded shaders if the
 	// hardware is able to do them, otherwise it maps to the base material
 
 	if (!driver->queryFeature(video::EVDF_ARB_FRAGMENT_PROGRAM_1) ||
@@ -253,10 +248,6 @@ COpenGLParallaxMapRenderer::COpenGLParallaxMapRenderer(video::COpenGLDriver* dri
 		// compile shaders on our own
 		init(outMaterialTypeNr, OPENGL_PARALLAX_MAP_VSH, OPENGL_PARALLAX_MAP_PSH, EVT_TANGENTS);
 	}
-
-	// fallback if compilation has failed
-	if (-1==outMaterialTypeNr)
-		outMaterialTypeNr = driver->addMaterialRenderer(this);
 }
 
 
@@ -326,7 +317,7 @@ void COpenGLParallaxMapRenderer::OnSetConstants(IMaterialRendererServices* servi
 	core::matrix4 tr(worldViewProj.getTransposed());
 	services->setVertexShaderConstant(tr.pointer(), 8, 4);
 
-	// here we fetch the fixed function lights from the driver
+	// here we've got to fetch the fixed function lights from the driver
 	// and set them as constants
 
 	u32 cnt = driver->getDynamicLightCount();

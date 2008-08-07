@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -25,7 +25,7 @@
 	#if defined(_IRR_OPENGL_USE_EXTPOINTER_)
 		#define GL_GLEXT_LEGACY 1
 	#endif
-	#if defined(_IRR_USE_OSX_DEVICE_)
+	#if defined(MACOSX)
 		#include <OpenGL/gl.h>
 	#else
 		#include <GL/gl.h>
@@ -50,24 +50,24 @@ public:
 	//! constructor
 	COpenGLTexture(IImage* surface, const char* name, COpenGLDriver* driver=0);
 	//! FrameBufferObject constructor
-	COpenGLTexture(const core::dimension2d<s32>& size, const char* name, COpenGLDriver* driver=0, bool useStencil=false);
+	COpenGLTexture(const core::dimension2d<s32>& size, bool extPackedDepthStencilSupported, const char* name, COpenGLDriver* driver=0);
 
 	//! destructor
 	virtual ~COpenGLTexture();
 
 	//! lock function
-	virtual void* lock(bool readOnly = false);
+	virtual void* lock();
 
 	//! unlock function
 	virtual void unlock();
 
-	//! Returns original size of the texture (image).
+	//! Returns original size of the texture.
 	virtual const core::dimension2d<s32>& getOriginalSize() const;
 
 	//! Returns size of the texture.
 	virtual const core::dimension2d<s32>& getSize() const;
 
-	//! returns driver type of texture (=the driver, that created it)
+	//! returns driver type of texture (=the driver, who created the texture)
 	virtual E_DRIVER_TYPE getDriverType() const;
 
 	//! returns color format of texture
@@ -99,7 +99,7 @@ public:
 	void unbindFrameBufferObject();
 
 	//! sets whether this texture is intended to be used as a render target.
-	void setIsRenderTarget(bool isTarget);
+	void setRenderTarget(bool isTarget);
 
 private:
 
@@ -113,7 +113,7 @@ private:
 	//! \param: newTexture is true if method is called from a newly created texture for the first time. Otherwise call with false to improve memory handling.
 	void copyTexture(bool newTexture=true);
 
-	//! returns the size of a texture which would be optimal for rendering
+	//! returns the size of a texture which would be the optimize size for rendering it
 	inline s32 getTextureSizeFromSurfaceSize(s32 size) const;
 
 	core::dimension2d<s32> ImageSize;
@@ -124,16 +124,15 @@ private:
 	GLint InternalFormat;
 	GLenum PixelFormat;
 	GLenum PixelType;
+	bool HasMipMaps;
+	bool IsRenderTarget;
+	bool AutomaticMipmapUpdate;
 
 	GLuint ColorFrameBuffer; // for FBO path
 	GLuint DepthRenderBuffer; // for FBO path
 	GLuint StencilRenderBuffer; // for FBO path
 
-	bool HasMipMaps;
-	bool IsRenderTarget;
-	bool AutomaticMipmapUpdate;
-	bool UseStencil;
-	bool ReadOnlyLock;
+	u32 Locks;
 };
 
 

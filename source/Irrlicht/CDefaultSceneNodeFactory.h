@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -22,6 +22,7 @@ namespace scene
 	public:
 
 		CDefaultSceneNodeFactory(ISceneManager* mgr);
+		~CDefaultSceneNodeFactory();
 
 		//! adds a scene node to the scene graph based on its type id
 		/** \param type: Type of the scene node to add.

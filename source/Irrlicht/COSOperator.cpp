@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -10,10 +10,8 @@
 #else
 #include <string.h>
 #include <unistd.h>
-#ifdef _IRR_USE_OSX_DEVICE_
+#ifdef MACOSX
 #include "OSXClipboard.h"
-#endif
-#ifdef _IRR_OSX_PLATFORM_
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #endif
@@ -25,11 +23,7 @@ namespace irr
 
 // constructor
 COSOperator::COSOperator(const c8* osVersion) : OperatingSystem(osVersion)
-{
-	#ifdef _DEBUG
-	setDebugName("COSOperator");
-	#endif
-}
+{ }
 
 
 //! returns the current operating system version as string.
@@ -65,10 +59,9 @@ void COSOperator::copyToClipboard(const c8* text) const
 	CloseClipboard();
 
 // MacOSX version
-#elif defined(_IRR_USE_OSX_DEVICE_)
+#elif defined(MACOSX)
 
 	OSXCopyToClipboard(text);
-#else
 
 // todo: Linux version
 #endif
@@ -91,7 +84,7 @@ c8* COSOperator::getTextFromClipboard() const
 	CloseClipboard();
 	return buffer;
 
-#elif defined(_IRR_USE_OSX_DEVICE_)
+#elif defined(MACOSX)
 	return (OSXCopyFromClipboard());
 #else
 
@@ -104,7 +97,7 @@ c8* COSOperator::getTextFromClipboard() const
 
 bool COSOperator::getProcessorSpeedMHz(u32* MHz) const
 {
-#if defined(_IRR_WINDOWS_API_) && !defined(_WIN32_WCE )
+#if defined(_IRR_WINDOWS_API_)
 	LONG Error;
 	
 	HKEY Key;
@@ -128,7 +121,7 @@ bool COSOperator::getProcessorSpeedMHz(u32* MHz) const
 	_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
 	return true;
 
-#elif defined(_IRR_OSX_PLATFORM_)
+#elif defined(MACOSX)
 	struct clockinfo CpuClock;
 	size_t Size = sizeof(clockinfo);
 
@@ -162,7 +155,6 @@ bool COSOperator::getSystemMemory(u32* Total, u32* Avail) const
 	return true;
 
 #elif defined(_IRR_POSIX_API_)
-#if defined(_SC_PHYS_PAGES) && defined(_SC_AVPHYS_PAGES)
         long ps = sysconf(_SC_PAGESIZE);
         long pp = sysconf(_SC_PHYS_PAGES);
         long ap = sysconf(_SC_AVPHYS_PAGES);
@@ -171,14 +163,10 @@ bool COSOperator::getSystemMemory(u32* Total, u32* Avail) const
 		return false;
 
 	if (Total)
-		*Total = (u32)((ps*(long long)pp)>>10);
+		*Total = ((ps*(long long)pp)>>10);
 	if (Avail)
-		*Avail = (u32)((ps*(long long)ap)>>10);
+		*Avail = ((ps*(long long)ap)>>10);
 	return true;
-#else
-	// TODO: implement for non-availablity of symbols/features
-	return false;
-#endif
 #else
 	// TODO: implement for OSX 
 	return false;

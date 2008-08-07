@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -16,14 +16,12 @@
 #include "CAttributes.h"
 #include "CMemoryReadFile.h"
 
-#if defined (_IRR_WINDOWS_API_)
-	#if !defined ( _WIN32_WCE )
-		#include <direct.h> // for _chdir
-	#endif
+#ifdef _IRR_WINDOWS_API_
+#include <direct.h> // for _chdir
 #else
-	#include <unistd.h>
-	#include <limits.h>
-	#include <stdlib.h>
+#include <unistd.h>
+#include <limits.h>
+#include <stdlib.h>
 #endif
 
 namespace irr
@@ -92,7 +90,7 @@ IReadFile* CFileSystem::createAndOpenFile(const c8* filename)
 
 //! Creates an IReadFile interface for treating memory like a file.
 IReadFile* CFileSystem::createMemoryReadFile(void* memory, s32 len, 
-			const c8* fileName, bool deleteMemoryWhenDropped)
+											const c8* fileName, bool deleteMemoryWhenDropped)
 {
 	if (!memory)
 		return 0;
@@ -186,12 +184,10 @@ bool CFileSystem::addPakFileArchive(const c8* filename, bool ignoreCase, bool ig
 const c8* CFileSystem::getWorkingDirectory()
 {
 #ifdef _IRR_WINDOWS_API_
-	#if !defined ( _WIN32_WCE )
-		_getcwd(WorkingDirectory, FILE_SYSTEM_MAX_PATH);
-	#endif
+	_getcwd(WorkingDirectory, FILE_SYSTEM_MAX_PATH);
 #endif
 
-#if (defined(_IRR_POSIX_API_) || defined(_IRR_OSX_PLATFORM_))
+#if (defined(_IRR_POSIX_API_) || defined(MACOSX))
 	getcwd(WorkingDirectory, (size_t)FILE_SYSTEM_MAX_PATH);
 #endif
 	return WorkingDirectory;
@@ -206,9 +202,7 @@ bool CFileSystem::changeWorkingDirectoryTo(const c8* newDirectory)
 {
 	bool success=false;
 #ifdef _MSC_VER
-	#if !defined ( _WIN32_WCE )
-		success=(_chdir(newDirectory) == 0);
-	#endif
+	success=(_chdir(newDirectory) == 0);
 #else
 	success=(chdir(newDirectory) == 0);
 #endif
@@ -218,25 +212,25 @@ bool CFileSystem::changeWorkingDirectoryTo(const c8* newDirectory)
 core::stringc CFileSystem::getAbsolutePath(const core::stringc& filename) const
 {
 	c8 *p=0;
+	core::stringc ret;
 
 #ifdef _IRR_WINDOWS_API_
-	#if !defined ( _WIN32_WCE )
-		c8 fpath[_MAX_PATH];
-		p = _fullpath( fpath, filename.c_str(), _MAX_PATH);
-	#endif
 
-#elif (defined(_IRR_POSIX_API_) || defined(_IRR_OSX_PLATFORM_))
+	c8 fpath[_MAX_PATH];
+	p = _fullpath( fpath, filename.c_str(), _MAX_PATH);
+	ret = p;
+
+#elif (defined(_IRR_POSIX_API_) || defined(MACOSX))
+
 	c8 fpath[4096];
 	p = realpath(filename.c_str(), fpath);
+	ret = p;
+
 #endif
 
-	return core::stringc(p);
+	return ret;
 }
 
-
-//! returns the directory part of a filename, i.e. all until the first
-//! slash or backslash, excluding it. If no directory path is prefixed, a '.'
-//! is returned.
 core::stringc CFileSystem::getFileDir(const core::stringc& filename) const
 {
 	// find last forward or backslash
@@ -249,23 +243,6 @@ core::stringc CFileSystem::getFileDir(const core::stringc& filename) const
 	else
 		return ".";
 }
-
-
-//! returns the base part of a filename, i.e. all except for the directory
-//! part. If no directory path is prefixed, the full name is returned.
-core::stringc CFileSystem::getFileBasename(const core::stringc& filename) const
-{
-	// find last forward or backslash
-	s32 lastSlash = filename.findLast('/');
-	const s32 lastBackSlash = filename.findLast('\\');
-	lastSlash = lastSlash > lastBackSlash ? lastSlash : lastBackSlash;
-
-	if ((u32)lastSlash < filename.size())
-		return filename.subString(lastSlash+1, filename.size()-lastSlash);
-	else
-		return filename;
-}
-
 
 //! Creates a list of files and directories in the current working directory 
 IFileList* CFileSystem::createFileList() const

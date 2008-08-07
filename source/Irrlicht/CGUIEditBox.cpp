@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -37,8 +37,7 @@ CGUIEditBox::CGUIEditBox(const wchar_t* text, bool border, IGUIEnvironment* envi
 	OverrideFont(0), LastBreakFont(0), CursorPos(0), HScrollPos(0), VScrollPos(0), Max(0),
 	WordWrap(false), MultiLine(false), AutoScroll(true), PasswordBox(false),
 	PasswordChar(L'*'),
-	HAlign(EGUIA_UPPERLEFT), VAlign(EGUIA_CENTER),
-	CurrentTextRect(0,0,1,1), FrameRect(rectangle)
+	HAlign(EGUIA_UPPERLEFT), VAlign(EGUIA_CENTER)
 
 {
 	#ifdef _DEBUG
@@ -56,17 +55,7 @@ CGUIEditBox::CGUIEditBox(const wchar_t* text, bool border, IGUIEnvironment* envi
 	setTabStop(true);
 	setTabOrder(-1);
 
-	IGUISkin *skin = Environment->getSkin();
-	if (Border && skin)
-	{
-		FrameRect.UpperLeftCorner.X += skin->getSize(EGDS_TEXT_DISTANCE_X)+1;
-		FrameRect.UpperLeftCorner.Y += skin->getSize(EGDS_TEXT_DISTANCE_Y)+1;
-		FrameRect.LowerRightCorner.X -= skin->getSize(EGDS_TEXT_DISTANCE_X)+1;
-		FrameRect.LowerRightCorner.Y -= skin->getSize(EGDS_TEXT_DISTANCE_Y)+1;
-	}
-
 	breakText();
-	calculateScrollPos();
 }
 
 
@@ -187,36 +176,32 @@ void CGUIEditBox::setTextAlignment(EGUI_ALIGNMENT horizontal, EGUI_ALIGNMENT ver
 //! called if an event happened.
 bool CGUIEditBox::OnEvent(const SEvent& event)
 {
-	if (IsEnabled)
+	switch(event.EventType)
 	{
-
-		switch(event.EventType)
+	case EET_GUI_EVENT:
+		if (event.GUIEvent.EventType == EGET_ELEMENT_FOCUS_LOST)
 		{
-		case EET_GUI_EVENT:
-			if (event.GUIEvent.EventType == EGET_ELEMENT_FOCUS_LOST)
+			if (event.GUIEvent.Caller == this)
 			{
-				if (event.GUIEvent.Caller == this)
-				{
-					MouseMarking = false;
-					MarkBegin = 0;
-					MarkEnd = 0;
-				}
+				MouseMarking = false;
+				MarkBegin = 0;
+				MarkEnd = 0;
 			}
-			break;
-		case EET_KEY_INPUT_EVENT:
-			if (processKey(event))
-				return true;
-			break;
-		case EET_MOUSE_INPUT_EVENT:
-			if (processMouse(event))
-				return true;
-			break;
-		default:
-			break;
 		}
+		break;
+	case EET_KEY_INPUT_EVENT:
+		if (processKey(event))
+			return true;
+		break;
+	case EET_MOUSE_INPUT_EVENT:
+		if (processMouse(event))
+			return true;
+		break;
+	default:
+		break;
 	}
 
-	return IGUIElement::OnEvent(event);
+	return Parent ? Parent->OnEvent(event) : false;
 }
 
 
@@ -673,21 +658,21 @@ void CGUIEditBox::draw()
 	if (!skin)
 		return;
 
-	FrameRect = AbsoluteRect;
+	frameRect = AbsoluteRect;
 
 	// draw the border
 
 	if (Border)
 	{
 		skin->draw3DSunkenPane(this, skin->getColor(EGDC_WINDOW),
-			false, true, FrameRect, &AbsoluteClippingRect);
+			false, true, frameRect, &AbsoluteClippingRect);
 
-		FrameRect.UpperLeftCorner.X += skin->getSize(EGDS_TEXT_DISTANCE_X)+1;
-		FrameRect.UpperLeftCorner.Y += skin->getSize(EGDS_TEXT_DISTANCE_Y)+1;
-		FrameRect.LowerRightCorner.X -= skin->getSize(EGDS_TEXT_DISTANCE_X)+1;
-		FrameRect.LowerRightCorner.Y -= skin->getSize(EGDS_TEXT_DISTANCE_Y)+1;
+		frameRect.UpperLeftCorner.X += skin->getSize(EGDS_TEXT_DISTANCE_X)+1;
+		frameRect.UpperLeftCorner.Y += skin->getSize(EGDS_TEXT_DISTANCE_Y)+1;
+		frameRect.LowerRightCorner.X -= skin->getSize(EGDS_TEXT_DISTANCE_X)+1;
+		frameRect.LowerRightCorner.Y -= skin->getSize(EGDS_TEXT_DISTANCE_Y)+1;
 	}
-	core::rect<s32> localClipRect = FrameRect;
+	core::rect<s32> localClipRect = frameRect;
 	localClipRect.clipAgainst(AbsoluteClippingRect);
 
 	// draw the text
@@ -840,9 +825,6 @@ void CGUIEditBox::draw()
 				false, true, &localClipRect);
 		}
 	}
-
-	// draw children
-	IGUIElement::draw();
 }
 
 
@@ -942,7 +924,9 @@ bool CGUIEditBox::processMouse(const SEvent& event)
 	case EMIE_LMOUSE_PRESSED_DOWN:
 		if (!Environment->hasFocus(this))
 		{
+			// get focus
 			BlinkStartTime = os::Timer::getTime();
+			Environment->setFocus(this);
 			MouseMarking = true;
 			CursorPos = getCursorPos(event.MouseInput.X, event.MouseInput.Y);
 			MarkBegin = CursorPos;
@@ -953,7 +937,7 @@ bool CGUIEditBox::processMouse(const SEvent& event)
 		else
 		{
 			if (!AbsoluteClippingRect.isPointInside(
-				core::position2d<s32>(event.MouseInput.X, event.MouseInput.Y)))
+			core::position2d<s32>(event.MouseInput.X, event.MouseInput.Y)))
 			{
 				return false;
 			}
@@ -1148,7 +1132,7 @@ void CGUIEditBox::setTextRect(s32 line)
 
 	IGUIFont* font = OverrideFont;
 	IGUISkin* skin = Environment->getSkin();
-	if (!font)
+	if (!OverrideFont)
 		font = skin->getFont();
 
 	// get text dimension
@@ -1169,13 +1153,13 @@ void CGUIEditBox::setTextRect(s32 line)
 	{
 	case EGUIA_CENTER:
 		// align to h centre
-		CurrentTextRect.UpperLeftCorner.X = (FrameRect.getWidth()/2) - (d.Width/2);
-		CurrentTextRect.LowerRightCorner.X = (FrameRect.getWidth()/2) + (d.Width/2);
+		CurrentTextRect.UpperLeftCorner.X = (frameRect.getWidth()/2) - (d.Width/2);
+		CurrentTextRect.LowerRightCorner.X = (frameRect.getWidth()/2) + (d.Width/2);
 		break;
 	case EGUIA_LOWERRIGHT:
 		// align to right edge
-		CurrentTextRect.UpperLeftCorner.X = FrameRect.getWidth() - d.Width;
-		CurrentTextRect.LowerRightCorner.X = FrameRect.getWidth();
+		CurrentTextRect.UpperLeftCorner.X = frameRect.getWidth() - d.Width;
+		CurrentTextRect.LowerRightCorner.X = frameRect.getWidth();
 		break;
 	default:
 		// align to left edge
@@ -1189,12 +1173,12 @@ void CGUIEditBox::setTextRect(s32 line)
 	case EGUIA_CENTER:
 		// align to v centre
 		CurrentTextRect.UpperLeftCorner.Y =
-			(FrameRect.getHeight()/2) - (lineCount*d.Height)/2 + d.Height*line;
+			(frameRect.getHeight()/2) - (lineCount*d.Height)/2 + d.Height*line;
 		break;
 	case EGUIA_LOWERRIGHT:
 		// align to bottom edge
 		CurrentTextRect.UpperLeftCorner.Y =
-			FrameRect.getHeight() - lineCount*d.Height + d.Height*line;
+			frameRect.getHeight() - lineCount*d.Height + d.Height*line;
 		break;
 	default:
 		// align to top edge
@@ -1207,7 +1191,7 @@ void CGUIEditBox::setTextRect(s32 line)
 	CurrentTextRect.UpperLeftCorner.Y  -= VScrollPos;
 	CurrentTextRect.LowerRightCorner.Y = CurrentTextRect.UpperLeftCorner.Y + d.Height;
 
-	CurrentTextRect += FrameRect.UpperLeftCorner;
+	CurrentTextRect += frameRect.UpperLeftCorner;
 
 }
 
@@ -1272,6 +1256,7 @@ void CGUIEditBox::inputChar(wchar_t c)
 
 void CGUIEditBox::calculateScrollPos()
 {
+
 	if (!AutoScroll)
 		return;
 
@@ -1296,10 +1281,10 @@ void CGUIEditBox::calculateScrollPos()
 
 		s32 cEnd = cStart + font->getDimension(L"_ ").Width;
 
-		if (FrameRect.LowerRightCorner.X < cEnd)
-			HScrollPos = cEnd - FrameRect.LowerRightCorner.X;
-		else if (FrameRect.UpperLeftCorner.X > cStart)
-			HScrollPos = cStart - FrameRect.UpperLeftCorner.X;
+		if (frameRect.LowerRightCorner.X < cEnd)
+			HScrollPos = cEnd - frameRect.LowerRightCorner.X;
+		else if (frameRect.UpperLeftCorner.X > cStart)
+			HScrollPos = cStart - frameRect.UpperLeftCorner.X;
 		else
 			HScrollPos = 0;
 
@@ -1308,11 +1293,11 @@ void CGUIEditBox::calculateScrollPos()
 	}
 
 	// vertical scroll position
-	if (FrameRect.LowerRightCorner.Y < CurrentTextRect.LowerRightCorner.Y + VScrollPos)
-		VScrollPos = CurrentTextRect.LowerRightCorner.Y - FrameRect.LowerRightCorner.Y + VScrollPos;
+	if (frameRect.LowerRightCorner.Y < CurrentTextRect.LowerRightCorner.Y + VScrollPos)
+		VScrollPos = CurrentTextRect.LowerRightCorner.Y - frameRect.LowerRightCorner.Y + VScrollPos;
 
-	else if (FrameRect.UpperLeftCorner.Y > CurrentTextRect.UpperLeftCorner.Y + VScrollPos)
-		VScrollPos = CurrentTextRect.UpperLeftCorner.Y - FrameRect.UpperLeftCorner.Y + VScrollPos;
+	else if (frameRect.UpperLeftCorner.Y > CurrentTextRect.UpperLeftCorner.Y + VScrollPos)
+		VScrollPos = CurrentTextRect.UpperLeftCorner.Y - frameRect.UpperLeftCorner.Y + VScrollPos;
 	else
 		VScrollPos = 0;
 

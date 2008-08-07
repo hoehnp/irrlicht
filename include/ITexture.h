@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -25,7 +25,7 @@ enum E_TEXTURE_CREATION_FLAG
 	//! Forces the driver to create 16 bit textures always, independent of
 	//! which format the file on disk has. When choosing this you may loose
 	//! some color detail, but gain much speed and memory. 16 bit textures
-	//! can be transferred twice as fast as 32 bit textures and only use
+	//! can be transferred twice as fast as 32 bit textures and only use 
 	//! half of the space in memory.
 	//! When using this flag, it does not make sense to use the flags
 	//! ETCF_ALWAYS_32_BIT, ETCF_OPTIMIZED_FOR_QUALITY,
@@ -33,7 +33,7 @@ enum E_TEXTURE_CREATION_FLAG
 	ETCF_ALWAYS_16_BIT = 0x00000001,
 
 	//! Forces the driver to create 32 bit textures always, independent of
-	//! which format the file on disk has. Please note that some drivers
+	//! which format the file on disk has. Please note that some drivers 
 	//! (like the software device) will ignore this, because they are only
 	//! able to create and use 16 bit textures.
 	//! When using this flag, it does not make sense to use the flags
@@ -45,9 +45,9 @@ enum E_TEXTURE_CREATION_FLAG
 	//! tries to make the textures look as good as possible.
 	//! Usually it simply chooses the format in which the texture was stored on disk.
 	//! When using this flag, it does not make sense to use the flags
-	//! ETCF_ALWAYS_16_BIT, ETCF_ALWAYS_32_BIT,
+	//! ETCF_ALWAYS_16_BIT, ETCF_ALWAYS_32_BIT, 
 	//! or ETCF_OPTIMIZED_FOR_SPEED at the same time.
-	ETCF_OPTIMIZED_FOR_QUALITY = 0x00000004,
+	ETCF_OPTIMIZED_FOR_QUALITY  = 0x00000004,
 
 	//! Lets the driver decide in which format the textures are created and
 	//! tries to create them maximizing render speed.
@@ -62,7 +62,7 @@ enum E_TEXTURE_CREATION_FLAG
 	//! Discard any alpha layer and use non-alpha color format.
 	ETCF_NO_ALPHA_CHANNEL = 0x00000020,
 
-	//! This flag is never used, it only forces the compiler to
+	//! This flag is never used, it only forces the compiler to 
 	//! compile these enumeration values to 32 bit.
 	ETCF_FORCE_32_BIT_DO_NOT_USE = 0x7fffffff
 };
@@ -107,21 +107,16 @@ public:
 	//! destructor
 	virtual ~ITexture() {}
 
-	//! Lock function.
-	/** Locks the Texture and returns a pointer to access the
+	//! Lock function. 
+	/** Locks the Texture and returns a pointer to access the 
 	pixels. After lock() has been called and all operations on the pixels
 	are done, you must call unlock().
-	Locks are not accumulating, hence one unlock will do for an arbitrary
-	number of previous locks.
-	\param readOnly Specifies that no changes to the locked texture are
-	made. Unspecified behavior will arise if still write access happens.
 	\return Returns a pointer to the pixel data. The format of the pixel can
-	be determined by using getColorFormat(). 0 is returned, if
+	be determinated by using getColorFormat(). NULL is returned, if
 	the texture cannot be locked. */
-	virtual void* lock(bool readOnly = false) = 0;
+	virtual void* lock() = 0;
 
 	//! Unlock function. Must be called after a lock() to the texture.
-	/** One should avoid to call unlock more than once before another lock. */
 	virtual void unlock() = 0;
 
 	//! Returns original size of the texture.
@@ -130,7 +125,7 @@ public:
 	of the texture file it was loaded from was not a power of two. This returns
 	the size of the texture, it had before it was scaled. Can be useful
 	when drawing 2d images on the screen, which should have the exact size
-	of the original texture. Use ITexture::getSize() if you want to know
+	of the original texture. Use ITexture::getSize() if you want to know 
 	the real size it has now stored in the system.
 	\return Returns the original size of the texture. */
 	virtual const core::dimension2d<s32>& getOriginalSize() const = 0;
@@ -139,7 +134,7 @@ public:
 	/** \return Returns the size of the texture. */
 	virtual const core::dimension2d<s32>& getSize() const = 0;
 
-	//! Returns driver type of texture.
+	//! Returns driver type of texture. 
 	/** This is the driver, which created the texture.
 	This method is used internally by the video devices, to check, if they may
 	use a texture because textures may be incompatible between different
@@ -162,7 +157,7 @@ public:
 	virtual bool hasMipMaps() const { return false; }
 
 	//! Regenerates the mip map levels of the texture.
-	/** Required after locking and modifying the texture */
+	/** Useful after locking and modifying the texture */
 	virtual void regenerateMipMapLevels() = 0;
 
 	//! Returns whether the texture is a render target

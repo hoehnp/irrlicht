@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -11,9 +11,7 @@
 
 #include "fast_atof.h"
 #include "coreutil.h"
-#include "ISceneManager.h"
 #include "IVideoDriver.h"
-#include "IFileSystem.h"
 #include "IReadFile.h"
 
 #ifdef _DEBUG
@@ -27,14 +25,11 @@ namespace scene
 {
 
 //! Constructor
-CXMeshFileLoader::CXMeshFileLoader(scene::ISceneManager* smgr, io::IFileSystem* fs)
-: SceneManager(smgr), FileSystem(fs), AnimatedMesh(0), MajorVersion(0),
-	MinorVersion(0), BinaryFormat(false), BinaryNumCount(0), Buffer(0),
-	P(0), End(0), FloatSize(0), CurFrame(0)
+CXMeshFileLoader::CXMeshFileLoader(scene::ISceneManager* smgr)
+: SceneManager(smgr), AnimatedMesh(0), MajorVersion(0), MinorVersion(0),
+	BinaryFormat(false), BinaryNumCount(0), Buffer(0), P(0), End(0),
+	FloatSize(0), CurFrame(0)
 {
-	#ifdef _DEBUG
-	setDebugName("CXMeshFileLoader");
-	#endif
 }
 
 
@@ -42,7 +37,7 @@ CXMeshFileLoader::CXMeshFileLoader(scene::ISceneManager* smgr, io::IFileSystem* 
 //! based on the file extension (e.g. ".bsp")
 bool CXMeshFileLoader::isALoadableFileExtension(const c8* filename) const
 {
-	return strncmp(&filename[strlen(filename)-2], ".x", 2) == 0;
+	return strstr(filename, ".x") != 0;
 }
 
 
@@ -55,9 +50,7 @@ IAnimatedMesh* CXMeshFileLoader::createMesh(io::IReadFile* f)
 	if (!f)
 		return 0;
 
-#ifdef _XREADER_DEBUG
 	u32 time = os::Timer::getRealTime();
-#endif
 
 	AnimatedMesh = new CSkinnedMesh();
 
@@ -91,7 +84,7 @@ IAnimatedMesh* CXMeshFileLoader::createMesh(io::IReadFile* f)
 	CurFrame=0;
 	TemplateMaterials.clear();
 
-	delete [] Buffer;
+	delete Buffer;
 	Buffer = 0;
 
 	for (u32 i=0; i<Meshes.size(); ++i)
@@ -121,9 +114,7 @@ bool CXMeshFileLoader::load(io::IReadFile* file)
 		u32 i;
 
 		mesh->Buffers.reallocate(mesh->Materials.size());
-#ifndef BETTER_MESHBUFFER_SPLITTING_FOR_X
 		const u32 bufferOffset = AnimatedMesh->getMeshBufferCount();
-#endif
 		for (i=0; i<mesh->Materials.size(); ++i)
 		{
 			mesh->Buffers.push_back( AnimatedMesh->createBuffer() );
@@ -137,6 +128,7 @@ bool CXMeshFileLoader::load(io::IReadFile* file)
 					AnimatedMesh->getAllJoints()[mesh->AttachedJointID]->AttachedMeshes.push_back( AnimatedMesh->getMeshBuffers().size()-1 );
 				}
 			}
+
 		}
 
 		if (!mesh->HasVertexColors)
@@ -169,7 +161,7 @@ bool CXMeshFileLoader::load(io::IReadFile* file)
 			{
 				for (u32 id=i*3+0;id<=i*3+2;++id)
 				{
-					core::array< u16 > &Array=verticesLinkBuffer[ mesh->Indices[id] ];
+					core::array< u32 > &Array=verticesLinkBuffer[ mesh->Indices[id] ];
 					bool found=false;
 
 					for (u32 j=0; j < Array.size(); ++j)
@@ -212,7 +204,7 @@ bool CXMeshFileLoader::load(io::IReadFile* file)
 				{
 					core::array< u16 > &Array=verticesLinkBuffer[ mesh->Indices[id] ];
 
-					for (u32 j=0;j< Array.size() ;++j)
+					for (u32 j=0;j<  Array.size() ;++j)
 					{
 						if ( Array[j]== mesh->FaceMaterialIndices[i] )
 							buffer->Indices.push_back( verticesLinkIndex[ mesh->Indices[id] ][j] );
@@ -220,31 +212,29 @@ bool CXMeshFileLoader::load(io::IReadFile* file)
 				}
 			}
 
-			for (u32 j=0;j<mesh->WeightJoint.size();++j)
+			for (u32 j=0;j<mesh->Weights.size();++j)
 			{
-				ISkinnedMesh::SJoint* joint = AnimatedMesh->getAllJoints()[mesh->WeightJoint[j]];
-				ISkinnedMesh::SWeight& weight = joint->Weights[mesh->WeightNum[j]];
+				ISkinnedMesh::SWeight& Weight = (*mesh->Weights[j]);
 
-				u32 id = weight.vertex_id;
+				u32 id = Weight.vertex_id;
 
 				if (id>=verticesLinkIndex.size())
 				{
 					os::Printer::log("X loader: Weight id out of range", ELL_WARNING);
 					id=0;
-					weight.strength=0.f;
 				}
 
 				if (verticesLinkBuffer[id].size()==1)
 				{
-					weight.vertex_id=verticesLinkIndex[id][0];
-					weight.buffer_id=verticesLinkBuffer[id][0];
+					Weight.vertex_id=verticesLinkIndex[id][0];
+					Weight.buffer_id=verticesLinkBuffer[id][0];
 				}
 				else if (verticesLinkBuffer[id].size() != 0)
 				{
 					for (u32 k=1; k < verticesLinkBuffer[id].size(); ++k)
 					{
-						ISkinnedMesh::SWeight* WeightClone = AnimatedMesh->createWeight(joint);
-						WeightClone->strength = weight.strength;
+						ISkinnedMesh::SWeight* WeightClone = AnimatedMesh->createWeight(Joint);
+						WeightClone->strength = Weight.strength;
 						WeightClone->vertex_id = verticesLinkIndex[id][k];
 						WeightClone->buffer_id = verticesLinkBuffer[id][k];
 					}
@@ -254,91 +244,74 @@ bool CXMeshFileLoader::load(io::IReadFile* file)
 		#else
 		{
 			core::array< u32 > verticesLinkIndex;
-			core::array< s16 > verticesLinkBuffer;
+			core::array< u16 > verticesLinkBuffer;
 			verticesLinkBuffer.set_used(mesh->Vertices.size());
+			verticesLinkIndex.set_used(mesh->Vertices.size());
 
 			// init with 0
 			for (i=0;i<mesh->Vertices.size();++i)
 			{
-				verticesLinkBuffer[i]=-1;
+				verticesLinkBuffer[i]=0;
+				verticesLinkIndex[i]=0;
 			}
 
-			bool warned = false;
 			// store meshbuffer number per vertex
 			for (i=0;i<mesh->FaceMaterialIndices.size();++i)
 			{
 				for (u32 id=i*3+0;id<=i*3+2;++id)
 				{
-					if ((verticesLinkBuffer[ mesh->Indices[id] ] != -1) && (verticesLinkBuffer[ mesh->Indices[id] ] != (s16)mesh->FaceMaterialIndices[i]))
-					{
-						if (!warned)
-						{
-							os::Printer::log("X loader", "Duplicated vertex, animation might be corrupted.", ELL_WARNING);
-							warned=true;
-						}
-						const u32 tmp = mesh->Vertices.size();
-						mesh->Vertices.push_back(mesh->Vertices[ mesh->Indices[id] ]);
-						mesh->Indices[id] = tmp;
-						verticesLinkBuffer.set_used(mesh->Vertices.size());
-					}
 					verticesLinkBuffer[ mesh->Indices[id] ] = mesh->FaceMaterialIndices[i];
 				}
 			}
 
-			if (mesh->FaceMaterialIndices.size() != 0)
+			// store vertices in buffers and remember relation in verticesLinkIndex
+			u32* vCountArray = new u32[mesh->Buffers.size()];
+			memset(vCountArray, 0, mesh->Buffers.size()*sizeof(u32));
+			// count vertices in each buffer and reallocate
+			for (i=0;i<mesh->Vertices.size();++i)
+				++vCountArray[verticesLinkBuffer[i]];
+			for (i=0; i!=mesh->Buffers.size(); ++i)
+				mesh->Buffers[i]->Vertices_Standard.reallocate(vCountArray[i]);
+
+			// actually store vertices
+			for (i=0;i<mesh->Vertices.size();++i)
 			{
-				// store vertices in buffers and remember relation in verticesLinkIndex
-				u32* vCountArray = new u32[mesh->Buffers.size()];
-				memset(vCountArray, 0, mesh->Buffers.size()*sizeof(u32));
-				// count vertices in each buffer and reallocate
-				for (i=0;i<mesh->Vertices.size();++i)
-					++vCountArray[verticesLinkBuffer[i]];
-				for (i=0; i!=mesh->Buffers.size(); ++i)
-					mesh->Buffers[i]->Vertices_Standard.reallocate(vCountArray[i]);
+				scene::SSkinMeshBuffer *buffer = mesh->Buffers[ verticesLinkBuffer[i] ];
 
-				verticesLinkIndex.set_used(mesh->Vertices.size());
-				// actually store vertices
-				for (i=0;i<mesh->Vertices.size();++i)
-				{
-					scene::SSkinMeshBuffer *buffer = mesh->Buffers[ verticesLinkBuffer[i] ];
-
-					verticesLinkIndex[i] = buffer->Vertices_Standard.size();
-					buffer->Vertices_Standard.push_back( mesh->Vertices[i] );
-				}
-
-				// count indices per buffer and reallocate
-				memset(vCountArray, 0, mesh->Buffers.size()*sizeof(u32));
-				for (i=0;i<mesh->FaceMaterialIndices.size();++i)
-					++vCountArray[ mesh->FaceMaterialIndices[i] ];
-				for (i=0; i!=mesh->Buffers.size(); ++i)
-					mesh->Buffers[i]->Indices.reallocate(vCountArray[i]);
-				delete [] vCountArray;
-				// create indices per buffer
-				for (i=0;i<mesh->FaceMaterialIndices.size();++i)
-				{
-					scene::SSkinMeshBuffer *buffer = mesh->Buffers[ mesh->FaceMaterialIndices[i] ];
-					for (u32 id=i*3+0;id!=i*3+3;++id)
-					{
-						buffer->Indices.push_back( verticesLinkIndex[ mesh->Indices[id] ] );
-					}
-				}
+				verticesLinkIndex[i] = buffer->Vertices_Standard.size();
+				buffer->Vertices_Standard.push_back( mesh->Vertices[i] );
 			}
 
-			for (u32 j=0;j<mesh->WeightJoint.size();++j)
+			// count indices per buffer and reallocate
+			memset(vCountArray, 0, mesh->Buffers.size()*sizeof(u32));
+			for (i=0;i<mesh->FaceMaterialIndices.size();++i)
+				++vCountArray[ mesh->FaceMaterialIndices[i] ];
+			for (i=0; i!=mesh->Buffers.size(); ++i)
+				mesh->Buffers[i]->Indices.reallocate(vCountArray[i]);
+			delete [] vCountArray;
+			// create indices per buffer
+			for (i=0;i<mesh->FaceMaterialIndices.size();++i)
 			{
-				ISkinnedMesh::SWeight& weight = (AnimatedMesh->getAllJoints()[mesh->WeightJoint[j]]->Weights[mesh->WeightNum[j]]);
+				scene::SSkinMeshBuffer *buffer = mesh->Buffers[ mesh->FaceMaterialIndices[i] ];
+				for (u32 id=i*3+0;id!=i*3+3;++id)
+					buffer->Indices.push_back( verticesLinkIndex[ mesh->Indices[id] ] );
+			}
 
-				u32 id = weight.vertex_id;
+
+			for (u32 j=0;j<mesh->Weights.size();++j)
+			{
+				ISkinnedMesh::SWeight* weight = mesh->Weights[j];
+
+				u32 id = weight->vertex_id;
 
 				if (id>=verticesLinkIndex.size())
 				{
 					os::Printer::log("X loader: Weight id out of range", ELL_WARNING);
 					id=0;
-					weight.strength=0.f;
 				}
 
-				weight.vertex_id=verticesLinkIndex[id];
-				weight.buffer_id=verticesLinkBuffer[id] + bufferOffset;
+				weight->vertex_id=verticesLinkIndex[id];
+				weight->buffer_id=verticesLinkBuffer[id] + bufferOffset;;
 			}
 		}
 		#endif
@@ -511,7 +484,7 @@ bool CXMeshFileLoader::parseDataObjectTemplate()
 	}
 
 	// read GUID
-	getNextToken();
+	core::stringc guid = getNextToken();
 
 	// read and ignore data members
 	while(true)
@@ -664,9 +637,11 @@ bool CXMeshFileLoader::parseDataObjectTransformationMatrix(core::matrix4 &mat)
 		return false;
 	}
 
-	readMatrix(mat);
+	for (u32 i=0; i<4; ++i)
+		for (u32 j=0; j<4; ++j)
+			mat(i,j)=readFloat();
 
-	if (!checkForOneFollowingSemicolons())
+	if (!checkForTwoFollowingSemicolons())
 	{
 		os::Printer::log("No finishing semicolon in Transformation Matrix found in x file", ELL_WARNING);
 		return false;
@@ -680,6 +655,7 @@ bool CXMeshFileLoader::parseDataObjectTransformationMatrix(core::matrix4 &mat)
 
 	return true;
 }
+
 
 
 bool CXMeshFileLoader::parseDataObjectMesh(SXMesh &mesh)
@@ -700,7 +676,8 @@ bool CXMeshFileLoader::parseDataObjectMesh(SXMesh &mesh)
 	const u32 nVertices = readInt();
 
 	// read vertices
-	mesh.Vertices.set_used(nVertices);
+	mesh.Vertices.set_used(nVertices); //luke: change
+
 	for (u32 n=0; n<nVertices; ++n)
 	{
 		readVector3(mesh.Vertices[n].Pos);
@@ -761,7 +738,12 @@ bool CXMeshFileLoader::parseDataObjectMesh(SXMesh &mesh)
 		}
 	}
 
-	if (!checkForTwoFollowingSemicolons())
+	if (BinaryFormat && BinaryNumCount)
+	{
+		os::Printer::log("Binary X: Mesh: Integer count mismatch", ELL_WARNING);
+		return false;
+	}
+	else if (!checkForTwoFollowingSemicolons())
 	{
 		os::Printer::log("No finishing semicolon in Mesh Face Array found in x file", ELL_WARNING);
 		return false;
@@ -820,19 +802,6 @@ bool CXMeshFileLoader::parseDataObjectMesh(SXMesh &mesh)
 				return false;
 		}
 		else
-		if (objectName == "DeclData")
-		{
-			// arbitrary vertex attributes
-			// first comes the number of element definitions
-			// then the vertex element type definitions
-			// with format type;tesselator;semantics;usageindex
-			// we want to support 2;0;6;0 == tangent
-			//                    2;0;7;0 == binormal
-			// and              1/2;0;5;1 == 2nd uv coord
-			if (!parseUnknownDataObject())
-				return false;
-		}
-		else
 		if (objectName == "XSkinMeshHeader")
 		{
 			if (!parseDataObjectSkinMeshHeader(mesh))
@@ -883,8 +852,7 @@ bool CXMeshFileLoader::parseDataObjectSkinWeights(SXMesh &mesh)
 
 	CSkinnedMesh::SJoint *joint=0;
 
-	u32 n;
-	for (n=0; n < AnimatedMesh->getAllJoints().size(); ++n)
+	for (u32 n=0; n < AnimatedMesh->getAllJoints().size(); ++n)
 	{
 		if (AnimatedMesh->getAllJoints()[n]->Name==TransformNodeName)
 		{
@@ -898,7 +866,6 @@ bool CXMeshFileLoader::parseDataObjectSkinWeights(SXMesh &mesh)
 #ifdef _XREADER_DEBUG
 		os::Printer::log("creating joint for skinning ", TransformNodeName.c_str());
 #endif
-		n = AnimatedMesh->getAllJoints().size();
 		joint=AnimatedMesh->createJoint(0);
 		joint->Name=TransformNodeName;
 	}
@@ -912,23 +879,21 @@ bool CXMeshFileLoader::parseDataObjectSkinWeights(SXMesh &mesh)
 	const u32 jointStart = joint->Weights.size();
 	joint->Weights.reallocate(jointStart+nWeights);
 
-	mesh.WeightJoint.reallocate( mesh.WeightJoint.size() + nWeights );
-	mesh.WeightNum.reallocate( mesh.WeightNum.size() + nWeights );
+	mesh.Weights.reallocate( mesh.Weights.size() + nWeights );
 
 	for (i=0; i<nWeights; ++i)
 	{
-		mesh.WeightJoint.push_back(n);
-		mesh.WeightNum.push_back(joint->Weights.size());
-
 		CSkinnedMesh::SWeight *weight=AnimatedMesh->createWeight(joint);
 
 		weight->buffer_id=0;
 		weight->vertex_id=readInt();
+
+		mesh.Weights.push_back(weight);
 	}
 
 	// read vertex weights
 
-	for (i=jointStart; i<jointStart+nWeights; ++i)
+	for (i=0; i<nWeights; ++i)
 		joint->Weights[i].strength = readFloat();
 
 	// read matrix offset
@@ -938,9 +903,13 @@ bool CXMeshFileLoader::parseDataObjectSkinWeights(SXMesh &mesh)
 	// world space coordinates of the mesh as affected by the bone
 	core::matrix4& MatrixOffset = joint->GlobalInversedMatrix;
 
-	readMatrix(MatrixOffset);
+	for (i=0; i<4; ++i)
+	{
+		for (u32 j=0; j<4; ++j)
+			MatrixOffset(i,j) = readFloat();
+	}
 
-	if (!checkForOneFollowingSemicolons())
+	if (!checkForTwoFollowingSemicolons())
 	{
 		os::Printer::log("No finishing semicolon in Skin Weights found in x file", ELL_WARNING);
 		return false;
@@ -1287,18 +1256,16 @@ bool CXMeshFileLoader::parseDataObjectMaterial(video::SMaterial& material)
 				return false;
 
 			// original name
-			if (FileSystem->existFile(TextureFileName.c_str()))
-				material.setTexture(0, SceneManager->getVideoDriver()->getTexture ( TextureFileName.c_str() ));
+			SceneManager->getVideoDriver()->getTexture ( TextureFileName.c_str() );
 			// mesh path
-			else
+			if (!material.getTexture(0))
 			{
 				TextureFileName=FilePath + stripPathFromString(TextureFileName,false);
-				if (FileSystem->existFile(TextureFileName.c_str()))
-					material.setTexture(0, SceneManager->getVideoDriver()->getTexture ( TextureFileName.c_str() ));
-				// working directory
-				else
-					material.setTexture(0, SceneManager->getVideoDriver()->getTexture ( stripPathFromString(TextureFileName,false).c_str() ));
+				material.setTexture(0, SceneManager->getVideoDriver()->getTexture ( TextureFileName.c_str() ));
 			}
+			// working directory
+			if (!material.getTexture(0))
+				SceneManager->getVideoDriver()->getTexture ( stripPathFromString(TextureFileName,false).c_str() );
 		}
 		else
 		{
@@ -1451,19 +1418,38 @@ bool CXMeshFileLoader::parseDataObjectAnimation()
 		joint->PositionKeys.reallocate(joint->PositionKeys.size()+animationDump.PositionKeys.size());
 		for (n=0;n<animationDump.PositionKeys.size();++n)
 		{
-			joint->PositionKeys.push_back(animationDump.PositionKeys[n]);
+			ISkinnedMesh::SPositionKey *key=&animationDump.PositionKeys[n];
+
+			//key->position+=joint->LocalMatrix.getTranslation();
+
+			joint->PositionKeys.push_back(*key);
 		}
 
 		joint->ScaleKeys.reallocate(joint->ScaleKeys.size()+animationDump.ScaleKeys.size());
 		for (n=0;n<animationDump.ScaleKeys.size();++n)
 		{
-			joint->ScaleKeys.push_back(animationDump.ScaleKeys[n]);
+			ISkinnedMesh::SScaleKey *key=&animationDump.ScaleKeys[n];
+
+			//key->scale*=joint->LocalMatrix.getScale();
+
+			joint->ScaleKeys.push_back(*key);
 		}
 
 		joint->RotationKeys.reallocate(joint->RotationKeys.size()+animationDump.RotationKeys.size());
 		for (n=0;n<animationDump.RotationKeys.size();++n)
 		{
-			joint->RotationKeys.push_back(animationDump.RotationKeys[n]);
+			ISkinnedMesh::SRotationKey *key=&animationDump.RotationKeys[n];
+
+			core::matrix4 tmpMatrix;
+
+			tmpMatrix.setRotationRadians(
+				core::vector3df(key->rotation.X, key->rotation.Y, key->rotation.Z) );
+
+			tmpMatrix=joint->LocalMatrix*tmpMatrix;
+
+			//key->rotation  = core::quaternion(tmpMatrix);
+
+			joint->RotationKeys.push_back(*key);
 		}
 	}
 	else
@@ -1506,7 +1492,7 @@ bool CXMeshFileLoader::parseDataObjectAnimationKey(ISkinnedMesh::SJoint *joint)
 	for (u32 i=0; i<numberOfKeys; ++i)
 	{
 		// read time
-		const f32 time = (f32)readInt();
+		const u32 time = readInt();
 
 		// read keys
 		switch(keyType)
@@ -1534,7 +1520,7 @@ bool CXMeshFileLoader::parseDataObjectAnimationKey(ISkinnedMesh::SJoint *joint)
 				}
 
 				ISkinnedMesh::SRotationKey *key=AnimatedMesh->createRotationKey(joint);
-				key->frame=time;
+				key->frame=(f32)time;
 				key->rotation.set(X,Y,Z,W);
 			}
 			break;
@@ -1562,13 +1548,13 @@ bool CXMeshFileLoader::parseDataObjectAnimationKey(ISkinnedMesh::SJoint *joint)
 				if (keyType==2)
 				{
 					ISkinnedMesh::SPositionKey *key=AnimatedMesh->createPositionKey(joint);
-					key->frame=time;
+					key->frame=(f32)time;
 					key->position=vector;
 				}
 				else
 				{
 					ISkinnedMesh::SScaleKey *key=AnimatedMesh->createScaleKey(joint);
-					key->frame=time;
+					key->frame=(f32)time;
 					key->scale=vector;
 				}
 			}
@@ -1586,39 +1572,41 @@ bool CXMeshFileLoader::parseDataObjectAnimationKey(ISkinnedMesh::SJoint *joint)
 				}
 
 				// read matrix
-				core::matrix4 mat(core::matrix4::EM4CONST_NOTHING);
-				readMatrix(mat);
+				core::matrix4 Matrix;
 
-				//mat=joint->LocalMatrix*mat;
+				for (u32 m=0; m<4; ++m)
+					for (u32 n=0; n<4; ++n)
+						Matrix(m,n) = readFloat();
 
-				if (!checkForOneFollowingSemicolons())
+
+				//Matrix=joint->LocalMatrix*Matrix;
+
+				if (!checkForTwoFollowingSemicolons())
 				{
 					os::Printer::log("No finishing semicolon after matrix animation key in x file", ELL_WARNING);
 					return false;
 				}
 
-				//core::vector3df rotation = mat.getRotationDegrees();
+				//core::vector3df rotation = Matrix.getRotationDegrees();
 
 				ISkinnedMesh::SRotationKey *keyR=AnimatedMesh->createRotationKey(joint);
-				keyR->frame=time;
-				keyR->rotation= core::quaternion(mat);
+				keyR->frame=(f32)time;
+				//keyR->rotation.set(rotation.X*core::DEGTORAD,rotation.Y*core::DEGTORAD,rotation.Z*core::DEGTORAD);
+				keyR->rotation= core::quaternion(Matrix);
 
 
 				ISkinnedMesh::SPositionKey *keyP=AnimatedMesh->createPositionKey(joint);
-				keyP->frame=time;
-				keyP->position=mat.getTranslation();
+				keyP->frame=(f32)time;
+				keyP->position=Matrix.getTranslation();
 
+				core::vector3df scale=Matrix.getScale();
+
+				//if (scale.X==0) scale.X=1;
+				//if (scale.Y==0) scale.Y=1;
+				//if (scale.Z==0) scale.Z=1;
 /*
-				core::vector3df scale=mat.getScale();
-
-				if (scale.X==0)
-					scale.X=1;
-				if (scale.Y==0)
-					scale.Y=1;
-				if (scale.Z==0)
-					scale.Z=1;
 				ISkinnedMesh::SScaleKey *keyS=AnimatedMesh->createScaleKey(joint);
-				keyS->frame=time;
+				keyS->frame=(f32)time;
 				keyS->scale=scale;
 */
 			}
@@ -2074,13 +2062,34 @@ bool CXMeshFileLoader::readVector3(core::vector3df& vec)
 
 
 // read color without alpha value. Stops after second semicolon after blue value
+bool CXMeshFileLoader::readRGB(video::SColorf& color)
+{
+	color.r = readFloat();
+	color.g = readFloat();
+	color.b = readFloat();
+	color.a = 1.0f;
+	return checkForOneFollowingSemicolons();
+}
+
+
+// read color with alpha value. Stops after second semicolon after blue value
+bool CXMeshFileLoader::readRGBA(video::SColorf& color)
+{
+	color.r = readFloat();
+	color.g = readFloat();
+	color.b = readFloat();
+	color.a = readFloat();
+	return checkForOneFollowingSemicolons();
+}
+
+
+// read color without alpha value. Stops after second semicolon after blue value
 bool CXMeshFileLoader::readRGB(video::SColor& color)
 {
-	video::SColorf tmpColor;
-	tmpColor.r = readFloat();
-	tmpColor.g = readFloat();
-	tmpColor.b = readFloat();
-	color = tmpColor.toSColor();
+	color.setRed( (u32)(readFloat()*255)) ;
+	color.setGreen( (u32)(readFloat()*255)) ;
+	color.setBlue( (u32)(readFloat()*255)) ;
+	color.setAlpha( 255 );
 	return checkForOneFollowingSemicolons();
 }
 
@@ -2088,21 +2097,10 @@ bool CXMeshFileLoader::readRGB(video::SColor& color)
 // read color with alpha value. Stops after second semicolon after blue value
 bool CXMeshFileLoader::readRGBA(video::SColor& color)
 {
-	video::SColorf tmpColor;
-	tmpColor.r = readFloat();
-	tmpColor.g = readFloat();
-	tmpColor.b = readFloat();
-	tmpColor.a = readFloat();
-	color = tmpColor.toSColor();
-	return checkForOneFollowingSemicolons();
-}
-
-
-// read matrix from list of floats
-bool CXMeshFileLoader::readMatrix(core::matrix4& mat)
-{
-	for (u32 i=0; i<16; ++i)
-		mat[i] = readFloat();
+	color.setRed( (u32)(readFloat()*255)) ;
+	color.setGreen( (u32)(readFloat()*255)) ;
+	color.setBlue( (u32)(readFloat()*255)) ;
+	color.setAlpha( (u32)(readFloat()*255)) ;
 	return checkForOneFollowingSemicolons();
 }
 
@@ -2115,12 +2113,10 @@ core::stringc CXMeshFileLoader::stripPathFromString(core::stringc string, bool r
 	if (backSlash>slashIndex) slashIndex=backSlash;
 
 	if (slashIndex==-1)//no slashes found
-	{
 		if (returnPath)
 			return core::stringc(); //no path to return
 		else
 			return string;
-	}
 
 	if (returnPath)
 		return string.subString(0, slashIndex + 1);

@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -7,25 +7,25 @@
 #ifdef _IRR_COMPILE_WITH_GUI_
 
 #include "IGUIEnvironment.h"
-
 #include "IGUIButton.h"
 #include "IGUICheckBox.h"
-#include "IGUIColorSelectDialog.h"
 #include "IGUIComboBox.h"
 #include "IGUIContextMenu.h"
 #include "IGUIEditBox.h"
+#include "IGUISpinBox.h"
 #include "IGUIFileOpenDialog.h"
+#include "IGUIColorSelectDialog.h"
 #include "IGUIInOutFader.h"
 #include "IGUIImage.h"
 #include "IGUIListBox.h"
 #include "IGUIMeshViewer.h"
 #include "IGUIScrollBar.h"
-#include "IGUISpinBox.h"
 #include "IGUIStaticText.h"
 #include "IGUITabControl.h"
-#include "IGUITable.h"
 #include "IGUIToolbar.h"
 #include "IGUIWindow.h"
+
+#include <string.h>
 
 namespace irr
 {
@@ -35,12 +35,12 @@ namespace gui
 CDefaultGUIElementFactory::CDefaultGUIElementFactory(IGUIEnvironment* env)
 : Environment(env)
 {
-
-	#ifdef _DEBUG
-	setDebugName("CDefaultGUIElementFactory");
-	#endif
-
 	// don't grab the gui environment here to prevent cyclic references
+}
+
+
+CDefaultGUIElementFactory::~CDefaultGUIElementFactory()
+{
 }
 
 
@@ -85,8 +85,6 @@ IGUIElement* CDefaultGUIElementFactory::addGUIElement(EGUI_ELEMENT_TYPE type, IG
 			return Environment->addTab(core::rect<s32>(0,0,100,100),parent);
 		case EGUIET_TAB_CONTROL:
 			return Environment->addTabControl(core::rect<s32>(0,0,100,100),parent);
-		case EGUIET_TABLE:
-			return Environment->addTable(core::rect<s32>(0,0,100,100), parent);
 		case EGUIET_TOOL_BAR:
 			return Environment->addToolBar(parent);
 		case EGUIET_WINDOW:
@@ -106,14 +104,14 @@ IGUIElement* CDefaultGUIElementFactory::addGUIElement(const c8* typeName, IGUIEl
 }
 
 
-//! Returns the amount of element types this factory is able to create.
+//! returns amount of element types this factory is able to create
 s32 CDefaultGUIElementFactory::getCreatableGUIElementTypeCount() const
 {
 	return EGUIET_COUNT;
 }
 
 
-//! Returns the type of a createable element type.
+//! returns type of a createable element type
 EGUI_ELEMENT_TYPE CDefaultGUIElementFactory::getCreateableGUIElementType(s32 idx) const
 {
 	if (idx>=0 && idx<EGUIET_COUNT)
@@ -123,7 +121,7 @@ EGUI_ELEMENT_TYPE CDefaultGUIElementFactory::getCreateableGUIElementType(s32 idx
 }
 
 
-//! Returns the type name of a createable element type.
+//! returns type name of a createable element type 
 const c8* CDefaultGUIElementFactory::getCreateableGUIElementTypeName(s32 idx) const
 {
 	if (idx>=0 && idx<EGUIET_COUNT)
@@ -133,7 +131,7 @@ const c8* CDefaultGUIElementFactory::getCreateableGUIElementTypeName(s32 idx) co
 }
 
 
-//! Returns the type name of a createable element type.
+//! returns type name of a createable element type 
 const c8* CDefaultGUIElementFactory::getCreateableGUIElementTypeName(EGUI_ELEMENT_TYPE type) const
 {
 	// for this factory, type == index

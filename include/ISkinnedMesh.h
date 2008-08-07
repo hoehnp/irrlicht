@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -50,14 +50,13 @@ namespace scene
 
 		//! uses animation from another mesh
 		//! the animation is linked (not copied) based on joint names (so make sure they are unique)
-		//! \return Returns true if all joints in this mesh were
-		//! matched up (empty names will not be matched, and it's case
-		//! sensitive). Unmatched joints will not be animated.
+		//! \return Returns true if all joints in this mesh were matched up (empty names will not be matched, and it's case sensitive)
+		//! unmatched joints will not be animated
 		virtual bool useAnimationFrom(const ISkinnedMesh *mesh) = 0;
 
 		//!Update Normals when Animating
-		//!False= Don't animate, faster
-		//!True= Update normals
+		//!False= Don't (default)
+		//!True= Update normals, slower
 		virtual void updateNormalsWhenAnimating(bool on) = 0;
 
 		//!Sets Interpolation Mode
@@ -69,11 +68,17 @@ namespace scene
 		//! Preforms a software skin on this mesh based of joint positions
 		virtual void skinMesh() = 0;
 
-		//! converts the vertex type of all meshbuffers to tangents. eg for bumpmapping
-		virtual void convertMeshToTangents() = 0;
+		//!Recovers the joints from the mesh
+		virtual void recoverJointsFromMesh(core::array<IBoneSceneNode*> &JointChildSceneNodes) = 0;
 
-		//! (This feature is not implementated in irrlicht yet)
-		virtual bool setHardwareSkinning(bool on) = 0;
+		//!Tranfers the joint data to the mesh
+		virtual void transferJointsToMesh(const core::array<IBoneSceneNode*> &JointChildSceneNodes) = 0;
+
+		//!Creates an array of joints from this mesh
+		virtual void createJoints(core::array<IBoneSceneNode*> &JointChildSceneNodes,
+			IAnimatedMeshSceneNode* AnimatedMeshSceneNode, ISceneManager* SceneManager) = 0;
+
+		virtual void convertMeshToTangents() = 0;
 
 		//! A vertex weight
 		struct SWeight
@@ -96,21 +101,19 @@ namespace scene
 		};
 
 
-		//! Animation keyframe which describes a new position
+		//! Animation keyframe which describes a new position, scale or rotation
 		struct SPositionKey
 		{
 			f32 frame;
 			core::vector3df position;
 		};
 
-		//! Animation keyframe which describes a new scale
 		struct SScaleKey
 		{
 			f32 frame;
 			core::vector3df scale;
 		};
 
-		//! Animation keyframe which describes a new rotation
 		struct SRotationKey
 		{
 			f32 frame;
@@ -118,10 +121,10 @@ namespace scene
 		};
 
 		//! Joints
-		struct SJoint
+	  	struct SJoint
 		{
-			SJoint() : UseAnimationFrom(0), LocalAnimatedMatrix_Animated(false), GlobalSkinningSpace(false),
-				positionHint(-1),scaleHint(-1),rotationHint(-1)
+			SJoint() : UseAnimationFrom(0), LocalAnimatedMatrix_Animated(false),
+				   positionHint(-1),scaleHint(-1),rotationHint(-1)
 			{
 			}
 
@@ -166,8 +169,6 @@ namespace scene
 			SJoint *UseAnimationFrom;
 			bool LocalAnimatedMatrix_Animated;
 
-			bool GlobalSkinningSpace;
-
 			s32 positionHint;
 			s32 scaleHint;
 			s32 rotationHint;
@@ -190,16 +191,16 @@ namespace scene
 		//! loaders should call this after populating the mesh
 		virtual void finalize() = 0;
 
+
 		virtual SSkinMeshBuffer *createBuffer() = 0;
 
 		virtual SJoint *createJoint(SJoint *parent=0) = 0;
-		virtual SWeight *createWeight(SJoint *joint) = 0;
 
 		virtual SPositionKey *createPositionKey(SJoint *joint) = 0;
 		virtual SScaleKey *createScaleKey(SJoint *joint) = 0;
 		virtual SRotationKey *createRotationKey(SJoint *joint) = 0;
 
-		virtual bool isStatic()=0;
+		virtual SWeight *createWeight(SJoint *joint) = 0;
 	};
 
 } // end namespace scene

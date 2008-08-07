@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -16,20 +16,16 @@ CSceneNodeAnimatorFlyCircle::CSceneNodeAnimatorFlyCircle(u32 time, const core::v
 	#ifdef _DEBUG
 	setDebugName("CSceneNodeAnimatorFlyCircle");
 	#endif
-	init();
-}
-
-
-void CSceneNodeAnimatorFlyCircle::init()
-{
 	Direction.normalize();
-
-	if (Direction.Y != 0)
-		VecV = core::vector3df(50,0,0).crossProduct(Direction).normalize();
-	else
-		VecV = core::vector3df(0,50,0).crossProduct(Direction).normalize();
-	VecU = VecV.crossProduct(Direction).normalize();
 }
+
+
+
+//! destructor
+CSceneNodeAnimatorFlyCircle::~CSceneNodeAnimatorFlyCircle()
+{
+}
+
 
 
 //! animates a scene node
@@ -40,7 +36,10 @@ void CSceneNodeAnimatorFlyCircle::animateNode(ISceneNode* node, u32 timeMs)
 
 	const f32 t = (timeMs-StartTime) * Speed;
 
-	node->setPosition(Center + Radius * ((VecU*cosf(t)) + (VecV*sinf(t))));
+	core::vector3df circle(Radius * sinf(t), 0, Radius * cosf(t));
+	circle = circle.crossProduct ( Direction );
+
+	node->setPosition(Center + circle);
 }
 
 
@@ -61,14 +60,13 @@ void CSceneNodeAnimatorFlyCircle::deserializeAttributes(io::IAttributes* in, io:
 	Radius = in->getAttributeAsFloat("Radius");
 	Speed = in->getAttributeAsFloat("Speed");
 	Direction = in->getAttributeAsVector3d("Direction");
-	StartTime = 0;
 	
 	if (Direction.equals(core::vector3df(0,0,0)))
 		Direction.set(0,1,0); // irrlicht 1.1 backwards compatibility
 	else
 		Direction.normalize();
-	init();
 }
+
 
 
 } // end namespace scene

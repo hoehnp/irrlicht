@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 //
@@ -24,7 +24,6 @@
 #include "irrString.h"
 #include "irrMath.h"
 #include "dmfsupport.h"
-#include "CImage.h"
 
 namespace irr
 {
@@ -32,13 +31,25 @@ namespace scene
 {
 
 /** Constructor*/
-CDMFLoader::CDMFLoader(ISceneManager* smgr)
-: SceneMgr(smgr)
+CDMFLoader::CDMFLoader(video::IVideoDriver* driver, ISceneManager* smgr)
+: Driver(driver) , SceneMgr(smgr)
 {
 	#ifdef _DEBUG
 	IReferenceCounted::setDebugName("CDMFLoader");
 	#endif
+
+	if (Driver)
+		Driver->grab();
 }
+
+
+/** Destructor*/
+CDMFLoader::~CDMFLoader()
+{
+	if (Driver)
+		Driver->drop();
+}
+
 
 
 /** Given first three points of a face, returns a face normal*/
@@ -80,7 +91,6 @@ IAnimatedMesh* CDMFLoader::createMesh(io::IReadFile* file)
 {
 	if (!file)
 		return 0;
-	video::IVideoDriver* driver = SceneMgr->getVideoDriver();
 
 	//Load stringlist
 	StringList dmfRawFile(file);
@@ -98,7 +108,7 @@ IAnimatedMesh* CDMFLoader::createMesh(io::IReadFile* file)
 	if (GetDMFHeader(dmfRawFile, header))
 	{
 		//let's set ambient light
-		SceneMgr->setAmbientLight(header.dmfAmbient);
+		SceneMgr->setAmbientLight( header.dmfAmbient);
 
 		//let's create the correct number of materials, vertices and faces
 		dmfMaterial *materiali=new dmfMaterial[header.numMaterials];
@@ -204,11 +214,11 @@ IAnimatedMesh* CDMFLoader::createMesh(io::IReadFile* file)
 				}
 
 				for (u32 j=0; j<filepath.size()-1; ++j)
-					path = path + filepath[j] + String("/");
+					path = path + filepath[j] + String("\\");
 			}
 			else
 				path = path +
-						String( SceneMgr->getParameters()->getAttributeAsString(DMF_TEXTURE_PATH)) + String("/");
+						String( SceneMgr->getParameters()->getAttributeAsString(DMF_TEXTURE_PATH)) + String("\\");
 
 			//texture and lightmap
 			ITexture *tex = 0;
@@ -219,8 +229,8 @@ IAnimatedMesh* CDMFLoader::createMesh(io::IReadFile* file)
 
 			//Primary texture is normal
 			if ((materiali[i].textureFlag==0) || (materiali[i].textureBlend==4))
-				driver->setTextureCreationFlag(ETCF_ALWAYS_32_BIT,true);
-			tex = driver->getTexture((path+String(materiali[i].textureName)).c_str());
+				Driver->setTextureCreationFlag(ETCF_ALWAYS_32_BIT,true);
+			tex = Driver->getTexture((path+String(materiali[i].textureName)).c_str());
 
 			//Primary texture is just a colour
 			if(materiali[i].textureFlag==1)
@@ -241,16 +251,21 @@ IAnimatedMesh* CDMFLoader::createMesh(io::IReadFile* file)
 					axtoi(red.c_str()),axtoi(green.c_str()),
 					axtoi(blue.c_str()));
 
+				s32 col = color.color;
+				s32 buf[64];
+
+				for (int k=0; k<64; k++)
+					buf[k]=col;
+
 				//just for compatibility with older Irrlicht versions
 				//to support transparent materials
 				if (color.getAlpha()!=255 && materiali[i].textureBlend==4)
-					driver->setTextureCreationFlag(ETCF_ALWAYS_32_BIT,true);
+					Driver->setTextureCreationFlag(ETCF_ALWAYS_32_BIT,true);
 
-				CImage *immagine= new CImage(ECF_A8R8G8B8,
-					core::dimension2d<s32>(8,8));
-				immagine->fill(color);
-				tex = driver->addTexture("", immagine);
-				immagine->drop();
+				IImage *immagine=Driver->createImageFromData(ECF_A8R8G8B8,
+					core::dimension2d<s32>(8,8),buf);
+
+				tex = Driver->addTexture("", immagine);
 
 				//to support transparent materials
 				if(color.getAlpha()!=255 && materiali[i].textureBlend==4)
@@ -263,7 +278,7 @@ IAnimatedMesh* CDMFLoader::createMesh(io::IReadFile* file)
 
 			//Lightmap is present
 			if (materiali[i].lightmapFlag == 0)
-				lig = driver->getTexture((path+String(materiali[i].lightmapName)).c_str());
+				lig = Driver->getTexture((path+String(materiali[i].lightmapName)).c_str());
 			else //no lightmap
 			{
 				lig = 0;

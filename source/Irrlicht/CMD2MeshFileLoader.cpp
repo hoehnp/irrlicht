@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -16,11 +16,6 @@ namespace scene
 //! Constructor
 CMD2MeshFileLoader::CMD2MeshFileLoader()
 {
-
-	#ifdef _DEBUG
-	setDebugName("CMD2MeshFileLoader");
-	#endif
-
 }
 
 
