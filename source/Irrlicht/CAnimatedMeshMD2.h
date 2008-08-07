@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -84,9 +84,12 @@ namespace scene
 		//! calculates the bounding box
 		virtual void calculateBoundingBox();
 
-		SMeshBuffer* InterpolationBuffer;
 		core::array<video::S3DVertex> *FrameList;
 		core::array<core::aabbox3d<f32> > BoxList;
+		u32 FrameCount;
+		s32 TriangleCount;
+
+		SMeshBuffer InterpolationBuffer;
 
 		struct SFrameData
 		{
@@ -97,9 +100,6 @@ namespace scene
 		};
 
 		core::array< SFrameData > FrameData;
-
-		u32 FrameCount;
-		s32 TriangleCount;
 	};
 
 } // end namespace scene

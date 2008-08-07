@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt / Thomas Alten
+// Copyright (C) 2002-2007 Nikolaus Gebhardt / Thomas Alten
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -13,7 +13,6 @@
 #include "SoftwareDriver2_compile_config.h"
 #include "irrMath.h"
 #include "CSoftwareTexture2.h"
-#include "SMaterial.h"
 
 
 
@@ -108,7 +107,7 @@ REALINLINE void memcpy32_small ( void * dest, const void *source, u32 bytesize )
 
 	do
 	{
-		((u32*) dest ) [ c-1 ] = ((u32*) source) [ c-1 ];
+		((u32*) dest ) [ c + -1 ] = ((u32*) source) [ c + -1 ];
 	} while ( --c );
 
 }
@@ -144,6 +143,12 @@ REALINLINE u32 if_mask_a_else_b ( const u32 mask, const u32 a, const u32 b )
 {
 	return ( mask & ( a ^ b ) ) ^ b;
 }
+
+inline void setbits ( u32 &state, s32 condition, u32 mask )
+{
+	state ^= ( ( -condition >> 31 ) ^ state ) & mask;
+}
+
 
 // ------------------ Video---------------------------------------
 /*!
@@ -697,24 +702,7 @@ inline void getSample_texture ( tFixPoint &r, tFixPoint &g, tFixPoint &b,
 	(tFixPointu &) r	 =	(t00 & MASK_R) >> ( SHIFT_R - FIX_POINT_PRE);
 	(tFixPointu &) g	 =	(t00 & MASK_G) << ( FIX_POINT_PRE - SHIFT_G );
 	(tFixPointu &) b	 =	(t00 & MASK_B) << ( FIX_POINT_PRE - SHIFT_B );
-}
 
-inline void getSample_texture ( tFixPointu &a, tFixPointu &r, tFixPointu &g, tFixPointu &b, 
-						const sInternalTexture * t, const tFixPointu tx, const tFixPointu ty
-								)
-{
-	u32 ofs;
-
-	ofs = ( ( ty & t->textureYMask ) >> FIX_POINT_PRE ) << t->pitchlog2;
-	ofs |= ( tx & t->textureXMask ) >> ( FIX_POINT_PRE - VIDEO_SAMPLE_GRANULARITY );
-
-	// texel
-	const tVideoSample t00 = *((tVideoSample*)( (u8*) t->data + ofs ));
-
-	(tFixPointu &)a	 =	(t00 & MASK_A) >> ( SHIFT_A - FIX_POINT_PRE);
-	(tFixPointu &)r	 =	(t00 & MASK_R) >> ( SHIFT_R - FIX_POINT_PRE);
-	(tFixPointu &)g	 =	(t00 & MASK_G) << ( FIX_POINT_PRE - SHIFT_G );
-	(tFixPointu &)b	 =	(t00 & MASK_B) << ( FIX_POINT_PRE - SHIFT_B );
 }
 
 

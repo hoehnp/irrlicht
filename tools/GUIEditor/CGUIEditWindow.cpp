@@ -54,7 +54,13 @@ CGUIEditWindow::CGUIEditWindow(IGUIEnvironment* environment, core::rect<s32> rec
 	//L"Sprite Editor"
 	//Environment->addGUIElement("textureCacheBrowser", this);
 
-	IGUITab* EditorTab = TabControl->addTab(L"Editor");
+	IGUITab* OptionsTab = TabControl->addTab(L"Attributes");
+
+	IGUITabControl *AttribTabControl = environment->addTabControl(core::rect<s32>(1,1,100,100), OptionsTab, false, true);
+	AttribTabControl->setRelativePosition( core::rect<f32>(0.0f, 0.0f, 1.0f, 1.0f));
+	AttribTabControl->setAlignment(EGUIA_UPPERLEFT, EGUIA_LOWERRIGHT, EGUIA_UPPERLEFT, EGUIA_LOWERRIGHT);
+
+	IGUITab* EditorTab = AttribTabControl->addTab(L"Editor");
 	OptionEditor = (CGUIAttributeEditor*) environment->addGUIElement("attributeEditor", EditorTab);
 	OptionEditor->grab();
 	OptionEditor->setID(EGUIEDCE_OPTION_EDITOR);
@@ -63,14 +69,14 @@ CGUIEditWindow::CGUIEditWindow(IGUIEnvironment* environment, core::rect<s32> rec
 
 	if (Parent && Parent->getParent() == Environment->getRootGUIElement())
 	{
-		IGUITab* EnvTab = TabControl->addTab(L"Env");
+		IGUITab* EnvTab = AttribTabControl->addTab(L"Env");
 		EnvEditor = (CGUIAttributeEditor*) environment->addGUIElement("attributeEditor", EnvTab);
 		EnvEditor->grab();
 		EnvEditor->setID(EGUIEDCE_ENV_EDITOR);
 		EnvEditor->setRelativePosition(core::rect<f32>(0.0f, 0.0f, 1.0f, 1.0f));
 		EnvEditor->setAlignment(EGUIA_UPPERLEFT, EGUIA_LOWERRIGHT, EGUIA_UPPERLEFT, EGUIA_LOWERRIGHT);
 	}
-	IGUITab* ElementTab = TabControl->addTab(L"Element");
+	IGUITab* ElementTab = AttribTabControl->addTab(L"Element");
 
 	AttribEditor = (CGUIAttributeEditor*) environment->addGUIElement("attributeEditor", ElementTab);
 	AttribEditor->grab();

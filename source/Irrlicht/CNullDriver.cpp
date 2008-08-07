@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -36,9 +36,6 @@ IImageLoader* createImageLoaderPCX();
 
 //! creates a loader which is able to load png images
 IImageLoader* createImageLoaderPNG();
-
-//! creates a loader which is able to load WAL images
-IImageLoader* createImageLoaderWAL();
 
 //! creates a loader which is able to load ppm/pgm/pbm images
 IImageLoader* createImageLoaderPPM();
@@ -105,9 +102,6 @@ CNullDriver::CNullDriver(io::IFileSystem* io, const core::dimension2d<s32>& scre
 #ifdef _IRR_COMPILE_WITH_PNG_LOADER_
 	SurfaceLoader.push_back(video::createImageLoaderPNG());
 #endif
-#ifdef _IRR_COMPILE_WITH_WAL_LOADER_
-	SurfaceLoader.push_back(video::createImageLoaderWAL());
-#endif
 #ifdef _IRR_COMPILE_WITH_PPM_LOADER_
 	SurfaceLoader.push_back(video::createImageLoaderPPM());
 #endif
@@ -143,27 +137,27 @@ CNullDriver::CNullDriver(io::IFileSystem* io, const core::dimension2d<s32>& scre
 //! destructor
 CNullDriver::~CNullDriver()
 {
-	// drop file system
+	// delete file system
+
 	if (FileSystem)
 		FileSystem->drop();
 
 	// delete textures
+
 	deleteAllTextures();
 
 	// delete surface loader
+
 	u32 i;
 	for (i=0; i<SurfaceLoader.size(); ++i)
 		SurfaceLoader[i]->drop();
 
 	// delete surface writer
+
 	for (i=0; i<SurfaceWriter.size(); ++i)
 		SurfaceWriter[i]->drop();
 
-	// delete material renderers
 	deleteMaterialRenders();
-
-	// delete hardware mesh buffers
-	removeAllHardwareBuffers();
 }
 
 
@@ -211,10 +205,9 @@ bool CNullDriver::beginScene(bool backBuffer, bool zBuffer, SColor color)
 
 
 //! applications must call this method after performing any rendering. returns false if failed.
-bool CNullDriver::endScene( void* windowId, core::rect<s32>* sourceRect )
+bool CNullDriver::endScene( s32 windowId, core::rect<s32>* sourceRect )
 {
 	FPSCounter.registerFrame(os::Timer::getRealTime(), PrimitivesDrawn);
-	updateAllHardwareBuffers();
 	return true;
 }
 
@@ -257,13 +250,11 @@ void CNullDriver::removeTexture(ITexture* texture)
 		return;
 
 	for (u32 i=0; i<Textures.size(); ++i)
-	{
 		if (Textures[i].Surface == texture)
 		{
 			texture->drop();
 			Textures.erase(i);
 		}
-	}
 }
 
 
@@ -315,6 +306,7 @@ ITexture* CNullDriver::getTexture(const c8* filename)
 		return texture;
 
 	io::IReadFile* file = FileSystem->createAndOpenFile(filename);
+	bool errorReported = false;
 
 	if (file)
 	{
@@ -326,16 +318,19 @@ ITexture* CNullDriver::getTexture(const c8* filename)
 			addTexture(texture);
 			texture->drop(); // drop it because we created it, one grab too much
 		}
-		else
-			os::Printer::log("Could not load texture", filename, ELL_ERROR);
-		return texture;
 	}
 	else
 	{
-		os::Printer::log("Could not open file of texture", filename, ELL_WARNING);
-		return 0;
+		errorReported = true;
+		os::Printer::log("Could not open file of texture", filename, ELL_ERROR);
 	}
+
+	if (!texture && !errorReported)
+		os::Printer::log("Could not load texture", filename, ELL_ERROR);
+
+	return texture;
 }
+
 
 
 //! loads a Texture
@@ -360,10 +355,11 @@ ITexture* CNullDriver::getTexture(io::IReadFile* file)
 	}
 
 	if (!texture)
-		os::Printer::log("Could not load texture", file->getFileName(), ELL_WARNING);
+		os::Printer::log("Could not load texture", file->getFileName(), ELL_ERROR);
 
 	return texture;
 }
+
 
 
 //! opens the file and loads it into the surface
@@ -709,11 +705,6 @@ void CNullDriver::draw2DPolygon(core::position2d<s32> center,
 }
 
 
-//! returns color format
-ECOLOR_FORMAT CNullDriver::getColorFormat() const
-{
-	return ECF_R5G6B5;
-}
 
 
 //! returns screen size
@@ -721,7 +712,6 @@ const core::dimension2d<s32>& CNullDriver::getScreenSize() const
 {
 	return ScreenSize;
 }
-
 
 //! returns the current render target size,
 //! or the screen size if render targets are not implemented
@@ -1151,7 +1141,7 @@ IImage* CNullDriver::createImageFromFile(const char* filename)
 		file->drop();
 	}
 	else
-		os::Printer::log("Could not open file of image", filename, ELL_WARNING);
+		os::Printer::log("Could not open file of image", filename, ELL_ERROR);
 
 	return image;
 }
@@ -1251,79 +1241,10 @@ void CNullDriver::drawMeshBuffer(const scene::IMeshBuffer* mb)
 	if (!mb)
 		return;
 
-	//IVertexBuffer and IIndexBuffer later
-	SHWBufferLink *HWBuffer=getBufferLink(mb);
-
-	if (HWBuffer)
-		drawHardwareBuffer(HWBuffer);
-	else
-		drawVertexPrimitiveList(mb->getVertices(), mb->getVertexCount(), mb->getIndices(), mb->getIndexCount()/3, mb->getVertexType(), scene::EPT_TRIANGLES);
-}
-
-CNullDriver::SHWBufferLink *CNullDriver::getBufferLink(const scene::IMeshBuffer* mb)
-{
-	if (!mb || !isHardwareBufferRecommend(mb))
-		return 0;
-
-	//search for hardware links
-	core::map< const scene::IMeshBuffer*,SHWBufferLink* >::Node* node = HWBufferMap.find(mb);
-	if (node) return node->getValue();
-
-	return createHardwareBuffer(mb); //no hardware links, and mesh wants one, create it
-}
-
-//! Update all hardware buffers, remove unused ones
-void CNullDriver::updateAllHardwareBuffers()
-{
-	core::map<const scene::IMeshBuffer*,SHWBufferLink*>::ParentFirstIterator Iterator=HWBufferMap.getParentFirstIterator();
-
-	for (;!Iterator.atEnd();Iterator++)
-	{
-		SHWBufferLink *Link=Iterator.getNode()->getValue();
-
-		Link->LastUsed++;
-		if (Link->LastUsed>20000)
-		{
-			deleteHardwareBuffer(Link);
-
-			// todo: needs better fix
-			Iterator = HWBufferMap.getParentFirstIterator();
-		}
-	}
+	drawVertexPrimitiveList(mb->getVertices(), mb->getVertexCount(), mb->getIndices(), mb->getIndexCount()/3, mb->getVertexType(), scene::EPT_TRIANGLES);
 }
 
 
-void CNullDriver::deleteHardwareBuffer(SHWBufferLink *HWBuffer)
-{
-	if (!HWBuffer) return;
-	HWBufferMap.remove( HWBuffer->MeshBuffer );
-	delete HWBuffer;
-}
-
-//! Remove hardware buffer
-void CNullDriver::removeHardwareBuffer(const scene::IMeshBuffer* mb)
-{
-	core::map<const scene::IMeshBuffer*,SHWBufferLink*>::Node* node = HWBufferMap.find(mb);
-	if (node) deleteHardwareBuffer( node->getValue() );
-}
-
-//! Remove all hardware buffers
-void CNullDriver::removeAllHardwareBuffers()
-{
-	while (HWBufferMap.size())
-		deleteHardwareBuffer(HWBufferMap.getRoot()->getValue());
-}
-
-bool CNullDriver::isHardwareBufferRecommend(const scene::IMeshBuffer* mb)
-{
-	if (!mb || mb->getHardwareMappingHint()==scene::EHM_NEVER)
-		return false;
-
-	if (mb->getVertexCount()<500) //todo: tweak and make user definable
-		return false;
-
-	return true;
-}
 
 //! Only used by the internal engine. Used to notify the driver that
 //! the window was resized.
@@ -1410,7 +1331,6 @@ io::IAttributes* CNullDriver::createAttributesFromMaterial(const video::SMateria
 	attr->addBool("ZWriteEnable", material.ZWriteEnable);
 	attr->addInt("ZBuffer", material.ZBuffer);
 	attr->addBool("BackfaceCulling", material.BackfaceCulling);
-	attr->addBool("FrontfaceCulling", material.FrontfaceCulling);
 	attr->addBool("FogEnable", material.FogEnable);
 	attr->addBool("NormalizeNormals", material.NormalizeNormals);
 
@@ -1466,7 +1386,6 @@ void CNullDriver::fillMaterialStructureFromAttributes(video::SMaterial& outMater
 	outMaterial.ZWriteEnable = attr->getAttributeAsBool("ZWriteEnable");
 	outMaterial.ZBuffer = attr->getAttributeAsInt("ZBuffer");
 	outMaterial.BackfaceCulling = attr->getAttributeAsBool("BackfaceCulling");
-	outMaterial.FrontfaceCulling = attr->getAttributeAsBool("FrontfaceCulling");
 	outMaterial.FogEnable = attr->getAttributeAsBool("FogEnable");
 	outMaterial.NormalizeNormals = attr->getAttributeAsBool("NormalizeNormals");
 	prefix = "BilinearFilter";
@@ -1513,13 +1432,12 @@ E_DRIVER_TYPE CNullDriver::getDriverType() const
 void CNullDriver::deleteMaterialRenders()
 {
 	// delete material renderers
-	for (u32 i=0; i<MaterialRenderers.size(); ++i)
+	for (int i=0; i<(int)MaterialRenderers.size(); ++i)
 		if (MaterialRenderers[i].Renderer)
 			MaterialRenderers[i].Renderer->drop();
 
 	MaterialRenderers.clear();
 }
-
 
 //! Returns pointer to material renderer or null
 IMaterialRenderer* CNullDriver::getMaterialRenderer(u32 idx)
@@ -1529,6 +1447,7 @@ IMaterialRenderer* CNullDriver::getMaterialRenderer(u32 idx)
 	else
 		return 0;
 }
+
 
 
 //! Returns amount of currently available material renderers.
@@ -1657,9 +1576,6 @@ s32 CNullDriver::addHighLevelShaderMaterialFromFiles(
 		const long size = pixelShaderProgram->getSize();
 		if (size)
 		{
-			// if both handles are the same we must reset the file
-			if (pixelShaderProgram==vertexShaderProgram)
-				pixelShaderProgram->seek(0);
 			ps = new c8[size+1];
 			pixelShaderProgram->read(ps, size);
 			ps[size] = 0;
@@ -1808,17 +1724,7 @@ void CNullDriver::printVersion()
 //! creates a video driver
 IVideoDriver* createNullDriver(io::IFileSystem* io, const core::dimension2d<s32>& screenSize)
 {
-	CNullDriver* nullDriver = new CNullDriver(io, screenSize);
-
-	// create empty material renderers
-	for(u32 i=0; sBuiltInMaterialTypeNames[i]; ++i)
-	{
-		IMaterialRenderer* imr = new IMaterialRenderer();
-		nullDriver->addMaterialRenderer(imr);
-		imr->drop();
-	}
-
-	return nullDriver;
+	return new CNullDriver(io, screenSize);
 }
 
 

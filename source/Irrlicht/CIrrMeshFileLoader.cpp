@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -22,15 +22,16 @@ namespace scene
 
 
 //! Constructor
-CIrrMeshFileLoader::CIrrMeshFileLoader(scene::ISceneManager* smgr,
-		io::IFileSystem* fs)
-	: SceneManager(smgr), FileSystem(fs)
+CIrrMeshFileLoader::CIrrMeshFileLoader(video::IVideoDriver* driver,
+		scene::ISceneManager* smgr, io::IFileSystem* fs)
+	: Driver(driver), SceneManager(smgr), FileSystem(fs)
 {
+}
 
-	#ifdef _DEBUG
-	setDebugName("CIrrMeshFileLoader");
-	#endif
 
+//! destructor
+CIrrMeshFileLoader::~CIrrMeshFileLoader()
+{
 }
 
 
@@ -174,10 +175,10 @@ IMeshBuffer* CIrrMeshFileLoader::readMeshBuffer(io::IXMLReader* reader)
 			{
 				//we've got a material
 
-				io::IAttributes* attributes = FileSystem->createEmptyAttributes(SceneManager->getVideoDriver());
+				io::IAttributes* attributes = FileSystem->createEmptyAttributes(Driver);
 				attributes->read(reader, true, L"material");
 
-				SceneManager->getVideoDriver()->fillMaterialStructureFromAttributes(material, attributes);
+				Driver->fillMaterialStructureFromAttributes(material, attributes);
 				attributes->drop();
 			}
 			else
@@ -255,7 +256,7 @@ IMeshBuffer* CIrrMeshFileLoader::readMeshBuffer(io::IXMLReader* reader)
 				if (sbuffer2)
 					readIndices(reader, indexCount, sbuffer2->Indices);
 				else
-				if (sbuffer3)
+				if (sbuffer2)
 					readIndices(reader, indexCount, sbuffer3->Indices);
 
 				insideIndexSection = false;

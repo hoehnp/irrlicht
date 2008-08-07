@@ -1,4 +1,4 @@
-// Copyright 2006-2008 Asger Feldthaus
+// Copyright 2006-2007 Asger Feldthaus
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -93,10 +93,11 @@ void CGUIPanel::draw()
 	}
 
     video::IVideoDriver* driver = Environment->getVideoDriver();
-    IGUISkin* skin = Environment->getSkin();
-    if (Border && skin)
+    
+    if (Border)
     {
-        skin->draw3DSunkenPane( this, skin->getColor( EGDC_APP_WORKSPACE), false, true, AbsoluteRect, &AbsoluteClippingRect );
+        IGUISkin* skin = Environment->getSkin();
+        skin->draw3DSunkenPane( this, skin->getColor( EGDC_APP_WORKSPACE), true,true, AbsoluteRect, &AbsoluteClippingRect );
     }
 
 	IGUIElement::draw();

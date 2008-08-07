@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -254,144 +254,141 @@ void CGUIMessageBox::refreshControls()
 //! called if an event happened.
 bool CGUIMessageBox::OnEvent(const SEvent& event)
 {
-	if (IsEnabled)
+	SEvent outevent;
+	outevent.EventType = EET_GUI_EVENT;
+	outevent.GUIEvent.Caller = this;
+	outevent.GUIEvent.Element = 0;
+
+	switch(event.EventType)
 	{
-		SEvent outevent;
-		outevent.EventType = EET_GUI_EVENT;
-		outevent.GUIEvent.Caller = this;
-		outevent.GUIEvent.Element = 0;
+	case EET_KEY_INPUT_EVENT:
 
-		switch(event.EventType)
+		if (event.KeyInput.PressedDown)
 		{
-		case EET_KEY_INPUT_EVENT:
-
-			if (event.KeyInput.PressedDown)
+			switch (event.KeyInput.Key)
 			{
-				switch (event.KeyInput.Key)
+			case KEY_RETURN:
+				if (OkButton)
 				{
-				case KEY_RETURN:
-					if (OkButton)
-					{
-						OkButton->setPressed(true);
-						Pressed = true;
-					}
-					break;
-				case KEY_KEY_Y:
-					if (YesButton)
-					{
-						YesButton->setPressed(true);
-						Pressed = true;
-					}
-					break;
-				case KEY_KEY_N:
-					if (NoButton)
-					{
-						NoButton->setPressed(true);
-						Pressed = true;
-					}
-					break;
-				case KEY_ESCAPE:
-					if (Pressed)
-					{
-						// cancel press
-						if (OkButton) OkButton->setPressed(false);
-						if (YesButton) OkButton->setPressed(false);
-						if (NoButton) OkButton->setPressed(false);
-						Pressed = false;
-					}
-					else
-					if (CancelButton)
-					{
-						CancelButton->setPressed(true);
-						Pressed = true;
-					}
-					else
-					if (CloseButton && CloseButton->isVisible())
-					{
-						CloseButton->setPressed(true);
-						Pressed = true;
-					}
-					break;
-				default: // no other key is handled here
-					break;
+					OkButton->setPressed(true);
+					Pressed = true;
 				}
+				break;
+			case KEY_KEY_Y:
+				if (YesButton)
+				{
+					YesButton->setPressed(true);
+					Pressed = true;
+				}
+				break;
+			case KEY_KEY_N:
+				if (NoButton)
+				{
+					NoButton->setPressed(true);
+					Pressed = true;
+				}
+				break;
+			case KEY_ESCAPE:
+				if (Pressed)
+				{
+					// cancel press
+					if (OkButton) OkButton->setPressed(false);
+					if (YesButton) OkButton->setPressed(false);
+					if (NoButton) OkButton->setPressed(false);
+					Pressed = false;
+				}
+				else
+				if (CancelButton)
+				{
+					CancelButton->setPressed(true);
+					Pressed = true;
+				}
+				else
+				if (CloseButton && CloseButton->isVisible())
+				{
+					CloseButton->setPressed(true);
+					Pressed = true;
+				}
+				break;
+			default: // no other key is handled here
+				break;
+			}
+		}
+		else
+		if (Pressed)
+		{
+			if (OkButton && event.KeyInput.Key == KEY_RETURN)
+			{
+				outevent.GUIEvent.EventType = EGET_MESSAGEBOX_OK;
+				Parent->OnEvent(outevent);
+				remove();
+				return true;
 			}
 			else
-			if (Pressed)
+			if ((CancelButton || CloseButton) && event.KeyInput.Key == KEY_ESCAPE)
 			{
-				if (OkButton && event.KeyInput.Key == KEY_RETURN)
-				{
-					outevent.GUIEvent.EventType = EGET_MESSAGEBOX_OK;
-					Parent->OnEvent(outevent);
-					remove();
-					return true;
-				}
-				else
-				if ((CancelButton || CloseButton) && event.KeyInput.Key == KEY_ESCAPE)
-				{
-					outevent.GUIEvent.EventType = EGET_MESSAGEBOX_CANCEL;
-					Parent->OnEvent(outevent);
-					remove();
-					return true;
-				}
-				else
-				if (YesButton && event.KeyInput.Key == KEY_KEY_Y)
-				{
-					outevent.GUIEvent.EventType = EGET_MESSAGEBOX_YES;
-					Parent->OnEvent(outevent);
-					remove();
-					return true;
-				}
-				else
-				if (NoButton && event.KeyInput.Key == KEY_KEY_N)
-				{
-					outevent.GUIEvent.EventType = EGET_MESSAGEBOX_NO;
-					Parent->OnEvent(outevent);
-					remove();
-					return true;
-				}
+				outevent.GUIEvent.EventType = EGET_MESSAGEBOX_CANCEL;
+				Parent->OnEvent(outevent);
+				remove();
+				return true;
 			}
-			break;
-		case EET_GUI_EVENT:
-			if (event.GUIEvent.EventType == EGET_BUTTON_CLICKED)
+			else
+			if (YesButton && event.KeyInput.Key == KEY_KEY_Y)
 			{
-				if (event.GUIEvent.Caller == OkButton)
-				{
-					outevent.GUIEvent.EventType = EGET_MESSAGEBOX_OK;
-					Parent->OnEvent(outevent);
-					remove();
-					return true;
-				}
-				else
-				if (event.GUIEvent.Caller == CancelButton ||
-					event.GUIEvent.Caller == CloseButton)
-				{
-					outevent.GUIEvent.EventType = EGET_MESSAGEBOX_CANCEL;
-					Parent->OnEvent(outevent);
-					remove();
-					return true;
-				}
-				else
-				if (event.GUIEvent.Caller == YesButton)
-				{
-					outevent.GUIEvent.EventType = EGET_MESSAGEBOX_YES;
-					Parent->OnEvent(outevent);
-					remove();
-					return true;
-				}
-				else
-				if (event.GUIEvent.Caller == NoButton)
-				{
-					outevent.GUIEvent.EventType = EGET_MESSAGEBOX_NO;
-					Parent->OnEvent(outevent);
-					remove();
-					return true;
-				}
+				outevent.GUIEvent.EventType = EGET_MESSAGEBOX_YES;
+				Parent->OnEvent(outevent);
+				remove();
+				return true;
 			}
-			break;
-		default:
-			break;
+			else
+			if (NoButton && event.KeyInput.Key == KEY_KEY_N)
+			{
+				outevent.GUIEvent.EventType = EGET_MESSAGEBOX_NO;
+				Parent->OnEvent(outevent);
+				remove();
+				return true;
+			}
 		}
+		break;
+	case EET_GUI_EVENT:
+		if (event.GUIEvent.EventType == EGET_BUTTON_CLICKED)
+		{
+			if (event.GUIEvent.Caller == OkButton)
+			{
+				outevent.GUIEvent.EventType = EGET_MESSAGEBOX_OK;
+				Parent->OnEvent(outevent);
+				remove();
+				return true;
+			}
+			else
+			if (event.GUIEvent.Caller == CancelButton ||
+				event.GUIEvent.Caller == CloseButton)
+			{
+				outevent.GUIEvent.EventType = EGET_MESSAGEBOX_CANCEL;
+				Parent->OnEvent(outevent);
+				remove();
+				return true;
+			}
+			else
+			if (event.GUIEvent.Caller == YesButton)
+			{
+				outevent.GUIEvent.EventType = EGET_MESSAGEBOX_YES;
+				Parent->OnEvent(outevent);
+				remove();
+				return true;
+			}
+			else
+			if (event.GUIEvent.Caller == NoButton)
+			{
+				outevent.GUIEvent.EventType = EGET_MESSAGEBOX_NO;
+				Parent->OnEvent(outevent);
+				remove();
+				return true;
+			}
+		}
+		break;
+	default:
+		break;
 	}
 
 	return CGUIWindow::OnEvent(event);

@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -299,23 +299,23 @@ static const SMD2AnimationType MD2AnimationTypeList[21] =
 
 //! constructor
 CAnimatedMeshMD2::CAnimatedMeshMD2()
-: InterpolationBuffer(0), FrameList(0), FrameCount(0), TriangleCount(0)
+: FrameList(0), FrameCount(0), TriangleCount(0)
 {
 	#ifdef _DEBUG
 	IAnimatedMesh::setDebugName("CAnimatedMeshMD2 IAnimatedMesh");
 	IMesh::setDebugName("CAnimatedMeshMD2 IMesh");
 	#endif
-	InterpolationBuffer = new SMeshBuffer;
 }
+
 
 
 //! destructor
 CAnimatedMeshMD2::~CAnimatedMeshMD2()
 {
-	delete [] FrameList;
-	if (InterpolationBuffer)
-		InterpolationBuffer->drop();
+	if (FrameList)
+		delete [] FrameList;
 }
+
 
 
 //! returns the amount of frames in milliseconds. If the amount is 1, it is a static (=non animated) mesh.
@@ -325,16 +325,17 @@ u32 CAnimatedMeshMD2::getFrameCount() const
 }
 
 
+
 //! returns the animated mesh based on a detail level. 0 is the lowest, 255 the highest detail. Note, that some Meshes will ignore the detail level.
 IMesh* CAnimatedMeshMD2::getMesh(s32 frame, s32 detailLevel, s32 startFrameLoop, s32 endFrameLoop)
 {
-	if ((u32)frame > getFrameCount())
-		frame = (frame % getFrameCount());
+	if ((u32)frame > (FrameCount<<MD2_FRAME_SHIFT))
+		frame = (frame % (FrameCount<<MD2_FRAME_SHIFT));
 
 	if (startFrameLoop == -1 && endFrameLoop == -1)
 	{
 		startFrameLoop = 0;
-		endFrameLoop = getFrameCount();
+		endFrameLoop = FrameCount<<MD2_FRAME_SHIFT;
 	}
 
 	updateInterpolationBuffer(frame, startFrameLoop, endFrameLoop);
@@ -352,15 +353,15 @@ u32 CAnimatedMeshMD2::getMeshBufferCount() const
 //! returns pointer to a mesh buffer
 IMeshBuffer* CAnimatedMeshMD2::getMeshBuffer(u32 nr) const
 {
-	return InterpolationBuffer;
+	return const_cast<IMeshBuffer*>(reinterpret_cast<const IMeshBuffer*>(&InterpolationBuffer));
 }
 
 
 //! Returns pointer to a mesh buffer which fits a material
 IMeshBuffer* CAnimatedMeshMD2::getMeshBuffer(const video::SMaterial &material) const
 {
-	if (InterpolationBuffer->Material == material)
-		return InterpolationBuffer;
+	if (InterpolationBuffer.Material == material)
+		return const_cast<IMeshBuffer*>(reinterpret_cast<const IMeshBuffer*>(&InterpolationBuffer));
 	else
 		return 0;
 }
@@ -397,13 +398,14 @@ void CAnimatedMeshMD2::updateInterpolationBuffer(s32 frame, s32 startFrameLoop, 
 		div = frame * MD2_FRAME_SHIFT_RECIPROCAL;
 	}
 
-	video::S3DVertex* target = static_cast<video::S3DVertex*>(InterpolationBuffer->getVertices());
+	video::S3DVertex* target = reinterpret_cast<video::S3DVertex*>(InterpolationBuffer.getVertices());
 	video::S3DVertex* first = FrameList[firstFrame].pointer();
 	video::S3DVertex* second = FrameList[secondFrame].pointer();
 
+	s32 count = FrameList[firstFrame].size();
+
 	// interpolate both frames
-	const u32 count = FrameList[firstFrame].size();
-	for (u32 i=0; i<count; ++i)
+	for (s32 i=0; i<count; ++i)
 	{
 		target->Pos = (second->Pos - first->Pos) * div + first->Pos;
 		target->Normal = (second->Normal - first->Normal) * div + first->Normal;
@@ -414,8 +416,7 @@ void CAnimatedMeshMD2::updateInterpolationBuffer(s32 frame, s32 startFrameLoop, 
 	}
 
 	//update bounding box
-	InterpolationBuffer->setBoundingBox(BoxList[secondFrame].getInterpolated(BoxList[firstFrame], div));
-	InterpolationBuffer->setDirty();
+	InterpolationBuffer.setBoundingBox(BoxList[secondFrame].getInterpolated(BoxList[firstFrame], div));
 }
 
 
@@ -617,25 +618,25 @@ bool CAnimatedMeshMD2::loadFile(io::IReadFile* file)
 
 	// create indices
 
-	InterpolationBuffer->Indices.reallocate(header.numVertices);
-	const u32 count = TriangleCount*3;
-	for (u32 n=0; n<count; n+=3)
+	InterpolationBuffer.Indices.reallocate(header.numVertices);
+	s16 count = TriangleCount*3;
+	for (s16 n=0; n<count; n+=3)
 	{
-		InterpolationBuffer->Indices.push_back(n);
-		InterpolationBuffer->Indices.push_back(n+1);
-		InterpolationBuffer->Indices.push_back(n+2);
+		InterpolationBuffer.Indices.push_back(n);
+		InterpolationBuffer.Indices.push_back(n+1);
+		InterpolationBuffer.Indices.push_back(n+2);
 	}
 
 	// reallocate interpolate buffer
 	if (header.numFrames)
 	{
-		const u32 currCount = FrameList[0].size();
-		InterpolationBuffer->Vertices.set_used(currCount);
+		u32 currCount = FrameList[0].size();
+		InterpolationBuffer.Vertices.set_used(currCount);
 
 		for (u32 num=0; num<currCount; ++num)
 		{
-			InterpolationBuffer->Vertices[num].TCoords = FrameList[0].pointer()[num].TCoords;
-			InterpolationBuffer->Vertices[num].Color = vtx.Color;
+			InterpolationBuffer.Vertices[num].TCoords = FrameList[0].pointer()[num].TCoords;
+			InterpolationBuffer.Vertices[num].Color = vtx.Color;
 		}
 	}
 
@@ -657,7 +658,7 @@ bool CAnimatedMeshMD2::loadFile(io::IReadFile* file)
 //! calculates the bounding box
 void CAnimatedMeshMD2::calculateBoundingBox()
 {
-	InterpolationBuffer->BoundingBox.reset(0,0,0);
+	InterpolationBuffer.BoundingBox.reset(0,0,0);
 
 	if (FrameCount)
 	{
@@ -667,7 +668,7 @@ void CAnimatedMeshMD2::calculateBoundingBox()
 			defaultFrame = 0;
 
 		for (u32 j=0; j<FrameList[defaultFrame].size(); ++j)
-			InterpolationBuffer->BoundingBox.addInternalPoint(FrameList[defaultFrame].pointer()[j].Pos);
+			InterpolationBuffer.BoundingBox.addInternalPoint(FrameList[defaultFrame].pointer()[j].Pos);
 	}
 }
 
@@ -675,21 +676,21 @@ void CAnimatedMeshMD2::calculateBoundingBox()
 //! sets a flag of all contained materials to a new value
 void CAnimatedMeshMD2::setMaterialFlag(video::E_MATERIAL_FLAG flag, bool newvalue)
 {
-	InterpolationBuffer->Material.setFlag(flag, newvalue);
+	InterpolationBuffer.Material.setFlag(flag, newvalue);
 }
 
 
 //! returns an axis aligned bounding box
 const core::aabbox3d<f32>& CAnimatedMeshMD2::getBoundingBox() const
 {
-	return InterpolationBuffer->BoundingBox;
+	return InterpolationBuffer.BoundingBox;
 }
 
 
 //! set user axis aligned bounding box
 void CAnimatedMeshMD2::setBoundingBox( const core::aabbox3df& box)
 {
-	InterpolationBuffer->BoundingBox = box;
+	InterpolationBuffer.BoundingBox = box;
 }
 
 
@@ -720,8 +721,7 @@ void CAnimatedMeshMD2::getFrameLoop(EMD2_ANIMATION_TYPE l,
 bool CAnimatedMeshMD2::getFrameLoop(const c8* name,
 	s32& outBegin, s32&outEnd, s32& outFPS) const
 {
-	for (u32 i=0; i<FrameData.size(); ++i)
-	{
+	for (s32 i=0; i<(s32)FrameData.size(); ++i)
 		if (FrameData[i].name == name)
 		{
 			outBegin = FrameData[i].begin << MD2_FRAME_SHIFT;
@@ -730,7 +730,6 @@ bool CAnimatedMeshMD2::getFrameLoop(const c8* name,
 			outFPS = FrameData[i].fps << MD2_FRAME_SHIFT;
 			return true;
 		}
-	}
 
 	return false;
 }
@@ -746,7 +745,7 @@ s32 CAnimatedMeshMD2::getAnimationCount() const
 //! Returns name of md2 animation.
 const c8* CAnimatedMeshMD2::getAnimationName(s32 nr) const
 {
-	if ((u32)nr >= FrameData.size())
+	if (nr < 0 || nr >= (s32)FrameData.size())
 		return 0;
 
 	return FrameData[nr].name.c_str();

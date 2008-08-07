@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -25,7 +25,7 @@ namespace video
 		virtual ~CSoftwareDriver();
 
 		//! presents the rendered scene on the screen, returns false if failed
-		virtual bool endScene( void* windowId=0, core::rect<s32>* sourceRect=0 );
+		virtual bool endScene( s32 windowId = 0, core::rect<s32>* sourceRect=0 );
 
 		//! queries the features of the driver, returns true if feature is available
 		virtual bool queryFeature(E_VIDEO_DRIVER_FEATURE feature) const;
@@ -53,9 +53,7 @@ namespace video
 		virtual const core::dimension2d<s32>& getCurrentRenderTargetSize() const;
 
 		//! draws a vertex primitive list
-		void drawVertexPrimitiveList(const void* vertices, u32 vertexCount,
-				const u16* indexList, u32 primitiveCount,
-				E_VERTEX_TYPE vType, scene::E_PRIMITIVE_TYPE pType);
+		void drawVertexPrimitiveList(const void* vertices, u32 vertexCount, const u16* indexList, u32 primitiveCount, E_VERTEX_TYPE vType, scene::E_PRIMITIVE_TYPE pType);
 
 		//! Draws a 3d line.
 		virtual void draw3DLine(const core::vector3df& start,
@@ -87,9 +85,6 @@ namespace video
 		//! Returns type of video driver
 		virtual E_DRIVER_TYPE getDriverType() const;
 
-		//! get color format of the current color buffer
-		virtual ECOLOR_FORMAT getColorFormat() const;
-
 		//! Returns the transformation set by setTransform
 		virtual const core::matrix4& getTransform(E_TRANSFORMATION_STATE state) const;
 
@@ -109,11 +104,20 @@ namespace video
 
 	protected:
 
+		struct splane
+		{
+			core::vector3df Normal;
+			f32 Dist;
+		};
+
 		//! sets a render target
 		void setRenderTarget(video::CImage* image);
 
 		//! sets the current Texture
 		bool setTexture(video::ITexture* texture);
+
+		video::CImage* BackBuffer;
+		video::IImagePresenter* Presenter;
 
 		//! switches to a triangle renderer
 		void switchToTriangleRenderer(ETriangleRenderer renderer);
@@ -124,12 +128,12 @@ namespace video
 		//! clips a triangle agains the viewing frustum
 		void clipTriangle(f32* transformedPos);
 
+		//! creates the clipping planes from the view matrix
+		void createPlanes(const core::matrix4& mat);
+
 		template<class VERTEXTYPE>
 		void drawClippedIndexedTriangleListT(const VERTEXTYPE* vertices,
 			s32 vertexCount, const u16* indexList, s32 triangleCount);
-
-		video::CImage* BackBuffer;
-		video::IImagePresenter* Presenter;
 
 		core::array<S2DVertex> TransformedPoints;
 
@@ -148,8 +152,11 @@ namespace video
 		IZBuffer* ZBuffer;
 
 		video::ITexture* Texture;
+		scene::SViewFrustum Frustum;
 
 		SMaterial Material;
+
+		splane planes[6]; // current planes of the view frustum
 	};
 
 } // end namespace video

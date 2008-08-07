@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 // This file was written by Jonas Petersen and modified by Nikolaus Gebhardt.
@@ -95,10 +95,6 @@ CLMTSMeshFileLoader::CLMTSMeshFileLoader(io::IFileSystem* fs, video::IVideoDrive
 	: Textures(0), Subsets(0), Triangles(0),
 	Parameters(parameters), Driver(driver), FileSystem(fs)
 {
-	#ifdef _DEBUG
-	setDebugName("CLMTSMeshFileLoader");
-	#endif
-
 	if (Driver)
 		Driver->grab();
 

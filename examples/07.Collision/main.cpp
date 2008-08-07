@@ -73,10 +73,10 @@ int main()
 	is a class which can fetch the triangles from scene nodes for doing different
 	things with them, for example collision detection. There are different triangle
 	selectors, and all can be created with the ISceneManager. In this example,
-	we create an OctTreeTriangleSelector, which optimizes the triangle output a
+	we create an OctTreeTriangleSelector, which optimizes the triangle output a l
 	little bit by reducing it like an octree. This is very useful for huge meshes
 	like quake 3 levels.
-	After we created the triangle selector, we attach it to the q3node. This is not
+	Afte we created the triangle selector, we attach it to the q3node. This is not
 	necessary, but in this way, we do not need to care for the selector, for example
 	dropping it after we do not need it anymore.
 	*/
@@ -130,6 +130,7 @@ int main()
 			selector, camera, core::vector3df(30,50,30),
 			core::vector3df(0,-3,0), 
 			core::vector3df(0,50,0));
+		selector->drop();
 		camera->addAnimator(anim);
 		anim->drop();
 	}
@@ -285,7 +286,6 @@ int main()
 		}
 	}
 
-	selector->drop();
 	device->drop();
 	
 	return 0;

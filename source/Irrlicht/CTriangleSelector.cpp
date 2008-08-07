@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -12,7 +12,7 @@ namespace scene
 {
 
 //! constructor
-CTriangleSelector::CTriangleSelector(const ISceneNode* node)
+CTriangleSelector::CTriangleSelector(ISceneNode* node)
 : SceneNode(node)
 {
 	#ifdef _DEBUG
@@ -22,7 +22,7 @@ CTriangleSelector::CTriangleSelector(const ISceneNode* node)
 
 
 //! constructor
-CTriangleSelector::CTriangleSelector(const IMesh* mesh, const ISceneNode* node)
+CTriangleSelector::CTriangleSelector(IMesh* mesh, ISceneNode* node)
 : SceneNode(node)
 {
 	#ifdef _DEBUG
@@ -30,32 +30,59 @@ CTriangleSelector::CTriangleSelector(const IMesh* mesh, const ISceneNode* node)
 	#endif
 
 	const u32 cnt = mesh->getMeshBufferCount();
-	u32 totalFaceCount = 0;
-	for (u32 j=0; j<cnt; ++j)
-		totalFaceCount += mesh->getMeshBuffer(j)->getIndexCount();
-	totalFaceCount /= 3;
-	Triangles.reallocate(totalFaceCount);
-
 	for (u32 i=0; i<cnt; ++i)
 	{
-		const IMeshBuffer* buf = mesh->getMeshBuffer(i);
+		IMeshBuffer* buf = mesh->getMeshBuffer(i);
 
-		const u32 idxCnt = buf->getIndexCount();
+		s32 idxCnt = buf->getIndexCount();
 		const u16* const indices = buf->getIndices();
+		core::triangle3df tri;
 
-		for (u32 j=0; j<idxCnt; j+=3)
+		switch (buf->getVertexType())
 		{
-			Triangles.push_back(core::triangle3df(
-					buf->getPosition(indices[j+0]),
-					buf->getPosition(indices[j+1]),
-					buf->getPosition(indices[j+2])));
+		case video::EVT_STANDARD:
+			{
+				video::S3DVertex* vtx = (video::S3DVertex*)buf->getVertices();
+				for (s32 j=0; j<idxCnt; j+=3)
+				{
+					Triangles.push_back(core::triangle3df(
+							vtx[indices[j+0]].Pos,
+							vtx[indices[j+1]].Pos,
+							vtx[indices[j+2]].Pos));
+				}
+			}
+			break;
+		case video::EVT_2TCOORDS:
+			{
+				video::S3DVertex2TCoords* vtx = (video::S3DVertex2TCoords*)buf->getVertices();
+				for (s32 j=0; j<idxCnt; j+=3)
+				{
+					Triangles.push_back(core::triangle3df(
+							vtx[indices[j+0]].Pos,
+							vtx[indices[j+1]].Pos,
+							vtx[indices[j+2]].Pos));
+				}
+			}
+			break;
+		case video::EVT_TANGENTS:
+			{
+				video::S3DVertexTangents* vtx = (video::S3DVertexTangents*)buf->getVertices();
+				for (s32 j=0; j<idxCnt; j+=3)
+				{
+					Triangles.push_back(core::triangle3df(
+							vtx[indices[j+0]].Pos,
+							vtx[indices[j+1]].Pos,
+							vtx[indices[j+2]].Pos));
+				}
+			}
+			break;
 		}
 	}
 }
 
 
 //! constructor
-CTriangleSelector::CTriangleSelector(const core::aabbox3d<f32>& box, const ISceneNode* node)
+CTriangleSelector::CTriangleSelector(core::aabbox3d<f32> box, ISceneNode* node)
 : SceneNode(node)
 {
 	#ifdef _DEBUG

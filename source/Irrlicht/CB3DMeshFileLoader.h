@@ -1,10 +1,4 @@
-// Copyright (C) 2006-2008 Luke Hoschke
-// This file is part of the "Irrlicht Engine".
-// For conditions of distribution and use, see copyright notice in irrlicht.h
-
-// B3D Mesh loader
-// File format designed by Mark Sibly for the Blitz3D engine and has been
-// declared public domain
+// B3D mesh loader
 
 #include "IrrCompileConfig.h"
 
@@ -30,6 +24,9 @@ public:
 	//! Constructor
 	CB3DMeshFileLoader(scene::ISceneManager* smgr);
 
+	//! destructor
+	virtual ~CB3DMeshFileLoader();
+
 	//! returns true if the file maybe is able to be loaded by this class
 	//! based on the file extension (e.g. ".bsp")
 	virtual bool isALoadableFileExtension(const c8* fileName) const;
@@ -50,18 +47,9 @@ private:
 
 	struct SB3dChunk
 	{
-		SB3dChunk(const SB3dChunkHeader& header, long sp)
-			: length(header.size+8), startposition(sp)
-		{
-			name[0]=header.name[0];
-			name[1]=header.name[1];
-			name[2]=header.name[2];
-			name[3]=header.name[3];
-		}
-
 		c8 name[4];
 		s32 length;
-		long startposition;
+		s32 startposition;
 	};
 
 	struct SB3dTexture
@@ -78,36 +66,31 @@ private:
 
 	struct SB3dMaterial
 	{
-		SB3dMaterial() : red(1.0f), green(1.0f),
-			blue(1.0f), alpha(1.0f), shininess(0.0f), blend(1),
-			fx(0)
-		{
-			for (u32 i=0; i<video::MATERIAL_MAX_TEXTURES; ++i)
-				Textures[i]=0;
-		}
-		video::SMaterial Material;
+		video::SMaterial* Material;
 		f32 red, green, blue, alpha;
 		f32 shininess;
 		s32 blend,fx;
-		SB3dTexture *Textures[video::MATERIAL_MAX_TEXTURES];
+		SB3dTexture *Textures[2];
 	};
 
 	bool load();
 	bool readChunkNODE(CSkinnedMesh::SJoint* InJoint);
 	bool readChunkMESH(CSkinnedMesh::SJoint* InJoint);
-	bool readChunkVRTS(CSkinnedMesh::SJoint* InJoint);
-	bool readChunkTRIS(scene::SSkinMeshBuffer *MeshBuffer, u32 MeshBufferID, s32 Vertices_Start);
+	bool readChunkVRTS(CSkinnedMesh::SJoint* InJoint, scene::SSkinMeshBuffer *MeshBuffer, s32 Vertices_Start);
+	bool readChunkTRIS(CSkinnedMesh::SJoint* InJoint, scene::SSkinMeshBuffer *MeshBuffer, u32 MeshBufferID, s32 Vertices_Start);
 	bool readChunkBONE(CSkinnedMesh::SJoint* InJoint);
 	bool readChunkKEYS(CSkinnedMesh::SJoint* InJoint);
-	bool readChunkANIM();
+	bool readChunkANIM(CSkinnedMesh::SJoint* InJoint);
 	bool readChunkTEXS();
 	bool readChunkBRUS();
 
 	core::stringc readString();
-	core::stringc stripPathFromString(const core::stringc& string, bool returnPath=false) const;
+	core::stringc stripPathFromString(core::stringc string, bool returnPath=false);
 	void readFloats(f32* vec, u32 count);
 
 	core::array<SB3dChunk> B3dStack;
+
+	bool NormalsInFile;
 
 	core::array<SB3dMaterial> Materials;
 	core::array<SB3dTexture> Textures;
@@ -124,10 +107,7 @@ private:
 	//
 	ISceneManager*	SceneManager;
 	CSkinnedMesh*	AnimatedMesh;
-	io::IReadFile*	B3DFile;
-
-	bool NormalsInFile;
-	bool ShowWarning;
+	io::IReadFile*	file;
 };
 
 

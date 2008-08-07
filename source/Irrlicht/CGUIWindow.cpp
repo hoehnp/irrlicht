@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -109,89 +109,92 @@ CGUIWindow::~CGUIWindow()
 //! called if an event happened.
 bool CGUIWindow::OnEvent(const SEvent& event)
 {
-	if (IsEnabled)
+	switch(event.EventType)
 	{
-
-		switch(event.EventType)
+	case EET_GUI_EVENT:
+		if (event.GUIEvent.EventType == EGET_ELEMENT_FOCUS_LOST)
 		{
-		case EET_GUI_EVENT:
-			if (event.GUIEvent.EventType == EGET_ELEMENT_FOCUS_LOST)
+			Dragging = false;
+		}
+		else
+		if (event.GUIEvent.EventType == EGET_ELEMENT_FOCUSED)
+		{
+			if (event.GUIEvent.Caller == this && Parent)
 			{
-				Dragging = false;
+				Parent->bringToFront(this);
 			}
-			else
-			if (event.GUIEvent.EventType == EGET_ELEMENT_FOCUSED)
+		}
+		else
+		if (event.GUIEvent.EventType == EGET_BUTTON_CLICKED)
+		{
+			if (event.GUIEvent.Caller == CloseButton)
 			{
-				if (Parent && ((event.GUIEvent.Caller == this) || isMyChild(event.GUIEvent.Caller)))
-					Parent->bringToFront(this);
-			}
-			else
-			if (event.GUIEvent.EventType == EGET_BUTTON_CLICKED)
-			{
-				if (event.GUIEvent.Caller == CloseButton)
+				if (Parent)
 				{
-					if (Parent)
-					{
-						// send close event to parent
-						SEvent e;
-						e.EventType = EET_GUI_EVENT;
-						e.GUIEvent.Caller = this;
-						e.GUIEvent.Element = 0;
-						e.GUIEvent.EventType = EGET_ELEMENT_CLOSED;
+					// send close event to parent
+					SEvent e;
+					e.EventType = EET_GUI_EVENT;
+					e.GUIEvent.Caller = this;
+					e.GUIEvent.Element = 0;
+					e.GUIEvent.EventType = EGET_ELEMENT_CLOSED;
 
-						// if the event was not absorbed
-						if (!Parent->OnEvent(e))
-							remove();
-
-						return true;
-
-					}
-					else
+					// if the event was not absorbed
+					if (!Parent->OnEvent(e))
 					{
 						remove();
-						return true;
 					}
+					return true;
+
 				}
-			}
-			break;
-		case EET_MOUSE_INPUT_EVENT:
-			switch(event.MouseInput.Event)
-			{
-			case EMIE_LMOUSE_PRESSED_DOWN:
-				DragStart.X = event.MouseInput.X;
-				DragStart.Y = event.MouseInput.Y;
-				Dragging = true;
-				if (Parent)
-					Parent->bringToFront(this);
-				return true;
-			case EMIE_LMOUSE_LEFT_UP:
-				Dragging = false;
-				return true;
-			case EMIE_MOUSE_MOVED:
-				if (Dragging)
+				else
 				{
-					// gui window should not be dragged outside its parent
-					if (Parent)
-						if (event.MouseInput.X < Parent->getAbsolutePosition().UpperLeftCorner.X +1 ||
-							event.MouseInput.Y < Parent->getAbsolutePosition().UpperLeftCorner.Y +1 ||
-							event.MouseInput.X > Parent->getAbsolutePosition().LowerRightCorner.X -1 ||
-							event.MouseInput.Y > Parent->getAbsolutePosition().LowerRightCorner.Y -1)
-
-							return true;
-						
-
-					move(core::position2d<s32>(event.MouseInput.X - DragStart.X, event.MouseInput.Y - DragStart.Y));
-					DragStart.X = event.MouseInput.X;
-					DragStart.Y = event.MouseInput.Y;
+					remove();
 					return true;
 				}
-				break;
-			default:
-				break;
 			}
+		}
+		break;
+	case EET_MOUSE_INPUT_EVENT:
+		switch(event.MouseInput.Event)
+		{
+		case EMIE_LMOUSE_PRESSED_DOWN:
+			DragStart.X = event.MouseInput.X;
+			DragStart.Y = event.MouseInput.Y;
+			Dragging = true;
+			if (!Environment->hasFocus(this))
+			{
+				Environment->setFocus(this);
+				if (Parent)
+					Parent->bringToFront(this);
+			}
+			return true;
+		case EMIE_LMOUSE_LEFT_UP:
+			Dragging = false;
+			return true;
+		case EMIE_MOUSE_MOVED:
+			if (Dragging)
+			{
+				// gui window should not be dragged outside its parent
+				if (Parent)
+					if (event.MouseInput.X < Parent->getAbsolutePosition().UpperLeftCorner.X +1 ||
+						event.MouseInput.Y < Parent->getAbsolutePosition().UpperLeftCorner.Y +1 ||
+						event.MouseInput.X > Parent->getAbsolutePosition().LowerRightCorner.X -1 ||
+						event.MouseInput.Y > Parent->getAbsolutePosition().LowerRightCorner.Y -1)
+
+						return true;
+					
+
+				move(core::position2d<s32>(event.MouseInput.X - DragStart.X, event.MouseInput.Y - DragStart.Y));
+				DragStart.X = event.MouseInput.X;
+				DragStart.Y = event.MouseInput.Y;
+				return true;
+			}
+			break;
 		default:
 			break;
 		}
+	default:
+		break;
 	}
 
 	return IGUIElement::OnEvent(event);

@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -339,94 +339,92 @@ void CGUIColorSelectDialog::buildColorRing( const core::dimension2d<s32> & dim, 
 //! called if an event happened.
 bool CGUIColorSelectDialog::OnEvent(const SEvent& event)
 {
-	if (IsEnabled)
+
+	switch(event.EventType)
 	{
-		switch(event.EventType)
+		case EET_GUI_EVENT:
+		switch(event.GUIEvent.EventType)
 		{
-			case EET_GUI_EVENT:
-			switch(event.GUIEvent.EventType)
+			case EGET_SCROLL_BAR_CHANGED:
 			{
-				case EGET_SCROLL_BAR_CHANGED:
+				for ( u32 i = 0; i!= Battery.size (); ++i )
 				{
-					for ( u32 i = 0; i!= Battery.size (); ++i )
+					if ( event.GUIEvent.Caller == Battery[i].Scrollbar )
 					{
-						if ( event.GUIEvent.Caller == Battery[i].Scrollbar )
-						{
-							s32 pos = Battery[i].Scrollbar->getPos ();
-							s32 value = Template[i].range_down + ( pos );
-							core::stringw s ( value );
-							Battery[i].Edit->setText ( s.c_str() );
-						}
+						s32 pos = Battery[i].Scrollbar->getPos ();
+						s32 value = Template[i].range_down + ( pos );
+						core::stringw s ( value );
+						Battery[i].Edit->setText ( s.c_str() );
 					}
-					return true;
 				}
+				return true;
+			}
 
-			case EGET_ELEMENT_FOCUS_LOST:
-				Dragging = false;
-				break;
-			case EGET_BUTTON_CLICKED:
-				if (event.GUIEvent.Caller == CloseButton ||
-					event.GUIEvent.Caller == CancelButton)
-				{
-					sendCancelEvent();
-					remove();
-					return true;
-				}
-				else
-				if (event.GUIEvent.Caller == OKButton)
-				{
-					sendSelectedEvent();
-					remove();
-					return true;
-				}
-				break;
-
-			case EGET_LISTBOX_CHANGED:
-			case EGET_LISTBOX_SELECTED_AGAIN:
-			default:
-				break;
-				
+		case EGET_ELEMENT_FOCUS_LOST:
+			Dragging = false;
+			break;
+		case EGET_BUTTON_CLICKED:
+			if (event.GUIEvent.Caller == CloseButton ||
+				event.GUIEvent.Caller == CancelButton)
+			{
+				sendCancelEvent();
+				remove();
+				return true;
+			}
+			else
+			if (event.GUIEvent.Caller == OKButton)
+			{
+				sendSelectedEvent();
+				remove();
+				return true;
 			}
 			break;
-		case EET_MOUSE_INPUT_EVENT:
-			switch(event.MouseInput.Event)
+
+		case EGET_LISTBOX_CHANGED:
+		case EGET_LISTBOX_SELECTED_AGAIN:
+		default:
+			break;
+			
+		}
+		break;
+	case EET_MOUSE_INPUT_EVENT:
+		switch(event.MouseInput.Event)
+		{
+		case EMIE_LMOUSE_PRESSED_DOWN:
+			DragStart.X = event.MouseInput.X;
+			DragStart.Y = event.MouseInput.Y;
+			Dragging = true;
+			Environment->setFocus(this);
+			return true;
+		case EMIE_LMOUSE_LEFT_UP:
+			Dragging = false;
+			Environment->removeFocus(this);
+			return true;
+		case EMIE_MOUSE_MOVED:
+			if (Dragging)
 			{
-			case EMIE_LMOUSE_PRESSED_DOWN:
+				// gui window should not be dragged outside its parent
+				if (Parent)
+					if (event.MouseInput.X < Parent->getAbsolutePosition().UpperLeftCorner.X +1 ||
+						event.MouseInput.Y < Parent->getAbsolutePosition().UpperLeftCorner.Y +1 ||
+						event.MouseInput.X > Parent->getAbsolutePosition().LowerRightCorner.X -1 ||
+						event.MouseInput.Y > Parent->getAbsolutePosition().LowerRightCorner.Y -1)
+
+						return true;
+
+				move(core::position2d<s32>(event.MouseInput.X - DragStart.X, event.MouseInput.Y - DragStart.Y));
 				DragStart.X = event.MouseInput.X;
 				DragStart.Y = event.MouseInput.Y;
-				Dragging = true;
-				Environment->setFocus(this);
 				return true;
-			case EMIE_LMOUSE_LEFT_UP:
-				Dragging = false;
-				Environment->removeFocus(this);
-				return true;
-			case EMIE_MOUSE_MOVED:
-				if (Dragging)
-				{
-					// gui window should not be dragged outside its parent
-					if (Parent)
-						if (event.MouseInput.X < Parent->getAbsolutePosition().UpperLeftCorner.X +1 ||
-							event.MouseInput.Y < Parent->getAbsolutePosition().UpperLeftCorner.Y +1 ||
-							event.MouseInput.X > Parent->getAbsolutePosition().LowerRightCorner.X -1 ||
-							event.MouseInput.Y > Parent->getAbsolutePosition().LowerRightCorner.Y -1)
-
-							return true;
-
-					move(core::position2d<s32>(event.MouseInput.X - DragStart.X, event.MouseInput.Y - DragStart.Y));
-					DragStart.X = event.MouseInput.X;
-					DragStart.Y = event.MouseInput.Y;
-					return true;
-				}
-			default:
-				break;
 			}
 		default:
 			break;
 		}
+	default:
+		break;
 	}
 
-	return IGUIElement::OnEvent(event);
+	return Parent ? Parent->OnEvent(event) : false;
 }
 
 

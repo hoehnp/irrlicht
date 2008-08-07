@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -165,7 +165,7 @@ public:
 	//! Sets if the particles should be global. If they are, the particles are affected by
 	//! the movement of the particle system scene node too, otherwise they completely
 	//! ignore it. Default is true.
-	virtual void setParticlesAreGlobal(bool global=true);
+	virtual void setParticlesAreGlobal(bool global);
 
 	//! Writes attributes of the scene node.
 	virtual void serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options=0) const;
@@ -188,7 +188,7 @@ private:
 	u32 LastEmitTime;
 	s32 MaxParticles;
 
-	SMeshBuffer* Buffer;
+	SMeshBuffer Buffer;
 
 	enum E_PARTICLES_PRIMITIVE
 	{

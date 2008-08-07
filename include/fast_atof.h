@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine" and the "irrXML" project.
 // For conditions of distribution and use, see copyright notice in irrlicht.h and irrXML.h
 
@@ -13,8 +13,7 @@ namespace irr
 namespace core
 {
 
-// we write [16] here instead of [] to work around a swig bug
-const float fast_atof_table[16] = {
+const float fast_atof_table[16] =	{  // we write [16] here instead of [] to work around a swig bug
 	0.f,
 	0.1f,
 	0.01f,
@@ -37,8 +36,11 @@ inline u32 strtol10(const char* in, const char** out=0)
 {
 	u32 value = 0;
 
-	while ( ( *in >= '0') && ( *in <= '9' ))
+	while ( 1 )
 	{
+		if ( *in < '0' || *in > '9' )
+			break;
+
 		value = ( value * 10 ) + ( *in - '0' );
 		++in;
 	}
@@ -95,7 +97,7 @@ inline const char* fast_atof_move( const char* c, float& out)
 
 	if (inv)
 		f *= -1.0f;
-
+	
 	out = f;
 	return c;
 }
