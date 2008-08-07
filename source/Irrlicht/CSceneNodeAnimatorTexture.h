@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -27,13 +27,13 @@ namespace scene
 		virtual void animateNode(ISceneNode* node, u32 timeMs);
 
 		//! Writes attributes of the scene node animator.
-		virtual void serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options=0) const;
+		virtual void serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options=0);
 
 		//! Reads attributes of the scene node animator.
 		virtual void deserializeAttributes(io::IAttributes* in, io::SAttributeReadWriteOptions* options=0);
 
 		//! Returns type of the scene node animator
-		virtual ESCENE_NODE_ANIMATOR_TYPE getType() const { return ESNAT_TEXTURE; }
+		virtual ESCENE_NODE_ANIMATOR_TYPE getType()	{ return ESNAT_TEXTURE; }
 
 	private:
 

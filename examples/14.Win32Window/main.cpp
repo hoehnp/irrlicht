@@ -2,9 +2,6 @@
 // can run inside a win32 window.
 
 #include <irrlicht.h>
-#ifndef _IRR_WINDOWS_
-#error Windows only example
-#else
 #include <windows.h> // this example only runs with windows
 
 using namespace irr;
@@ -102,7 +99,7 @@ int main()
 	// create irrlicht device in the button window
 
 	irr::SIrrlichtCreationParameters param;
-	param.WindowId = reinterpret_cast<void*>(hIrrlichtWindow); // hColorButton
+	param.WindowId = reinterpret_cast<s32>(hIrrlichtWindow); // hColorButton
 	param.DriverType = video::EDT_OPENGL;
 
 	irr::IrrlichtDevice* device = irr::createDeviceEx(param);
@@ -185,5 +182,3 @@ int main()
 
 	return 0;
 }
-#endif // if windows
-

@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -33,7 +33,7 @@ CWriteFile::~CWriteFile()
 
 
 //! returns if file is open
-inline bool CWriteFile::isOpen() const
+inline bool CWriteFile::isOpen()
 {
 	return File != 0;
 }
@@ -41,7 +41,7 @@ inline bool CWriteFile::isOpen() const
 
 
 //! returns how much was read
-s32 CWriteFile::write(const void* buffer, u32 sizeToWrite)
+s32 CWriteFile::write(const void* buffer, s32 sizeToWrite)
 {
 	if (!isOpen())
 		return 0;
@@ -54,7 +54,7 @@ s32 CWriteFile::write(const void* buffer, u32 sizeToWrite)
 //! changes position in file, returns true if successful
 //! if relativeMovement==true, the pos is changed relative to current pos,
 //! otherwise from begin of file
-bool CWriteFile::seek(long finalPos, bool relativeMovement)
+bool CWriteFile::seek(s32 finalPos, bool relativeMovement)
 {
 	if (!isOpen())
 		return false;
@@ -65,7 +65,7 @@ bool CWriteFile::seek(long finalPos, bool relativeMovement)
 
 
 //! returns where in the file we are.
-long CWriteFile::getPos() const
+s32 CWriteFile::getPos()
 {
 	return ftell(File);
 }
@@ -96,7 +96,7 @@ void CWriteFile::openFile(bool append)
 
 
 //! returns name of file
-const c8* CWriteFile::getFileName() const
+const c8* CWriteFile::getFileName()
 {
 	return Filename.c_str();
 }

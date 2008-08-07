@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -12,9 +12,9 @@ namespace scene
 
 //! constructor
 CSceneNodeAnimatorFlyStraight::CSceneNodeAnimatorFlyStraight(const core::vector3df& startPoint,
-				const core::vector3df& endPoint, u32 timeForWay,
-				bool loop, u32 now)
-: Start(startPoint), End(endPoint), WayLength(0.0f), TimeFactor(0.0f), StartTime(now), TimeForWay(timeForWay), Loop(loop)
+							const core::vector3df& endPoint, u32 timeForWay,
+							bool loop, u32 now)
+: Start(startPoint), End(endPoint), StartTime(now), TimeForWay(timeForWay), Loop(loop)
 {
 	#ifdef _DEBUG
 	setDebugName("CSceneNodeAnimatorFlyStraight");
@@ -61,7 +61,7 @@ void CSceneNodeAnimatorFlyStraight::animateNode(ISceneNode* node, u32 timeMs)
 
 
 //! Writes attributes of the scene node animator.
-void CSceneNodeAnimatorFlyStraight::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options) const
+void CSceneNodeAnimatorFlyStraight::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options)
 {
 	out->addVector3d("Start", Start);
 	out->addVector3d("End", End);

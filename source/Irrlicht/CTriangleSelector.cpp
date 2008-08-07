@@ -1,10 +1,9 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #include "CTriangleSelector.h"
 #include "ISceneNode.h"
-#include "IMeshBuffer.h"
 
 namespace irr
 {
@@ -12,7 +11,7 @@ namespace scene
 {
 
 //! constructor
-CTriangleSelector::CTriangleSelector(const ISceneNode* node)
+CTriangleSelector::CTriangleSelector(ISceneNode* node)
 : SceneNode(node)
 {
 	#ifdef _DEBUG
@@ -22,40 +21,55 @@ CTriangleSelector::CTriangleSelector(const ISceneNode* node)
 
 
 //! constructor
-CTriangleSelector::CTriangleSelector(const IMesh* mesh, const ISceneNode* node)
+CTriangleSelector::CTriangleSelector(IMesh* mesh, ISceneNode* node)
 : SceneNode(node)
 {
 	#ifdef _DEBUG
 	setDebugName("CTriangleSelector");
 	#endif
 
-	const u32 cnt = mesh->getMeshBufferCount();
-	u32 totalFaceCount = 0;
-	for (u32 j=0; j<cnt; ++j)
-		totalFaceCount += mesh->getMeshBuffer(j)->getIndexCount();
-	totalFaceCount /= 3;
-	Triangles.reallocate(totalFaceCount);
-
-	for (u32 i=0; i<cnt; ++i)
+	s32 cnt = mesh->getMeshBufferCount();
+	for (s32 i=0; i<cnt; ++i)
 	{
-		const IMeshBuffer* buf = mesh->getMeshBuffer(i);
+		IMeshBuffer* buf = mesh->getMeshBuffer(i);
 
-		const u32 idxCnt = buf->getIndexCount();
-		const u16* const indices = buf->getIndices();
+		s32 idxCnt = buf->getIndexCount();
+		const u16* indices = buf->getIndices();
+		core::triangle3df tri;
 
-		for (u32 j=0; j<idxCnt; j+=3)
+		switch (buf->getVertexType())
 		{
-			Triangles.push_back(core::triangle3df(
-					buf->getPosition(indices[j+0]),
-					buf->getPosition(indices[j+1]),
-					buf->getPosition(indices[j+2])));
+		case video::EVT_STANDARD:
+			{
+				video::S3DVertex* vtx = (video::S3DVertex*)buf->getVertices();
+				for (s32 j=0; j<idxCnt; j+=3)
+				{
+					tri.pointA = vtx[indices[j+0]].Pos;
+					tri.pointB = vtx[indices[j+1]].Pos;
+					tri.pointC = vtx[indices[j+2]].Pos;
+					Triangles.push_back(tri);
+				}
+			}
+			break;
+		case video::EVT_2TCOORDS:
+			{
+				video::S3DVertex2TCoords* vtx = (video::S3DVertex2TCoords*)buf->getVertices();
+				for (s32 j=0; j<idxCnt; j+=3)
+				{
+					tri.pointA = vtx[indices[j+0]].Pos;
+					tri.pointB = vtx[indices[j+1]].Pos;
+					tri.pointC = vtx[indices[j+2]].Pos;
+					Triangles.push_back(tri);
+				}
+			}
+			break;
 		}
 	}
 }
 
 
 //! constructor
-CTriangleSelector::CTriangleSelector(const core::aabbox3d<f32>& box, const ISceneNode* node)
+CTriangleSelector::CTriangleSelector(core::aabbox3d<f32> box, ISceneNode* node)
 : SceneNode(node)
 {
 	#ifdef _DEBUG
@@ -66,10 +80,18 @@ CTriangleSelector::CTriangleSelector(const core::aabbox3d<f32>& box, const IScen
 }
 
 
+
+//! destructor
+CTriangleSelector::~CTriangleSelector()
+{
+}
+
+
+
 //! Gets all triangles.
 void CTriangleSelector::getTriangles(core::triangle3df* triangles,
-					s32 arraySize, s32& outTriangleCount, 
-					const core::matrix4* transform) const
+									 s32 arraySize, s32& outTriangleCount, 
+									const core::matrix4* transform)
 {
 	s32 cnt = Triangles.size();
 	if (cnt > arraySize)
@@ -78,7 +100,7 @@ void CTriangleSelector::getTriangles(core::triangle3df* triangles,
 	core::matrix4 mat;
 
 	if (transform)
-		mat = *transform;
+		mat = (*transform);
 
 	if (SceneNode)
 		mat *= SceneNode->getAbsoluteTransformation();
@@ -98,9 +120,9 @@ void CTriangleSelector::getTriangles(core::triangle3df* triangles,
 
 //! Gets all triangles which lie within a specific bounding box.
 void CTriangleSelector::getTriangles(core::triangle3df* triangles, 
-					s32 arraySize, s32& outTriangleCount, 
-					const core::aabbox3d<f32>& box,
-					const core::matrix4* transform) const
+									 s32 arraySize, s32& outTriangleCount, 
+									const core::aabbox3d<f32>& box,
+									const core::matrix4* transform)
 {
 	// return all triangles
 	getTriangles(triangles, arraySize, outTriangleCount, transform);
@@ -108,10 +130,9 @@ void CTriangleSelector::getTriangles(core::triangle3df* triangles,
 
 
 //! Gets all triangles which have or may have contact with a 3d line.
-void CTriangleSelector::getTriangles(core::triangle3df* triangles,
-					s32 arraySize, s32& outTriangleCount,
-					const core::line3d<f32>& line,
-					const core::matrix4* transform) const
+void CTriangleSelector::getTriangles(core::triangle3df* triangles, s32 arraySize,
+	s32& outTriangleCount, const core::line3d<f32>& line, 
+	const core::matrix4* transform)
 {
 	// return all triangles
 	getTriangles(triangles, arraySize, outTriangleCount, transform);

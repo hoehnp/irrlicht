@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -18,14 +18,12 @@ CParticlePointEmitter::CParticlePointEmitter(
 	video::SColor maxStartColor, u32 lifeTimeMin, u32 lifeTimeMax,
 	s32 maxAngleDegrees)
  : Direction(direction), MinParticlesPerSecond(minParticlesPerSecond),
-	MaxParticlesPerSecond(maxParticlesPerSecond),
+	MaxParticlesPerSecond(maxParticlesPerSecond), 
 	MinStartColor(minStartColor), MaxStartColor(maxStartColor),
-	MinLifeTime(lifeTimeMin), MaxLifeTime(lifeTimeMax),
-	MaxAngleDegrees(maxAngleDegrees), Time(0), Emitted(0)
+	MinLifeTime(lifeTimeMin), MaxLifeTime(lifeTimeMax), Time(0), Emitted(0),
+	MaxAngleDegrees(maxAngleDegrees)
 {
-	#ifdef _DEBUG
-	setDebugName("CParticlePointEmitter");
-	#endif
+
 }
 
 
@@ -74,7 +72,7 @@ s32 CParticlePointEmitter::emitt(u32 now, u32 timeSinceLastCall, SParticle*& out
 
 
 //! Writes attributes of the object.
-void CParticlePointEmitter::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options) const
+void CParticlePointEmitter::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options)
 {
 	out->addVector3d("Direction", Direction);
 	out->addInt("MinParticlesPerSecond", MinParticlesPerSecond);
@@ -97,10 +95,10 @@ s32 CParticlePointEmitter::deserializeAttributes(s32 startIndex, io::IAttributes
 	MinParticlesPerSecond = in->getAttributeAsInt("MinParticlesPerSecond");
 	MaxParticlesPerSecond = in->getAttributeAsInt("MaxParticlesPerSecond");
 
-	MinParticlesPerSecond = core::max_(1u, MinParticlesPerSecond);
-	MaxParticlesPerSecond = core::max_(MaxParticlesPerSecond, 1u);
-	MaxParticlesPerSecond = core::min_(MaxParticlesPerSecond, 200u);
-	MinParticlesPerSecond = core::min_(MinParticlesPerSecond, MaxParticlesPerSecond);
+	MinParticlesPerSecond = core::max_<s32>(1, MinParticlesPerSecond);
+	MaxParticlesPerSecond = core::max_<s32>(MaxParticlesPerSecond, 1);
+	MaxParticlesPerSecond = core::min_<s32>(MaxParticlesPerSecond, 200);
+	MinParticlesPerSecond = core::min_<s32>(MinParticlesPerSecond, MaxParticlesPerSecond);
 
 	MinStartColor = in->getAttributeAsColor("MinStartColor");
 	MaxStartColor = in->getAttributeAsColor("MaxStartColor");
@@ -108,9 +106,9 @@ s32 CParticlePointEmitter::deserializeAttributes(s32 startIndex, io::IAttributes
 	MaxLifeTime = in->getAttributeAsInt("MaxLifeTime");
 	MaxAngleDegrees = in->getAttributeAsInt("MaxAngleDegrees");
 
-	MinLifeTime = core::max_(0u, MinLifeTime);
-	MaxLifeTime = core::max_(MaxLifeTime, MinLifeTime);
-	MinLifeTime = core::min_(MinLifeTime, MaxLifeTime);
+	MinLifeTime = core::max_<s32>(0, MinLifeTime);
+	MaxLifeTime = core::max_<s32>(MaxLifeTime, MinLifeTime);
+	MinLifeTime = core::min_<s32>(MinLifeTime, MaxLifeTime);
 
 	return in->findAttribute("MaxAngleDegrees");
 }

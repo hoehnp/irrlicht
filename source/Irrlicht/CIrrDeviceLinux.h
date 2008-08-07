@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -7,11 +7,12 @@
 
 #include "IrrCompileConfig.h"
 
-#ifdef _IRR_USE_LINUX_DEVICE_
+#ifdef LINUX
 
 #include "CIrrDeviceStub.h"
 #include "IrrlichtDevice.h"
 #include "IImagePresenter.h"
+#include "IGUIEnvironment.h"
 #include "ICursorControl.h"
 
 #ifdef _IRR_COMPILE_WITH_X11_
@@ -20,7 +21,7 @@
 #include <GL/gl.h>
 #define GLX_GLXEXT_LEGACY 1
 #include <GL/glx.h>
-#ifdef _IRR_OPENGL_USE_EXTPOINTER_
+#ifndef __sun__
 #include "glxext.h"
 #endif
 #endif
@@ -47,7 +48,10 @@ namespace irr
 	public:
 
 		//! constructor
-		CIrrDeviceLinux(const SIrrlichtCreationParameters& param);
+		CIrrDeviceLinux(video::E_DRIVER_TYPE deviceType, 
+			const core::dimension2d<s32>& windowSize, u32 bits,
+			bool fullscreen, bool stencilbuffer, bool vsync, bool antiAlias, IEventReceiver* receiver,
+			const char* version);
 
 		//! destructor
 		virtual ~CIrrDeviceLinux();
@@ -55,47 +59,25 @@ namespace irr
 		//! runs the device. Returns false if device wants to be deleted
 		virtual bool run();
 
-		//! Cause the device to temporarily pause execution and let other processes to run
-		// This should bring down processor usage without major performance loss for Irrlicht
-		virtual void yield();
-
-		//! Pause execution and let other processes to run for a specified amount of time.
-		virtual void sleep(u32 timeMs, bool pauseTimer);
-
 		//! sets the caption of the window
 		virtual void setWindowCaption(const wchar_t* text);
 
 		//! returns if window is active. if not, nothing need to be drawn
-		virtual bool isWindowActive() const;
-
-		//! returns if window has focus.
-		virtual bool isWindowFocused() const;
-
-		//! returns if window is minimized.
-		virtual bool isWindowMinimized() const;
-
-		//! returns color format of the window.
-		virtual video::ECOLOR_FORMAT getColorFormat() const;
+		virtual bool isWindowActive();
 
 		//! presents a surface in the client area
-		virtual void present(video::IImage* surface, void* windowId=0, core::rect<s32>* src=0 );
+		virtual void present(video::IImage* surface, s32 windowId = 0, core::rect<s32>* src=0 );
 
 		//! notifies the device that it should close itself
 		virtual void closeDevice();
 
-		//! \return Returns a pointer to a list with all video modes
-		//! supported by the gfx adapter.
-		video::IVideoModeList* getVideoModeList();
-
-		//! Sets if the window should be resizeable in windowed mode.
-		virtual void setResizeAble(bool resize=false);
-
 	private:
 
 		//! create the driver
-		void createDriver();
+		void createDriver(const core::dimension2d<s32>& windowSize,
+					u32 bits, bool vsync);
 
-		bool createWindow();
+		bool createWindow(const core::dimension2d<s32>& windowSize, u32 bits);
 
 		void createKeyMap();
 
@@ -105,36 +87,37 @@ namespace irr
 		public:
 
 			CCursorControl(CIrrDeviceLinux* dev, bool null)
-				: Device(dev), IsVisible(true), Null(null), UseReferenceRect(false)
+				: Device(dev), IsVisible(true), Null(null)
 			{
 #ifdef _IRR_COMPILE_WITH_X11_
-				if (!Null)
+				if (!null)
 				{
+					GC gc;
 					XGCValues values;
 					unsigned long valuemask = 0;
 
 					XColor fg, bg;
+					int depth = 1;
 
 					// this code, for making the cursor invisible was sent in by
 					// Sirshane, thank your very much!
 
+					Colormap screen_colormap;
 
-					Pixmap invisBitmap = XCreatePixmap(Device->display, Device->window, 32, 32, 1);
-					Pixmap maskBitmap = XCreatePixmap(Device->display, Device->window, 32, 32, 1);
-					Colormap screen_colormap = DefaultColormap( Device->display, DefaultScreen( Device->display ) );
+					invisBitmap = XCreatePixmap( Device->display, Device->window, 32, 32, depth );
+					maskBitmap = XCreatePixmap( Device->display, Device->window, 32, 32, depth );
+
+					screen_colormap = DefaultColormap( Device->display, DefaultScreen( Device->display ) );
 					XAllocNamedColor( Device->display, screen_colormap, "black", &fg, &fg );
 					XAllocNamedColor( Device->display, screen_colormap, "white", &bg, &bg );
 
-					GC gc = XCreateGC( Device->display, invisBitmap, valuemask, &values );
+					gc = XCreateGC( Device->display, invisBitmap, valuemask, &values );
 
 					XSetForeground( Device->display, gc, BlackPixel( Device->display, DefaultScreen( Device->display ) ) );
 					XFillRectangle( Device->display, invisBitmap, gc, 0, 0, 32, 32 );
 					XFillRectangle( Device->display, maskBitmap, gc, 0, 0, 32, 32 );
 
 					invisCursor = XCreatePixmapCursor( Device->display, invisBitmap, maskBitmap, &fg, &bg, 1, 1 );
-					XFreeGC(Device->display, gc);
-					XFreePixmap(Device->display, invisBitmap);
-					XFreePixmap(Device->display, maskBitmap);
 				}
 #endif
 			}
@@ -155,7 +138,7 @@ namespace irr
 			}
 
 			//! Returns if the cursor is currently visible.
-			virtual bool isVisible() const
+			virtual bool isVisible()
 			{
 				return IsVisible;
 			}
@@ -182,33 +165,16 @@ namespace irr
 			virtual void setPosition(s32 x, s32 y)
 			{
 #ifdef _IRR_COMPILE_WITH_X11_
-
 				if (!Null)
 				{
-					if (UseReferenceRect)
-					{
-						XWarpPointer(Device->display,
-							None,
-							Device->window, 0, 0,
-							Device->Width,
-							Device->Height,
-							ReferenceRect.UpperLeftCorner.X + x,
-							ReferenceRect.UpperLeftCorner.Y + y);
-
-					}
-					else
-					{
-						XWarpPointer(Device->display,
-							None,
-							Device->window, 0, 0,
-							Device->Width,
-							Device->Height, x, y);
-					}
+					XWarpPointer(Device->display,
+						None,
+				 		Device->window, 0, 0,
+				 		Device->Width,
+				 		Device->Height, x, y);
 					XFlush(Device->display);
 				}
 #endif
-				CursorPos.X = x;
-				CursorPos.Y = y;
 			}
 
 			//! Returns the current position of the mouse cursor.
@@ -222,34 +188,8 @@ namespace irr
 			virtual core::position2d<f32> getRelativePosition()
 			{
 				updateCursorPos();
-
-				if (!UseReferenceRect)
-				{
-					return core::position2d<f32>(CursorPos.X / (f32)Device->Width,
-						CursorPos.Y / (f32)Device->Height);
-				}
-
-				return core::position2d<f32>(CursorPos.X / (f32)ReferenceRect.getWidth(),
-						CursorPos.Y / (f32)ReferenceRect.getHeight());
-			}
-
-			virtual void setReferenceRect(core::rect<s32>* rect=0)
-			{
-				if (rect)
-				{
-					ReferenceRect = *rect;
-					UseReferenceRect = true;
-
-					// prevent division through zero and uneven sizes
-
-					if (!ReferenceRect.getHeight() || ReferenceRect.getHeight()%2)
-						ReferenceRect.LowerRightCorner.Y += 1;
-
-					if (!ReferenceRect.getWidth() || ReferenceRect.getWidth()%2)
-						ReferenceRect.LowerRightCorner.X += 1;
-				}
-				else
-					UseReferenceRect = false;
+				return core::position2d<f32>(CursorPos.X / (f32)Device->Width,
+					CursorPos.Y / (f32)Device->Height);
 			}
 
 		private:
@@ -259,7 +199,7 @@ namespace irr
 #ifdef _IRR_COMPILE_WITH_X11_
 				if (Null)
 					return;
-
+					
 				Window tmp;
 				int itmp1, itmp2;
 				unsigned  int maskreturn;
@@ -270,36 +210,53 @@ namespace irr
 
 				if (CursorPos.X < 0)
 					CursorPos.X = 0;
-				if (CursorPos.X > (s32) Device->Width)
+				if (CursorPos.X > Device->Width)
 					CursorPos.X = Device->Width;
 				if (CursorPos.Y < 0)
 					CursorPos.Y = 0;
-				if (CursorPos.Y > (s32) Device->Height)
+				if (CursorPos.Y > Device->Height)
 					CursorPos.Y = Device->Height;
 #endif
 			}
 
-			CIrrDeviceLinux* Device;
 			core::position2d<s32> CursorPos;
-			core::rect<s32> ReferenceRect;
+			bool IsVisible;
+			CIrrDeviceLinux* Device;
 #ifdef _IRR_COMPILE_WITH_X11_
 			Cursor invisCursor;
+			Pixmap invisBitmap;
+			Pixmap maskBitmap;
 #endif
-			bool IsVisible;
 			bool Null;
-			bool UseReferenceRect;
 		};
 
 		friend class CCursorControl;
 
 #ifdef _IRR_COMPILE_WITH_X11_
 		Display *display;
-		XVisualInfo* visual;
 		int screennr;
 		Window window;
+		#ifdef _IRR_COMPILE_WITH_OPENGL_
+		GLXWindow glxWin;
+		GLXContext Context;
+		#endif
 		XSetWindowAttributes attributes;
-		XSizeHints* StdHints;
+		XEvent event;
 		XImage* SoftwareImage;
+#endif
+		bool Fullscreen;
+		bool StencilBuffer;
+		bool AntiAlias;
+		video::E_DRIVER_TYPE DriverType;
+
+		s32 x,y;
+		u32 Width, Height, Depth;
+		bool Close;
+		bool WindowActive;
+		bool UseXVidMode;
+		bool UseXRandR;
+		bool UseGLXWindow;
+#ifdef _IRR_COMPILE_WITH_X11_
 		#ifdef _IRR_LINUX_X11_VIDMODE_
 		XF86VidModeModeInfo oldVideoMode;
 		#endif
@@ -307,19 +264,7 @@ namespace irr
 		SizeID oldRandrMode;
 		Rotation oldRandrRotation;
 		#endif
-		#ifdef _IRR_COMPILE_WITH_OPENGL_
-		GLXWindow glxWin;
-		GLXContext Context;
-		#endif
 #endif
-		u32 Width, Height;
-		bool Close;
-		bool WindowHasFocus;
-		bool WindowMinimized;
-		bool UseXVidMode;
-		bool UseXRandR;
-		bool UseGLXWindow;
-		int AutorepeatSupport;
 
 		struct SKeyMap
 		{
@@ -344,6 +289,6 @@ namespace irr
 
 } // end namespace irr
 
-#endif // _IRR_USE_LINUX_DEVICE_
+#endif // LINUX
 #endif // __C_IRR_DEVICE_LINUX_H_INCLUDED__
 

@@ -1,15 +1,11 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #include "CImageLoaderJPG.h"
-
-#ifdef _IRR_COMPILE_WITH_JPG_LOADER_
-
-#include "IReadFile.h"
+#include <string.h>
 #include "CImage.h"
 #include "os.h"
-#include "irrString.h"
 
 namespace irr
 {
@@ -35,7 +31,7 @@ CImageLoaderJPG::~CImageLoaderJPG()
 
 //! returns true if the file maybe is able to be loaded by this class
 //! based on the file extension (e.g. ".tga")
-bool CImageLoaderJPG::isALoadableFileExtension(const c8* fileName) const
+bool CImageLoaderJPG::isALoadableFileExtension(const c8* fileName)
 {
 	return strstr(fileName, ".jpg") != 0;
 }
@@ -109,10 +105,10 @@ void CImageLoaderJPG::output_message(j_common_ptr cinfo)
 	(*cinfo->err->format_message)(cinfo, temp1);
 	os::Printer::log("JPEG FATAL ERROR",temp1, ELL_ERROR);
 }
-#endif // _IRR_COMPILE_WITH_LIBJPEG_
+#endif
 
 //! returns true if the file maybe is able to be loaded by this class
-bool CImageLoaderJPG::isALoadableFileFormat(io::IReadFile* file) const
+bool CImageLoaderJPG::isALoadableFileFormat(irr::io::IReadFile* file)
 {
 	#ifndef _IRR_COMPILE_WITH_LIBJPEG_
 	return false;
@@ -130,7 +126,7 @@ bool CImageLoaderJPG::isALoadableFileFormat(io::IReadFile* file) const
 }
 
 //! creates a surface from the file
-IImage* CImageLoaderJPG::loadImage(io::IReadFile* file) const
+IImage* CImageLoaderJPG::loadImage(irr::io::IReadFile* file)
 {
 	#ifndef _IRR_COMPILE_WITH_LIBJPEG_
 	return 0;
@@ -255,6 +251,4 @@ IImageLoader* createImageLoaderJPG()
 
 } // end namespace video
 } // end namespace irr
-
-#endif
 

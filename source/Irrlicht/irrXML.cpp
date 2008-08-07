@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine" and the "irrXML" project.
 // For conditions of distribution and use, see copyright notice in irrlicht.h and/or irrXML.h
 
@@ -54,7 +54,7 @@ public:
 	}
 
 	//! Returns size of file in bytes
-	virtual long getSize() const
+	virtual int getSize()
 	{
 		return Size;
 	}
@@ -70,7 +70,7 @@ private:
 	}
 
 	FILE* File;
-	long Size;
+	int Size;
 	bool Close;
 
 }; // end class CFileReadCallBack
@@ -81,63 +81,63 @@ private:
 
 
 //! Creates an instance of an UFT-8 or ASCII character xml parser. 
-IRRLICHT_API IrrXMLReader* IRRCALLCONV createIrrXMLReader(const char* filename)
+IrrXMLReader* createIrrXMLReader(const char* filename)
 {
 	return new CXMLReaderImpl<char, IXMLBase>(new CFileReadCallBack(filename)); 
 }
 
 
 //! Creates an instance of an UFT-8 or ASCII character xml parser. 
-IRRLICHT_API IrrXMLReader* IRRCALLCONV createIrrXMLReader(FILE* file)
+IrrXMLReader* createIrrXMLReader(FILE* file)
 {
 	return new CXMLReaderImpl<char, IXMLBase>(new CFileReadCallBack(file)); 
 }
 
 
 //! Creates an instance of an UFT-8 or ASCII character xml parser. 
-IRRLICHT_API IrrXMLReader* IRRCALLCONV createIrrXMLReader(IFileReadCallBack* callback)
+IrrXMLReader* createIrrXMLReader(IFileReadCallBack* callback)
 {
 	return new CXMLReaderImpl<char, IXMLBase>(callback, false); 
 }
 
 
 //! Creates an instance of an UTF-16 xml parser. 
-IRRLICHT_API IrrXMLReaderUTF16* IRRCALLCONV createIrrXMLReaderUTF16(const char* filename)
+IrrXMLReaderUTF16* createIrrXMLReaderUTF16(const char* filename)
 {
 	return new CXMLReaderImpl<char16, IXMLBase>(new CFileReadCallBack(filename)); 
 }
 
 
 //! Creates an instance of an UTF-16 xml parser. 
-IRRLICHT_API IrrXMLReaderUTF16* IRRCALLCONV createIrrXMLReaderUTF16(FILE* file)
+IrrXMLReaderUTF16* createIrrXMLReaderUTF16(FILE* file)
 {
 	return new CXMLReaderImpl<char16, IXMLBase>(new CFileReadCallBack(file)); 
 }
 
 
 //! Creates an instance of an UTF-16 xml parser. 
-IRRLICHT_API IrrXMLReaderUTF16* IRRCALLCONV createIrrXMLReaderUTF16(IFileReadCallBack* callback)
+IrrXMLReaderUTF16* createIrrXMLReaderUTF16(IFileReadCallBack* callback)
 {
 	return new CXMLReaderImpl<char16, IXMLBase>(callback, false); 
 }
 
 
 //! Creates an instance of an UTF-32 xml parser. 
-IRRLICHT_API IrrXMLReaderUTF32* IRRCALLCONV createIrrXMLReaderUTF32(const char* filename)
+IrrXMLReaderUTF32* createIrrXMLReaderUTF32(const char* filename)
 {
 	return new CXMLReaderImpl<char32, IXMLBase>(new CFileReadCallBack(filename)); 
 }
 
 
 //! Creates an instance of an UTF-32 xml parser. 
-IRRLICHT_API IrrXMLReaderUTF32* IRRCALLCONV createIrrXMLReaderUTF32(FILE* file)
+IrrXMLReaderUTF32* createIrrXMLReaderUTF32(FILE* file)
 {
 	return new CXMLReaderImpl<char32, IXMLBase>(new CFileReadCallBack(file)); 
 }
 
 
 //! Creates an instance of an UTF-32 xml parser. 
-IRRLICHT_API IrrXMLReaderUTF32* IRRCALLCONV createIrrXMLReaderUTF32(IFileReadCallBack* callback)
+IrrXMLReaderUTF32* createIrrXMLReaderUTF32(IFileReadCallBack* callback)
 {
 	return new CXMLReaderImpl<char32, IXMLBase>(callback, false); 
 }

@@ -1,15 +1,9 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
-// This file is part of the "Irrlicht Engine".
-// For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #include "CImageWriterBMP.h"
-
-#ifdef _IRR_COMPILE_WITH_BMP_WRITER_
-
 #include "CImageLoaderBMP.h"
 #include "IWriteFile.h"
 #include "CColorConverter.h"
-#include "irrString.h"
+#include "string.h"
 
 namespace irr
 {
@@ -28,12 +22,12 @@ CImageWriterBMP::CImageWriterBMP()
 #endif
 }
 
-bool CImageWriterBMP::isAWriteableFileExtension(const c8* fileName) const
+bool CImageWriterBMP::isAWriteableFileExtension(const c8* fileName)
 {
 	return strstr(fileName, ".bmp") != 0;
 }
 
-bool CImageWriterBMP::writeImage(io::IWriteFile* file, IImage* image, u32 param) const
+bool CImageWriterBMP::writeImage(io::IWriteFile* file, IImage* image)
 {
 	// we always write 24-bit color because nothing really reads 32-bit
 
@@ -52,10 +46,9 @@ bool CImageWriterBMP::writeImage(io::IWriteFile* file, IImage* image, u32 param)
 	imageHeader.Colors = 0;
 	imageHeader.ImportantColors = 0;
 
-	// data size is rounded up to next larger 4 bytes boundary
-	imageHeader.BitmapDataSize = imageHeader.Width * imageHeader.BPP / 8;
+	// data size is rounded up to nearest 4 bytes
+	imageHeader.BitmapDataSize = (imageHeader.Width * imageHeader.Height) * 3;
 	imageHeader.BitmapDataSize = (imageHeader.BitmapDataSize + 3) & ~3;
-	imageHeader.BitmapDataSize *= imageHeader.Height;
 
 	// file size is data size plus offset to data
 	imageHeader.FileSize = imageHeader.BitmapDataOffset + imageHeader.BitmapDataSize;
@@ -70,7 +63,7 @@ bool CImageWriterBMP::writeImage(io::IWriteFile* file, IImage* image, u32 param)
 		break;
 	case ECF_A8R8G8B8:
 		CColorConverter_convertFORMATtoFORMAT
-			= CColorConverter::convert_A8R8G8B8toB8G8R8;
+			= CColorConverter::convert_A8R8G8B8toR8G8B8;
 		break;
 	case ECF_A1R5G5B5:
 		CColorConverter_convertFORMATtoFORMAT
@@ -129,8 +122,5 @@ bool CImageWriterBMP::writeImage(io::IWriteFile* file, IImage* image, u32 param)
 	return y < 0;
 }
 
-} // namespace video
-} // namespace irr
-
-#endif
-
+}; // namespace video
+}; // namespace irr

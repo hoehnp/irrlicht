@@ -1,11 +1,9 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
-#include "IrrCompileConfig.h"
 #include "CTRTextureGouraud.h"
-
-#ifdef _IRR_COMPILE_WITH_SOFTWARE_
+#include "os.h"
 
 namespace irr
 {
@@ -120,7 +118,8 @@ void CTRTextureGouraudAdd::drawIndexedTriangleList(S2DVertex* vertices, s32 vert
 		if (!TriangleRect.isRectCollided(ViewPortRect))
 			continue;
 
-		// calculate height of triangle
+
+		// höhe des dreiecks berechnen
 		height = v3->Pos.Y - v1->Pos.Y;
 		if (!height)
 			continue;
@@ -259,7 +258,7 @@ void CTRTextureGouraudAdd::drawIndexedTriangleList(S2DVertex* vertices, s32 vert
 				// draw the span
 				if (rightx + tDiffRight - leftx - tDiffLeft)
 				{
-					tmpDiv = 1.0f / (f32)(rightx - leftx);
+					f32 tmpDiv = 1.0f / (f32)(rightx - leftx);
 					spanZStep = (s32)((rightZValue - leftZValue) * tmpDiv);
 					spanZValue = leftZValue+tDiffLeft*spanZStep;
 
@@ -393,24 +392,13 @@ void CTRTextureGouraudAdd::drawIndexedTriangleList(S2DVertex* vertices, s32 vert
 	Texture->unlock();
 }
 
-} // end namespace video
-} // end namespace irr
-
-#endif // _IRR_COMPILE_WITH_SOFTWARE_
-
-namespace irr
-{
-namespace video
-{
 
 ITriangleRenderer* createTriangleRendererTextureGouraudAdd(IZBuffer* zbuffer)
 {
-	#ifdef _IRR_COMPILE_WITH_SOFTWARE_
 	return new CTRTextureGouraudAdd(zbuffer);
-	#else
-	return 0;
-	#endif // _IRR_COMPILE_WITH_SOFTWARE_
 }
+
+
 
 } // end namespace video
 } // end namespace irr

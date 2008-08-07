@@ -1,12 +1,9 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #ifndef __C_GUI_CHECKBOX_H_INCLUDED__
 #define __C_GUI_CHECKBOX_H_INCLUDED__
-
-#include "IrrCompileConfig.h"
-#ifdef _IRR_COMPILE_WITH_GUI_
 
 #include "IGUICheckBox.h"
 
@@ -22,34 +19,30 @@ namespace gui
 		//! constructor
 		CGUICheckBox(bool checked, IGUIEnvironment* environment, IGUIElement* parent, s32 id, core::rect<s32> rectangle);
 
+		//! destructor
+		~CGUICheckBox();
+
 		//! set if box is checked
 		virtual void setChecked(bool checked);
 
 		//! returns if box is checked
-		virtual bool isChecked() const;
+		virtual bool isChecked();
 
 		//! called if an event happened.
-		virtual bool OnEvent(const SEvent& event);
+		virtual bool OnEvent(SEvent event);
 
 		//! draws the element and its children
 		virtual void draw();
 
-		//! Writes attributes of the element.
-		virtual void serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options) const;
-
-		//! Reads attributes of the element
-		virtual void deserializeAttributes(io::IAttributes* in, io::SAttributeReadWriteOptions* options);
 
 	private:
 
 		bool Pressed;
 		bool Checked;
-		u32 checkTime;
 	};
 
 } // end namespace gui
 } // end namespace irr
 
-#endif // __C_GUI_CHECKBOX_H_INCLUDED__
+#endif
 
-#endif // _IRR_COMPILE_WITH_GUI_

@@ -2,8 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="10.Shaders"
-	ProjectGUID="{A4F71E8D-4042-4909-9AB8-1BA4CF5B926D}"
+	Name="Shaders"
 	SccProjectName=""
 	SccLocalPath="">
 	<Platforms>
@@ -39,7 +38,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="..\..\bin\Win32-VisualStudio\10.Shaders.exe"
+				OutputFile="..\..\bin\Win32-VisualStudio\Shaders.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				AdditionalLibraryDirectories="..\..\lib\Win32-visualstudio"
@@ -101,7 +100,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="..\..\bin\Win32-VisualStudio\10.Shaders.exe"
+				OutputFile="..\..\bin\Win32-VisualStudio\Shaders.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				AdditionalLibraryDirectories="..\..\lib\Win32-visualstudio"

@@ -22,7 +22,7 @@
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="0"
+			CharacterSet="2"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -49,11 +49,8 @@
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\include;zlib"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;IRRLICHT_EXPORTS;_CRT_SECURE_NO_DEPRECATE"
-				ExceptionHandling="0"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				DisableLanguageExtensions="false"
-				RuntimeTypeInfo="false"
 				PrecompiledHeaderFile=".\..\obj\IrrDebug/Irrlicht.pch"
 				AssemblerListingLocation=".\..\obj\IrrDebug/"
 				ObjectFile=".\..\obj\IrrDebug/"
@@ -76,13 +73,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				UseLibraryDependencyInputs="true"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib opengl32.lib"
+				AdditionalDependencies="odbc32.lib odbccp32.lib"
 				OutputFile="..\..\bin\Win32-visualstudio\Irrlicht.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories=""
 				IgnoreDefaultLibraryNames="libci.lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="..\obj\IrrDebug\Irrlicht.pdb"
@@ -179,112 +174,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib opengl32.lib"
-				OutputFile="..\..\bin\Win32-visualstudio\Irrlicht.dll"
-				LinkIncremental="1"
-				SuppressStartupBanner="true"
-				IgnoreDefaultLibraryNames="libci.lib"
-				GenerateDebugInformation="false"
-				ProgramDatabaseFile="..\obj\IrrRelease\Irrlicht.pdb"
-				ImportLibrary="..\..\lib\Win32-visualstudio\Irrlicht.lib"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Release - Fast FPU|Win32"
-			OutputDirectory="$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="2"
-			WholeProgramOptimization="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
-				MkTypLibCompatible="true"
-				SuppressStartupBanner="true"
-				TargetEnvironment="1"
-				TypeLibraryName=".\..\Release/Irrlicht.tlb"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="3"
-				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="true"
-				FavorSizeOrSpeed="0"
-				OmitFramePointers="true"
-				AdditionalIncludeDirectories="..\..\include;zlib"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;IRRLICHT_EXPORTS;_CRT_SECURE_NO_DEPRECATE"
-				StringPooling="true"
-				ExceptionHandling="0"
-				RuntimeLibrary="0"
-				BufferSecurityCheck="false"
-				EnableFunctionLevelLinking="true"
-				FloatingPointModel="2"
-				RuntimeTypeInfo="false"
-				PrecompiledHeaderFile=".\..\obj\IrrRelease/Irrlicht.pch"
-				AssemblerListingLocation=".\..\obj\IrrRelease/"
-				ObjectFile=".\..\obj\IrrRelease/"
-				ProgramDataBaseFileName=".\..\obj\IrrRelease/"
-				WarningLevel="3"
-				SuppressStartupBanner="true"
-				DebugInformationFormat="0"
-				CallingConvention="1"
-				CompileAs="0"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="3079"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib opengl32.lib"
+				AdditionalDependencies="odbc32.lib odbccp32.lib"
 				OutputFile="..\..\bin\Win32-visualstudio\Irrlicht.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -338,10 +228,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\..\..\include\IReferenceCounted.h"
-				>
-			</File>
-			<File
 				RelativePath=".\..\..\include\IrrCompileConfig.h"
 				>
 			</File>
@@ -359,6 +245,10 @@
 			</File>
 			<File
 				RelativePath=".\..\..\include\ITimer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\..\..\include\IUnknown.h"
 				>
 			</File>
 			<File
@@ -465,15 +355,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\include\irrMap.h"
+					RelativePath=".\..\..\include\irrmath.h"
 					>
 				</File>
 				<File
-					RelativePath=".\..\..\include\irrMath.h"
-					>
-				</File>
-				<File
-					RelativePath=".\..\..\include\irrString.h"
+					RelativePath=".\..\..\include\irrstring.h"
 					>
 				</File>
 				<File
@@ -561,18 +447,6 @@
 				Name="scene"
 				>
 				<File
-					RelativePath="..\..\include\ECullingTypes.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\include\EDebugSceneTypes.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\include\EMeshWriterEnums.h"
-					>
-				</File>
-				<File
 					RelativePath=".\..\..\include\ESceneNodeAnimatorTypes.h"
 					>
 				</File>
@@ -594,6 +468,10 @@
 				</File>
 				<File
 					RelativePath=".\..\..\include\IAnimatedMeshSceneNode.h"
+					>
+				</File>
+				<File
+					RelativePath=".\..\..\include\IAnimatedMeshX.h"
 					>
 				</File>
 				<File
@@ -637,10 +515,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\include\IMeshWriter.h"
-					>
-				</File>
-				<File
 					RelativePath=".\..\..\include\IMetaTriangleSelector.h"
 					>
 				</File>
@@ -677,14 +551,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\include\ISceneNodeAnimatorCameraFPS.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\include\ISceneNodeAnimatorCameraMaya.h"
-					>
-				</File>
-				<File
 					RelativePath=".\..\..\include\ISceneNodeAnimatorCollisionResponse.h"
 					>
 				</File>
@@ -697,11 +563,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\..\..\include\IShadowVolumeSceneNode.h"
+					RelativePath=".\..\..\include\ISceneNodeMeshLoader.h"
 					>
 				</File>
 				<File
-					RelativePath="..\..\include\ISkinnedMesh.h"
+					RelativePath=".\..\..\include\IShadowVolumeSceneNode.h"
 					>
 				</File>
 				<File
@@ -714,10 +580,6 @@
 				</File>
 				<File
 					RelativePath=".\..\..\include\ITriangleSelector.h"
-					>
-				</File>
-				<File
-					RelativePath=".\..\..\include\IVolumeLightSceneNode.h"
 					>
 				</File>
 				<File
@@ -749,7 +611,7 @@
 					>
 				</File>
 				<File
-					RelativePath=".\..\..\include\SViewFrustum.h"
+					RelativePath=".\..\..\include\SViewFrustrum.h"
 					>
 				</File>
 			</Filter>
@@ -757,15 +619,7 @@
 				Name="gui"
 				>
 				<File
-					RelativePath="..\..\include\EGUIAlignment.h"
-					>
-				</File>
-				<File
 					RelativePath=".\..\..\include\EGUIElementTypes.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\include\EMessageBoxFlags.h"
 					>
 				</File>
 				<File
@@ -794,10 +648,6 @@
 				</File>
 				<File
 					RelativePath=".\..\..\include\IGUIElement.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\include\IGUIElementFactory.h"
 					>
 				</File>
 				<File
@@ -837,14 +687,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\include\IGUISpinBox.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\include\IGUISpriteBank.h"
-					>
-				</File>
-				<File
 					RelativePath=".\..\..\include\IGUIStaticText.h"
 					>
 				</File>
@@ -870,14 +712,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\CDefaultGUIElementFactory.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CDefaultGUIElementFactory.h"
-				>
-			</File>
-			<File
 				RelativePath=".\CGUIButton.cpp"
 				>
 			</File>
@@ -895,10 +729,6 @@
 			</File>
 			<File
 				RelativePath=".\CGUIColorSelectDialog.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CGUIColorSelectDialog.h"
 				>
 			</File>
 			<File
@@ -954,7 +784,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\CGUIImage.h"
+				RelativePath=".\CGUIImage.H"
 				>
 			</File>
 			<File
@@ -1022,22 +852,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\CGUISpinBox.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CGUISpinBox.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CGUISpriteBank.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CGUISpriteBank.h"
-				>
-			</File>
-			<File
 				RelativePath=".\CGUIStaticText.cpp"
 				>
 			</File>
@@ -1054,14 +868,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\CGUITable.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CGUITable.h"
-				>
-			</File>
-			<File
 				RelativePath="CGUIToolBar.cpp"
 				>
 			</File>
@@ -1075,6 +881,10 @@
 			</File>
 			<File
 				RelativePath=".\CGUIWindow.h"
+				>
+			</File>
+			<File
+				RelativePath=".\GUIIcons.h"
 				>
 			</File>
 		</Filter>
@@ -1182,14 +992,6 @@
 				</File>
 				<File
 					RelativePath=".\COpenGLDriver.h"
-					>
-				</File>
-				<File
-					RelativePath=".\COpenGLExtensionHandler.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\COpenGLExtensionHandler.h"
 					>
 				</File>
 				<File
@@ -1341,19 +1143,11 @@
 					>
 				</File>
 				<File
-					RelativePath="CImageLoaderPNG.cpp"
+					RelativePath=".\CImageLoaderPNG.cpp"
 					>
 				</File>
 				<File
-					RelativePath="CImageLoaderPNG.h"
-					>
-				</File>
-				<File
-					RelativePath="CImageLoaderPPM.cpp"
-					>
-				</File>
-				<File
-					RelativePath="CImageLoaderPPM.h"
+					RelativePath=".\CImageLoaderPNG.h"
 					>
 				</File>
 				<File
@@ -1370,14 +1164,6 @@
 				</File>
 				<File
 					RelativePath="CImageLoaderTGA.h"
-					>
-				</File>
-				<File
-					RelativePath="CImageLoaderWAL.cpp"
-					>
-				</File>
-				<File
-					RelativePath="CImageLoaderWAL.h"
 					>
 				</File>
 				<File
@@ -1510,20 +1296,8 @@
 				</File>
 			</Filter>
 			<Filter
-				Name="Burning Video"
+				Name="Software2"
 				>
-				<File
-					RelativePath=".\CBurningShader_Raster_Reference.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CDepthBuffer.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CDepthBuffer.h"
-					>
-				</File>
 				<File
 					RelativePath=".\CSoftware2MaterialRenderer.h"
 					>
@@ -1557,10 +1331,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\CTRTextureBlend.cpp"
-					>
-				</File>
-				<File
 					RelativePath=".\CTRTextureDetailMap2.cpp"
 					>
 				</File>
@@ -1574,14 +1344,6 @@
 				</File>
 				<File
 					RelativePath=".\CTRTextureGouraudAddNoZ2.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CTRTextureGouraudAlpha.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CTRTextureGouraudAlphaNoZ.cpp"
 					>
 				</File>
 				<File
@@ -1617,15 +1379,23 @@
 					>
 				</File>
 				<File
-					RelativePath=".\IBurningShader.cpp"
+					RelativePath=".\CZBuffer2.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\IBurningShader.h"
+					RelativePath=".\CZBuffer2.h"
 					>
 				</File>
 				<File
-					RelativePath=".\IDepthBuffer.h"
+					RelativePath=".\ITriangleRenderer2.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ITriangleRenderer2.h"
+					>
+				</File>
+				<File
+					RelativePath=".\IZBuffer2.h"
 					>
 				</File>
 				<File
@@ -1709,6 +1479,14 @@
 					>
 				</File>
 				<File
+					RelativePath=".\CAnimatedMeshB3d.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\CAnimatedMeshB3d.h"
+					>
+				</File>
+				<File
 					RelativePath=".\CAnimatedMeshMD2.cpp"
 					>
 				</File>
@@ -1717,27 +1495,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\CAnimatedMeshMD3.cpp"
+					RelativePath=".\CAnimatedMeshMS3D.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\CAnimatedMeshMD3.h"
-					>
-				</File>
-				<File
-					RelativePath=".\CB3DMeshFileLoader.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CB3DMeshFileLoader.h"
-					>
-				</File>
-				<File
-					RelativePath=".\CBSPMeshFileLoader.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CBSPMeshFileLoader.h"
+					RelativePath=".\CAnimatedMeshMS3D.h"
 					>
 				</File>
 				<File
@@ -1757,6 +1519,14 @@
 					>
 				</File>
 				<File
+					RelativePath=".\CDefaultMeshFormatLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\CDefaultMeshFormatLoader.h"
+					>
+				</File>
+				<File
 					RelativePath=".\CDMFLoader.cpp"
 					>
 				</File>
@@ -1765,51 +1535,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\CIrrMeshFileLoader.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CIrrMeshFileLoader.h"
-					>
-				</File>
-				<File
 					RelativePath=".\CLMTSMeshFileLoader.cpp"
 					>
 				</File>
 				<File
 					RelativePath=".\CLMTSMeshFileLoader.h"
-					>
-				</File>
-				<File
-					RelativePath=".\CLWOMeshFileLoader.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CLWOMeshFileLoader.h"
-					>
-				</File>
-				<File
-					RelativePath=".\CMD2MeshFileLoader.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CMD2MeshFileLoader.h"
-					>
-				</File>
-				<File
-					RelativePath=".\CMD3MeshFileLoader.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CMD3MeshFileLoader.h"
-					>
-				</File>
-				<File
-					RelativePath=".\CMS3DMeshFileLoader.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CMS3DMeshFileLoader.h"
 					>
 				</File>
 				<File
@@ -1822,6 +1552,10 @@
 				</File>
 				<File
 					RelativePath=".\CMY3DMeshFileLoader.h"
+					>
+				</File>
+				<File
+					RelativePath=".\CMY3DStuff.h"
 					>
 				</File>
 				<File
@@ -1857,19 +1591,19 @@
 					>
 				</File>
 				<File
-					RelativePath=".\CSkinnedMesh.cpp"
+					RelativePath="CXAnimationPlayer.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\CSkinnedMesh.h"
+					RelativePath="CXAnimationPlayer.h"
 					>
 				</File>
 				<File
-					RelativePath="CSTLMeshFileLoader.cpp"
+					RelativePath="CXFileReader.cpp"
 					>
 				</File>
 				<File
-					RelativePath="CSTLMeshFileLoader.h"
+					RelativePath="CXFileReader.h"
 					>
 				</File>
 				<File
@@ -1905,11 +1639,19 @@
 					>
 				</File>
 				<File
-					RelativePath=".\CBoneSceneNode.cpp"
+					RelativePath=".\CCameraFPSSceneNode.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\CBoneSceneNode.h"
+					RelativePath=".\CCameraFPSSceneNode.h"
+					>
+				</File>
+				<File
+					RelativePath=".\CCameraMayaSceneNode.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\CCameraMayaSceneNode.h"
 					>
 				</File>
 				<File
@@ -1969,14 +1711,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\CQuake3ShaderSceneNode.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CQuake3ShaderSceneNode.h"
-					>
-				</File>
-				<File
 					RelativePath=".\CShadowVolumeSceneNode.cpp"
 					>
 				</File>
@@ -2025,14 +1759,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\CVolumeLightSceneNode.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CVolumeLightSceneNode.h"
-					>
-				</File>
-				<File
 					RelativePath="CWaterSurfaceSceneNode.cpp"
 					>
 				</File>
@@ -2045,23 +1771,11 @@
 				Name="particleSystem"
 				>
 				<File
-					RelativePath=".\CParticleAnimatedMeshSceneNodeEmitter.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CParticleAttractionAffector.cpp"
-					>
-				</File>
-				<File
 					RelativePath="CParticleBoxEmitter.cpp"
 					>
 				</File>
 				<File
 					RelativePath="CParticleBoxEmitter.h"
-					>
-				</File>
-				<File
-					RelativePath=".\CParticleCylinderEmitter.cpp"
 					>
 				</File>
 				<File
@@ -2081,27 +1795,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\CParticleMeshEmitter.cpp"
-					>
-				</File>
-				<File
 					RelativePath="CParticlePointEmitter.cpp"
 					>
 				</File>
 				<File
 					RelativePath="CParticlePointEmitter.h"
-					>
-				</File>
-				<File
-					RelativePath=".\CParticleRingEmitter.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CParticleRotationAffector.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CParticleSphereEmitter.cpp"
 					>
 				</File>
 				<File
@@ -2112,6 +1810,66 @@
 					RelativePath="CParticleSystemSceneNode.h"
 					>
 				</File>
+				<Filter
+					Name="animators"
+					>
+					<File
+						RelativePath="CSceneNodeAnimatorCollisionResponse.cpp"
+						>
+					</File>
+					<File
+						RelativePath="CSceneNodeAnimatorCollisionResponse.h"
+						>
+					</File>
+					<File
+						RelativePath="CSceneNodeAnimatorDelete.cpp"
+						>
+					</File>
+					<File
+						RelativePath="CSceneNodeAnimatorDelete.h"
+						>
+					</File>
+					<File
+						RelativePath=".\CSceneNodeAnimatorFlyCircle.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\CSceneNodeAnimatorFlyCircle.h"
+						>
+					</File>
+					<File
+						RelativePath=".\CSceneNodeAnimatorFlyStraight.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\CSceneNodeAnimatorFlyStraight.h"
+						>
+					</File>
+					<File
+						RelativePath="CSceneNodeAnimatorFollowSpline.cpp"
+						>
+					</File>
+					<File
+						RelativePath="CSceneNodeAnimatorFollowSpline.h"
+						>
+					</File>
+					<File
+						RelativePath=".\CSceneNodeAnimatorRotation.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\CSceneNodeAnimatorRotation.h"
+						>
+					</File>
+					<File
+						RelativePath=".\CSceneNodeAnimatorTexture.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\CSceneNodeAnimatorTexture.h"
+						>
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="collision"
@@ -2162,110 +1920,6 @@
 				</File>
 				<File
 					RelativePath="CTriangleSelector.h"
-					>
-				</File>
-			</Filter>
-			<Filter
-				Name="animators"
-				>
-				<File
-					RelativePath=".\CSceneNodeAnimatorCameraFPS.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CSceneNodeAnimatorCameraFPS.h"
-					>
-				</File>
-				<File
-					RelativePath=".\CSceneNodeAnimatorCameraMaya.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CSceneNodeAnimatorCameraMaya.h"
-					>
-				</File>
-				<File
-					RelativePath="CSceneNodeAnimatorCollisionResponse.cpp"
-					>
-				</File>
-				<File
-					RelativePath="CSceneNodeAnimatorCollisionResponse.h"
-					>
-				</File>
-				<File
-					RelativePath="CSceneNodeAnimatorDelete.cpp"
-					>
-				</File>
-				<File
-					RelativePath="CSceneNodeAnimatorDelete.h"
-					>
-				</File>
-				<File
-					RelativePath=".\CSceneNodeAnimatorFlyCircle.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CSceneNodeAnimatorFlyCircle.h"
-					>
-				</File>
-				<File
-					RelativePath=".\CSceneNodeAnimatorFlyStraight.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CSceneNodeAnimatorFlyStraight.h"
-					>
-				</File>
-				<File
-					RelativePath="CSceneNodeAnimatorFollowSpline.cpp"
-					>
-				</File>
-				<File
-					RelativePath="CSceneNodeAnimatorFollowSpline.h"
-					>
-				</File>
-				<File
-					RelativePath=".\CSceneNodeAnimatorRotation.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CSceneNodeAnimatorRotation.h"
-					>
-				</File>
-				<File
-					RelativePath=".\CSceneNodeAnimatorTexture.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CSceneNodeAnimatorTexture.h"
-					>
-				</File>
-			</Filter>
-			<Filter
-				Name="writers"
-				>
-				<File
-					RelativePath=".\CColladaMeshWriter.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CColladaMeshWriter.h"
-					>
-				</File>
-				<File
-					RelativePath=".\CIrrMeshWriter.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CIrrMeshWriter.h"
-					>
-				</File>
-				<File
-					RelativePath=".\CSTLMeshWriter.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CSTLMeshWriter.h"
 					>
 				</File>
 			</Filter>
@@ -2386,14 +2040,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\CIrrDeviceSDL.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CIrrDeviceSDL.h"
-				>
-			</File>
-			<File
 				RelativePath="CIrrDeviceStub.cpp"
 				>
 			</File>
@@ -2427,6 +2073,10 @@
 			</File>
 			<File
 				RelativePath="CTimer.h"
+				>
+			</File>
+			<File
+				RelativePath="fast_atof.h"
 				>
 			</File>
 			<File
@@ -2765,6 +2415,62 @@
 					</File>
 					<File
 						RelativePath="jpeglib\jversion.h"
+						>
+					</File>
+					<File
+						RelativePath="jpeglib\rdbmp.c"
+						>
+					</File>
+					<File
+						RelativePath="jpeglib\rdcolmap.c"
+						>
+					</File>
+					<File
+						RelativePath="jpeglib\rdgif.c"
+						>
+					</File>
+					<File
+						RelativePath="jpeglib\rdppm.c"
+						>
+					</File>
+					<File
+						RelativePath="jpeglib\rdrle.c"
+						>
+					</File>
+					<File
+						RelativePath="jpeglib\rdswitch.c"
+						>
+					</File>
+					<File
+						RelativePath="jpeglib\rdtarga.c"
+						>
+					</File>
+					<File
+						RelativePath="jpeglib\transupp.c"
+						>
+					</File>
+					<File
+						RelativePath="jpeglib\transupp.h"
+						>
+					</File>
+					<File
+						RelativePath="jpeglib\wrbmp.c"
+						>
+					</File>
+					<File
+						RelativePath="jpeglib\wrgif.c"
+						>
+					</File>
+					<File
+						RelativePath="jpeglib\wrppm.c"
+						>
+					</File>
+					<File
+						RelativePath="jpeglib\wrrle.c"
+						>
+					</File>
+					<File
+						RelativePath="jpeglib\wrtarga.c"
 						>
 					</File>
 				</Filter>

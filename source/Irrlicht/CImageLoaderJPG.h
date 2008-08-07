@@ -1,17 +1,15 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #ifndef __C_IMAGE_LOADER_JPG_H_INCLUDED__
 #define __C_IMAGE_LOADER_JPG_H_INCLUDED__
 
-#include "IrrCompileConfig.h"
-
-#ifdef _IRR_COMPILE_WITH_JPG_LOADER_
-
 #include "IImageLoader.h"
 
-#include <stdio.h> // required for jpeglib.h
+#include <stdio.h>
+
+#include "IrrCompileConfig.h"
 #ifdef _IRR_COMPILE_WITH_LIBJPEG_
 extern "C" {
 	#ifndef _IRR_USE_NON_SYSTEM_JPEG_LIB_
@@ -30,7 +28,7 @@ namespace video
 {
 
 
-//! Surface Loader for JPG images
+//! Surface Loader fow JPG images
 class CImageLoaderJPG : public IImageLoader
 {
 public:
@@ -43,13 +41,13 @@ public:
 
 	//! returns true if the file maybe is able to be loaded by this class
 	//! based on the file extension (e.g. ".tga")
-	virtual bool isALoadableFileExtension(const c8* fileName) const;
+	virtual bool isALoadableFileExtension(const c8* fileName);
 
 	//! returns true if the file maybe is able to be loaded by this class
-	virtual bool isALoadableFileFormat(io::IReadFile* file) const;
+	virtual bool isALoadableFileFormat(irr::io::IReadFile* file);
 
 	//! creates a surface from the file
-	virtual IImage* loadImage(io::IReadFile* file) const;
+	virtual IImage* loadImage(irr::io::IReadFile* file);
 
 private:
 
@@ -108,6 +106,5 @@ private:
 } // end namespace irr
 
 
-#endif
 #endif
 

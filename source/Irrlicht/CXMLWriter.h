@@ -1,11 +1,10 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #ifndef __C_XML_WRITER_H_INCLUDED__
 #define __C_XML_WRITER_H_INCLUDED__
 
-#include <wchar.h>
 #include "IXMLWriter.h"
 #include "IWriteFile.h"
 
@@ -56,7 +55,7 @@ namespace io
 		struct XMLSpecialCharacters
 		{
 			wchar_t Character;
-			const wchar_t* Symbol;
+			wchar_t* Symbol;
 		};
 
 	private:
@@ -65,8 +64,6 @@ namespace io
 
 		IWriteFile* File;
 		s32 Tabs;
-
-		bool TextWrittenLast;
 	};
 
 } // end namespace irr

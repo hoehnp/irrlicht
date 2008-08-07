@@ -1,17 +1,13 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
-// This file is part of the "Irrlicht Engine".
-// For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #include "CImageWriterPNG.h"
-
-#ifdef _IRR_COMPILE_WITH_PNG_WRITER_
-
 #include "CImageLoaderPNG.h"
 #include "CColorConverter.h"
 #include "IWriteFile.h"
 #include "irrString.h"
 #include "os.h" // for logging
+#include <string.h>
 
+#include "IrrCompileConfig.h"
 #ifdef _IRR_COMPILE_WITH_LIBPNG_
 #ifndef _IRR_USE_NON_SYSTEM_LIB_PNG_
 	#include <png.h> // use system lib png
@@ -43,7 +39,7 @@ void PNGAPI user_write_data_fcn(png_structp png_ptr, png_bytep data, png_size_t 
 {
 	png_size_t check;
 
-	io::IWriteFile* file=(io::IWriteFile*)png_ptr->io_ptr;
+	irr::io::IWriteFile* file=(irr::io::IWriteFile*)png_ptr->io_ptr;
 	check=(png_size_t) file->write((void*)data,length);
 
 	if (check != length)
@@ -58,7 +54,7 @@ CImageWriterPNG::CImageWriterPNG()
 #endif
 }
 
-bool CImageWriterPNG::isAWriteableFileExtension(const c8* fileName) const
+bool CImageWriterPNG::isAWriteableFileExtension(const c8* fileName)
 {
 #ifdef _IRR_COMPILE_WITH_LIBPNG_
 	return strstr(fileName, ".png") != 0;
@@ -67,7 +63,7 @@ bool CImageWriterPNG::isAWriteableFileExtension(const c8* fileName) const
 #endif
 }
 
-bool CImageWriterPNG::writeImage(io::IWriteFile* file, IImage* image,u32 param) const
+bool CImageWriterPNG::writeImage(io::IWriteFile* file, IImage* image)
 {
 #ifdef _IRR_COMPILE_WITH_LIBPNG_
 	if (!file || !image)
@@ -78,7 +74,7 @@ bool CImageWriterPNG::writeImage(io::IWriteFile* file, IImage* image,u32 param) 
 		NULL, (png_error_ptr)png_cpexcept_error, NULL);
 	if (!png_ptr)
 	{
-		os::Printer::log("PNGWriter: Internal PNG create write struct failure\n", file->getFileName(), ELL_ERROR);
+		os::Printer::log("LOAD PNG: Internal PNG create write struct failure\n", file->getFileName(), ELL_ERROR);
 		return false;
 	}
 
@@ -86,7 +82,7 @@ bool CImageWriterPNG::writeImage(io::IWriteFile* file, IImage* image,u32 param) 
 	png_infop info_ptr = png_create_info_struct(png_ptr);
 	if (!info_ptr)
 	{
-		os::Printer::log("PNGWriter: Internal PNG create info struct failure\n", file->getFileName(), ELL_ERROR);
+		os::Printer::log("LOAD PNG: Internal PNG create info struct failure\n", file->getFileName(), ELL_ERROR);
 		png_destroy_write_struct(&png_ptr, NULL);
 		return false;
 	}
@@ -101,21 +97,16 @@ bool CImageWriterPNG::writeImage(io::IWriteFile* file, IImage* image,u32 param) 
 	png_set_write_fn(png_ptr, file, user_write_data_fcn, NULL);
 
 	// Set info
-	switch(image->getColorFormat())
-	{
-		case ECF_A8R8G8B8:
-		case ECF_A1R5G5B5:
-			png_set_IHDR(png_ptr, info_ptr,
-				image->getDimension().Width, image->getDimension().Height,
-				8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
-				PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
-		break;
-		default:
-			png_set_IHDR(png_ptr, info_ptr,
-				image->getDimension().Width, image->getDimension().Height,
-				8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
-				PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
-	}
+	if ((image->getColorFormat()==ECF_A8R8G8B8) || (image->getColorFormat()==ECF_A1R5G5B5))
+		png_set_IHDR(png_ptr, info_ptr,
+			image->getDimension().Width, image->getDimension().Height,
+			8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
+			PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+	else
+		png_set_IHDR(png_ptr, info_ptr,
+			image->getDimension().Width, image->getDimension().Height,
+			8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
+			PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 
 	s32 lineWidth=image->getDimension().Width;
 	switch(image->getColorFormat())
@@ -132,7 +123,7 @@ bool CImageWriterPNG::writeImage(io::IWriteFile* file, IImage* image,u32 param) 
 	u8* tmpImage = new u8[image->getDimension().Height*lineWidth];
 	if (!tmpImage)
 	{
-		os::Printer::log("PNGWriter: Internal PNG create image failure\n", file->getFileName(), ELL_ERROR);
+		os::Printer::log("LOAD PNG: Internal PNG create image failure\n", file->getFileName(), ELL_ERROR);
 		png_destroy_write_struct(&png_ptr, &info_ptr);
 		return false;
 	}
@@ -154,14 +145,11 @@ bool CImageWriterPNG::writeImage(io::IWriteFile* file, IImage* image,u32 param) 
 		break;
 	}
 	image->unlock();
-
 	// Create array of pointers to rows in image data
-
-	//Used to point to image rows
-	u8** RowPointers = new png_bytep[image->getDimension().Height];
+	RowPointers = new png_bytep[image->getDimension().Height];
 	if (!RowPointers)
 	{
-		os::Printer::log("PNGWriter: Internal PNG create row pointers failure\n", file->getFileName(), ELL_ERROR);
+		os::Printer::log("LOAD PNG: Internal PNG create row pointers failure\n", file->getFileName(), ELL_ERROR);
 		png_destroy_write_struct(&png_ptr, &info_ptr);
 		delete [] tmpImage;
 		return false;
@@ -201,8 +189,5 @@ bool CImageWriterPNG::writeImage(io::IWriteFile* file, IImage* image,u32 param) 
 #endif
 }
 
-} // namespace video
-} // namespace irr
-
-#endif
-
+}; // namespace video
+}; // namespace irr

@@ -1,17 +1,12 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #include "CImageLoaderTGA.h"
-
-#ifdef _IRR_COMPILE_WITH_TGA_LOADER_
-
-#include "IReadFile.h"
+#include <string.h>
 #include "os.h"
 #include "CColorConverter.h"
 #include "CImage.h"
-#include "irrString.h"
-
 
 namespace irr
 {
@@ -19,16 +14,30 @@ namespace video
 {
 
 
+//! constructor
+CImageLoaderTGA::CImageLoaderTGA()
+{
+}
+
+
+
+//! destructor
+CImageLoaderTGA::~CImageLoaderTGA()
+{
+}
+
+
+
 //! returns true if the file maybe is able to be loaded by this class
 //! based on the file extension (e.g. ".tga")
-bool CImageLoaderTGA::isALoadableFileExtension(const c8* fileName) const
+bool CImageLoaderTGA::isALoadableFileExtension(const c8* fileName)
 {
 	return strstr(fileName, ".tga") != 0;
 }
 
 
 //! loads a compressed tga.
-u8 *CImageLoaderTGA::loadCompressedImage(io::IReadFile *file, const STGAHeader& header) const
+u8 *CImageLoaderTGA::loadCompressedImage(irr::io::IReadFile *file, const STGAHeader& header)
 {
 	// This was written and sent in by Jon Pry, thank you very much!
 	// I only changed the formatting a little bit.
@@ -78,13 +87,12 @@ u8 *CImageLoaderTGA::loadCompressedImage(io::IReadFile *file, const STGAHeader& 
 
 
 //! returns true if the file maybe is able to be loaded by this class
-bool CImageLoaderTGA::isALoadableFileFormat(io::IReadFile* file) const
+bool CImageLoaderTGA::isALoadableFileFormat(irr::io::IReadFile* file)
 {
 	if (!file)
 		return false;
 
 	STGAFooter footer;
-	memset(&footer, 0, sizeof(STGAFooter));
 	file->seek(file->getSize()-sizeof(STGAFooter));
 	file->read(&footer, sizeof(STGAFooter));
 	return (!strcmp(footer.Signature,"TRUEVISION-XFILE.")); // very old tgas are refused.
@@ -93,7 +101,7 @@ bool CImageLoaderTGA::isALoadableFileFormat(io::IReadFile* file) const
 
 
 //! creates a surface from the file
-IImage* CImageLoaderTGA::loadImage(io::IReadFile* file) const
+IImage* CImageLoaderTGA::loadImage(irr::io::IReadFile* file)
 {
 	STGAHeader header;
 	u8* colorMap = 0;
@@ -193,6 +201,4 @@ IImageLoader* createImageLoaderTGA()
 
 } // end namespace video
 } // end namespace irr
-
-#endif
 

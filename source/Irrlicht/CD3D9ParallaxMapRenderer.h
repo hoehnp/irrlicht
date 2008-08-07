@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -16,17 +16,17 @@
 
 namespace irr
 {
-namespace video
+namespace video  
 {
 
 //! Renderer for normal maps using parallax mapping
-class CD3D9ParallaxMapRenderer :
+class CD3D9ParallaxMapRenderer : 
 	public CD3D9ShaderMaterialRenderer, IShaderConstantSetCallBack
 {
 public:
 
 	CD3D9ParallaxMapRenderer(
-		IDirect3DDevice9* d3ddev, video::IVideoDriver* driver,
+		IDirect3DDevice9* d3ddev, video::IVideoDriver* driver, 
 		s32& outMaterialTypeNr, IMaterialRenderer* baseMaterial);
 
 	~CD3D9ParallaxMapRenderer();
@@ -37,10 +37,10 @@ public:
 
 	virtual bool OnRender(IMaterialRendererServices* service, E_VERTEX_TYPE vtxtype);
 
-	//! Returns the render capability of the material.
-	virtual s32 getRenderCapability() const;
+	//! Returns the render capability of the material. 
+	virtual s32 getRenderCapability();
 
-	virtual void OnSetMaterial(const video::SMaterial& material,
+	virtual void OnSetMaterial(video::SMaterial& material, 
 		const video::SMaterial& lastMaterial,
 		bool resetAllRenderstates, video::IMaterialRendererServices* services);
 

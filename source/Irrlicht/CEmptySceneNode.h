@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -23,16 +23,13 @@ namespace scene
 		virtual const core::aabbox3d<f32>& getBoundingBox() const;
 
 		//! This method is called just before the rendering process of the whole scene.
-		virtual void OnRegisterSceneNode();
+		virtual void OnPreRender();
 
 		//! does nothing.
 		virtual void render();
 
 		//! Returns type of the scene node
-		virtual ESCENE_NODE_TYPE getType() const { return ESNT_EMPTY; }
-
-		//! Creates a clone of this scene node and its children.
-		virtual ISceneNode* clone(ISceneNode* newParent=0, ISceneManager* newManager=0);
+		virtual ESCENE_NODE_TYPE getType() { return ESNT_EMPTY; }
 
 	private:
 

@@ -86,7 +86,7 @@ public:
 
 
 	/*
-	Before it is drawn, the OnRegisterSceneNode() method of every scene node in the scene 
+	Before it is drawn, the OnPreRender() method of every scene node in the scene 
 	is called by the scene manager. If the scene node wishes to draw itself,
 	it may register itself in the scene manager to be drawn. This is necessary to
 	tell the scene manager when it should call the ::render method. For example
@@ -97,15 +97,15 @@ public:
 	So here we simply register the scene node to get render normally. If we would like
 	to let it be rendered like cameras or light, we would have to call
 	SceneManager->registerNodeForRendering(this, SNRT_LIGHT_AND_CAMERA);
-	After this, we call the OnRegisterSceneNode-method of the base class ISceneNode,
+	After this, we call the OnPreRender-method of the base class ISceneNode,
 	which simply lets also all the child scene nodes of this node register themselves.
 	*/
-	virtual void OnRegisterSceneNode()
+	virtual void OnPreRender()
 	{
 		if (IsVisible)
 			SceneManager->registerNodeForRendering(this);
 
-		ISceneNode::OnRegisterSceneNode();
+		ISceneNode::OnPreRender();
 	}
 
 	/*
@@ -137,12 +137,12 @@ public:
 		return Box;
 	}
 
-	virtual u32 getMaterialCount() const
+	virtual s32 getMaterialCount()
 	{
 		return 1;
 	}
 
-	virtual video::SMaterial& getMaterial(u32 i)
+	virtual video::SMaterial& getMaterial(s32 i)
 	{
 		return Material;
 	}	
@@ -172,7 +172,7 @@ int main()
 		case 'b': driverType = video::EDT_DIRECT3D8;break;
 		case 'c': driverType = video::EDT_OPENGL;   break;
 		case 'd': driverType = video::EDT_SOFTWARE; break;
-		case 'e': driverType = video::EDT_BURNINGSVIDEO; break;
+		case 'e': driverType = video::EDT_SOFTWARE2;break;
 		case 'f': driverType = video::EDT_NULL;     break;
 		default: return 0;
 	}
@@ -194,44 +194,35 @@ int main()
 
 	smgr->addCameraSceneNode(0, core::vector3df(0,-40,0), core::vector3df(0,0,0));
 
-	// Create our scene node.  I don't check the result of calling new, as it
-	// should throw an exception rather than returning 0 on failure.
-	// Because the new node will create itself with a reference count of 1, and
-	// then will have another reference added by its parent scene node when it is
-	// added to the scene, I need to drop my reference to it.  Best practice is
-	// to drop it only *after* I have finished using it, regardless of what the
-	// reference count of the object is after creation.
+	/*
+	Create our scene node. Note that it is dropped (->drop()) instantly after 
+	we create it. This is possible because the scene manager now takes
+	care of it. This is not nessecary, it would also be possible to drop it
+	at the end of the program.
+	*/
+
 	CSampleSceneNode *myNode = 
 		new CSampleSceneNode(smgr->getRootSceneNode(), smgr, 666);
 
-	// To animate something in this boring scene consisting only of one tetraeder,
-	// and to show, that you now can use your scene node like any other scene
-	// node in the engine, we add an animator to the scene node, which rotates
-	// the node a little bit.
+	myNode->drop();
+
+	/*
+	To animate something in this boring scene consisting only of one tetraeder,
+	and to show, that you now can use your scene node like any other scene
+	node in the engine, we add an animator to the scene node, which rotates
+	the node a little bit.
+	*/
+
 	scene::ISceneNodeAnimator* anim = 
 		smgr->createRotationAnimator(core::vector3df(0.8f, 0, 0.8f));
 
-	// createRotationAnimator() could return 0, so should be checked
-	if(anim)
-	{
-		myNode->addAnimator(anim);
-		
-		// I'm done referring to anim, so must drop this reference now because it
-		// was produced by a createFoo() function.
-		anim->drop();
-		anim = 0; // As I shouldn't refer to it again, ensure that I can't
-	}
-
-	// I'm done with my CSampleSceneNode object, and so must drop my reference
-	myNode->drop();
-	myNode = 0; // As I shouldn't refer to it again, ensure that I can't
-
+	myNode->addAnimator(anim);
+	anim->drop();
 
 	/* 
 	Now draw everything and finish.
 	*/
 
-	u32 frames=0;
 	while(device->run())
 	{
 		driver->beginScene(true, true, video::SColor(0,100,100,100));
@@ -239,16 +230,6 @@ int main()
 		smgr->drawAll();
 
 		driver->endScene();
-		if (++frames==100)
-		{
-			core::stringw str = L"Irrlicht Engine [";
-			str += driver->getName();
-			str += L"] FPS: ";
-			str += (s32)driver->getFPS();
-
-			device->setWindowCaption(str.c_str());
-			frames=0;
-		}
 	}
 
 	device->drop();

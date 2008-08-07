@@ -1,11 +1,8 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
-#include "IrrCompileConfig.h"
 #include "CTRTextureGouraud.h"
-
-#ifdef _IRR_COMPILE_WITH_SOFTWARE_
 
 namespace irr
 {
@@ -101,7 +98,8 @@ public:
 			if (!TriangleRect.isRectCollided(ViewPortRect))
 				continue;
 
-			// calculate height of triangle
+
+			// höhe des dreiecks berechnen
 			height = v3->Pos.Y - v1->Pos.Y;
 			if (!height)
 				continue;
@@ -299,28 +297,12 @@ public:
 
 };
 
-} // end namespace video
-} // end namespace irr
-
-#endif // _IRR_COMPILE_WITH_SOFTWARE_
-
-namespace irr
-{
-namespace video
-{
-
 
 //! creates a flat triangle renderer
 ITriangleRenderer* createTriangleRendererGouraudWire(IZBuffer* zbuffer)
 {
-	#ifdef _IRR_COMPILE_WITH_SOFTWARE_
 	return new CTRGouraudWire(zbuffer);
-	#else
-	return 0;
-	#endif // _IRR_COMPILE_WITH_SOFTWARE_
 }
 
 } // end namespace video
 } // end namespace irr
-
-

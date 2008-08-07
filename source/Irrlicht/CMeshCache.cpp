@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -14,7 +14,8 @@ namespace scene
 
 CMeshCache::~CMeshCache()
 {
-	clear();
+	for (u32 i=0; i<Meshes.size(); ++i)
+		Meshes[i].Mesh->drop();
 }
 
 
@@ -32,97 +33,40 @@ void CMeshCache::addMesh(const c8* filename, IAnimatedMesh* mesh)
 }
 
 
-//! Removes a mesh from the cache.
-void CMeshCache::removeMesh(const IAnimatedMesh* const mesh)
-{
-	if ( !mesh )
-		return;
-	for (u32 i=0; i<Meshes.size(); ++i)
-	{
-		if (Meshes[i].Mesh == mesh)
-		{
-			Meshes[i].Mesh->drop();
-			Meshes.erase(i);
-			return;
-		}
-	}
-}
-
-
-//! Removes a mesh from the cache.
-void CMeshCache::removeMesh(const IMesh* const mesh)
-{
-	if ( !mesh )
-		return;
-	for (u32 i=0; i<Meshes.size(); ++i)
-	{
-		if (Meshes[i].Mesh && Meshes[i].Mesh->getMesh(0) == mesh)
-		{
-			Meshes[i].Mesh->drop();
-			Meshes.erase(i);
-			return;
-		}
-	}
-}
-
-
 //! Returns amount of loaded meshes
-u32 CMeshCache::getMeshCount() const
+s32 CMeshCache::getMeshCount()
 {
 	return Meshes.size();
 }
 
 
-//! Returns current number of the mesh
-s32 CMeshCache::getMeshIndex(const IAnimatedMesh* const mesh) const
-{
-	for (u32 i=0; i<Meshes.size(); ++i)
-		if (Meshes[i].Mesh == mesh)
-			return (s32)i;
-
-	return -1;
-}
-
-
-
-//! Returns current index number of the mesh, and -1 if it is not in the cache.
-s32 CMeshCache::getMeshIndex(const IMesh* const mesh) const
-{
-	for (u32 i=0; i<Meshes.size(); ++i)
-	{
-		if (Meshes[i].Mesh && Meshes[i].Mesh->getMesh(0) == mesh)
-			return (s32)i;
-	}
-
-	return -1;
-}
-
-
 //! Returns a mesh based on its index number
-IAnimatedMesh* CMeshCache::getMeshByIndex(u32 number)
+IAnimatedMesh* CMeshCache::getMeshByIndex(s32 number)
 {
-	if (number >= Meshes.size())
+	if (number < 0 || number >= (s32)Meshes.size())
 		return 0;
 
 	return Meshes[number].Mesh;
 }
 
 
-//! Returns a mesh based on its file name.
-IAnimatedMesh* CMeshCache::getMeshByFilename(const c8* filename)
+
+//! Returns current number of the mesh 
+s32 CMeshCache::getMeshIndex(IAnimatedMesh* mesh)
 {
-	MeshEntry e;
-	e.Name = filename;
-	e.Name.make_lower();
-	s32 id = Meshes.binary_search(e);
-	return (id != -1) ? Meshes[id].Mesh : 0;
+	for (int i=0; i<(int)Meshes.size(); ++i)
+		if (Meshes[i].Mesh == mesh)
+			return i;
+
+	return -1;
 }
 
 
+
 //! Returns name of a mesh based on its index number
-const c8* CMeshCache::getMeshFilename(u32 number) const
+const c8* CMeshCache::getMeshFilename(s32 number)
 {
-	if (number >= Meshes.size())
+	if (number < 0 || number >= (s32)Meshes.size())
 		return 0;
 
 	return Meshes[number].Name.c_str();
@@ -131,9 +75,9 @@ const c8* CMeshCache::getMeshFilename(u32 number) const
 
 
 //! Returns the filename of a loaded mesh, if there is any. Returns 0 if there is none.
-const c8* CMeshCache::getMeshFilename(const IAnimatedMesh* const mesh) const
+const c8* CMeshCache::getMeshFilename(IAnimatedMesh* mesh)
 {
-	for (u32 i=0; i<Meshes.size(); ++i)
+	for (s32 i=0; i<(s32)Meshes.size(); ++i)
 	{
 		if (Meshes[i].Mesh == mesh)
 			return Meshes[i].Name.c_str();
@@ -144,9 +88,9 @@ const c8* CMeshCache::getMeshFilename(const IAnimatedMesh* const mesh) const
 
 
 //! Returns the filename of a loaded mesh, if there is any. Returns 0 if there is none.
-const c8* CMeshCache::getMeshFilename(const IMesh* const mesh) const
+const c8* CMeshCache::getMeshFilename(IMesh* mesh)
 {
-	for (u32 i=0; i<Meshes.size(); ++i)
+	for (s32 i=0; i<(s32)Meshes.size(); ++i)
 	{
 		if (Meshes[i].Mesh && Meshes[i].Mesh->getMesh(0) == mesh)
 			return Meshes[i].Name.c_str();
@@ -157,83 +101,41 @@ const c8* CMeshCache::getMeshFilename(const IMesh* const mesh) const
 
 
 
-//! Renames a loaded mesh, if possible.
-bool CMeshCache::setMeshFilename(u32 index, const c8* filename)
-{
-	if (index >= Meshes.size())
-		return false;
-
-	Meshes[index].Name = filename;
-	Meshes.sort();
-	return true;
-}
-
-
-//! Renames a loaded mesh, if possible.
-bool CMeshCache::setMeshFilename(const IAnimatedMesh* const mesh, const c8* filename)
-{
-	for (u32 i=0; i<Meshes.size(); ++i)
-	{
-		if (Meshes[i].Mesh == mesh)
-		{
-			Meshes[i].Name = filename;
-			Meshes.sort();
-			return true;
-		}
-	}
-
-	return false;
-}
-
-
-//! Renames a loaded mesh, if possible.
-bool CMeshCache::setMeshFilename(const IMesh* const mesh, const c8* filename)
-{
-	for (u32 i=0; i<Meshes.size(); ++i)
-	{
-		if (Meshes[i].Mesh && Meshes[i].Mesh->getMesh(0) == mesh)
-		{
-			Meshes[i].Name = filename;
-			Meshes.sort();
-			return true;
-		}
-	}
-
-	return false;
-}
-
-
 //! returns if a mesh already was loaded
 bool CMeshCache::isMeshLoaded(const c8* filename)
 {
-	return getMeshByFilename(filename) != 0;
+	core::stringc name = filename;
+	name.make_lower();
+	return findMesh(name.c_str()) != 0;
 }
 
 
-//! Clears the whole mesh cache, removing all meshes.
-void CMeshCache::clear()
+//! returns an already loaded mesh
+IAnimatedMesh* CMeshCache::findMesh(const c8* lowerMadeFilename)
 {
-	for (u32 i=0; i<Meshes.size(); ++i)
-		Meshes[i].Mesh->drop();
-
-	Meshes.clear();
+	MeshEntry e;
+	e.Name = lowerMadeFilename;
+	s32 id = Meshes.binary_search(e);
+	return (id != -1) ? Meshes[id].Mesh : 0;
 }
 
-//! Clears all meshes that are held in the mesh cache but not used anywhere else.
-void CMeshCache::clearUnusedMeshes()
+
+//! Removes a mesh from the cache.
+void CMeshCache::removeMesh(IAnimatedMesh* mesh)
 {
-	for (u32 i=0; i<Meshes.size(); ++i)
+	if ( mesh )
+	for (int i=0; i<(int)Meshes.size(); ++i)
 	{
-		if (Meshes[i].Mesh->getReferenceCount() == 1)
+		if (Meshes[i].Mesh == mesh)
 		{
 			Meshes[i].Mesh->drop();
 			Meshes.erase(i);
-			--i;
+			return;
 		}
 	}
 }
 
-
 } // end namespace scene
 } // end namespace irr
+
 

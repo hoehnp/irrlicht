@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -13,7 +13,7 @@
 namespace irr
 {
 
-//! Class for logging messages, warnings and errors to stdout
+//! Interface for logging messages, warnings and errors
 class CLogger : public ILogger
 {
 public:
@@ -21,7 +21,7 @@ public:
 	CLogger(IEventReceiver* r);
 
 	//! Returns the current set log level.
-	virtual ELOG_LEVEL getLogLevel() const;
+	virtual ELOG_LEVEL getLogLevel();
 
 	//! Sets a new log level.	virtual void setLogLevel(ELOG_LEVEL ll);
 	virtual void setLogLevel(ELOG_LEVEL ll);

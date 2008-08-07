@@ -1,8 +1,9 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #include "CEmptySceneNode.h"
+#include "IVideoDriver.h"
 #include "ISceneManager.h"
 
 namespace irr
@@ -18,17 +19,18 @@ CEmptySceneNode::CEmptySceneNode(ISceneNode* parent, ISceneManager* mgr, s32 id)
 	setDebugName("CEmptySceneNode");
 	#endif
 
-	setAutomaticCulling(scene::EAC_OFF);
+	setAutomaticCulling(false);
 }
 
 
 //! pre render event
-void CEmptySceneNode::OnRegisterSceneNode()
+void CEmptySceneNode::OnPreRender()
 {
 	if (IsVisible)
+	{
 		SceneManager->registerNodeForRendering(this);
-
-	ISceneNode::OnRegisterSceneNode();
+		ISceneNode::OnPreRender();
+	}
 }
 
 
@@ -44,24 +46,6 @@ const core::aabbox3d<f32>& CEmptySceneNode::getBoundingBox() const
 {
 	return Box;
 }
-
-
-//! Creates a clone of this scene node and its children.
-ISceneNode* CEmptySceneNode::clone(ISceneNode* newParent, ISceneManager* newManager)
-{
-	if (!newParent) newParent = Parent;
-	if (!newManager) newManager = SceneManager;
-
-	CEmptySceneNode* nb = new CEmptySceneNode(newParent, 
-		newManager, ID);
-
-	nb->cloneMembers(this, newManager);
-	nb->Box = Box;
-
-	nb->drop();
-	return nb;
-}
-
 
 } // end namespace scene
 } // end namespace irr

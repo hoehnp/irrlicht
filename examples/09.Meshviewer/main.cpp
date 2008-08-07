@@ -28,26 +28,10 @@ core::stringw Caption;
 scene::IAnimatedMeshSceneNode* Model = 0;
 scene::ISceneNode* SkyBox = 0;
 
-scene::ICameraSceneNode* Camera[2] = { 0, 0};
-
 /*
-	toggles between various cameras
-*/
-void setActiveCamera ( scene::ICameraSceneNode* newActive )
-{
-	if ( 0 == Device )
-		return;
-
-	scene::ICameraSceneNode* active = Device->getSceneManager()->getActiveCamera ();
-
-	newActive->setInputReceiverEnabled ( true );
-	Device->getSceneManager()->setActiveCamera ( newActive );
-}
-
-/*
-	The three following functions do several stuff used by the mesh viewer.
+	The three following functions do several stuff used by the mesh viewer. 
 	The first function showAboutText() simply displays a messagebox with a caption
-	and a message text. The texts will be stored in the MessageText and
+	and a message text. The texts will be stored in the MessageText and 
 	Caption variables at startup.
 */
 void showAboutText()
@@ -68,43 +52,14 @@ void loadModel(const c8* fn)
 {
 	// modify the name if it a .pk3 file
 
-	core::stringc filename ( fn );
+	c8 filename[1024];
+	strcpy(filename, fn);
+	c8* found = 0;
 
-	core::stringc extension;
-	core::getFileNameExtension ( extension, filename );
-	extension.make_lower();
-
-	// if a texture is loaded apply it to the current model..
-	if (	extension == ".jpg" ||
-			extension == ".pcx" ||
-			extension == ".png" ||
-			extension == ".ppm" ||
-			extension == ".pgm" ||
-			extension == ".pbm" ||
-			extension == ".psd" ||
-			extension == ".tga" ||
-			extension == ".bmp"
-		)
+	if (found = strstr(filename, ".pk3"))
 	{
-		video::ITexture * texture = Device->getVideoDriver()->getTexture( filename.c_str() );
-		if ( texture && Model )
-		{
-			// always reload texture
-			Device->getVideoDriver()->removeTexture ( texture );
-			texture = Device->getVideoDriver()->getTexture( filename.c_str() );
-
-			Model->setMaterialTexture ( 0, texture );
-		}
-		return;
-	}
-
-	// if a archive is loaded add it to the FileSystems..
-	if (	extension == ".pk3" ||
-			extension == ".zip"
-		)
-	{
-		Device->getFileSystem()->addZipFileArchive( filename.c_str () );
-		return;
+		Device->getFileSystem()->addZipFileArchive(filename);
+		strcpy(found +1, "bsp");
 	}
 
 	// load a model into the engine
@@ -114,9 +69,9 @@ void loadModel(const c8* fn)
 
 	Model = 0;
 
-	scene::IAnimatedMesh* m = Device->getSceneManager()->getMesh( filename.c_str() );
+	scene::IAnimatedMesh* m = Device->getSceneManager()->getMesh(filename);
 
-	if (!m)
+	if (!m) 
 	{
 		// model could not be loaded
 
@@ -131,8 +86,7 @@ void loadModel(const c8* fn)
 
 	Model = Device->getSceneManager()->addAnimatedMeshSceneNode(m);
 	Model->setMaterialFlag(video::EMF_LIGHTING, false);
-//	Model->setMaterialFlag(video::EMF_BACK_FACE_CULLING, false);
-	Model->setDebugDataVisible(scene::EDS_OFF);
+	Model->setDebugDataVisible(true);
 	Model->setAnimationSpeed(30);
 }
 
@@ -151,14 +105,15 @@ void createToolBox()
 	if (e) e->remove();
 
 	// create the toolbox window
-	IGUIWindow* wnd = env->addWindow(core::rect<s32>(600,25,800,480),
+	IGUIWindow* wnd = env->addWindow(core::rect<s32>(450,25,640,480),
 		false, L"Toolset", 0, 5000);
 
 	// create tab control and tabs
 	IGUITabControl* tab = env->addTabControl(
-		core::rect<s32>(2,20,800-602,480-7), wnd, true, true);
+		core::rect<s32>(2,20,640-452,480-7), wnd, true, true);
 
 	IGUITab* t1 = tab->addTab(L"Scale");
+	IGUITab* t2 = tab->addTab(L"Empty Tab");
 
 	// add some edit boxes and a button to tab one
 	env->addEditBox(L"1.0", core::rect<s32>(40,50,130,70), true, t1, 901);
@@ -174,7 +129,6 @@ void createToolBox()
 	env->addStaticText(L"Transparent Control:", core::rect<s32>(10,240,150,260), true, false, t1);
 	IGUIScrollBar* scrollbar = env->addScrollBar(true, core::rect<s32>(10,260,150,275), t1, 104);
 	scrollbar->setMax(255);
-	scrollbar->setPos(255);
 
 	// bring irrlicht engine logo to front, because it
 	// now may be below the newly created toolbox
@@ -191,24 +145,8 @@ void createToolBox()
 class MyEventReceiver : public IEventReceiver
 {
 public:
-	virtual bool OnEvent(const SEvent& event)
+	virtual bool OnEvent(SEvent event)
 	{
-		// Escape swaps Camera Input
-		if (event.EventType == EET_KEY_INPUT_EVENT &&
-			event.KeyInput.Key == irr::KEY_ESCAPE &&
-			event.KeyInput.PressedDown == false)
-		{
-			if ( Device )
-			{
-				scene::ICameraSceneNode * camera = Device->getSceneManager()->getActiveCamera ();
-				if ( camera )
-				{
-					camera->setInputReceiverEnabled ( !camera->isInputReceiverEnabled() );
-				}
-				return true;
-			}
-		}
-
 		if (event.EventType == EET_GUI_EVENT)
 		{
 			s32 id = event.GUIEvent.Caller->getID();
@@ -222,14 +160,11 @@ public:
 
 					IGUIContextMenu* menu = (IGUIContextMenu*)event.GUIEvent.Caller;
 					s32 id = menu->getItemCommandId(menu->getSelectedItem());
-
+					
 					switch(id)
 					{
 					case 100: // File -> Open Model
 						env->addFileOpenDialog(L"Please select a model file to open");
-						break;
-					case 101: // File -> Set Model Archive
-						env->addFileOpenDialog(L"Please select your game archive/directory");
 						break;
 					case 200: // File -> Quit
 						Device->closeDevice();
@@ -239,35 +174,7 @@ public:
 						break;
 					case 400: // View -> Debug Information
 						if (Model)
-							Model->setDebugDataVisible(scene::EDS_OFF);
-						break;
-					case 410: // View -> Debug Information
-						if (Model)
-							Model->setDebugDataVisible((scene::E_DEBUG_SCENE_TYPE)(Model->isDebugDataVisible()^scene::EDS_BBOX));
-						break;
-					case 420: // View -> Debug Information
-						if (Model)
-							Model->setDebugDataVisible((scene::E_DEBUG_SCENE_TYPE)(Model->isDebugDataVisible()^scene::EDS_NORMALS));
-						break;
-					case 430: // View -> Debug Information
-						if (Model)
-							Model->setDebugDataVisible((scene::E_DEBUG_SCENE_TYPE)(Model->isDebugDataVisible()^scene::EDS_SKELETON));
-						break;
-					case 440: // View -> Debug Information
-						if (Model)
-							Model->setDebugDataVisible((scene::E_DEBUG_SCENE_TYPE)(Model->isDebugDataVisible()^scene::EDS_MESH_WIRE_OVERLAY));
-						break;
-					case 450: // View -> Debug Information
-						if (Model)
-							Model->setDebugDataVisible((scene::E_DEBUG_SCENE_TYPE)(Model->isDebugDataVisible()^scene::EDS_HALF_TRANSPARENCY));
-						break;
-					case 460: // View -> Debug Information
-						if (Model)
-							Model->setDebugDataVisible((scene::E_DEBUG_SCENE_TYPE)(Model->isDebugDataVisible()^scene::EDS_BBOX_BUFFERS));
-						break;
-					case 499: // View -> Debug Information
-						if (Model)
-							Model->setDebugDataVisible(scene::EDS_FULL);
+							Model->setDebugDataVisible(!Model->isDebugDataVisible());
 						break;
 					case 500: // Help->About
 						showAboutText();
@@ -284,29 +191,21 @@ public:
 						if (Model)
 							Model->setMaterialType(video::EMT_SPHERE_MAP);
 						break;
-
-					case 1000:
-						setActiveCamera ( Camera[0] );
-						break;
-					case 1100:
-						setActiveCamera ( Camera[1] );
-						break;
-
 					}
-				break;
+                    break;
 				}
 
 			case EGET_FILE_SELECTED:
 				{
 					// load the model file, selected in the file open dialog
-					IGUIFileOpenDialog* dialog =
+					IGUIFileOpenDialog* dialog = 
 						(IGUIFileOpenDialog*)event.GUIEvent.Caller;
-					loadModel(core::stringc(dialog->getFileName()).c_str());
+					loadModel(core::stringc(dialog->getFilename()).c_str());
 				}
 
 			case EGET_SCROLL_BAR_CHANGED:
 
-				// control skin transparency
+				// control skin transparency 
 				if (id == 104)
 				{
 					s32 pos = ((IGUIScrollBar*)event.GUIEvent.Caller)->getPos();
@@ -354,7 +253,6 @@ public:
 						{
 							Model->setMaterialFlag(video::EMF_ANISOTROPIC_FILTER, true);
 						}
-						break;
 						case 4:
 						if (Model)
 						{
@@ -396,9 +294,6 @@ public:
 				case 1104:
 					createToolBox();
 					break;
-				case 1105:
-					env->addFileOpenDialog(L"Please select your game archive/directory");
-					break;
 				}
 
 				break;
@@ -412,15 +307,15 @@ public:
 
 /*
 	Most of the hard work is done. We only need to create the Irrlicht Engine device
-	and all the buttons, menus and toolbars.
+	and all the buttons, menus and toolbars. 
 	We start up the engine as usual, using createDevice(). To make our application
 	catch events, we set our eventreceiver as parameter. The #ifdef WIN32 preprocessor
 	commands are not necesarry, but I included them to make the tutorial use DirectX on
-	Windows and OpenGL on all other platforms like Linux.
-	As you can see, there is also a unusual call to IrrlichtDevice::setResizeAble().
+	Windows and OpenGL on all other platforms like Linux. 
+	As you can see, there is also a unusual call to IrrlichtDevice::setResizeAble(). 
 	This makes the render window resizeable, which is quite useful for a mesh viewer.
 */
-int main(int argc, char* argv[])
+int main()
 {
 	// ask user for driver
 
@@ -440,15 +335,15 @@ int main(int argc, char* argv[])
 		case 'b': driverType = video::EDT_DIRECT3D8;break;
 		case 'c': driverType = video::EDT_OPENGL;   break;
 		case 'd': driverType = video::EDT_SOFTWARE; break;
-		case 'e': driverType = video::EDT_BURNINGSVIDEO;break;
+		case 'e': driverType = video::EDT_SOFTWARE2;break;
 		case 'f': driverType = video::EDT_NULL;     break;
 		default: return 1;
-	}
+	}	
 
 	// create device and exit if creation failed
 
 	MyEventReceiver receiver;
-	Device = createDevice(driverType, core::dimension2d<s32>(800, 600),
+	Device = createDevice(driverType, core::dimension2d<s32>(640, 480),
 		16, false, false, false, &receiver);
 
 	if (Device == 0)
@@ -461,17 +356,11 @@ int main(int argc, char* argv[])
 	video::IVideoDriver* driver = Device->getVideoDriver();
 	IGUIEnvironment* env = Device->getGUIEnvironment();
 	scene::ISceneManager* smgr = Device->getSceneManager();
-	smgr->getParameters()->setAttribute(scene::COLLADA_CREATE_SCENE_INSTANCES, true);
 
 	driver->setTextureCreationFlag(video::ETCF_ALWAYS_32_BIT, true);
 
-	smgr->addLightSceneNode();
-	smgr->addLightSceneNode(0, core::vector3df(50,-50,100), video::SColorf(1.0f,1.0f,1.0f),20000);
-	// add our media directory as "search path"
-	Device->getFileSystem()->addFolderFileArchive ( "../../media/" );
-
 	/*
-		The next step is to read the configuration file. It is stored in the xml
+		The next step is to read the configuration file. It is stored in the xml 
 		format and looks a little bit like this:
 
 		<?xml version="1.0"?>
@@ -490,7 +379,7 @@ int main(int argc, char* argv[])
 	// read configuration from xml file
 
 	io::IXMLReader* xml = Device->getFileSystem()->createXMLReader(
-		"config.xml");
+		"../../media/config.xml");
 
 	while(xml && xml->read())
 	{
@@ -513,10 +402,7 @@ int main(int argc, char* argv[])
 	}
 
 	if (xml)
-		xml->drop(); // don't forget to delete the xml reader
-
-	if (argc > 1)
-		StartUpModelFile = argv[1];
+		xml->drop(); // don't forget to delete the xml reader 
 
 	/*
 		That wasn't difficult. Now we'll set a nicer font and create the
@@ -532,7 +418,7 @@ int main(int argc, char* argv[])
 	// set a nicer font
 
 	IGUISkin* skin = env->getSkin();
-	IGUIFont* font = env->getFont("fonthaettenschweiler.bmp");
+	IGUIFont* font = env->getFont("../../media/fonthaettenschweiler.bmp");
 	if (font)
 		skin->setFont(font);
 
@@ -540,45 +426,29 @@ int main(int argc, char* argv[])
 	gui::IGUIContextMenu* menu = env->addMenu();
 	menu->addItem(L"File", -1, true, true);
 	menu->addItem(L"View", -1, true, true);
-	menu->addItem(L"Camera", -1, true, true);
 	menu->addItem(L"Help", -1, true, true);
 
 	gui::IGUIContextMenu* submenu;
 	submenu = menu->getSubMenu(0);
-	submenu->addItem(L"Open Model File & Texture...", 100);
-	submenu->addItem(L"Set Model Archive...", 101);
+	submenu->addItem(L"Open Model File...", 100);
 	submenu->addSeparator();
 	submenu->addItem(L"Quit", 200);
 
 	submenu = menu->getSubMenu(1);
 	submenu->addItem(L"toggle sky box visibility", 300);
-	submenu->addItem(L"toggle model debug information", -1, true, true);
+	submenu->addItem(L"toggle model debug information", 400);
 	submenu->addItem(L"model material", -1, true, true );
 
-	submenu = submenu->getSubMenu(1);
-	submenu->addItem(L"Off", 400);
-	submenu->addItem(L"Bounding Box", 410);
-	submenu->addItem(L"Normals", 420);
-	submenu->addItem(L"Skeleton", 430);
-	submenu->addItem(L"Wire overlay", 440);
-	submenu->addItem(L"Half-Transparent", 450);
-	submenu->addItem(L"Buffers bounding boxes", 460);
-	submenu->addItem(L"All", 499);
-
-	submenu = menu->getSubMenu(1)->getSubMenu(2);
+	submenu = submenu->getSubMenu(2);
 	submenu->addItem(L"Solid", 610);
 	submenu->addItem(L"Transparent", 620);
 	submenu->addItem(L"Reflection", 630);
 
 	submenu = menu->getSubMenu(2);
-	submenu->addItem(L"Maya Style", 1000);
-	submenu->addItem(L"First Person", 1100);
-
-	submenu = menu->getSubMenu(3);
 	submenu->addItem(L"About", 500);
 
 	/*
-		Below the toolbar, we want a toolbar, onto which we can place
+		Below the toolbar, we want a toolbar, onto which we can place 
 		colored buttons and important looking stuff like a senseless
 		combobox.
 	*/
@@ -587,21 +457,21 @@ int main(int argc, char* argv[])
 
 	gui::IGUIToolBar* bar = env->addToolBar();
 
-	video::ITexture* image = driver->getTexture("open.png");
-	bar->addButton(1102, 0, L"Open a model",image, 0, false, true);
+	video::ITexture* image = driver->getTexture("../../media/open.bmp");
+	driver->makeColorKeyTexture(image, core::position2d<s32>(0,0));
+	bar->addButton(1102, 0, image, 0, false, true);
 
-	image = driver->getTexture("tools.png");
-	bar->addButton(1104, 0, L"Open Toolset",image, 0, false, true);
+	image = driver->getTexture("../../media/help.bmp");
+	driver->makeColorKeyTexture(image, core::position2d<s32>(0,0));
+	bar->addButton(1103, 0, image, 0, false, true);
 
-	image = driver->getTexture("zip.png");
-	bar->addButton(1105, 0, L"Set Model Archive",image, 0, false, true);
-
-	image = driver->getTexture("help.png");
-	bar->addButton(1103, 0, L"Open Help", image, 0, false, true);
+	image = driver->getTexture("../../media/tools.bmp");
+	driver->makeColorKeyTexture(image, core::position2d<s32>(0,0));
+	bar->addButton(1104, 0, image, 0, false, true);
 
 	// create a combobox with some senseless texts
 
-	gui::IGUIComboBox* box = env->addComboBox(core::rect<s32>(250,4,350,23), bar, 108);
+	gui::IGUIComboBox* box = env->addComboBox(core::rect<s32>(100,5,200,25), bar, 108);
 	box->addItem(L"No filtering");
 	box->addItem(L"Bilinear");
 	box->addItem(L"Trilinear");
@@ -610,9 +480,9 @@ int main(int argc, char* argv[])
 
 	/*
 		To make the editor look a little bit better, we disable transparent
-		gui elements, and add a Irrlicht Engine logo. In addition, a text
-		showing the current frame per second value is created and
-		the window caption is changed.
+		gui elements, and add a Irrlicht Engine logo. In addition, a text,
+		which will show the current frame per second value is created, and
+		the window caption changed.
 	*/
 
 	// disable alpha
@@ -628,9 +498,9 @@ int main(int argc, char* argv[])
 
 	createToolBox();
 
-	// create fps text
+	// create fps text 
 
-	IGUIStaticText* fpstext = env->addStaticText(L"", core::rect<s32>(400,4,570,23), true, false, bar);
+	IGUIStaticText* fpstext = env->addStaticText(L"", core::rect<s32>(210,26,270,41), true);
 
 	// set window caption
 
@@ -640,7 +510,7 @@ int main(int argc, char* argv[])
 	Device->setWindowCaption(Caption.c_str());
 
 	/*
-		That's nearly the whole application. We simply show the about
+		That's nearly the whole application. We simply show the about 
 		message box at start up, and load the first model. To make everything
 		look better, a skybox is created and a user controled camera,
 		to make the application a little bit more interactive. Finally,
@@ -648,40 +518,31 @@ int main(int argc, char* argv[])
 	*/
 
 	// show about message box and load default model
-	if (argc==1)
-		showAboutText();
+	showAboutText();
 	loadModel(StartUpModelFile.c_str());
 
-	// add skybox
+	// add skybox 
 
 	SkyBox = smgr->addSkyBoxSceneNode(
-		driver->getTexture("irrlicht2_up.jpg"),
-		driver->getTexture("irrlicht2_dn.jpg"),
-		driver->getTexture("irrlicht2_lf.jpg"),
-		driver->getTexture("irrlicht2_rt.jpg"),
-		driver->getTexture("irrlicht2_ft.jpg"),
-		driver->getTexture("irrlicht2_bk.jpg"));
+		driver->getTexture("../../media/irrlicht2_up.jpg"),
+		driver->getTexture("../../media/irrlicht2_dn.jpg"),
+		driver->getTexture("../../media/irrlicht2_lf.jpg"),
+		driver->getTexture("../../media/irrlicht2_rt.jpg"),
+		driver->getTexture("../../media/irrlicht2_ft.jpg"),
+		driver->getTexture("../../media/irrlicht2_bk.jpg"));
 
-	// add a camera scene node
-	Camera[0] = smgr->addCameraSceneNodeMaya();
-	Camera[0]->setFarValue(20000.f);
-	Camera[1] = smgr->addCameraSceneNodeFPS();
-	Camera[1]->setFarValue(20000.f);
+	// add a camera scene node 
 
-	setActiveCamera ( Camera[0] );
+	smgr->addCameraSceneNodeMaya();
 
 	// load the irrlicht engine logo
-	IGUIImage *img =
-		env->addImage(driver->getTexture("irrlichtlogo2.png"),
-			core::position2d<s32>(10, driver->getScreenSize().Height - 128));
 
-	// lock the logo's edges to the bottom left corner of the screen
-	img->setAlignment(EGUIA_UPPERLEFT, EGUIA_UPPERLEFT, EGUIA_LOWERRIGHT, EGUIA_LOWERRIGHT);
+	video::ITexture* irrLogo = 
+		driver->getTexture("../../media/irrlichtlogoaligned.jpg");
 
 	// draw everything
 
 	while(Device->run() && driver)
-	{
 		if (Device->isWindowActive())
 		{
 			driver->beginScene(true, true, video::SColor(150,50,50,50));
@@ -689,17 +550,17 @@ int main(int argc, char* argv[])
 			smgr->drawAll();
 			env->drawAll();
 
+			// draw irrlicht engine logo
+			driver->draw2DImage(irrLogo,
+				core::position2d<s32>(10, driver->getScreenSize().Height - 50),
+				core::rect<s32>(0,0,108-20,460-429));
+		
 			driver->endScene();
 
-			core::stringw str(L"FPS: ");
-			str.append(core::stringw(driver->getFPS()));
-			str += L" Tris: ";
-			str.append(core::stringw(driver->getPrimitiveCountDrawn()));
+			core::stringw str = L"FPS: ";
+			str += driver->getFPS();
 			fpstext->setText(str.c_str());
 		}
-		else
-			Device->yield();
-	}
 
 	Device->drop();
 	return 0;

@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 // orginally written by Christian Stehno, modified by Nikolaus Gebhardt
@@ -21,7 +21,7 @@ namespace irr
 namespace scene
 {
 
-//! Meshloader capable of loading ogre meshes.
+//! Meshloader capable of loading 3ds meshes.
 class COgreMeshFileLoader : public IMeshLoader
 {
 public:
@@ -34,18 +34,18 @@ public:
 
 	//! returns true if the file maybe is able to be loaded by this class
 	//! based on the file extension (e.g. ".cob")
-	virtual bool isALoadableFileExtension(const c8* fileName) const;
+	virtual bool isALoadableFileExtension(const c8* fileName);
 
 	//! creates/loads an animated mesh from the file.
 	//! \return Pointer to the created mesh. Returns 0 if loading failed.
 	//! If you no longer need the mesh, you should call IAnimatedMesh::drop().
-	//! See IReferenceCounted::drop() for more information.
-	virtual IAnimatedMesh* createMesh(io::IReadFile* file);
+	//! See IUnknown::drop() for more information.
+	virtual IAnimatedMesh* createMesh(irr::io::IReadFile* file);
 
 private:
 
 	// byte-align structures
-	#if defined(_MSC_VER) ||  defined(__BORLANDC__) || defined (__BCPLUSPLUS__) 
+	#ifdef _MSC_VER
 	#	pragma pack( push, packing )
 	#	pragma pack( 1 )
 	#	define PACK_STRUCT
@@ -62,7 +62,7 @@ private:
 	} PACK_STRUCT;
 
 	// Default alignment
-	#if defined(_MSC_VER) ||  defined(__BORLANDC__) || defined (__BCPLUSPLUS__) 
+	#ifdef _MSC_VER
 	#	pragma pack( pop, packing )
 	#endif
 
@@ -135,7 +135,7 @@ private:
 	struct OgreVertexBuffer
 	{
 		OgreVertexBuffer() : BindIndex(0), VertexSize(0), Data(0) {}
-		void destroy() { delete [] Data; Data = 0; }
+		void destroy() { delete [] Data; Data = 0; };
 
 		u16 BindIndex,
 		VertexSize;
@@ -197,6 +197,7 @@ private:
 	bool readVertexDeclaration(io::IReadFile* file, ChunkData& parent, OgreGeometry& geometry);
 	bool readVertexBuffer(io::IReadFile* file, ChunkData& parent, OgreGeometry& geometry);
 	bool readSubMesh(io::IReadFile* file, ChunkData& parent, OgreSubMesh& subMesh);
+	bool readPercentageChunk(io::IReadFile* file, ChunkData& chunk, float&percentage);
 
 	void readChunkData(io::IReadFile* file, ChunkData& data);
 	void readString(io::IReadFile* file, ChunkData& data, core::stringc& out);

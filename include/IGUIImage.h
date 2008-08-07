@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -6,13 +6,10 @@
 #define __I_GUI_IMAGE_H_INCLUDED__
 
 #include "IGUIElement.h"
+#include "ITexture.h"
 
 namespace irr
 {
-namespace video
-{
-	class ITexture;
-}
 namespace gui
 {
 
@@ -26,25 +23,13 @@ namespace gui
 			: IGUIElement(EGUIET_IMAGE, environment, parent, id, rectangle) {}
 
 		//! destructor
-		virtual ~IGUIImage() {}
+		~IGUIImage() {};
 
-		//! Sets an image
+		//! sets an image
 		virtual void setImage(video::ITexture* image) = 0;
 
-		//! Sets the colour of the image
-		virtual void setColor(video::SColor color) = 0;
-
-		//! Sets if the image should scale to fit the element
-		virtual void setScaleImage(bool scale) = 0;
-
-		//! Sets if the image should use its alpha channel to draw itself
+		//! sets if the image should use its alpha channel to draw itself
 		virtual void setUseAlphaChannel(bool use) = 0;
-
-		//! Returns true if the image is scaled to fit, false if not
-		virtual bool isImageScaled() const = 0;
-
-		//! Returns true if the image is using the alpha channel, false if not
-		virtual bool isAlphaChannelUsed() const = 0;
 	};
 
 

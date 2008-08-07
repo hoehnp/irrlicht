@@ -20,9 +20,7 @@ using namespace video;
 using namespace io;
 using namespace gui;
 
-#ifdef _IRR_WINDOWS_
 #pragma comment(lib, "Irrlicht.lib")
-#endif
 
 
 IrrlichtDevice *device = 0;
@@ -44,7 +42,7 @@ the pointer to the gui environment.
 class MyEventReceiver : public IEventReceiver
 {
 public:
-	virtual bool OnEvent(const SEvent& event)
+	virtual bool OnEvent(SEvent event)
 	{
 		if (event.EventType == EET_GUI_EVENT)
 		{
@@ -67,7 +65,7 @@ public:
 				{
 					s32 pos = ((IGUIScrollBar*)event.GUIEvent.Caller)->getPos();
 					
-					for (u32 i=0; i<EGDC_COUNT ; ++i)
+					for (s32 i=0; i<EGDC_COUNT ; ++i)
 					{
 						SColor col = env->getSkin()->getColor((EGUI_DEFAULT_COLOR)i);
 						col.setAlpha(pos);
@@ -123,8 +121,6 @@ public:
 				}
 
 				break;
-			default:
-				break;
 			}
 		}
 
@@ -158,7 +154,7 @@ int main()
 		case 'b': driverType = video::EDT_DIRECT3D8;break;
 		case 'c': driverType = video::EDT_OPENGL;   break;
 		case 'd': driverType = video::EDT_SOFTWARE; break;
-		case 'e': driverType = video::EDT_BURNINGSVIDEO;break;
+		case 'e': driverType = video::EDT_SOFTWARE2;break;
 		case 'f': driverType = video::EDT_NULL;     break;
 		default: return 1;
 	}	
@@ -181,10 +177,20 @@ int main()
 	IGUIEnvironment* env = device->getGUIEnvironment();
 
 	/*
+	We add three buttons. The first one closes the engine. The second
+	creates a window and the third opens a file open dialog. The third
+	parameter is the id of the button, with which we can easily identify
+	the button in the event receiver.
+	*/	
+
+	env->addButton(rect<s32>(10,210,100,240), 0, 101, L"Quit");
+	env->addButton(rect<s32>(10,250,100,290), 0, 102, L"New Window");
+	env->addButton(rect<s32>(10,300,100,340), 0, 103, L"File Open");
+
+	/*
 	To make the font a little bit nicer, we load an external font
-	and set it as the new default font in the skin. 
-	To keep the standard font for tool tip text, we set it to
-	the built-in font.
+	and set it as new font in the skin. An at last, we create a 
+	nice Irrlicht Engine logo in the top left corner.
 	*/
 
 	IGUISkin* skin = env->getSkin();
@@ -192,18 +198,9 @@ int main()
 	if (font)
 		skin->setFont(font);
 
-	skin->setFont(env->getBuiltInFont(), EGDF_TOOLTIP);
-
-	/*
-	We add three buttons. The first one closes the engine. The second
-	creates a window and the third opens a file open dialog. The third
-	parameter is the id of the button, with which we can easily identify
-	the button in the event receiver.
-	*/	
-
-	env->addButton(rect<s32>(10,240,110,240 + 32), 0, 101, L"Quit", L"Exits Program");
-	env->addButton(rect<s32>(10,280,110,280 + 32), 0, 102, L"New Window", L"Launches a new Window");
-	env->addButton(rect<s32>(10,320,110,320 + 32), 0, 103, L"File Open", L"Opens a file");
+	IGUIImage* img = env->addImage(
+		driver->getTexture("../../media/irrlichtlogoalpha2.tga"),
+		position2d<int>(10,10));
 
 	/*
 	Now, we add a static text and a scrollbar, which modifies the
@@ -218,16 +215,11 @@ int main()
 	scrollbar->setMax(255);
 
 	// set scrollbar position to alpha value of an arbitrary element
-	scrollbar->setPos(env->getSkin()->getColor(EGDC_WINDOW).getAlpha());
+	scrollbar->setPos(env->getSkin()->getColor((EGUI_DEFAULT_COLOR)0).getAlpha());
 
-	env->addStaticText(L"Logging ListBox:", rect<s32>(50,110,250,130), true);
-	listbox = env->addListBox(rect<s32>(50, 140, 250, 210));
+	env->addStaticText(L"Logging ListBox:", rect<s32>(50,80,250,100), true);
+	listbox = env->addListBox(rect<s32>(50, 110, 250, 180));
 	env->addEditBox(L"Editable Text", rect<s32>(350, 80, 550, 100));
-
-	// add the engine logo
-	env->addImage(driver->getTexture("../../media/irrlichtlogo2.png"),
-			position2d<int>(10,10));
-
 
 	/*
 	That's all, we only have to draw everything.

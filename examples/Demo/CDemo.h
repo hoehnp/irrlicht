@@ -4,7 +4,7 @@
 #ifndef __C_DEMO_H_INCLUDED__
 #define __C_DEMO_H_INCLUDED__
 
-//#define USE_IRRKLANG
+#define USE_IRRKLANG
 //#define USE_SDL_MIXER
 
 #include <irrlicht.h>
@@ -42,7 +42,7 @@ public:
 
 	void run();
 
-	virtual bool OnEvent(const SEvent& event);
+	virtual bool OnEvent(SEvent event);
 
 private:
 
@@ -89,7 +89,7 @@ private:
 	gui::IGUIStaticText* statusText;
 	gui::IGUIInOutFader* inOutFader;
 
-	scene::IQ3LevelMesh* quakeLevelMesh;
+	scene::IAnimatedMesh* quakeLevelMesh;
 	scene::ISceneNode* quakeLevelNode;
 	scene::ISceneNode* skyboxNode;
 	scene::IAnimatedMeshSceneNode* model1;
@@ -99,8 +99,8 @@ private:
 	scene::IMetaTriangleSelector* metaSelector;
 	scene::ITriangleSelector* mapSelector;
 
-	s32 sceneStartTime;
-	s32 timeForThisScene;
+	u32 sceneStartTime;
+	u32 timeForThisScene;
 
 	core::array<SParticleImpact> Impacts;
 };

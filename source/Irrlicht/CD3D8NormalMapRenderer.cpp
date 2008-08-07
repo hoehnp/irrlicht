@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -9,7 +9,6 @@
 #include "IMaterialRendererServices.h"
 #include "IVideoDriver.h"
 #include "os.h"
-#include "SLight.h"
 
 namespace irr
 {
@@ -115,11 +114,6 @@ namespace video
 		: CD3D8ShaderMaterialRenderer(d3ddev, driver, 0, baseMaterial), 
 		CompiledShaders(true)
 	{
-
-		#ifdef _DEBUG
-		setDebugName("CD3D8NormalMapRenderer");
-		#endif
-
 		// set this as callback. We could have done this in 
 		// the initialization list, but some compilers don't like it.
 
@@ -156,11 +150,7 @@ namespace video
 			// compile shaders on our own
 			init(outMaterialTypeNr, D3D8_NORMAL_MAP_VSH, D3D8_NORMAL_MAP_PSH, EVT_TANGENTS);
 		}
-		// something failed, use base material
-		if (-1==outMaterialTypeNr)
-			driver->addMaterialRenderer(this);
 	}
-
 
 	CD3D8NormalMapRenderer::~CD3D8NormalMapRenderer()
 	{
@@ -175,7 +165,6 @@ namespace video
 		}
 	}
 
-
 	bool CD3D8NormalMapRenderer::OnRender(IMaterialRendererServices* service, E_VERTEX_TYPE vtxtype)
 	{
 		if (vtxtype != video::EVT_TANGENTS)
@@ -188,7 +177,7 @@ namespace video
 	}
 
 	//! Returns the render capability of the material. 
-	s32 CD3D8NormalMapRenderer::getRenderCapability() const
+	s32 CD3D8NormalMapRenderer::getRenderCapability()
 	{
 		if (Driver->queryFeature(video::EVDF_PIXEL_SHADER_1_1) &&
 			Driver->queryFeature(video::EVDF_VERTEX_SHADER_1_1))
@@ -205,22 +194,24 @@ namespace video
 		video::IVideoDriver* driver = services->getVideoDriver();
 
 		// set transposed world matrix
-		services->setVertexShaderConstant(driver->getTransform(video::ETS_WORLD).getTransposed().pointer(), 0, 4);
+		const core::matrix4& tWorld = driver->getTransform(video::ETS_WORLD).getTransposed();
+		services->setVertexShaderConstant(&tWorld.M[0], 0, 4);
 
 		// set transposed worldViewProj matrix
 		core::matrix4 worldViewProj(driver->getTransform(video::ETS_PROJECTION));
 		worldViewProj *= driver->getTransform(video::ETS_VIEW);
 		worldViewProj *= driver->getTransform(video::ETS_WORLD);
-		services->setVertexShaderConstant(worldViewProj.getTransposed().pointer(), 8, 4);
+		core::matrix4 tr = worldViewProj.getTransposed();
+		services->setVertexShaderConstant(&tr.M[0], 8, 4);
 
-		// here we've got to fetch the fixed function lights from the
-		// driver and set them as constants
+		// here we've got to fetch the fixed function lights from the driver
+		// and set them as constants
 
-		u32 cnt = driver->getDynamicLightCount();
+		int cnt = driver->getDynamicLightCount();
 
-		for (u32 i=0; i<2; ++i)
+		for (int i=0; i<2; ++i)
 		{
-			SLight light; 
+			video::SLight light; 
 
 			if (i<cnt)
 				light = driver->getDynamicLight(i);
@@ -244,5 +235,5 @@ namespace video
 } // end namespace video
 } // end namespace irr
 
-#endif // _IRR_COMPILE_WITH_DIRECT3D_8_
+#endif
 

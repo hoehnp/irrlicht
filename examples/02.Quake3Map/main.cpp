@@ -64,7 +64,7 @@ int main()
 		case 'b': driverType = video::EDT_DIRECT3D8;break;
 		case 'c': driverType = video::EDT_OPENGL;   break;
 		case 'd': driverType = video::EDT_SOFTWARE; break;
-		case 'e': driverType = video::EDT_BURNINGSVIDEO;break;
+		case 'e': driverType = video::EDT_SOFTWARE2;break;
 		case 'f': driverType = video::EDT_NULL;     break;
 		default: return 1;
 	}	
@@ -101,21 +101,20 @@ int main()
 	attached. Hence the IAnimated mesh consists of only one frame,
 	so we get the "first frame" of the "animation", which is our quake level
 	and create an OctTree scene node with it, using addOctTreeSceneNode().
-	The OctTree optimizes the scene a little bit, trying to draw only
-	geometry which is currently visible. An alternative to the OctTree
-	would be a MeshSceneNode, which would draw always the complete geometry
-	of the mesh, without optimization. Try it out: Write addMeshSceneNode
-	instead of addOctTreeSceneNode and compare the primitives drawn by the
-	video driver. (There is a getPrimitiveCountDrawn() method in the 
+	The OctTree optimizes the scene a little bit, trying to draw only geometry
+	which is currently visible. An alternative to the OctTree would be a 
+	AnimatedMeshSceneNode, which would draw always the complete geometry of 
+	the mesh, without optimization. Try it out: Write addAnimatedMeshSceneNode
+	instead of addOctTreeSceneNode and compare the primitives drawed by the
+	video driver. (There is a getPrimitiveCountDrawed() method in the 
 	IVideoDriver class). Note that this optimization with the Octree is only
-	useful when drawing huge meshes consisting of lots of geometry.
+	useful when drawing huge meshes consiting of lots of geometry.
 	*/
 	scene::IAnimatedMesh* mesh = smgr->getMesh("20kdm2.bsp");
 	scene::ISceneNode* node = 0;
 	
 	if (mesh)
-		node = smgr->addOctTreeSceneNode(mesh->getMesh(0), 0, -1, 1024);
-//		node = smgr->addMeshSceneNode(mesh->getMesh(0));
+		node = smgr->addOctTreeSceneNode(mesh->getMesh(0));
 
 	/*
 	Because the level was modelled not around the origin (0,0,0), we translate
@@ -176,6 +175,7 @@ int main()
 	In the end, delete the Irrlicht device.
 	*/
 	device->drop();
+	
 	return 0;
 }
 

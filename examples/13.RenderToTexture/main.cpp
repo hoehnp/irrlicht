@@ -34,7 +34,7 @@ int main()
 		case 'b': driverType = video::EDT_DIRECT3D8;break;
 		case 'c': driverType = video::EDT_OPENGL;   break;
 		case 'd': driverType = video::EDT_SOFTWARE; break;
-		case 'e': driverType = video::EDT_BURNINGSVIDEO;break;
+		case 'e': driverType = video::EDT_SOFTWARE2;break;
 		case 'f': driverType = video::EDT_NULL;     break;
 		default: return 1;
 	}	
@@ -71,7 +71,6 @@ int main()
 		fairy->setMaterialFlag(video::EMF_LIGHTING, true); // enable dynamic lighting
 		fairy->getMaterial(0).Shininess = 20.0f; // set size of specular highlights
 		fairy->setPosition(core::vector3df(-10,0,-100));
-		fairy->setMD2Animation ( scene::EMAT_STAND );
 	}
 	
 	/*
@@ -85,7 +84,7 @@ int main()
 		core::vector3df(-15,5,-105), video::SColorf(1.0f, 1.0f, 1.0f));
 
 	// set ambient light
-	smgr->setAmbientLight(video::SColor(0,60,60,60));
+	driver->setAmbientLight(video::SColor(0,60,60,60));
 	
 	/*
 	The next is just some standard stuff: Add a user controlled camera to the scene, disable
@@ -163,8 +162,6 @@ int main()
 	That's, wasn't quite complicated I hope. :)
 	*/
 
-	int lastFPS = -1;
-
 	while(device->run())
 	if (device->isWindowActive())
 	{
@@ -185,8 +182,7 @@ int main()
 			smgr->drawAll();                 
 
 			// set back old render target
-			// The buffer might have been distorted, so clear it
-			driver->setRenderTarget(0, true, true, 0);      
+			driver->setRenderTarget(0);      
 
 			// make the cube visible and set the user controlled camera as active one
 			test->setVisible(true);
@@ -198,18 +194,6 @@ int main()
 		env->drawAll();
 
 		driver->endScene();
-
-		// display frames per second in window title
-		int fps = driver->getFPS();
-		if (lastFPS != fps)
-		{
-			core::stringw str = L"Irrlicht Engine - Render to Texture and Specular Highlights example";
-			str += " FPS:";
-			str += fps;
-
-			device->setWindowCaption(str.c_str());
-			lastFPS = fps;
-		}
 	}
 
 	if (rt)

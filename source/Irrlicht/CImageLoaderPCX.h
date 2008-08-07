@@ -1,13 +1,9 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #ifndef __C_IMAGE_LOADER_PCX_H_INCLUDED__
 #define __C_IMAGE_LOADER_PCX_H_INCLUDED__
-
-#include "IrrCompileConfig.h"
-
-#ifdef _IRR_COMPILE_WITH_PCX_LOADER_
 
 #include "IImageLoader.h"
 
@@ -18,7 +14,7 @@ namespace video
 
 
 // byte-align structures
-#if defined(_MSC_VER) ||  defined(__BORLANDC__) || defined (__BCPLUSPLUS__) 
+#ifdef _MSC_VER
 #	pragma pack( push, packing )
 #	pragma pack( 1 )
 #	define PACK_STRUCT
@@ -52,7 +48,7 @@ namespace video
 
 
 // Default alignment
-#if defined(_MSC_VER) ||  defined(__BORLANDC__) || defined (__BCPLUSPLUS__) 
+#ifdef _MSC_VER
 #	pragma pack( pop, packing )
 #endif
 
@@ -71,22 +67,29 @@ public:
 	//! constructor
 	CImageLoaderPCX();
 
+	//! destructor
+	virtual ~CImageLoaderPCX();
+
 	//! returns true if the file maybe is able to be loaded by this class
 	//! based on the file extension (e.g. ".tga")
-	virtual bool isALoadableFileExtension(const c8* fileName) const;
+	virtual bool isALoadableFileExtension(const c8* fileName);
 
 	//! returns true if the file maybe is able to be loaded by this class
-	virtual bool isALoadableFileFormat(io::IReadFile* file) const;
+	virtual bool isALoadableFileFormat(irr::io::IReadFile* file);
 
 	//! creates a surface from the file
-	virtual IImage* loadImage(io::IReadFile* file) const;
+	virtual IImage* loadImage(irr::io::IReadFile* file);
 
+private:
+
+	u8* PCXData;
+	s32* PaletteData;
 };
 
 
 } // end namespace video
 } // end namespace irr
 
-#endif
+
 #endif
 

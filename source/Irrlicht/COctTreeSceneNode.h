@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -20,12 +20,12 @@ namespace scene
 
 		//! constructor
 		COctTreeSceneNode(ISceneNode* parent, ISceneManager* mgr, s32 id, 
-			s32 minimalPolysPerNode=512);
+			s32 minimalPolysPerNode=128);
 
 		//! destructor
 		virtual ~COctTreeSceneNode();
 
-		virtual void OnRegisterSceneNode();
+		virtual void OnPreRender();
 
 		//! renders the node.
 		virtual void render();
@@ -41,19 +41,19 @@ namespace scene
 		//! This function is needed for inserting the node into the scene hirachy on a
 		//! optimal position for minimizing renderstate changes, but can also be used
 		//! to directly modify the material of a scene node.
-		virtual video::SMaterial& getMaterial(u32 i);
+		virtual video::SMaterial& getMaterial(s32 i);
 		
 		//! returns amount of materials used by this scene node.
-		virtual u32 getMaterialCount() const;
+		virtual s32 getMaterialCount();
 
 		//! Writes attributes of the scene node.
-		virtual void serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options=0) const;
+		virtual void serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options=0);
 
 		//! Reads attributes of the scene node.
 		virtual void deserializeAttributes(io::IAttributes* in, io::SAttributeReadWriteOptions* options=0);
 
 		//! Returns type of the scene node
-		virtual ESCENE_NODE_TYPE getType() const { return ESNT_OCT_TREE; }
+		virtual ESCENE_NODE_TYPE getType() { return ESNT_OCT_TREE; }
 
 	private:
 
@@ -67,13 +67,10 @@ namespace scene
 		OctTree<video::S3DVertex2TCoords>* LightMapOctTree;
 		core::array< OctTree<video::S3DVertex2TCoords>::SMeshChunk > LightMapMeshes;
 
-		OctTree<video::S3DVertexTangents>* TangentsOctTree;
-		core::array< OctTree<video::S3DVertexTangents>::SMeshChunk > TangentsMeshes;
-
 		video::E_VERTEX_TYPE vertexType;
 		core::array< video::SMaterial > Materials;
 
-		core::stringc MeshName;
+		IMesh* Mesh;
 		s32 MinimalPolysPerNode;
 		s32 PassCount;
 	};

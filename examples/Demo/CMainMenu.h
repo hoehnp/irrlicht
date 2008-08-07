@@ -17,7 +17,7 @@ public:
 	bool run(bool& outFullscreen, bool& outMusic, bool& outShadows,
 		bool& outAdditive, bool &outVSync, video::E_DRIVER_TYPE& outDriver);
 
-	virtual bool OnEvent(const SEvent& event);
+	virtual bool OnEvent(SEvent event);
 
 private:
 
@@ -37,9 +37,6 @@ private:
 	scene::IAnimatedMesh* quakeLevel;
 	scene::ISceneNode* lightMapNode;
 	scene::ISceneNode* dynamicNode;
-
-	video::SColor SkinColor [ gui::EGDC_COUNT ];
-	void getOriginalSkinColor();
 };
 
 #endif

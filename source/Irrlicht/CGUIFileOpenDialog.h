@@ -1,12 +1,9 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #ifndef __C_GUI_FILE_OPEN_DIALOG_H_INCLUDED__
 #define __C_GUI_FILE_OPEN_DIALOG_H_INCLUDED__
-
-#include "IrrCompileConfig.h"
-#ifdef _IRR_COMPILE_WITH_GUI_
 
 #include "IGUIFileOpenDialog.h"
 #include "IGUIButton.h"
@@ -23,21 +20,21 @@ namespace gui
 	public:
 
 		//! constructor
-		CGUIFileOpenDialog(const wchar_t* title, IGUIEnvironment* environment, IGUIElement* parent, s32 id);
+		CGUIFileOpenDialog(io::IFileSystem* fs, const wchar_t* title, IGUIEnvironment* environment, IGUIElement* parent, s32 id);
 
 		//! destructor
 		virtual ~CGUIFileOpenDialog();
 
 		//! returns the filename of the selected file. Returns NULL, if no file was selected.
-		virtual const wchar_t* getFileName() const;
+		virtual const wchar_t* getFilename();
 
 		//! called if an event happened.
-		virtual bool OnEvent(const SEvent& event);
+		virtual bool OnEvent(SEvent event);
 
 		//! draws the element and its children
 		virtual void draw();
 
-	protected:
+	private:
 
 		//! fills the listbox with files.
 		void fillListBox();
@@ -56,7 +53,6 @@ namespace gui
 		IGUIButton* CancelButton;
 		IGUIListBox* FileBox;
 		IGUIElement* FileNameText;
-		IGUIElement* EventParent;
 		io::IFileSystem* FileSystem;
 
 		io::IFileList* FileList;
@@ -66,7 +62,5 @@ namespace gui
 } // end namespace gui
 } // end namespace irr
 
-#endif // _IRR_COMPILE_WITH_GUI_
-
-#endif // __C_GUI_FILE_OPEN_DIALOG_H_INCLUDED__
+#endif
 

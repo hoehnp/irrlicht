@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -6,11 +6,11 @@
 #include "ISceneNode.h"
 #include "ICameraSceneNode.h"
 #include "ITriangleSelector.h"
-#include "SViewFrustum.h"
+#include "SViewFrustrum.h"
 
 #include "os.h"
 #include "irrMath.h"
-#include <float.h> // For FLT_MAX
+#include <stdio.h>
 
 namespace irr
 {
@@ -19,7 +19,7 @@ namespace scene
 
 //! constructor
 CSceneCollisionManager::CSceneCollisionManager(ISceneManager* smanager, video::IVideoDriver* driver)
-: SceneManager(smanager), Driver(driver)
+: Driver(driver), SceneManager(smanager)
 {
 	#ifdef _DEBUG
 	setDebugName("CSceneCollisionManager");
@@ -62,7 +62,7 @@ ISceneNode* CSceneCollisionManager::getSceneNodeFromRayBB(core::line3d<f32> ray,
 						bool bNoDebugObjects)
 {
 	ISceneNode* best = 0;
-	f32 dist = FLT_MAX;
+	f32 dist = 9999999999.0f;
 
 	getPickedNodeBB(SceneManager->getRootSceneNode(), ray, 
 		idBitMask, bNoDebugObjects, dist, best);
@@ -83,7 +83,7 @@ void CSceneCollisionManager::getPickedNodeBB(ISceneNode* root,
 
    const core::list<ISceneNode*>& children = root->getChildren();
 
-   core::list<ISceneNode*>::ConstIterator it = children.begin();
+   core::list<ISceneNode*>::Iterator it = children.begin();
    for (; it != children.end(); ++it)
    {
       ISceneNode* current = *it;
@@ -167,50 +167,25 @@ bool CSceneCollisionManager::getCollisionPoint(const core::line3d<f32>& ray,
 	s32 cnt = 0;
 	selector->getTriangles(Triangles.pointer(), totalcnt, cnt, ray);
 
-	const core::vector3df linevect = ray.getVector().normalize();
+	core::vector3df linevect = ray.getVector().normalize();
 	core::vector3df intersection;
-	f32 nearest = FLT_MAX;
+	f32 nearest = 9999999999999.0f;
 	bool found = false;
-	const f32 raylength = ray.getLengthSQ();
-
-	const f32 minX = core::min_(ray.start.X, ray.end.X);
-	const f32 maxX = core::max_(ray.start.X, ray.end.X);
-	const f32 minY = core::min_(ray.start.Y, ray.end.Y);
-	const f32 maxY = core::max_(ray.start.Y, ray.end.Y);
-	const f32 minZ = core::min_(ray.start.Z, ray.end.Z);
-	const f32 maxZ = core::max_(ray.start.Z, ray.end.Z);
+	f32 tmp, tmp2;
+	f32 raylength = (f32)ray.getLengthSQ();
 
 	for (s32 i=0; i<cnt; ++i)
 	{
-		const core::triangle3df & triangle = Triangles[i];
-
-		if(minX > triangle.pointA.X && minX > triangle.pointB.X && minX > triangle.pointC.X)
-			continue;
-		if(maxX < triangle.pointA.X && maxX < triangle.pointB.X && maxX < triangle.pointC.X)
-			continue;
-		if(minY > triangle.pointA.Y && minY > triangle.pointB.Y && minY > triangle.pointC.Y)
-			continue;
-		if(maxY < triangle.pointA.Y && maxY < triangle.pointB.Y && maxY < triangle.pointC.Y)
-			continue;
-		if(minZ > triangle.pointA.Z && minZ > triangle.pointB.Z && minZ > triangle.pointC.Z)
-			continue;
-		if(maxZ < triangle.pointA.Z && maxZ < triangle.pointB.Z && maxZ < triangle.pointC.Z)
-			continue;
-
-		if(ray.start.getDistanceFromSQ(triangle.pointA) >= nearest &&
-			ray.start.getDistanceFromSQ(triangle.pointB) >= nearest &&
-			ray.start.getDistanceFromSQ(triangle.pointC) >= nearest)
-			continue;
-
-		if (triangle.getIntersectionWithLine(ray.start, linevect, intersection))
+		if (Triangles[i].getIntersectionWithLine(ray.start, linevect, intersection))
 		{
-			const f32 tmp = intersection.getDistanceFromSQ(ray.start);
-			const f32 tmp2 = intersection.getDistanceFromSQ(ray.end);
+			tmp = (f32)intersection.getDistanceFromSQ(ray.start);
+			tmp2 = (f32)intersection.getDistanceFromSQ(ray.end);
 
-			if (tmp < raylength && tmp2 < raylength && tmp < nearest)
+			if (tmp < raylength && tmp2 < raylength &&
+				tmp < nearest)
 			{
 				nearest = tmp;
-				outTriangle = triangle;
+				outTriangle = Triangles[i];
 				outIntersection = intersection;
 				found = true;
 			}
@@ -245,247 +220,249 @@ core::vector3df CSceneCollisionManager::getCollisionResultPosition(
 void CSceneCollisionManager::testTriangleIntersection(SCollisionData* colData,
 			const core::triangle3df& triangle)
 {
-	const core::plane3d<f32> trianglePlane = triangle.getPlane();
+	core::plane3d<f32> trianglePlane = triangle.getPlane();
 
 	// only check front facing polygons
-	if ( !trianglePlane.isFrontFacing(colData->normalizedVelocity) )
-		return;
-
-	// get interval of plane intersection
-
-	f32 t1, t0;
-	bool embeddedInPlane = false;
-
-	// calculate signed distance from sphere position to triangle plane
-	f32 signedDistToTrianglePlane = trianglePlane.getDistanceTo(
-		colData->basePoint);
-
-	f32 normalDotVelocity =
-		trianglePlane.Normal.dotProduct(colData->velocity);
-
-	if ( core::iszero ( normalDotVelocity ) )
+	if (trianglePlane.isFrontFacing(colData->normalizedVelocity))
 	{
-		// sphere is traveling parallel to plane
+		// get interval of plane intersection
 
-		if (fabs(signedDistToTrianglePlane) >= 1.0f)
-			return; // no collision possible
+		f64 t1, t0;
+		bool embeddedInPlane = false;
+
+		// calculate signed distance from sphere position to triangle plane
+		f64 signedDistToTrianglePlane = trianglePlane.getDistanceTo(
+			colData->basePoint);
+
+		f32 normalDotVelocity =
+			trianglePlane.Normal.dotProduct(colData->velocity);
+
+		if (normalDotVelocity == 0.0f)
+		{
+			// sphere is traveling paralell to plane
+
+			if (fabs(signedDistToTrianglePlane) >= 1.0f)
+				return; // no collision possible
+			else
+			{
+				// sphere is embedded in plane
+				embeddedInPlane = true;
+				t0 = 0.0;
+				t1 = 1.0;
+			}
+		}
 		else
 		{
-			// sphere is embedded in plane
-			embeddedInPlane = true;
-			t0 = 0.0;
-			t1 = 1.0;
+			// N.D is not 0. Calculate intersection interval
+			t0 = (-1.0-signedDistToTrianglePlane)/normalDotVelocity;
+			t1 = (1.0-signedDistToTrianglePlane)/normalDotVelocity;
+
+			// Swap so t0 < t1
+			if (t0 > t1) { f64 tmp = t1; t1 = t0; t0 = tmp;	}
+
+			// check if at least one value is within the range
+			if (t0 > 1.0f || t1 < 0.0f)
+				return; // both t values are outside 1 and 0, no collision possible
+
+			// clamp to 0 and 1
+			if (t0 < 0.0) t0 = 0.0;
+			if (t1 < 0.0) t1 = 0.0;
+			if (t0 > 1.0) t0 = 1.0;
+			if (t1 > 1.0) t1 = 1.0;
 		}
-	}
-	else
-	{
-		normalDotVelocity = core::reciprocal ( normalDotVelocity );
 
-		// N.D is not 0. Calculate intersection interval
-		t0 = (-1.f - signedDistToTrianglePlane) * normalDotVelocity;
-		t1 = (1.f - signedDistToTrianglePlane) * normalDotVelocity;
+		// at this point we have t0 and t1, if there is any intersection, it
+		// is between this interval
 
-		// Swap so t0 < t1
-		if (t0 > t1) { f32 tmp = t1; t1 = t0; t0 = tmp;	}
+		core::vector3df collisionPoint;
+		bool foundCollision = false;
+		float t = 1.0f;
 
-		// check if at least one value is within the range
-		if (t0 > 1.0f || t1 < 0.0f)
-			return; // both t values are outside 1 and 0, no collision possible
+		// first check the easy case: Collision within the triangle;
+		// if this happens, it must be at t0 and this is when the sphere
+		// rests on the front side of the triangle plane. This can only happen
+		// if the sphere is not embedded in the triangle plane.
 
-		// clamp to 0 and 1
-		t0 = core::clamp ( t0, 0.f, 1.f );
-		t1 = core::clamp ( t1, 0.f, 1.f );
-	}
-
-	// at this point we have t0 and t1, if there is any intersection, it
-	// is between this interval
-	core::vector3df collisionPoint;
-	bool foundCollision = false;
-	f32 t = 1.0f;
-
-	// first check the easy case: Collision within the triangle;
-	// if this happens, it must be at t0 and this is when the sphere
-	// rests on the front side of the triangle plane. This can only happen
-	// if the sphere is not embedded in the triangle plane.
-
-	if (!embeddedInPlane)
-	{
-		core::vector3df planeIntersectionPoint =
-			(colData->basePoint - trianglePlane.Normal)
-			+ (colData->velocity * t0);
-
-		if (triangle.isPointInsideFast(planeIntersectionPoint))
+		if (!embeddedInPlane)
 		{
-			foundCollision = true;
-			t = t0;
-			collisionPoint = planeIntersectionPoint;
-		}
-	}
+			core::vector3df planeIntersectionPoint =
+				(colData->basePoint - trianglePlane.Normal)
+				+ (colData->velocity * (f32)t0);
 
-	// if we havent found a collision already we will have to sweep
-	// the sphere against points and edges of the triangle. Note: A
-	// collision inside the triangle will always happen before a
-	// vertex or edge collision.
-
-	if (!foundCollision)
-	{
-		core::vector3df velocity = colData->velocity;
-		core::vector3df base = colData->basePoint;
-
-		f32 velocitySqaredLength = velocity.getLengthSQ();
-		f32 a,b,c;
-		f32 newT;
-
-		// for each edge or vertex a quadratic equation has to be solved:
-		// a*t^2 + b*t + c = 0. We calculate a,b, and c for each test.
-
-		// check against points
-		a = velocitySqaredLength;
-
-		// p1
-		b = 2.0f * (velocity.dotProduct(base - triangle.pointA));
-		c = (triangle.pointA-base).getLengthSQ() - 1.f;
-		if (getLowestRoot(a,b,c,t, &newT))
-		{
-			t = newT;
-			foundCollision = true;
-			collisionPoint = triangle.pointA;
+			if (triangle.isPointInsideFast(planeIntersectionPoint))
+			{
+				foundCollision = true;
+				t = (f32)t0;
+				collisionPoint = planeIntersectionPoint;
+			}
 		}
 
-		// p2
+		// if we havent found a collision already we will have to sweep
+		// the sphere against points and edges of the triangle. Note: A
+		// collision inside the triangle will always happen before a
+		// vertex or edge collision.
+
 		if (!foundCollision)
 		{
-			b = 2.0f * (velocity.dotProduct(base - triangle.pointB));
-			c = (triangle.pointB-base).getLengthSQ() - 1.f;
+			core::vector3df velocity = colData->velocity;
+			core::vector3df base = colData->basePoint;
+
+			f32 velocitySqaredLength = (f32)velocity.getLengthSQ();
+			f32 a,b,c;
+			f32 newT;
+
+			// for each edge or vertex a quadratic equation has to be solved:
+			// a*t^2 + b*t + c = 0. We calculate a,b, and c for each test.
+
+			// check against points
+			a = velocitySqaredLength;
+
+			// p1
+			b = 2.0f * (velocity.dotProduct(base - triangle.pointA));
+			c = (f32)((triangle.pointA-base).getLengthSQ() - 1.0);
 			if (getLowestRoot(a,b,c,t, &newT))
 			{
 				t = newT;
 				foundCollision = true;
-				collisionPoint = triangle.pointB;
+				collisionPoint = triangle.pointA;
 			}
-		}
 
-		// p3
-		if (!foundCollision)
-		{
-			b = 2.0f * (velocity.dotProduct(base - triangle.pointC));
-			c = (triangle.pointC-base).getLengthSQ() - 1.f;
-			if (getLowestRoot(a,b,c,t, &newT))
+			// p2
+			if (!foundCollision)
 			{
-				t = newT;
-				foundCollision = true;
-				collisionPoint = triangle.pointC;
+				b = 2.0f * (velocity.dotProduct(base - triangle.pointB));
+				c = (f32)((triangle.pointB-base).getLengthSQ() - 1.0);
+				if (getLowestRoot(a,b,c,t, &newT))
+				{
+					t = newT;
+					foundCollision = true;
+					collisionPoint = triangle.pointB;
+				}
 			}
-		}
 
-		// check against edges:
-
-		// p1 --- p2
-		core::vector3df edge = triangle.pointB - triangle.pointA;
-		core::vector3df baseToVertex = triangle.pointA - base;
-		f32 edgeSqaredLength = edge.getLengthSQ();
-		f32 edgeDotVelocity = edge.dotProduct(velocity);
-		f32 edgeDotBaseToVertex = edge.dotProduct(baseToVertex);
-
-		// calculate parameters for equation
-		a = edgeSqaredLength* -velocitySqaredLength +
-			edgeDotVelocity*edgeDotVelocity;
-		b = edgeSqaredLength* (2.f *velocity.dotProduct(baseToVertex)) -
-			2.0f*edgeDotVelocity*edgeDotBaseToVertex;
-		c = edgeSqaredLength* (1.f -baseToVertex.getLengthSQ()) +
-			edgeDotBaseToVertex*edgeDotBaseToVertex;
-
-		// does the swept sphere collide against infinite edge?
-		if (getLowestRoot(a,b,c,t,&newT))
-		{
-			f32 f = (edgeDotVelocity*newT - edgeDotBaseToVertex) / edgeSqaredLength;
-			if (f >=0.0f && f <= 1.0f)
+			// p3
+			if (!foundCollision)
 			{
-				// intersection took place within segment
-				t = newT;
-				foundCollision = true;
-				collisionPoint = triangle.pointA + (edge*f);
+				b = 2.0f * (velocity.dotProduct(base - triangle.pointC));
+				c = (f32)((triangle.pointC-base).getLengthSQ() - 1.0);
+				if (getLowestRoot(a,b,c,t, &newT))
+				{
+					t = newT;
+					foundCollision = true;
+					collisionPoint = triangle.pointC;
+				}
 			}
-		}
 
-		// p2 --- p3
-		edge = triangle.pointC-triangle.pointB;
-		baseToVertex = triangle.pointB - base;
-		edgeSqaredLength = edge.getLengthSQ();
-		edgeDotVelocity = edge.dotProduct(velocity);
-		edgeDotBaseToVertex = edge.dotProduct(baseToVertex);
+			// check against edges:
 
-		// calculate parameters for equation
-		a = edgeSqaredLength* -velocitySqaredLength +
-			edgeDotVelocity*edgeDotVelocity;
-		b = edgeSqaredLength* (2*velocity.dotProduct(baseToVertex)) -
-			2.0f*edgeDotVelocity*edgeDotBaseToVertex;
-		c = edgeSqaredLength* (1-baseToVertex.getLengthSQ()) +
-			edgeDotBaseToVertex*edgeDotBaseToVertex;
+			// p1 --- p2
+			core::vector3df edge = triangle.pointB - triangle.pointA;
+			core::vector3df baseToVertex = triangle.pointA - base;
+			f32 edgeSqaredLength = (f32)edge.getLengthSQ();
+			f32 edgeDotVelocity = edge.dotProduct(velocity);
+			f32 edgeDotBaseToVertex = edge.dotProduct(baseToVertex);
 
-		// does the swept sphere collide against infinite edge?
-		if (getLowestRoot(a,b,c,t,&newT))
-		{
-			f32 f = (edgeDotVelocity*newT-edgeDotBaseToVertex) /
-				edgeSqaredLength;
-			if (f >=0.0f && f <= 1.0f)
+			// calculate parameters for equation
+			a = edgeSqaredLength* -velocitySqaredLength +
+				edgeDotVelocity*edgeDotVelocity;
+			b = edgeSqaredLength* (2*velocity.dotProduct(baseToVertex)) -
+				2.0f*edgeDotVelocity*edgeDotBaseToVertex;
+			c = (f32)(edgeSqaredLength* (1-baseToVertex.getLengthSQ()) +
+				edgeDotBaseToVertex*edgeDotBaseToVertex);
+
+			// does the swept sphere collide against ininite edge?
+			if (getLowestRoot(a,b,c,t,&newT))
 			{
-				// intersection took place within segment
-				t = newT;
-				foundCollision = true;
-				collisionPoint = triangle.pointB + (edge*f);
+				f32 f = (edgeDotVelocity*newT - edgeDotBaseToVertex) / edgeSqaredLength;
+				if (f >=0.0f && f <= 1.0f)
+				{
+					// intersection took place within segment
+					t = newT;
+					foundCollision = true;
+					collisionPoint = triangle.pointA + (edge*f);
+				}
 			}
-		}
 
+			// p2 --- p3
+			edge = triangle.pointC-triangle.pointB;
+			baseToVertex = triangle.pointB - base;
+			edgeSqaredLength = (f32)edge.getLengthSQ();
+			edgeDotVelocity = edge.dotProduct(velocity);
+			edgeDotBaseToVertex = edge.dotProduct(baseToVertex);
 
-		// p3 --- p1
-		edge = triangle.pointA-triangle.pointC;
-		baseToVertex = triangle.pointC - base;
-		edgeSqaredLength = edge.getLengthSQ();
-		edgeDotVelocity = edge.dotProduct(velocity);
-		edgeDotBaseToVertex = edge.dotProduct(baseToVertex);
+			// calculate parameters for equation
+			a = edgeSqaredLength* -velocitySqaredLength +
+				edgeDotVelocity*edgeDotVelocity;
+			b = edgeSqaredLength* (2*velocity.dotProduct(baseToVertex)) -
+				2.0f*edgeDotVelocity*edgeDotBaseToVertex;
+			c = (f32)(edgeSqaredLength* (1-baseToVertex.getLengthSQ()) +
+				edgeDotBaseToVertex*edgeDotBaseToVertex);
 
-		// calculate parameters for equation
-		a = edgeSqaredLength* -velocitySqaredLength +
-			edgeDotVelocity*edgeDotVelocity;
-		b = edgeSqaredLength* (2*velocity.dotProduct(baseToVertex)) -
-			2.0f*edgeDotVelocity*edgeDotBaseToVertex;
-		c = edgeSqaredLength* (1-baseToVertex.getLengthSQ()) +
-			edgeDotBaseToVertex*edgeDotBaseToVertex;
-
-		// does the swept sphere collide against infinite edge?
-		if (getLowestRoot(a,b,c,t,&newT))
-		{
-			f32 f = (edgeDotVelocity*newT-edgeDotBaseToVertex) /
-				edgeSqaredLength;
-			if (f >=0.0f && f <= 1.0f)
+			// does the swept sphere collide against ininite edge?
+			if (getLowestRoot(a,b,c,t,&newT))
 			{
-				// intersection took place within segment
-				t = newT;
-				foundCollision = true;
-				collisionPoint = triangle.pointC + (edge*f);
+				f32 f = (edgeDotVelocity*newT-edgeDotBaseToVertex) /
+					edgeSqaredLength;
+				if (f >=0.0f && f <= 1.0f)
+				{
+					// intersection took place within segment
+					t = newT;
+					foundCollision = true;
+					collisionPoint = triangle.pointB + (edge*f);
+				}
 			}
-		}
-	}// end no collision found
 
-	// set result:
-	if (foundCollision)
-	{
-		// distance to collision is t
-		f32 distToCollision = t*colData->velocity.getLength();
 
-		// does this triangle qualify for closest hit?
-		if (!colData->foundCollision ||
-			distToCollision	< colData->nearestDistance)
+			// p3 --- p1
+			edge = triangle.pointA-triangle.pointC;
+			baseToVertex = triangle.pointC - base;
+			edgeSqaredLength = (f32)edge.getLengthSQ();
+			edgeDotVelocity = edge.dotProduct(velocity);
+			edgeDotBaseToVertex = edge.dotProduct(baseToVertex);
+
+			// calculate parameters for equation
+			a = edgeSqaredLength* -velocitySqaredLength +
+				edgeDotVelocity*edgeDotVelocity;
+			b = edgeSqaredLength* (2*velocity.dotProduct(baseToVertex)) -
+				2.0f*edgeDotVelocity*edgeDotBaseToVertex;
+			c = (f32)(edgeSqaredLength* (1-baseToVertex.getLengthSQ()) +
+				edgeDotBaseToVertex*edgeDotBaseToVertex);
+
+			// does the swept sphere collide against ininite edge?
+			if (getLowestRoot(a,b,c,t,&newT))
+			{
+				f32 f = (edgeDotVelocity*newT-edgeDotBaseToVertex) /
+					edgeSqaredLength;
+				if (f >=0.0f && f <= 1.0f)
+				{
+					// intersection took place within segment
+					t = newT;
+					foundCollision = true;
+					collisionPoint = triangle.pointC + (edge*f);
+				}
+			}
+		}// end no collision found
+
+		// set result:
+		if (foundCollision)
 		{
-			colData->nearestDistance = distToCollision;
-			colData->intersectionPoint = collisionPoint;
-			colData->foundCollision = true;
-			colData->intersectionTriangle = triangle;
-			++colData->triangleHits;
-		}
+			// distance to collision is t
+			f32 distToCollision = (f32)(t*colData->velocity.getLength());
 
-	}// end found collision
+			// does this triangle qualify for closest hit?
+			if (!colData->foundCollision ||
+				distToCollision	< colData->nearestDistance)
+			{
+				colData->nearestDistance = distToCollision;
+				colData->intersectionPoint = collisionPoint;
+				colData->foundCollision = true;
+				colData->intersectionTriangle = triangle;
+				++colData->triangleHits;
+			}
+
+		}// end found collision
+
+	}// end if is front facing
 }
 
 
@@ -509,7 +486,7 @@ core::vector3df CSceneCollisionManager::collideEllipsoidWithWorld(
 	colData.R3Position = position;
 	colData.R3Velocity = velocity;
 	colData.eRadius = radius;
-	colData.nearestDistance = FLT_MAX;
+	colData.nearestDistance = 9999999999999.0f;
 	colData.selector = selector;
 	colData.slidingSpeed = slidingSpeed;
 	colData.triangleHits = 0;
@@ -565,7 +542,7 @@ core::vector3df CSceneCollisionManager::collideWithWorld(s32 recursionDepth,
 	colData.normalizedVelocity.normalize();
 	colData.basePoint = pos;
 	colData.foundCollision = false;
-	colData.nearestDistance = FLT_MAX;
+	colData.nearestDistance = 9999999999999.0f;
 
 	//------------------ collide with world
 
@@ -580,10 +557,7 @@ core::vector3df CSceneCollisionManager::collideWithWorld(s32 recursionDepth,
 
 	core::matrix4 scaleMatrix;
 	scaleMatrix.setScale(
-		core::vector3df(1.0f / colData.eRadius.X, 
-						1.0f / colData.eRadius.Y,
-						1.0f / colData.eRadius.Z)
-					);
+		core::vector3df(1.0f / colData.eRadius.X, 1.0f / colData.eRadius.Y, 1.0f / colData.eRadius.Z));
 
 	s32 triangleCnt = 0;
 	colData.selector->getTriangles(Triangles.pointer(), totalTriangleCnt, triangleCnt, box, &scaleMatrix);
@@ -607,7 +581,7 @@ core::vector3df CSceneCollisionManager::collideWithWorld(s32 recursionDepth,
 	if (colData.nearestDistance >= veryCloseDistance)
 	{
 		core::vector3df v = vel;
-		v.setLength( colData.nearestDistance - veryCloseDistance );
+		v.setLength((f32)(colData.nearestDistance - veryCloseDistance));
 		newBasePoint = colData.basePoint + v;
 
 		v.normalize();
@@ -653,13 +627,13 @@ core::line3d<f32> CSceneCollisionManager::getRayFromScreenCoordinates(
 	if (!camera)
 		return ln;
 
-	const scene::SViewFrustum* f = camera->getViewFrustum();
+	const scene::SViewFrustrum* f = camera->getViewFrustrum();
 
 	core::vector3df farLeftUp = f->getFarLeftUp();
 	core::vector3df lefttoright = f->getFarRightUp() - farLeftUp;
 	core::vector3df uptodown = f->getFarLeftDown() - farLeftUp;
 
-	const core::rect<s32>& viewPort = Driver->getViewPort();
+	core::rect<s32> viewPort = Driver->getViewPort();
 	core::dimension2d<s32> screenSize(viewPort.getWidth(), viewPort.getHeight());
 
 	f32 dx = pos.X / (f32)screenSize.Width;
@@ -676,43 +650,51 @@ core::line3d<f32> CSceneCollisionManager::getRayFromScreenCoordinates(
 }
 
 
+
 //! Calculates 2d screen position from a 3d position.
 core::position2d<s32> CSceneCollisionManager::getScreenCoordinatesFrom3DPosition(
 	core::vector3df pos3d, ICameraSceneNode* camera)
 {
+	core::position2d<s32> pos2d(-1000,-1000);
+
 	if (!SceneManager || !Driver)
-		return core::position2d<s32>(-1000,-1000);
+		return pos2d;
 
 	if (!camera)
 		camera = SceneManager->getActiveCamera();
 
 	if (!camera)
-		return core::position2d<s32>(-1000,-1000);
+		return pos2d;
 
-	const core::rect<s32>& viewPort = Driver->getViewPort();
+	core::rect<s32> viewPort = Driver->getViewPort();
 	core::dimension2d<s32> dim(viewPort.getWidth(), viewPort.getHeight());
 
 	dim.Width /= 2;
 	dim.Height /= 2;
 
+	f32 transformedPos[4];
+
 	core::matrix4 trans = camera->getProjectionMatrix();
 	trans *= camera->getViewMatrix();
 
-	f32 transformedPos[4] = { pos3d.X, pos3d.Y, pos3d.Z, 1.0f };
+	transformedPos[0] = pos3d.X;
+	transformedPos[1] = pos3d.Y;
+	transformedPos[2] = pos3d.Z;
+	transformedPos[3] = 1.0f;
 
 	trans.multiplyWith1x4Matrix(transformedPos);
 
 	if (transformedPos[3] < 0)
 		return core::position2d<s32>(-10000,-10000);
 
-	const f32 zDiv = transformedPos[3] == 0.0f ? 1.0f :
-		core::reciprocal(transformedPos[3]);
+	f32 zDiv = transformedPos[3] == 0.0f ? 1.0f :
+		(1.0f / transformedPos[3]);
 
-	return core::position2d<s32>(
-			core::round32(dim.Width * transformedPos[0] * zDiv) + dim.Width,
-			dim.Height - core::round32(dim.Height * (transformedPos[1] * zDiv)));
+	pos2d.X = (s32)(dim.Width * transformedPos[0] * zDiv) + dim.Width;
+	pos2d.Y = ((s32)(dim.Height - (dim.Height * (transformedPos[1] * zDiv))));
+
+	return pos2d;
 }
-
 
 inline bool CSceneCollisionManager::getLowestRoot(f32 a, f32 b, f32 c, f32 maxR, f32* root)
 {
@@ -724,10 +706,8 @@ inline bool CSceneCollisionManager::getLowestRoot(f32 a, f32 b, f32 c, f32 maxR,
 
 	// calculate two roots: (if det==0 then x1==x2
 	// but lets disregard that slight optimization)
-	// burningwater: sqrt( 0) is an illegal operation.... smth should be done...
 
 	f32 sqrtD = (f32)sqrt(determinant);
-
 	f32 r1 = (-b - sqrtD) / (2*a);
 	f32 r2 = (-b + sqrtD) / (2*a);
 
@@ -754,5 +734,4 @@ inline bool CSceneCollisionManager::getLowestRoot(f32 a, f32 b, f32 c, f32 maxR,
 
 } // end namespace scene
 } // end namespace irr
-
 

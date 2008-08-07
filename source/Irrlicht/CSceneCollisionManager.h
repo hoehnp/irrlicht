@@ -1,7 +1,7 @@
 #ifndef __C_SCENE_COLLISION_MANAGER_H_INCLUDED__
 #define __C_SCENE_COLLISION_MANAGER_H_INCLUDED__
 
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2006 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -67,7 +67,7 @@ namespace scene
 	private:
 
 		//! recursive method for going through all scene nodes
-		void getPickedNodeBB(ISceneNode* root,
+		void CSceneCollisionManager::getPickedNodeBB(ISceneNode* root,
 					   const core::line3df& ray,
 					   s32 bits,
 					   bool bNoDebugObjects,
@@ -86,7 +86,7 @@ namespace scene
 			core::vector3df basePoint;
 
 			bool foundCollision;
-			f32 nearestDistance;
+			f64 nearestDistance;
 			core::vector3df intersectionPoint;
 
 			core::triangle3df intersectionTriangle;
