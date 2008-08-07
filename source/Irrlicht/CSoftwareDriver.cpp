@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -19,8 +19,7 @@ namespace video
 
 //! constructor
 CSoftwareDriver::CSoftwareDriver(const core::dimension2d<s32>& windowSize, bool fullscreen, io::IFileSystem* io, video::IImagePresenter* presenter)
-: CNullDriver(io, windowSize), BackBuffer(0), Presenter(presenter),
-	RenderTargetTexture(0), RenderTargetSurface(0),
+: CNullDriver(io, windowSize), RenderTargetTexture(0), RenderTargetSurface(0),
 	CurrentTriangleRenderer(0), ZBuffer(0), Texture(0)
 {
 	#ifdef _DEBUG
@@ -30,13 +29,15 @@ CSoftwareDriver::CSoftwareDriver(const core::dimension2d<s32>& windowSize, bool 
 	// create backbuffer
 
 	BackBuffer = new CImage(ECF_A1R5G5B5, windowSize);
-	if (BackBuffer)
-	{
-		BackBuffer->fill(SColor(0));
+	BackBuffer->fill(SColor(0));
 
-		// create z buffer
-		ZBuffer = video::createZBuffer(BackBuffer->getDimension());
-	}
+	// get presenter
+
+	Presenter = presenter;
+
+	// create z buffer
+
+	ZBuffer = irr::video::createZBuffer(BackBuffer->getDimension());
 
 	// create triangle renderers
 
@@ -66,8 +67,7 @@ CSoftwareDriver::CSoftwareDriver(const core::dimension2d<s32>& windowSize, bool 
 CSoftwareDriver::~CSoftwareDriver()
 {
 	// delete Backbuffer
-	if (BackBuffer)
-		BackBuffer->drop();
+	BackBuffer->drop();
 
 	// delete triangle renderers
 
@@ -157,7 +157,7 @@ void CSoftwareDriver::selectRightTriangleRenderer()
 
 
 //! presents the rendered scene on the screen, returns false if failed
-bool CSoftwareDriver::endScene( void* windowId, core::rect<s32>* sourceRect )
+bool CSoftwareDriver::endScene( s32 windowId, core::rect<s32>* sourceRect )
 {
 	CNullDriver::endScene();
 
@@ -168,7 +168,7 @@ bool CSoftwareDriver::endScene( void* windowId, core::rect<s32>* sourceRect )
 
 
 //! queries the features of the driver, returns true if feature is available
-bool CSoftwareDriver::queryFeature(E_VIDEO_DRIVER_FEATURE feature) const
+bool CSoftwareDriver::queryFeature(E_VIDEO_DRIVER_FEATURE feature)
 {
 	switch (feature)
 	{
@@ -220,7 +220,7 @@ void CSoftwareDriver::setMaterial(const SMaterial& material)
 
 	for (u32 i = 0; i < 1; ++i)
 	{
-		setTexture(Material.getTexture(i));
+		setTexture(Material.Textures[i]);
 		setTransform ((E_TRANSFORMATION_STATE) ( ETS_TEXTURE_0 + i ),
 				material.getTextureMatrix(i));
 	}
@@ -232,7 +232,7 @@ bool CSoftwareDriver::beginScene(bool backBuffer, bool zBuffer, SColor color)
 {
 	CNullDriver::beginScene(backBuffer, zBuffer, color);
 
-	if (backBuffer && BackBuffer)
+	if (backBuffer)
 		BackBuffer->fill( color );
 
 	if (ZBuffer && zBuffer)
@@ -684,6 +684,7 @@ void CSoftwareDriver::drawClippedIndexedTriangleListT(const VERTEXTYPE* vertices
 }
 
 
+
 //! Draws a 3d line.
 void CSoftwareDriver::draw3DLine(const core::vector3df& start,
 				const core::vector3df& end, SColor color)
@@ -711,55 +712,24 @@ void CSoftwareDriver::draw3DLine(const core::vector3df& start,
 }
 
 
+
 //! clips a triangle against the viewing frustum
 void CSoftwareDriver::clipTriangle(f32* transformedPos)
 {
 }
 
 
-//! Only used by the internal engine. Used to notify the driver that
-//! the window was resized.
-void CSoftwareDriver::OnResize(const core::dimension2d<s32>& size)
+
+//! creates the clipping planes from the matrix
+void CSoftwareDriver::createPlanes(const core::matrix4& mat)
 {
-	// make sure width and height are multiples of 2
-	core::dimension2d<s32> realSize(size);
-
-	if (realSize.Width % 2)
-		realSize.Width += 1;
-
-	if (realSize.Height % 2)
-		realSize.Height += 1;
-
-	if (ScreenSize != realSize)
-	{
-		if (ViewPort.getWidth() == ScreenSize.Width &&
-			ViewPort.getHeight() == ScreenSize.Height)
-		{
-			ViewPort = core::rect<s32>(core::position2d<s32>(0,0), realSize);
-		}
-
-		ScreenSize = realSize;
-
-		bool resetRT = (RenderTargetSurface == BackBuffer);
-
-		if (BackBuffer)
-			BackBuffer->drop();
-		BackBuffer = new CImage(ECF_A1R5G5B5, realSize);
-
-		if (resetRT)
-			setRenderTarget(BackBuffer);
-	}
+	Frustum = scene::SViewFrustum(mat);
 }
 
-//! returns the current render target size
-const core::dimension2d<s32>& CSoftwareDriver::getCurrentRenderTargetSize() const
-{
-	return RenderTargetSize;
-}
 
 
 //! draws an 2d image, using a color (if color is other then Color(255,255,255,255)) and the alpha channel of the texture if wanted.
-void CSoftwareDriver::draw2DImage(const video::ITexture* texture, const core::position2d<s32>& destPos,
+void CSoftwareDriver::draw2DImage(video::ITexture* texture, const core::position2d<s32>& destPos,
 					const core::rect<s32>& sourceRect,
 					const core::rect<s32>* clipRect, SColor color,
 					bool useAlphaChannelOfTexture)
@@ -830,40 +800,28 @@ void CSoftwareDriver::draw2DRectangle(const core::rect<s32>& pos,
 
 //! \return Returns the name of the video driver. Example: In case of the Direct3D8
 //! driver, it would return "Direct3D8.1".
-const wchar_t* CSoftwareDriver::getName() const
+const wchar_t* CSoftwareDriver::getName()
 {
 	return L"Irrlicht Software Device 1.0";
 }
 
-
 //! Returns type of video driver
-E_DRIVER_TYPE CSoftwareDriver::getDriverType() const
+E_DRIVER_TYPE CSoftwareDriver::getDriverType()
 {
 	return EDT_SOFTWARE;
 }
 
-
-//! returns color format
-ECOLOR_FORMAT CSoftwareDriver::getColorFormat() const
-{
-	if (BackBuffer)
-		return BackBuffer->getColorFormat();
-	else
-		return CNullDriver::getColorFormat();
-}
-
-
 //! Returns the transformation set by setTransform
-const core::matrix4& CSoftwareDriver::getTransform(E_TRANSFORMATION_STATE state) const
+const core::matrix4& CSoftwareDriver::getTransform(E_TRANSFORMATION_STATE state)
 {
 	return TransformationMatrix[state];
 }
 
 //! Creates a render target texture.
-ITexture* CSoftwareDriver::createRenderTargetTexture(const core::dimension2d<s32>& size, const c8* name)
+ITexture* CSoftwareDriver::createRenderTargetTexture(const core::dimension2d<s32>& size)
 {
 	CImage* img = new CImage(video::ECF_A1R5G5B5, size);
-	ITexture* tex = new CSoftwareTexture(img, name, true);
+	ITexture* tex = new CSoftwareTexture(img, 0);
 	img->drop();
 	return tex;
 }
@@ -880,17 +838,14 @@ void CSoftwareDriver::clearZBuffer()
 //! Returns an image created from the last rendered frame.
 IImage* CSoftwareDriver::createScreenShot()
 {
-	if (BackBuffer)
-		return new CImage(BackBuffer->getColorFormat(), BackBuffer);
-	else
-		return 0;
+	return new CImage(BackBuffer->getColorFormat(), BackBuffer);
 }
 
 
 //! Returns the maximum amount of primitives (mostly vertices) which
 //! the device is able to render with one drawIndexedTriangleList
 //! call.
-u32 CSoftwareDriver::getMaximalPrimitiveCount() const
+u32 CSoftwareDriver::getMaximalPrimitiveCount()
 {
 	return 0x00800000;
 }

@@ -1,10 +1,8 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #include "CGUIWindow.h"
-#ifdef _IRR_COMPILE_WITH_GUI_
-
 #include "IGUISkin.h"
 #include "IGUIEnvironment.h"
 #include "IVideoDriver.h"
@@ -44,7 +42,6 @@ CGUIWindow::CGUIWindow(IGUIEnvironment* environment, IGUIElement* parent, s32 id
 	CloseButton = Environment->addButton(core::rect<s32>(posx, 3, posx + buttonw, 3 + buttonw), this, -1, 
 		L"", skin ? skin->getDefaultText(EGDT_WINDOW_CLOSE) : L"Close" );
 	CloseButton->setSubElement(true);
-	CloseButton->setTabStop(false);
 	CloseButton->setAlignment(EGUIA_LOWERRIGHT, EGUIA_LOWERRIGHT, EGUIA_UPPERLEFT, EGUIA_UPPERLEFT);
 	if (sprites)
 	{
@@ -58,7 +55,6 @@ CGUIWindow::CGUIWindow(IGUIEnvironment* environment, IGUIElement* parent, s32 id
 		L"", skin ? skin->getDefaultText(EGDT_WINDOW_RESTORE) : L"Restore" );
 	RestoreButton->setVisible(false);
 	RestoreButton->setSubElement(true);
-	RestoreButton->setTabStop(false);
 	RestoreButton->setAlignment(EGUIA_LOWERRIGHT, EGUIA_LOWERRIGHT, EGUIA_UPPERLEFT, EGUIA_UPPERLEFT);
 	if (sprites)
 	{
@@ -72,7 +68,6 @@ CGUIWindow::CGUIWindow(IGUIEnvironment* environment, IGUIElement* parent, s32 id
 		L"", skin ? skin->getDefaultText(EGDT_WINDOW_MINIMIZE) : L"Minimize" );
 	MinButton->setVisible(false);
 	MinButton->setSubElement(true);
-	MinButton->setTabStop(false);
 	MinButton->setAlignment(EGUIA_LOWERRIGHT, EGUIA_LOWERRIGHT, EGUIA_UPPERLEFT, EGUIA_UPPERLEFT);
 	if (sprites)
 	{
@@ -84,12 +79,8 @@ CGUIWindow::CGUIWindow(IGUIEnvironment* environment, IGUIElement* parent, s32 id
 	MinButton->grab();
 	RestoreButton->grab();
 	CloseButton->grab();
-
-	// this element is a tab group
-	setTabGroup(true);
-	setTabStop(true);
-	setTabOrder(-1);
 }
+
 
 
 //! destructor
@@ -106,103 +97,78 @@ CGUIWindow::~CGUIWindow()
 }
 
 
+
 //! called if an event happened.
-bool CGUIWindow::OnEvent(const SEvent& event)
+bool CGUIWindow::OnEvent(SEvent event)
 {
-	if (IsEnabled)
+	switch(event.EventType)
 	{
-
-		switch(event.EventType)
+	case EET_GUI_EVENT:
+		if (event.GUIEvent.EventType == EGET_ELEMENT_FOCUS_LOST)
 		{
-		case EET_GUI_EVENT:
-			if (event.GUIEvent.EventType == EGET_ELEMENT_FOCUS_LOST)
-			{
+			if (event.GUIEvent.Caller == (IGUIElement*)this)
 				Dragging = false;
-			}
-			else
-			if (event.GUIEvent.EventType == EGET_ELEMENT_FOCUSED)
+			return true;
+		}
+		else
+		if (event.GUIEvent.EventType == EGET_BUTTON_CLICKED)
+		{
+			if (event.GUIEvent.Caller == CloseButton)
 			{
-				if (Parent && ((event.GUIEvent.Caller == this) || isMyChild(event.GUIEvent.Caller)))
-					Parent->bringToFront(this);
+				remove();
+				return true;
 			}
-			else
-			if (event.GUIEvent.EventType == EGET_BUTTON_CLICKED)
+		}
+		break;
+	case EET_MOUSE_INPUT_EVENT:
+		switch(event.MouseInput.Event)
+		{
+		case EMIE_LMOUSE_PRESSED_DOWN:
+			DragStart.X = event.MouseInput.X;
+			DragStart.Y = event.MouseInput.Y;
+			if (!Environment->hasFocus(this))
 			{
-				if (event.GUIEvent.Caller == CloseButton)
-				{
-					if (Parent)
-					{
-						// send close event to parent
-						SEvent e;
-						e.EventType = EET_GUI_EVENT;
-						e.GUIEvent.Caller = this;
-						e.GUIEvent.Element = 0;
-						e.GUIEvent.EventType = EGET_ELEMENT_CLOSED;
-
-						// if the event was not absorbed
-						if (!Parent->OnEvent(e))
-							remove();
-
-						return true;
-
-					}
-					else
-					{
-						remove();
-						return true;
-					}
-				}
-			}
-			break;
-		case EET_MOUSE_INPUT_EVENT:
-			switch(event.MouseInput.Event)
-			{
-			case EMIE_LMOUSE_PRESSED_DOWN:
-				DragStart.X = event.MouseInput.X;
-				DragStart.Y = event.MouseInput.Y;
 				Dragging = true;
+				Environment->setFocus(this);
 				if (Parent)
 					Parent->bringToFront(this);
-				return true;
-			case EMIE_LMOUSE_LEFT_UP:
-				Dragging = false;
-				return true;
-			case EMIE_MOUSE_MOVED:
-				if (Dragging)
-				{
-					// gui window should not be dragged outside its parent
-					if (Parent)
-						if (event.MouseInput.X < Parent->getAbsolutePosition().UpperLeftCorner.X +1 ||
-							event.MouseInput.Y < Parent->getAbsolutePosition().UpperLeftCorner.Y +1 ||
-							event.MouseInput.X > Parent->getAbsolutePosition().LowerRightCorner.X -1 ||
-							event.MouseInput.Y > Parent->getAbsolutePosition().LowerRightCorner.Y -1)
-
-							return true;
-						
-
-					move(core::position2d<s32>(event.MouseInput.X - DragStart.X, event.MouseInput.Y - DragStart.Y));
-					DragStart.X = event.MouseInput.X;
-					DragStart.Y = event.MouseInput.Y;
-					return true;
-				}
-				break;
-			default:
-				break;
 			}
-		default:
+			return true;
+		case EMIE_LMOUSE_LEFT_UP:
+			Dragging = false;
+			Environment->removeFocus(this);
+			return true;
+		case EMIE_MOUSE_MOVED:
+			if (Dragging)
+			{
+				// gui window should not be dragged outside its parent
+				if (Parent)
+					if (event.MouseInput.X < Parent->getAbsolutePosition().UpperLeftCorner.X +1 ||
+						event.MouseInput.Y < Parent->getAbsolutePosition().UpperLeftCorner.Y +1 ||
+						event.MouseInput.X > Parent->getAbsolutePosition().LowerRightCorner.X -1 ||
+						event.MouseInput.Y > Parent->getAbsolutePosition().LowerRightCorner.Y -1)
+
+						return true;
+					
+
+				move(core::position2d<s32>(event.MouseInput.X - DragStart.X, event.MouseInput.Y - DragStart.Y));
+				DragStart.X = event.MouseInput.X;
+				DragStart.Y = event.MouseInput.Y;
+				return true;
+			}
 			break;
 		}
 	}
 
-	return IGUIElement::OnEvent(event);
+	return Parent ? Parent->OnEvent(event) : false;
 }
-
 
 //! Updates the absolute position.
 void CGUIWindow::updateAbsolutePosition()
 {
 	IGUIElement::updateAbsolutePosition();
 }
+
 
 
 //! draws the element and its children
@@ -235,22 +201,25 @@ void CGUIWindow::draw()
 }
 
 
+
 //! Returns pointer to the close button
-IGUIButton* CGUIWindow::getCloseButton() const
+IGUIButton* CGUIWindow::getCloseButton()
 {
 	return CloseButton;
 }
 
 
+
 //! Returns pointer to the minimize button
-IGUIButton* CGUIWindow::getMinimizeButton() const
+IGUIButton* CGUIWindow::getMinimizeButton()
 {
 	return MinButton;
 }
 
 
+
 //! Returns pointer to the maximize button
-IGUIButton* CGUIWindow::getMaximizeButton() const
+IGUIButton* CGUIWindow::getMaximizeButton()
 {
 	return RestoreButton;
 }
@@ -258,6 +227,3 @@ IGUIButton* CGUIWindow::getMaximizeButton() const
 
 } // end namespace gui
 } // end namespace irr
-
-#endif // _IRR_COMPILE_WITH_GUI_
-

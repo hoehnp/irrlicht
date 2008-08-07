@@ -1,10 +1,8 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #include "CGUIImage.h"
-#ifdef _IRR_COMPILE_WITH_GUI_
-
 #include "IGUISkin.h"
 #include "IGUIEnvironment.h"
 #include "IVideoDriver.h"
@@ -64,7 +62,7 @@ void CGUIImage::draw()
 		return;
 
 	IGUISkin* skin = Environment->getSkin();
-	video::IVideoDriver* driver = Environment->getVideoDriver();
+	irr::video::IVideoDriver* driver = Environment->getVideoDriver();
 
 	core::rect<s32> rect = AbsoluteRect;
 
@@ -91,7 +89,7 @@ void CGUIImage::draw()
 	}
 	else
 	{
-		skin->draw2DRectangle(this, skin->getColor(EGDC_3D_DARK_SHADOW), AbsoluteRect, &AbsoluteClippingRect);
+		driver->draw2DRectangle(skin->getColor(EGDC_3D_DARK_SHADOW), AbsoluteRect, &AbsoluteClippingRect);
 	}
 
 	IGUIElement::draw();
@@ -126,7 +124,7 @@ bool CGUIImage::isAlphaChannelUsed() const
 
 
 //! Writes attributes of the element.
-void CGUIImage::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options=0) const
+void CGUIImage::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options=0)
 {
 	IGUIImage::serializeAttributes(out,options);
 
@@ -154,5 +152,3 @@ void CGUIImage::deserializeAttributes(io::IAttributes* in, io::SAttributeReadWri
 } // end namespace gui
 } // end namespace irr
 
-
-#endif // _IRR_COMPILE_WITH_GUI_

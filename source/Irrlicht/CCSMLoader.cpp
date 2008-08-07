@@ -1,12 +1,9 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 //
 // This file was written by Saurav Mohapatra and modified by Nikolaus Gebhardt.
 // See CCSMLoader.h for details.
-
-#include "IrrCompileConfig.h" 
-#ifdef _IRR_COMPILE_WITH_CSM_LOADER_
 
 #include "CCSMLoader.h"
 #include "os.h"
@@ -360,10 +357,6 @@ namespace scene
 	CCSMLoader::CCSMLoader(scene::ISceneManager* manager, io::IFileSystem* fs)
 		: FileSystem(fs), SceneManager(manager)
 	{
-
-		#ifdef _DEBUG
-		setDebugName("CCSMLoader");
-		#endif
 	}
 
 	CCSMLoader::~CCSMLoader()
@@ -372,13 +365,13 @@ namespace scene
 
 	//! returns true if the file maybe is able to be loaded by this class
 	//! based on the file extension (e.g. ".bsp")
-	bool CCSMLoader::isALoadableFileExtension(const c8* fileName) const
+	bool CCSMLoader::isALoadableFileExtension(const c8* fileName)
 	{
 		return strstr(fileName, ".csm")!=0;
 	}
 
 	//! creates/loads an animated mesh from the file.
-	IAnimatedMesh* CCSMLoader::createMesh(io::IReadFile* file)
+	IAnimatedMesh* CCSMLoader::createMesh(irr::io::IReadFile* file)
 	{
 		file->grab(); // originally, this loader created the file on its own.
 
@@ -396,7 +389,7 @@ namespace scene
 		return am;
 	}
 
-	scene::IMesh* CCSMLoader::createCSMMesh(io::IReadFile* file)
+	scene::IMesh* CCSMLoader::createCSMMesh(irr::io::IReadFile* file)
 	{
 		if (!file)
 			return 0;
@@ -461,8 +454,8 @@ namespace scene
 				lmapName += "LMAP_";
 				lmapName += (int)surface->getLightMapId();
 
-				buffer->Material.setTexture(0, texture);
-				buffer->Material.setTexture(1, driver->getTexture(lmapName.c_str()));
+				buffer->Material.Textures[0] = texture;
+				buffer->Material.Textures[1] = driver->getTexture(lmapName.c_str());
 				buffer->Material.Lighting = false;
 				buffer->Material.MaterialType = video::EMT_LIGHTMAP_M4;
 
@@ -878,4 +871,3 @@ namespace scene
 } // end namespace
 } // end namespace
 
-#endif // _IRR_COMPILE_WITH_CSM_LOADER_

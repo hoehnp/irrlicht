@@ -1,11 +1,5 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
-// This file is part of the "Irrlicht Engine".
-// For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #include "CImageWriterBMP.h"
-
-#ifdef _IRR_COMPILE_WITH_BMP_WRITER_
-
 #include "CImageLoaderBMP.h"
 #include "IWriteFile.h"
 #include "CColorConverter.h"
@@ -28,12 +22,12 @@ CImageWriterBMP::CImageWriterBMP()
 #endif
 }
 
-bool CImageWriterBMP::isAWriteableFileExtension(const c8* fileName) const
+bool CImageWriterBMP::isAWriteableFileExtension(const c8* fileName)
 {
 	return strstr(fileName, ".bmp") != 0;
 }
 
-bool CImageWriterBMP::writeImage(io::IWriteFile* file, IImage* image, u32 param) const
+bool CImageWriterBMP::writeImage(io::IWriteFile* file, IImage* image, u32 param)
 {
 	// we always write 24-bit color because nothing really reads 32-bit
 
@@ -70,7 +64,7 @@ bool CImageWriterBMP::writeImage(io::IWriteFile* file, IImage* image, u32 param)
 		break;
 	case ECF_A8R8G8B8:
 		CColorConverter_convertFORMATtoFORMAT
-			= CColorConverter::convert_A8R8G8B8toB8G8R8;
+			= CColorConverter::convert_A8R8G8B8toR8G8B8;
 		break;
 	case ECF_A1R5G5B5:
 		CColorConverter_convertFORMATtoFORMAT
@@ -131,6 +125,3 @@ bool CImageWriterBMP::writeImage(io::IWriteFile* file, IImage* image, u32 param)
 
 } // namespace video
 } // namespace irr
-
-#endif
-

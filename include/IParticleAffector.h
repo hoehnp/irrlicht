@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -17,10 +17,8 @@ namespace scene
 enum E_PARTICLE_AFFECTOR_TYPE
 {
 	EPAT_NONE = 0,
-	EPAT_ATTRACT,
 	EPAT_FADE_OUT,
 	EPAT_GRAVITY,
-	EPAT_ROTATE,
 	EPAT_COUNT
 };
 
@@ -28,10 +26,8 @@ enum E_PARTICLE_AFFECTOR_TYPE
 const c8* const ParticleAffectorTypeNames[] =
 {
 	"None",
-	"Attract",
 	"FadeOut",
 	"Gravity",
-	"Rotate",
 	0
 };
 
@@ -50,15 +46,15 @@ public:
 	virtual void affect(u32 now, SParticle* particlearray, u32 count) = 0;
 
 	//! Sets whether or not the affector is currently enabled.
-	virtual void setEnabled(bool enabled) { Enabled = enabled; }
+	virtual void setEnabled(bool enabled) {Enabled = enabled;}
 
 	//! Gets whether or not the affector is currently enabled.
-	virtual bool getEnabled() const { return Enabled; }
+	virtual bool getEnabled() const { return Enabled;}
 
 	//! Writes attributes of the object.
 	//! Implement this to expose the attributes of your scene node animator for
 	//! scripting languages, editors, debuggers or xml serialization purposes.
-	virtual void serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options=0) const {}
+	virtual void serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options=0) {}
 
 	//! Reads attributes of the object.
 	//! Implement this to set the attributes of your scene node animator for

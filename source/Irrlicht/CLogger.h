@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -21,7 +21,7 @@ public:
 	CLogger(IEventReceiver* r);
 
 	//! Returns the current set log level.
-	virtual ELOG_LEVEL getLogLevel() const;
+	virtual ELOG_LEVEL getLogLevel();
 
 	//! Sets a new log level.	virtual void setLogLevel(ELOG_LEVEL ll);
 	virtual void setLogLevel(ELOG_LEVEL ll);

@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -10,18 +10,15 @@ namespace irr
 	CLogger::CLogger(IEventReceiver* r)
 		: LogLevel(ELL_INFORMATION), Receiver(r)
 	{
-		#ifdef _DEBUG
-		setDebugName("CLogger");
-		#endif
 	}
 
 	//! Returns the current set log level.
-	ELOG_LEVEL CLogger::getLogLevel() const
+	ELOG_LEVEL CLogger::getLogLevel()
 	{
 		return LogLevel;
 	}
 
-	//! Sets a new log level.
+	//! Sets a new log level.	virtual void setLogLevel(ELOG_LEVEL ll);
 	void CLogger::setLogLevel(ELOG_LEVEL ll)
 	{
 		LogLevel = ll;

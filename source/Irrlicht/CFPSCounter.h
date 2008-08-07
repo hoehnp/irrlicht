@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -19,16 +19,16 @@ public:
 	CFPSCounter();
 
 	//! returns current fps
-	s32 getFPS() const;
+	s32 getFPS();
 
 	//! returns primitive count
-	u32 getPrimitive() const;
+	u32 getPrimitive();
 
 	//! returns average primitive count of last period
-	u32 getPrimitiveAverage() const;
+	u32 getPrimitiveAverage();
 
 	//! returns accumulated primitive count since start
-	u32 getPrimitiveTotal() const;
+	u32 getPrimitiveTotal();
 
 	//! to be called every frame
 	void registerFrame(u32 now, u32 primitive);

@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -7,9 +7,10 @@
 
 #include "IMeshLoader.h"
 #include "IFileSystem.h"
-#include "ISceneManager.h"
+#include "IVideoDriver.h"
 #include "irrString.h"
 #include "SMesh.h"
+#include "IMeshManipulator.h"
 #include "matrix4.h"
 
 namespace irr
@@ -23,20 +24,20 @@ class C3DSMeshFileLoader : public IMeshLoader
 public:
 
 	//! Constructor
-	C3DSMeshFileLoader(ISceneManager* smgr, io::IFileSystem* fs);
+	C3DSMeshFileLoader(IMeshManipulator* manip,io::IFileSystem* fs, video::IVideoDriver* driver);
 
 	//! destructor
 	virtual ~C3DSMeshFileLoader();
 
 	//! returns true if the file maybe is able to be loaded by this class
 	//! based on the file extension (e.g. ".cob")
-	virtual bool isALoadableFileExtension(const c8* fileName) const;
+	virtual bool isALoadableFileExtension(const c8* fileName);
 
 	//! creates/loads an animated mesh from the file.
 	//! \return Pointer to the created mesh. Returns 0 if loading failed.
 	//! If you no longer need the mesh, you should call IAnimatedMesh::drop().
-	//! See IReferenceCounted::drop() for more information.
-	virtual IAnimatedMesh* createMesh(io::IReadFile* file);
+	//! See IUnknown::drop() for more information.
+	virtual IAnimatedMesh* createMesh(irr::io::IReadFile* file);
 
 private:
 
@@ -75,6 +76,10 @@ private:
 
 	struct SCurrentMaterial
 	{
+		SCurrentMaterial() {};
+
+		~SCurrentMaterial() { 	};
+
 		void clear() {
 			Material=video::SMaterial();
 			Name="";
@@ -83,17 +88,11 @@ private:
 			Filename[2]="";
 			Filename[3]="";
 			Filename[4]="";
-			Strength[0]=0.f;
-			Strength[1]=0.f;
-			Strength[2]=0.f;
-			Strength[3]=0.f;
-			Strength[4]=0.f;
 		}
 
 		video::SMaterial Material;
 		core::stringc Name;
 		core::stringc Filename[5];
-		f32 Strength[5];
 	};
 
 	struct SMaterialGroup
@@ -112,7 +111,7 @@ private:
 
 		void clear() 
 		{ 
-			delete [] faces;
+			if (faces) delete [] faces;
 			faces = 0;
 			faceCount = 0;
 		}
@@ -121,14 +120,14 @@ private:
 		{
 			MaterialName = o.MaterialName;
 			faceCount = o.faceCount;
-			faces = new u16[faceCount];
-			for (u32 i=0; i<faceCount; ++i)
+			faces = new s16[faceCount];
+			for (s32 i=0; i<faceCount; ++i)
 				faces[i] = o.faces[i];
 		}
 
 		core::stringc MaterialName;
 		u16 faceCount;
-		u16* faces;
+		s16* faces;
 	};
 
 	bool readChunk(io::IReadFile* file, ChunkData* parent);
@@ -150,13 +149,13 @@ private:
 	void composeObject(io::IReadFile* file, const core::stringc& name);
 	void loadMaterials(io::IReadFile* file);
 	void cleanUp();
+	core::stringc getTextureFileName(const core::stringc& texture, core::stringc& model);
 
-	scene::ISceneManager* SceneManager;
 	io::IFileSystem* FileSystem;
+	video::IVideoDriver* Driver;
 
 	f32* Vertices;
 	u16* Indices;
-	u32* SmoothingGroups;
 	core::array<u16> TempIndices;
 	f32* TCoords;
 	u16 CountVertices;
@@ -170,6 +169,8 @@ private:
 	core::matrix4 TransformationMatrix;
 
 	SMesh* Mesh;
+
+	IMeshManipulator* Manipulator;
 };
 
 } // end namespace scene

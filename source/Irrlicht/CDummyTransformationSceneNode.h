@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -19,6 +19,9 @@ namespace scene
 		//! constructor
 		CDummyTransformationSceneNode(ISceneNode* parent, ISceneManager* mgr, s32 id);
 
+		//! destructor
+		~CDummyTransformationSceneNode();
+
 		//! returns the axis aligned bounding box of this node
 		virtual const core::aabbox3d<f32>& getBoundingBox() const;
 
@@ -31,7 +34,7 @@ namespace scene
 		virtual core::matrix4 getRelativeTransformation() const;
 
 		//! does nothing.
-		virtual void render() {}
+		virtual void render() {};
 
 		//! Returns type of the scene node
 		virtual ESCENE_NODE_TYPE getType() const { return ESNT_DUMMY_TRANSFORMATION; }

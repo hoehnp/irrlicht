@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt / Gaz Davidson
+// Copyright (C) 2002-2007 Nikolaus Gebhardt / Gaz Davidson
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -41,7 +41,7 @@ namespace gui
 		~CGUIEditWorkspace();
 
 		//! called if an event happened.
-		virtual bool OnEvent(const SEvent &event);
+		virtual bool OnEvent(SEvent event);
 
 		//! Removes a child.
 		virtual void removeChild(IGUIElement* child);
@@ -61,7 +61,7 @@ namespace gui
 
 		//! grid drawing...
 		virtual void setDrawGrid(bool drawGrid);
-		virtual void setGridSize(const core::dimension2di& gridSize);
+		virtual void setGridSize(core::dimension2di	&gridSize);
 		virtual void setUseGrid(bool useGrid);
 
 		//! returns the first editable element under the mouse
@@ -88,6 +88,8 @@ namespace gui
 		virtual void deserializeAttributes(io::IAttributes* in, io::SAttributeReadWriteOptions* options=0);
 
 	private:
+
+		bool isMyChild(IGUIElement* target);
 
 		enum EGUIEDIT_MODE
 		{

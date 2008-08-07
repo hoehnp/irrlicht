@@ -53,8 +53,8 @@ BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LINK32=link.exe
-# ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib /nologo /dll /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib /nologo /dll /machine:I386
+# ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
 
 !ELSEIF  "$(CFG)" == "Irrlicht - Win32 Debug"
 
@@ -334,10 +334,6 @@ SOURCE=..\..\include\IEventReceiver.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\include\IReferenceCounted.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\include\Irrlicht.h
 # End Source File
 # Begin Source File
@@ -347,6 +343,10 @@ SOURCE=..\..\include\IrrlichtDevice.h
 # Begin Source File
 
 SOURCE=..\..\include\irrTypes.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\IUnknown.h
 # End Source File
 # Begin Source File
 
@@ -826,14 +826,6 @@ SOURCE=.\CImageWriterTGA.cpp
 
 SOURCE=.\CImageWriterTGA.h
 # End Source File
-# Begin Source File
-
-SOURCE=.\CImageWriterWAL.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CImageWriterWAL.h
-# End Source File
 # End Group
 # Begin Source File
 
@@ -1126,6 +1118,14 @@ SOURCE=.\C3DSMeshFileLoader.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\CAnimatedMeshB3d.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\CAnimatedMeshB3d.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\CAnimatedMeshMD2.cpp
 # End Source File
 # Begin Source File
@@ -1142,6 +1142,14 @@ SOURCE=.\CAnimatedMeshMD3.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\CAnimatedMeshMS3D.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\CAnimatedMeshMS3D.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\CAnimatedMeshSceneNode.cpp
 # End Source File
 # Begin Source File
@@ -1150,35 +1158,11 @@ SOURCE=.\CAnimatedMeshSceneNode.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CB3DMeshFileLoader.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CB3DMeshFileLoader.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\CBillboardSceneNode.cpp
 # End Source File
 # Begin Source File
 
 SOURCE=.\CBillboardSceneNode.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\CBoneSceneNode.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CBoneSceneNode.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\CBSPMeshFileLoader.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CBSPMeshFileLoader.h
 # End Source File
 # Begin Source File
 
@@ -1214,10 +1198,6 @@ SOURCE=.\CColladaFileLoader.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CColladaMeshWriter.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=.\CCSMLoader.cpp
 # End Source File
 # Begin Source File
@@ -1231,6 +1211,14 @@ SOURCE=.\CCubeSceneNode.cpp
 # Begin Source File
 
 SOURCE=.\CCubeSceneNode.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\CDefaultMeshFormatLoader.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\CDefaultMeshFormatLoader.h
 # End Source File
 # Begin Source File
 
@@ -1282,34 +1270,6 @@ SOURCE=.\CGeometryCreator.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CGUISpinBox.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CGUISpinBox.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\CImageLoaderPPM.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CIrrDeviceSDL.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CIrrDeviceSDL.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\CIrrMeshFileLoader.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CIrrMeshWriter.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=.\CLightSceneNode.cpp
 # End Source File
 # Begin Source File
@@ -1323,22 +1283,6 @@ SOURCE=.\CLMTSMeshFileLoader.cpp
 # Begin Source File
 
 SOURCE=.\CLMTSMeshFileLoader.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\CLWOMeshFileLoader.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CLWOMeshFileLoader.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\CMD2MeshFileLoader.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CMD2MeshFileLoader.h
 # End Source File
 # Begin Source File
 
@@ -1382,14 +1326,6 @@ SOURCE=.\CMetaTriangleSelector.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CMS3DMeshFileLoader.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CMS3DMeshFileLoader.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\CMY3DHelper.h
 # End Source File
 # Begin Source File
@@ -1399,6 +1335,10 @@ SOURCE=.\CMY3DMeshFileLoader.cpp
 # Begin Source File
 
 SOURCE=.\CMY3DMeshFileLoader.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\CMY3DStuff.h
 # End Source File
 # Begin Source File
 
@@ -1442,35 +1382,11 @@ SOURCE=.\COgreMeshFileLoader.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CParticleAnimatedMeshSceneNodeEmitter.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CParticleAnimatedMeshSceneNodeEmitter.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\CParticleAttractionAffector.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CParticleAttractionAffector.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\CParticleBoxEmitter.cpp
 # End Source File
 # Begin Source File
 
 SOURCE=.\CParticleBoxEmitter.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\CParticleCylinderEmitter.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CParticleCylinderEmitter.h
 # End Source File
 # Begin Source File
 
@@ -1490,43 +1406,11 @@ SOURCE=.\CParticleGravityAffector.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CParticleMeshEmitter.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CParticleMeshEmitter.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\CParticlePointEmitter.cpp
 # End Source File
 # Begin Source File
 
 SOURCE=.\CParticlePointEmitter.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\CParticleRingEmitter.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CParticleRingEmitter.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\CParticleRotationAffector.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CParticleRotationAffector.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\CParticleSphereEmitter.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CParticleSphereEmitter.h
 # End Source File
 # Begin Source File
 
@@ -1634,14 +1518,6 @@ SOURCE=.\CShadowVolumeSceneNode.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CSkinnedMesh.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CSkinnedMesh.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\CSkyBoxSceneNode.cpp
 # End Source File
 # Begin Source File
@@ -1663,14 +1539,6 @@ SOURCE=.\CSphereSceneNode.cpp
 # Begin Source File
 
 SOURCE=.\CSphereSceneNode.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\CSTLMeshFileLoader.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CSTLMeshWriter.cpp
 # End Source File
 # Begin Source File
 
@@ -1698,14 +1566,6 @@ SOURCE=.\CTextSceneNode.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CVolumeLightSceneNode.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CVolumeLightSceneNode.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\CTriangleBBSelector.cpp
 # End Source File
 # Begin Source File
@@ -1727,6 +1587,22 @@ SOURCE=.\CWaterSurfaceSceneNode.cpp
 # Begin Source File
 
 SOURCE=.\CWaterSurfaceSceneNode.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\CXAnimationPlayer.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\CXAnimationPlayer.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\CXFileReader.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\CXFileReader.h
 # End Source File
 # Begin Source File
 
@@ -2380,10 +2256,6 @@ SOURCE=.\changes.txt
 # Begin Source File
 
 SOURCE=.\glxext.h
-# End Source File
-# End Target
-
-SOURCE=.\CBurningShader_Raster_Reference.cpp
 # End Source File
 # End Target
 # End Project

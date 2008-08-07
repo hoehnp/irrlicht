@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -14,8 +14,8 @@ namespace video
 {
 
 //! constructor
-CSoftwareTexture::CSoftwareTexture(IImage* image, const char* name, bool renderTarget)
-: ITexture(name), Texture(0), IsRenderTarget(renderTarget)
+CSoftwareTexture::CSoftwareTexture(IImage* image, const char* name)
+: ITexture(name), Texture(0)
 {
 	#ifdef _DEBUG
 	setDebugName("CSoftwareTexture");
@@ -59,7 +59,7 @@ CSoftwareTexture::~CSoftwareTexture()
 
 
 //! lock function
-void* CSoftwareTexture::lock(bool readOnly)
+void* CSoftwareTexture::lock()
 {
 	return Image->lock();
 }
@@ -80,14 +80,14 @@ void CSoftwareTexture::unlock()
 
 
 //! Returns original size of the texture.
-const core::dimension2d<s32>& CSoftwareTexture::getOriginalSize() const
+const core::dimension2d<s32>& CSoftwareTexture::getOriginalSize()
 {
 	return OrigSize;
 }
 
 
 //! Returns (=size) of the texture.
-const core::dimension2d<s32>& CSoftwareTexture::getSize() const
+const core::dimension2d<s32>& CSoftwareTexture::getSize()
 {
 	return Image->getDimension();
 }
@@ -110,7 +110,7 @@ CImage* CSoftwareTexture::getTexture()
 
 
 //! returns the size of a texture which would be the optimize size for rendering it
-inline s32 CSoftwareTexture::getTextureSizeFromSurfaceSize(s32 size) const
+inline s32 CSoftwareTexture::getTextureSizeFromSurfaceSize(s32 size)
 {
 	s32 ts = 0x01;
 	while(ts < size)
@@ -122,7 +122,7 @@ inline s32 CSoftwareTexture::getTextureSizeFromSurfaceSize(s32 size) const
 
 
 //! returns driver type of texture (=the driver, who created the texture)
-E_DRIVER_TYPE CSoftwareTexture::getDriverType() const
+E_DRIVER_TYPE CSoftwareTexture::getDriverType()
 {
 	return EDT_SOFTWARE;
 }
@@ -151,10 +151,6 @@ void CSoftwareTexture::regenerateMipMapLevels()
 	// our software textures don't have mip maps
 }
 
-bool CSoftwareTexture::isRenderTarget() const
-{
-	return IsRenderTarget;
-}
 
 
 } // end namespace video

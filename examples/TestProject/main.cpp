@@ -39,7 +39,7 @@ int main()
 		case 'b': driverType = video::EDT_DIRECT3D8;break;
 		case 'c': driverType = video::EDT_OPENGL;   break;
 		case 'd': driverType = video::EDT_SOFTWARE; break;
-		case 'e': driverType = video::EDT_BURNINGSVIDEO;break;
+		case 'e': driverType = video::EDT_SOFTWARE2;break;
 		case 'f': driverType = video::EDT_NULL;     break;
 		default: return 0;
 	}
@@ -83,7 +83,7 @@ int main()
 	
 	if (q3node)
 	{		
-		q3node->setPosition(core::vector3df(-1350,-130,-1400));
+		q3node->setPosition(core::vector3df(-1370,-130,-1400));
 
 		selector = smgr->createOctTreeTriangleSelector(q3levelmesh->getMesh(0), q3node, 128);
 		q3node->setTriangleSelector(selector);
@@ -155,7 +155,7 @@ int main()
 	// add 3 animated faeries.
 
 	video::SMaterial material;
-	material.Textures[0] = driver->getTexture("../../media/faerie2.bmp");
+	material.Texture1 = driver->getTexture("../../media/faerie2.bmp");
 	material.Lighting = true;
 
 	scene::IAnimatedMeshSceneNode* node = 0;
@@ -179,7 +179,7 @@ int main()
 		node->getMaterial(0) = material;
 	}
 
-	material.Textures[0] = 0;
+	material.Texture1 = 0;
 	material.Lighting = false;
 
 	// Add a light

@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -9,11 +9,10 @@
 
 namespace irr
 {
-namespace scene
+namespace scene  
 {
-
-	//! An enumeration for all types of built-in scene nodes
-	/** A scene node type is represented by a four character code
+	//! An enumeration for all types of built-in scene nodes 
+	/** A scene node type is represented by a four character code 
 	such as 'cube' or 'mesh' instead of simple numbers, to avoid
 	name clashes with external scene nodes.*/
 	enum ESCENE_NODE_TYPE
@@ -57,6 +56,12 @@ namespace scene
 		//! Camera Scene Node
 		ESNT_CAMERA         = MAKE_IRR_ID('c','a','m','_'),
 
+		//! Maya Camera Scene Node
+		ESNT_CAMERA_MAYA    = MAKE_IRR_ID('c','a','m','M'),
+
+		//! First Person Shooter style Camera
+		ESNT_CAMERA_FPS	    = MAKE_IRR_ID('c','a','m','F'),
+
 		//! Billboard Scene Node
 		ESNT_BILLBOARD      = MAKE_IRR_ID('b','i','l','l'),
 
@@ -67,21 +72,10 @@ namespace scene
 		ESNT_PARTICLE_SYSTEM = MAKE_IRR_ID('p','t','c','l'),
 
 		//! Quake3 Model Scene Node ( has tag to link to )
-		ESNT_MD3_SCENE_NODE  = MAKE_IRR_ID('m','d','3','_'),
-
-		//! Maya Camera Scene Node
-		//! Legacy, for loading version <= 1.4.x .irr files
-		ESNT_CAMERA_MAYA    = MAKE_IRR_ID('c','a','m','M'),
-
-		//! First Person Shooter Camera
-		//! Legacy, for loading version <= 1.4.x .irr files
-		ESNT_CAMERA_FPS     = MAKE_IRR_ID('c','a','m','F'),
+		ESNT_MD3_SCENE_NODE	= MAKE_IRR_ID('m','d','3','_'),
 
 		//! Unknown scene node
-		ESNT_UNKNOWN        = MAKE_IRR_ID('u','n','k','n'),
-
-		//! Will match with any scene node when checking types
-		ESNT_ANY            = MAKE_IRR_ID('a','n','y','_')
+		ESNT_UNKNOWN        = MAKE_IRR_ID('u','n','k','n')
 	};
 
 

@@ -1,10 +1,8 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #include "CGUIToolBar.h"
-#ifdef _IRR_COMPILE_WITH_GUI_
-
 #include "IGUISkin.h"
 #include "IGUIEnvironment.h"
 #include "IVideoDriver.h"
@@ -34,7 +32,7 @@ CGUIToolBar::CGUIToolBar(IGUIEnvironment* environment, IGUIElement* parent, s32 
 		parentwidth = Parent->getAbsolutePosition().getWidth();
 
 		const core::list<IGUIElement*>& children = parent->getChildren();
-		core::list<IGUIElement*>::ConstIterator it = children.begin();
+		core::list<IGUIElement*>::Iterator it = children.begin();
 		for (; it != children.end(); ++it)
 		{
 			core::rect<s32> r = (*it)->getAbsolutePosition();
@@ -64,21 +62,12 @@ CGUIToolBar::CGUIToolBar(IGUIEnvironment* environment, IGUIElement* parent, s32 
 }
 
 
-//! called if an event happened.
-bool CGUIToolBar::OnEvent(const SEvent& event)
-{
-	if (IsEnabled)
-	{
-		if (event.EventType == EET_MOUSE_INPUT_EVENT && 
-			event.MouseInput.Event == EMIE_LMOUSE_PRESSED_DOWN)
-		{
-			if (AbsoluteClippingRect.isPointInside(core::position2di(event.MouseInput.X, event.MouseInput.Y)))
-				return true;
-		}
-	}
 
-	return IGUIElement::OnEvent(event);
+//! destructor
+CGUIToolBar::~CGUIToolBar()
+{
 }
+
 
 
 //! draws the element and its children
@@ -92,7 +81,7 @@ void CGUIToolBar::draw()
 		return;
 
 	core::rect<s32> rect = AbsoluteRect;
-	core::rect<s32>* clip = &AbsoluteClippingRect;
+	core::rect<s32>* clip = 0;
 
 	// draw frame
 	skin->draw3DToolBar(this, rect, clip);
@@ -157,6 +146,3 @@ IGUIButton* CGUIToolBar::addButton(s32 id, const wchar_t* text,const wchar_t* to
 	
 } // end namespace gui
 } // end namespace irr
-
-#endif // _IRR_COMPILE_WITH_GUI_
-

@@ -54,7 +54,7 @@ namespace gui
 				AttribName->drop();
 		}
 
-		virtual bool OnEvent(const SEvent &e)
+		virtual bool OnEvent(SEvent e)
 		{
 			if (IsEnabled)
 			{
@@ -64,15 +64,12 @@ namespace gui
 					switch (e.GUIEvent.EventType)
 					{
 					case EGET_ELEMENT_FOCUSED:
-						if (Parent && isMyChild(e.GUIEvent.Caller))
+						if (Parent)
 							Parent->bringToFront(this);
 						break;
 					case EGET_ELEMENT_HOVERED:
 					case EGET_ELEMENT_LEFT:
-						return IGUIElement::OnEvent(e);
-					case EGET_ELEMENT_FOCUS_LOST:
-						updateAttrib();
-						return IGUIElement::OnEvent(e);
+						return true;
 					default:
 						return updateAttrib();
 					}

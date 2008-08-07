@@ -4,7 +4,7 @@
 #ifndef __C_DEMO_H_INCLUDED__
 #define __C_DEMO_H_INCLUDED__
 
-//#define USE_IRRKLANG
+#define USE_IRRKLANG
 //#define USE_SDL_MIXER
 
 #include <irrlicht.h>
@@ -42,7 +42,7 @@ public:
 
 	void run();
 
-	virtual bool OnEvent(const SEvent& event);
+	virtual bool OnEvent(SEvent event);
 
 private:
 

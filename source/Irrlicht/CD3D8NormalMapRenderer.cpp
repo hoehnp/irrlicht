@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -115,11 +115,6 @@ namespace video
 		: CD3D8ShaderMaterialRenderer(d3ddev, driver, 0, baseMaterial), 
 		CompiledShaders(true)
 	{
-
-		#ifdef _DEBUG
-		setDebugName("CD3D8NormalMapRenderer");
-		#endif
-
 		// set this as callback. We could have done this in 
 		// the initialization list, but some compilers don't like it.
 
@@ -156,11 +151,7 @@ namespace video
 			// compile shaders on our own
 			init(outMaterialTypeNr, D3D8_NORMAL_MAP_VSH, D3D8_NORMAL_MAP_PSH, EVT_TANGENTS);
 		}
-		// something failed, use base material
-		if (-1==outMaterialTypeNr)
-			driver->addMaterialRenderer(this);
 	}
-
 
 	CD3D8NormalMapRenderer::~CD3D8NormalMapRenderer()
 	{
@@ -175,7 +166,6 @@ namespace video
 		}
 	}
 
-
 	bool CD3D8NormalMapRenderer::OnRender(IMaterialRendererServices* service, E_VERTEX_TYPE vtxtype)
 	{
 		if (vtxtype != video::EVT_TANGENTS)
@@ -188,7 +178,7 @@ namespace video
 	}
 
 	//! Returns the render capability of the material. 
-	s32 CD3D8NormalMapRenderer::getRenderCapability() const
+	s32 CD3D8NormalMapRenderer::getRenderCapability()
 	{
 		if (Driver->queryFeature(video::EVDF_PIXEL_SHADER_1_1) &&
 			Driver->queryFeature(video::EVDF_VERTEX_SHADER_1_1))

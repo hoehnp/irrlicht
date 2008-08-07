@@ -4,8 +4,7 @@
 
 #include "IGUIWindow.h"
 #include "CGUIAttributeEditor.h"
-//#include "IGUIStaticText.h"
-#include "IGUIButton.h"
+#include "IGUIStaticText.h"
 #include "irrArray.h"
 #include "IAttributes.h"
 
@@ -26,19 +25,19 @@ namespace gui
 		//! this part draws the window
 		virtual void draw();
 		//! handles events
-		virtual bool OnEvent(const SEvent &event);
+		virtual bool OnEvent(SEvent event);
 
 		//! change selection
 		virtual void setSelectedElement(IGUIElement *sel);
 
 		// not used
-		virtual IGUIButton* getCloseButton() const;
-		virtual IGUIButton* getMinimizeButton() const;
-		virtual IGUIButton* getMaximizeButton() const;
+		virtual IGUIButton* getCloseButton();
+		virtual IGUIButton* getMinimizeButton();
+		virtual IGUIButton* getMaximizeButton();
 
-		CGUIAttributeEditor* getAttributeEditor() const;
-		CGUIAttributeEditor* getOptionEditor() const;
-		CGUIAttributeEditor* getEnvironmentEditor() const;
+		CGUIAttributeEditor* getAttributeEditor();
+		CGUIAttributeEditor* getOptionEditor();
+		CGUIAttributeEditor* getEnvironmentEditor();
 
 		//! this shoudln't be serialized, but this is included as it's an example
 		virtual const c8* getTypeName() const { return "GUIEditWindow"; }
@@ -47,16 +46,16 @@ namespace gui
 
 
 		// for dragging the window
-		bool                    Dragging;
-		bool                    Resizing;
-		core::position2d<s32>   DragStart;
+		bool					Dragging;
+		bool					Resizing;
+		core::position2d<s32>	DragStart;
 
-		IGUIElement*            SelectedElement; // current selected element
+		IGUIElement*			SelectedElement; // current selected element
 
-		CGUIAttributeEditor*    AttribEditor;	// edits the current attribute
-		CGUIAttributeEditor*    OptionEditor;	// edits the options for the window
-		CGUIAttributeEditor*    EnvEditor;		// edits attributes for the environment
-		IGUIButton*             ResizeButton;
+		CGUIAttributeEditor*	AttribEditor;	// edits the current attribute
+		CGUIAttributeEditor*	OptionEditor;	// edits the options for the window
+		CGUIAttributeEditor*	EnvEditor;		// edits attributes for the environment
+		IGUIStaticText*			ResizeButton;
 
 	};
 

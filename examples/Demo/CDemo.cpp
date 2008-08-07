@@ -4,19 +4,15 @@
 #include "CDemo.h"
 
 CDemo::CDemo(bool f, bool m, bool s, bool a, bool v, video::E_DRIVER_TYPE d)
-: fullscreen(f), music(m), shadows(s), additive(a), vsync(v),
- driverType(d), device(0),
-#ifdef USE_IRRKLANG
-	irrKlang(0), ballSound(0), impactSound(0),
-#endif
-#ifdef USE_SDL_MIXER
-	stream(0), ballSound(0), impactSound(0),
-#endif
- currentScene(-2), backColor(0), statusText(0), inOutFader(0),
- quakeLevelMesh(0), quakeLevelNode(0), skyboxNode(0), model1(0), model2(0),
- campFire(0), metaSelector(0), mapSelector(0), sceneStartTime(0),
- timeForThisScene(0)
+: fullscreen(f), driverType(d), currentScene(-2),
+ model1(0), model2(0), music(m),
+ shadows(s), quakeLevelMesh(0), quakeLevelNode(0), timeForThisScene(0),
+ skyboxNode(0), mapSelector(0), metaSelector(0), campFire(0), device(0),
+ additive(a), vsync(v)
 {
+#ifdef USE_IRRKLANG
+	irrKlang = 0;
+#endif
 }
 
 
@@ -46,17 +42,11 @@ void CDemo::run()
 	}
 
 	device = createDevice(driverType,resolution, 32, fullscreen, shadows, vsync, this);
-	if ( 0 == device )
-		return;
 
-	if (device->getFileSystem()->existFile("irrlicht.dat"))
-		device->getFileSystem()->addZipFileArchive("irrlicht.dat");
-	else
-		device->getFileSystem()->addZipFileArchive("../../media/irrlicht.dat");
-	if (device->getFileSystem()->existFile("map-20kdm2.pk3"))
-		device->getFileSystem()->addZipFileArchive("map-20kdm2.pk3");
-	else
-		device->getFileSystem()->addZipFileArchive("../../media/map-20kdm2.pk3");
+	device->getFileSystem()->addZipFileArchive("irrlicht.dat");
+	device->getFileSystem()->addZipFileArchive("../../media/irrlicht.dat");
+	device->getFileSystem()->addZipFileArchive("map-20kdm2.pk3");
+	device->getFileSystem()->addZipFileArchive("../../media/map-20kdm2.pk3");
 
 	video::IVideoDriver* driver = device->getVideoDriver();
 	scene::ISceneManager* smgr = device->getSceneManager();
@@ -122,7 +112,7 @@ void CDemo::run()
 }
 
 
-bool CDemo::OnEvent(const SEvent& event)
+bool CDemo::OnEvent(SEvent event)
 {
 	if (!device)
 		return false;
@@ -368,7 +358,7 @@ void CDemo::loadSceneData()
 				quakeLevelNode, 128);
 
 			// if not using shader and no gamma it's better to use more lighting, because
-			// quake3 level are usually dark
+			// quake3 level are dark
 			quakeLevelNode->setMaterialType ( video::EMT_LIGHTMAP_M4 );
 
 			// set additive blending if wanted
@@ -468,11 +458,9 @@ void CDemo::loadSceneData()
 	core::array<video::ITexture*> textures;
 	for (s32 g=1; g<8; ++g)
 	{
-		core::stringc tmp;
-		tmp = "../../media/portal";
-		tmp += g;
-		tmp += ".bmp";
-		video::ITexture* t = driver->getTexture( tmp.c_str () );
+		char tmp[64];
+		sprintf(tmp, "../../media/portal%d.bmp", g);
+		video::ITexture* t = driver->getTexture(tmp);
 		textures.push_back(t);
 	}
 
@@ -538,7 +526,6 @@ void CDemo::loadSceneData()
 	paf->drop();
 
 	campFire->setMaterialFlag(video::EMF_LIGHTING, false);
-	campFire->setMaterialFlag(video::EMF_ZWRITE_ENABLE, false);
 	campFire->setMaterialTexture(0, driver->getTexture("../../media/fireball.bmp"));
 	campFire->setMaterialType(video::EMT_TRANSPARENT_VERTEX_ALPHA);
 
@@ -736,7 +723,7 @@ void CDemo::createParticleImpacts()
 				if (sound)
 				{
 					// adjust max value a bit to make to sound of an impact louder
-					sound->setMinDistance(400);
+					sound->setMinDistance(200);
 					sound->drop();
 				}
 			}

@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -27,7 +27,7 @@ namespace io
 		//! \param buffer: Pointer to buffer of bytes to write.
 		//! \param sizeToWrite: Amount of bytes to wrtie to the file.
 		//! \return Returns how much bytes were written.
-		virtual s32 write(const void* buffer, u32 sizeToWrite);
+		virtual s32 write(const void* buffer, s32 sizeToWrite);
 
 		//! Changes position in file, returns true if successful.
 		//! \param finalPos: Destination position in the file.
@@ -35,11 +35,11 @@ namespace io
 		//! changed relative to current position. Otherwise the position is changed 
 		//! from begin of file.		
 		//! \return Returns true if successful, otherwise false.
-		virtual bool seek(long finalPos, bool relativeMovement = false);
+		virtual bool seek(s32 finalPos, bool relativeMovement = false);
 
 		//! Returns size of file.
 		//! \return Returns the size of the file in bytes.
-		virtual long getSize() const;
+		virtual s32 getSize();
 
 		//! Reads an amount of bytes from the file.
 		//! \param buffer: Pointer to buffer where to read bytes will be written to.
@@ -49,11 +49,11 @@ namespace io
 
 		//! Returns the current position in the file.
 		//! \return Returns the current position in the file in bytes.
-		virtual long getPos() const;
+		virtual s32 getPos();
 
 		//! Returns name of file.
 		//! \return Returns the file name as zero terminated character string.
-		virtual const c8* getFileName() const;
+		virtual const c8* getFileName();
 
 		//! Returns file data as an array
 		core::array<c8>& getData();

@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -16,10 +16,9 @@ namespace scene
 	public:
 
 		//! constructor
-		CSceneNodeAnimatorFlyStraight(const core::vector3df& startPoint,
-						const core::vector3df& endPoint,
-						u32 timeForWay,
-						bool loop, u32 now);
+		CSceneNodeAnimatorFlyStraight(const core::vector3df& startPoint, 
+									  const core::vector3df& endPoint, u32 timeForWay,
+									  bool loop, u32 now);
 
 		//! destructor
 		virtual ~CSceneNodeAnimatorFlyStraight();
@@ -28,7 +27,7 @@ namespace scene
 		virtual void animateNode(ISceneNode* node, u32 timeMs);
 
 		//! Writes attributes of the scene node animator.
-		virtual void serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options=0) const;
+		virtual void serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options=0);
 
 		//! Reads attributes of the scene node animator.
 		virtual void deserializeAttributes(io::IAttributes* in, io::SAttributeReadWriteOptions* options=0);

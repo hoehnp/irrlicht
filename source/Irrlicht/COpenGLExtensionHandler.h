@@ -1,12 +1,9 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in Irrlicht.h
 
 #ifndef __C_OPEN_GL_FEATURE_MAP_H_INCLUDED__
 #define __C_OPEN_GL_FEATURE_MAP_H_INCLUDED__
-
-#include "IrrCompileConfig.h"
-#ifdef _IRR_COMPILE_WITH_OPENGL_
 
 #include "EDriverFeatures.h"
 #include "irrTypes.h"
@@ -17,19 +14,18 @@
 	#define WIN32_LEAN_AND_MEAN
 	#include <windows.h>
 	#include <GL/gl.h>
+	#include <GL/glu.h>
 	#include "glext.h"
 #ifdef _MSC_VER
 	#pragma comment(lib, "OpenGL32.lib")
+	#pragma comment(lib, "GLu32.lib")
 #endif
-#elif defined(_IRR_USE_OSX_DEVICE_)
+#elif defined(MACOSX)
+	#define GL_EXT_texture_env_combine 1
 	#include "CIrrDeviceMacOSX.h"
-	#if defined(_IRR_OPENGL_USE_EXTPOINTER_)
-		#define GL_GLEXT_LEGACY 1
-	#endif
 	#include <OpenGL/gl.h>
-	#if defined(_IRR_OPENGL_USE_EXTPOINTER_)
-		#include "glext.h"
-	#endif
+	#include <OpenGL/glu.h>
+	#include <OpenGL/glext.h>
 #elif defined(_IRR_USE_SDL_DEVICE_)
 	#if defined(_IRR_OPENGL_USE_EXTPOINTER_)
 		#define GL_GLEXT_LEGACY 1
@@ -38,9 +34,8 @@
 		#define GL_GLEXT_PROTOTYPES 1
 		#define GLX_GLXEXT_PROTOTYPES 1
 	#endif
-	#define NO_SDL_GLEXT
-	#include <SDL/SDL_video.h>
 	#include <SDL/SDL_opengl.h>
+	#define NO_SDL_GLEXT
 	#include "glext.h"
 #else
 	#if defined(_IRR_OPENGL_USE_EXTPOINTER_)
@@ -51,6 +46,7 @@
 		#define GLX_GLXEXT_PROTOTYPES 1
 	#endif
 	#include <GL/gl.h>
+	#include <GL/glu.h>
 	#include <GL/glx.h>
 	#if defined(_IRR_OPENGL_USE_EXTPOINTER_)
 	#include "glext.h"
@@ -64,8 +60,6 @@ namespace irr
 {
 namespace video
 {
-
-	class COpenGLTexture;
 
 static const char* const OpenGLFeatureStrings[] = {
 	"GL_3DFX_multisample",
@@ -652,8 +646,6 @@ class COpenGLExtensionHandler
 		IRR_OpenGL_Feature_Count
 	};
 
-	friend class COpenGLTexture;
-
 	// constructor
 	COpenGLExtensionHandler();
 
@@ -663,13 +655,7 @@ class COpenGLExtensionHandler
 	//! queries the features of the driver, returns true if feature is available
 	bool queryFeature(E_VIDEO_DRIVER_FEATURE feature) const;
 
-	//! queries the features of the driver, returns true if feature is available
-	bool queryOpenGLFeature(EOpenGLFeatures feature) const
-	{
-		return FeatureAvailable[feature];
-	}
-
-	//! show all features with availablity
+	// show all features with availablity
 	void dump() const;
 
 	// Some variables for properties
@@ -677,24 +663,17 @@ class COpenGLExtensionHandler
 	bool MultiTextureExtension;
 	bool MultiSamplingExtension;
 	bool AnisotropyExtension;
+	bool SeparateStencilExtension;
 	bool TextureCompressionExtension;
+	bool PackedDepthStencilExtension;
+	bool SeparateSpecularColorExtension;
 
 	// Some non-boolean properties
-	//! Maxmimum texture layers supported by the fixed pipeline
-	u32 MaxTextureUnits;
-	//! Maximum hardware lights supported
+	GLint MaxTextureUnits;
 	GLint MaxLights;
-	//! Optimal number of indices per meshbuffer
 	GLint MaxIndices;
-	//! Maximal Anisotropy
 	f32 MaxAnisotropy;
-	//! Number of user clipplanes
-	u32 MaxUserClipPlanes;
-
-	//! OpenGL version as Integer: 100*Major+Minor, i.e. 2.1 becomes 201
 	u32 Version;
-	//! GLSL version as Integer: 100*Major+Minor
-	u32 ShaderLanguageVersion;
 
 	// public access to the (loaded) extensions.
 	// general functions
@@ -746,21 +725,6 @@ class COpenGLExtensionHandler
 	void extGlGenRenderbuffers(GLsizei n, GLuint *renderbuffers);
 	void extGlRenderbufferStorage(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
 	void extGlFramebufferRenderbuffer(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
-	void extGlActiveStencilFace(GLenum face);
-
-	// vertex buffer object
-	void extGlGenBuffers(GLsizei n, GLuint *buffers);
-	void extGlBindBuffer(GLenum target, GLuint buffer);
-	void extGlBufferData(GLenum target, GLsizeiptrARB size, const GLvoid *data, GLenum usage);
-	void extGlDeleteBuffers(GLsizei n, const GLuint *buffers);
-	void extGlBufferSubData (GLenum target, GLintptrARB offset, GLsizeiptrARB size, const GLvoid *data);
-	void extGlGetBufferSubData (GLenum target, GLintptrARB offset, GLsizeiptrARB size, GLvoid *data);
-	void *extGlMapBuffer (GLenum target, GLenum access);
-	GLboolean extGlUnmapBuffer (GLenum target);
-	GLboolean extGlIsBuffer (GLuint buffer);
-	void extGlGetBufferParameteriv (GLenum target, GLenum pname, GLint *params);
-	void extGlGetBufferPointerv (GLenum target, GLenum pname, GLvoid **params);
-
 
 	protected:
 	// the global feature array
@@ -796,11 +760,15 @@ class COpenGLExtensionHandler
 		PFNGLGETACTIVEUNIFORMARBPROC pGlGetActiveUniformARB;
 		PFNGLPOINTPARAMETERFARBPROC  pGlPointParameterfARB;
 		PFNGLPOINTPARAMETERFVARBPROC pGlPointParameterfvARB;
+		#ifdef GL_ATI_separate_stencil
 		PFNGLSTENCILFUNCSEPARATEPROC pGlStencilFuncSeparate;
 		PFNGLSTENCILOPSEPARATEPROC pGlStencilOpSeparate;
 		PFNGLSTENCILFUNCSEPARATEATIPROC pGlStencilFuncSeparateATI;
 		PFNGLSTENCILOPSEPARATEATIPROC pGlStencilOpSeparateATI;
+		#endif
+		#ifdef PFNGLCOMPRESSEDTEXIMAGE2DPROC
 		PFNGLCOMPRESSEDTEXIMAGE2DPROC pGlCompressedTexImage2D;
+		#endif // PFNGLCOMPRESSEDTEXIMAGE2DPROC
 		#ifdef _IRR_WINDOWS_API_
 		typedef BOOL (APIENTRY *PFNWGLSWAPINTERVALFARPROC)(int);
 		PFNWGLSWAPINTERVALFARPROC wglSwapIntervalEXT;
@@ -817,21 +785,6 @@ class COpenGLExtensionHandler
 		PFNGLGENRENDERBUFFERSEXTPROC pGlGenRenderbuffersEXT;
 		PFNGLRENDERBUFFERSTORAGEEXTPROC pGlRenderbufferStorageEXT;
 		PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC pGlFramebufferRenderbufferEXT;
-		PFNGLACTIVESTENCILFACEEXTPROC pGlActiveStencilFaceEXT;
-		PFNGLGENBUFFERSARBPROC pGlGenBuffersARB;
-		PFNGLBINDBUFFERARBPROC pGlBindBufferARB;
-		PFNGLBUFFERDATAARBPROC pGlBufferDataARB;
-		PFNGLDELETEBUFFERSARBPROC pGlDeleteBuffersARB;
-		PFNGLBUFFERSUBDATAARBPROC pGlBufferSubDataARB;
-		PFNGLGETBUFFERSUBDATAARBPROC pGlGetBufferSubDataARB;
-		PFNGLMAPBUFFERARBPROC pGlMapBufferARB;
-		PFNGLUNMAPBUFFERARBPROC pGlUnmapBufferARB;
-		PFNGLISBUFFERARBPROC pGlIsBufferARB;
-		PFNGLGETBUFFERPARAMETERIVARBPROC pGlGetBufferParameterivARB;
-		PFNGLGETBUFFERPOINTERVARBPROC pGlGetBufferPointervARB;
-
-
-
 	#endif
 };
 
@@ -1146,9 +1099,7 @@ inline void COpenGLExtensionHandler::extGlUniformMatrix4fv(GLint loc, GLsizei co
 #endif
 }
 
-inline void COpenGLExtensionHandler::extGlGetActiveUniform(GLhandleARB program,
-		GLuint index, GLsizei maxlength, GLsizei *length,
-		GLint *size, GLenum *type, GLcharARB *name)
+inline void COpenGLExtensionHandler::extGlGetActiveUniform(GLhandleARB program, GLuint index, GLsizei maxlength, GLsizei *length, GLint *size, GLenum *type, GLcharARB *name)
 {
 #ifdef _IRR_OPENGL_USE_EXTPOINTER_
 	if (pGlGetActiveUniformARB)
@@ -1220,8 +1171,10 @@ inline void COpenGLExtensionHandler::extGlCompressedTexImage2D (GLenum target, G
 		GLsizei height, GLint border, GLsizei imageSize, const void* data)
 {
 #ifdef _IRR_OPENGL_USE_EXTPOINTER_
-	if (pGlCompressedTexImage2D)
-		pGlCompressedTexImage2D(target, level, internalformat, width, height, border, imageSize, data);
+	#ifdef PFNGLCOMPRESSEDTEXIMAGE2DPROC
+		if (pGlCompressedTexImage2D)
+			pGlCompressedTexImage2D(target, level, internalformat, width, height, border, imageSize, data);
+	#endif
 #elif defined(GL_ARB_texture_compression)
 	glCompressedTexImage2D(target, level, internalformat, width, height, border, imageSize, data);
 #else
@@ -1352,162 +1305,9 @@ inline void COpenGLExtensionHandler::extGlFramebufferRenderbuffer(GLenum target,
 #endif
 }
 
-inline void COpenGLExtensionHandler::extGlActiveStencilFace(GLenum face)
-{
-#ifdef _IRR_OPENGL_USE_EXTPOINTER_
-	if (pGlActiveStencilFaceEXT)
-		pGlActiveStencilFaceEXT(face);
-#elif defined(GL_EXT_stencil_two_side)
-	glActiveStencilFaceEXT(face);
-#else
-	os::Printer::log("glActiveStencilFace not supported", ELL_ERROR);
-#endif
-}
-
-
-inline void COpenGLExtensionHandler::extGlGenBuffers(GLsizei n, GLuint *buffers)
-{
-#ifdef _IRR_OPENGL_USE_EXTPOINTER_
-	if (pGlGenBuffersARB)
-		pGlGenBuffersARB(n, buffers);
-#elif defined(GL_ARB_vertex_buffer_object)
-	glGenBuffers(n, buffers);
-#else
-	os::Printer::log("glGenBuffers not supported", ELL_ERROR);
-#endif
-}
-
-inline void COpenGLExtensionHandler::extGlBindBuffer(GLenum target, GLuint buffer)
-{
-#ifdef _IRR_OPENGL_USE_EXTPOINTER_
-	if (pGlBindBufferARB)
-		pGlBindBufferARB(target, buffer);
-#elif defined(GL_ARB_vertex_buffer_object)
-	glBindBuffer(target, buffer);
-#else
-	os::Printer::log("glBindBuffer not supported", ELL_ERROR);
-#endif
-}
-
-inline void COpenGLExtensionHandler::extGlBufferData(GLenum target, GLsizeiptrARB size, const GLvoid *data, GLenum usage)
-{
-#ifdef _IRR_OPENGL_USE_EXTPOINTER_
-	if (pGlBufferDataARB)
-		pGlBufferDataARB(target, size, data, usage);
-#elif defined(GL_ARB_vertex_buffer_object)
-	glBufferData(target, size, data, usage);
-#else
-	os::Printer::log("glBufferData not supported", ELL_ERROR);
-#endif
-}
-
-inline void COpenGLExtensionHandler::extGlDeleteBuffers(GLsizei n, const GLuint *buffers)
-{
-#ifdef _IRR_OPENGL_USE_EXTPOINTER_
-	if (pGlDeleteBuffersARB)
-		pGlDeleteBuffersARB(n, buffers);
-#elif defined(GL_ARB_vertex_buffer_object)
-	glDeleteBuffers(n, buffers);
-#else
-	os::Printer::log("glDeleteBuffers not supported", ELL_ERROR);
-#endif
-}
-
-inline void COpenGLExtensionHandler::extGlBufferSubData(GLenum target, GLintptrARB offset, GLsizeiptrARB size, const GLvoid *data)
-{
-#ifdef _IRR_OPENGL_USE_EXTPOINTER_
-	if (pGlBufferSubDataARB)
-		pGlBufferSubDataARB(target, offset, size, data);
-#elif defined(GL_ARB_vertex_buffer_object)
-	glBufferSubData(target, offset, size, data);
-#else
-	os::Printer::log("glBufferSubData not supported", ELL_ERROR);
-#endif
-}
-
-inline void COpenGLExtensionHandler::extGlGetBufferSubData(GLenum target, GLintptrARB offset, GLsizeiptrARB size, GLvoid *data)
-{
-#ifdef _IRR_OPENGL_USE_EXTPOINTER_
-	if (pGlGetBufferSubDataARB)
-		pGlGetBufferSubDataARB(target, offset, size, data);
-#elif defined(GL_ARB_vertex_buffer_object)
-	glGetBufferSubData(target, offset, size, data);
-#else
-	os::Printer::log("glGetBufferSubData not supported", ELL_ERROR);
-#endif
-}
-
-inline void *COpenGLExtensionHandler::extGlMapBuffer(GLenum target, GLenum access)
-{
-#ifdef _IRR_OPENGL_USE_EXTPOINTER_
-	if (pGlMapBufferARB)
-		return pGlMapBufferARB(target, access);
-	return 0;
-#elif defined(GL_ARB_vertex_buffer_object)
-	return glMapBuffer(target, access);
-#else
-	os::Printer::log("glMapBuffer not supported", ELL_ERROR);
-	return 0;
-#endif
-}
-
-inline GLboolean COpenGLExtensionHandler::extGlUnmapBuffer (GLenum target)
-{
-#ifdef _IRR_OPENGL_USE_EXTPOINTER_
-	if (pGlUnmapBufferARB)
-		return pGlUnmapBufferARB(target);
-	return false;
-#elif defined(GL_ARB_vertex_buffer_object)
-	return glUnmapBuffer(target);
-#else
-	os::Printer::log("glUnmapBuffer not supported", ELL_ERROR);
-	return false;
-#endif
-}
-
-inline GLboolean COpenGLExtensionHandler::extGlIsBuffer (GLuint buffer)
-{
-#ifdef _IRR_OPENGL_USE_EXTPOINTER_
-	if (pGlIsBufferARB)
-		return pGlIsBufferARB(buffer);
-	return false;
-#elif defined(GL_ARB_vertex_buffer_object)
-	return glIsBuffer(buffer);
-#else
-	os::Printer::log("glDeleteBuffers not supported", ELL_ERROR);
-	return false;
-#endif
-}
-
-inline void COpenGLExtensionHandler::extGlGetBufferParameteriv (GLenum target, GLenum pname, GLint *params)
-{
-#ifdef _IRR_OPENGL_USE_EXTPOINTER_
-	if (pGlGetBufferParameterivARB)
-		pGlGetBufferParameterivARB(target, pname, params);
-#elif defined(GL_ARB_vertex_buffer_object)
-	glGetBufferParameteriv(target, pname, params);
-#else
-	os::Printer::log("glGetBufferParameteriv not supported", ELL_ERROR);
-#endif
-}
-
-inline void COpenGLExtensionHandler::extGlGetBufferPointerv (GLenum target, GLenum pname, GLvoid **params)
-{
-#ifdef _IRR_OPENGL_USE_EXTPOINTER_
-	if (pGlGetBufferPointervARB)
-		pGlGetBufferPointervARB(target, pname, params);
-#elif defined(GL_ARB_vertex_buffer_object)
-	glGetBufferPointerv(target, pname, params);
-#else
-	os::Printer::log("glGetBufferPointerv not supported", ELL_ERROR);
-#endif
-}
-
 
 }
 }
-
-#endif
 
 #endif
 

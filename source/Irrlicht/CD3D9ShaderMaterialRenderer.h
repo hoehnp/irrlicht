@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -36,7 +36,7 @@ public:
 	//! Destructor
 	~CD3D9ShaderMaterialRenderer();
 
-	virtual void OnSetMaterial(const video::SMaterial& material, const video::SMaterial& lastMaterial,
+	virtual void OnSetMaterial(video::SMaterial& material, const video::SMaterial& lastMaterial,
 		bool resetAllRenderstates, video::IMaterialRendererServices* services);
 
 	virtual void OnUnsetMaterial();
@@ -44,40 +44,40 @@ public:
 	virtual bool OnRender(IMaterialRendererServices* service, E_VERTEX_TYPE vtxtype);
 
 	//! Returns if the material is transparent.
-	virtual bool isTransparent() const;
+	virtual bool isTransparent();
 
 protected:
 
 	//! constructor only for use by derived classes who want to
 	//! create a fall back material for example.
 	CD3D9ShaderMaterialRenderer(IDirect3DDevice9* d3ddev,
-					video::IVideoDriver* driver,
-					IShaderConstantSetCallBack* callback,
-					IMaterialRenderer* baseMaterial,
-					s32 userData=0);
+								video::IVideoDriver* driver,
+								IShaderConstantSetCallBack* callback,
+								IMaterialRenderer* baseMaterial, s32 userData=0);
+
 
 	void init(s32& outMaterialTypeNr, const c8* vertexShaderProgram, const c8* pixelShaderProgram);
 	bool createPixelShader(const c8* pxsh);
 	bool createVertexShader(const char* vtxsh);
 
 	HRESULT stubD3DXAssembleShader(LPCSTR pSrcData,  UINT SrcDataLen,
-					CONST D3DXMACRO* pDefines, LPD3DXINCLUDE pInclude,
-					DWORD Flags, LPD3DXBUFFER* ppShader,
-					LPD3DXBUFFER* ppErrorMsgs);
+								   CONST D3DXMACRO* pDefines, LPD3DXINCLUDE pInclude,
+								   DWORD Flags, LPD3DXBUFFER* ppShader,
+								   LPD3DXBUFFER* ppErrorMsgs);
 
 	HRESULT stubD3DXAssembleShaderFromFile(LPCSTR pSrcFile,
 				        CONST D3DXMACRO* pDefines, LPD3DXINCLUDE  pInclude, DWORD Flags,
 					LPD3DXBUFFER* ppShader, LPD3DXBUFFER* ppErrorMsgs);
 
 	HRESULT stubD3DXCompileShader(LPCSTR pSrcData, UINT SrcDataLen, CONST D3DXMACRO* pDefines,
-					LPD3DXINCLUDE pInclude, LPCSTR pFunctionName,
-					LPCSTR pProfile, DWORD Flags, LPD3DXBUFFER* ppShader,
-					LPD3DXBUFFER* ppErrorMsgs, LPD3DXCONSTANTTABLE* ppConstantTable);
+								  LPD3DXINCLUDE pInclude, LPCSTR pFunctionName,
+								  LPCSTR pProfile, DWORD Flags, LPD3DXBUFFER* ppShader,
+								  LPD3DXBUFFER* ppErrorMsgs, LPD3DXCONSTANTTABLE* ppConstantTable);
 
 	HRESULT stubD3DXCompileShaderFromFile(LPCSTR pSrcFile, CONST D3DXMACRO* pDefines,
-					LPD3DXINCLUDE pInclude, LPCSTR pFunctionName,
-					LPCSTR pProfile, DWORD Flags, LPD3DXBUFFER* ppShader, LPD3DXBUFFER* ppErrorMsgs,
-					LPD3DXCONSTANTTABLE* ppConstantTable);
+								LPD3DXINCLUDE pInclude, LPCSTR pFunctionName,
+								LPCSTR pProfile, DWORD Flags, LPD3DXBUFFER* ppShader, LPD3DXBUFFER* ppErrorMsgs,
+								LPD3DXCONSTANTTABLE* ppConstantTable);
 
 	IDirect3DDevice9* pID3DDevice;
 	video::IVideoDriver* Driver;

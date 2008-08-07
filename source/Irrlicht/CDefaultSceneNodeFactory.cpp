@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -23,11 +23,6 @@ namespace scene
 CDefaultSceneNodeFactory::CDefaultSceneNodeFactory(ISceneManager* mgr)
 : Manager(mgr)
 {
-
-	#ifdef _DEBUG
-	setDebugName("CDefaultSceneNodeFactory");
-	#endif
-
 	// don't grab the scene manager here to prevent cyclic references
 
 	SupportedSceneNodeTypes.push_back(SSceneNodeTypePair(ESNT_CUBE, "cube"));
@@ -43,14 +38,17 @@ CDefaultSceneNodeFactory::CDefaultSceneNodeFactory(ISceneManager* mgr)
 	SupportedSceneNodeTypes.push_back(SSceneNodeTypePair(ESNT_EMPTY, "empty"));
 	SupportedSceneNodeTypes.push_back(SSceneNodeTypePair(ESNT_DUMMY_TRANSFORMATION, "dummyTransformation"));
 	SupportedSceneNodeTypes.push_back(SSceneNodeTypePair(ESNT_CAMERA, "camera"));
+	SupportedSceneNodeTypes.push_back(SSceneNodeTypePair(ESNT_CAMERA_MAYA, "cameraMaya"));
+	SupportedSceneNodeTypes.push_back(SSceneNodeTypePair(ESNT_CAMERA_FPS, "cameraFPS"));
 	SupportedSceneNodeTypes.push_back(SSceneNodeTypePair(ESNT_BILLBOARD, "billBoard"));
 	SupportedSceneNodeTypes.push_back(SSceneNodeTypePair(ESNT_ANIMATED_MESH, "animatedMesh"));
 	SupportedSceneNodeTypes.push_back(SSceneNodeTypePair(ESNT_PARTICLE_SYSTEM, "particleSystem"));
 	// SupportedSceneNodeTypes.push_back(SSceneNodeTypePair(ESNT_MD3_SCENE_NODE, "md3"));
+}
 
-	// legacy, for version <= 1.4.x irr files
-	SupportedSceneNodeTypes.push_back(SSceneNodeTypePair(ESNT_CAMERA_MAYA, "cameraMaya"));
-	SupportedSceneNodeTypes.push_back(SSceneNodeTypePair(ESNT_CAMERA_FPS, "cameraFPS"));
+
+CDefaultSceneNodeFactory::~CDefaultSceneNodeFactory()
+{
 }
 
 
@@ -118,36 +116,36 @@ ISceneNode* CDefaultSceneNodeFactory::addSceneNode(const c8* typeName, ISceneNod
 
 
 //! returns amount of scene node types this factory is able to create
-u32 CDefaultSceneNodeFactory::getCreatableSceneNodeTypeCount() const
+s32 CDefaultSceneNodeFactory::getCreatableSceneNodeTypeCount()
 {
 	return SupportedSceneNodeTypes.size();
 }
 
 
 //! returns type of a createable scene node type
-ESCENE_NODE_TYPE CDefaultSceneNodeFactory::getCreateableSceneNodeType(u32 idx) const
+ESCENE_NODE_TYPE CDefaultSceneNodeFactory::getCreateableSceneNodeType(s32 idx)
 {
-	if (idx<SupportedSceneNodeTypes.size())
+	if (idx>=0 && idx<(s32)SupportedSceneNodeTypes.size())
 		return SupportedSceneNodeTypes[idx].Type;
-	else
-		return ESNT_UNKNOWN;
+
+	return ESNT_UNKNOWN;
 }
 
 
 //! returns type name of a createable scene node type 
-const c8* CDefaultSceneNodeFactory::getCreateableSceneNodeTypeName(u32 idx) const
+const c8* CDefaultSceneNodeFactory::getCreateableSceneNodeTypeName(s32 idx)
 {
-	if (idx<SupportedSceneNodeTypes.size())
+	if (idx>=0 && idx<(s32)SupportedSceneNodeTypes.size())
 		return SupportedSceneNodeTypes[idx].TypeName.c_str();
-	else
-		return 0;
+
+	return 0;
 }
 
 
 //! returns type name of a createable scene node type 
-const c8* CDefaultSceneNodeFactory::getCreateableSceneNodeTypeName(ESCENE_NODE_TYPE type) const
+const c8* CDefaultSceneNodeFactory::getCreateableSceneNodeTypeName(ESCENE_NODE_TYPE type)
 {
-	for (u32 i=0; i<SupportedSceneNodeTypes.size(); ++i)
+	for (unsigned int i=0; i<SupportedSceneNodeTypes.size(); ++i)
 		if (SupportedSceneNodeTypes[i].Type == type)
 			return SupportedSceneNodeTypes[i].TypeName.c_str();
 
@@ -155,9 +153,9 @@ const c8* CDefaultSceneNodeFactory::getCreateableSceneNodeTypeName(ESCENE_NODE_T
 }
 
 
-ESCENE_NODE_TYPE CDefaultSceneNodeFactory::getTypeFromName(const c8* name) const
+ESCENE_NODE_TYPE CDefaultSceneNodeFactory::getTypeFromName(const c8* name)
 {
-	for (u32 i=0; i<SupportedSceneNodeTypes.size(); ++i)
+	for (unsigned int i=0; i<SupportedSceneNodeTypes.size(); ++i)
 		if (SupportedSceneNodeTypes[i].TypeName == name)
 			return SupportedSceneNodeTypes[i].Type;
 

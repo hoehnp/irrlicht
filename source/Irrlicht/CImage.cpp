@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt / Thomas Alten
+// Copyright (C) 2002-2007 Nikolaus Gebhardt / Thomas Alten
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -944,7 +944,7 @@ CImage::CImage(ECOLOR_FORMAT format, const core::dimension2d<s32>& size, void* d
 	{
 		Data = 0;
 		initData();
-		memcpy(Data, data, Size.Height * Pitch);
+		memcpy(Data, data, Size.Height * Size.Width * BytesPerPixel);
 	}
 }
 
@@ -1097,15 +1097,15 @@ void CImage::setBitMasks()
 	break;
 	case ECF_R8G8B8:
 		AlphaMask = 0x0;
-		RedMask   = 0x00FF0000;
-		GreenMask = 0x0000FF00;
-		BlueMask  = 0x000000FF;
+		RedMask = 0xFF<<16;
+		GreenMask = 0xFF<<8;
+		BlueMask = 0xFF;
 	break;
 	case ECF_A8R8G8B8:
-		AlphaMask = 0xFF000000;
-		RedMask   = 0x00FF0000;
-		GreenMask = 0x0000FF00;
-		BlueMask  = 0x000000FF;
+		AlphaMask = 0xFF<<24;
+		RedMask = 0xFF<<16;
+		GreenMask = 0xFF<<8;
+		BlueMask = 0xFF;
 	break;
 	}
 }
@@ -1281,44 +1281,22 @@ void CImage::copyToScaling(void* target, s32 width, s32 height, ECOLOR_FORMAT fo
 	if (0==pitch)
 		pitch = width*bpp;
 
-	if (Format==format && Size.Width==width && Size.Height==height)
-	{
-		if (pitch==Pitch)
-		{
-			memcpy(target, Data, height*pitch);
-			return;
-		}
-		else
-		{
-			u8* tgtpos = (u8*) target;
-			u8* dstpos = (u8*) Data;
-			const u32 bwidth = width*bpp;
-			for (s32 y=0; y<height; ++y)
-			{
-				memcpy(target, Data, height*pitch);
-				memset(tgtpos+width, 0, pitch-bwidth);
-				tgtpos += pitch;
-				dstpos += Pitch;
-			}
-			return;
-		}
-	}
+	if (Format==format && Size.Width==width && Size.Height==height && pitch==width*bpp)
+		memcpy(target, Data, height*pitch);
 
 	const f32 sourceXStep = (f32)Size.Width / (f32)width;
 	const f32 sourceYStep = (f32)Size.Height / (f32)height;
-	s32 yval=0, syval=0;
-	f32 sy = 0.0f;
+	f32 sx,sy;
+	sy = 0.0f;
 	for (s32 y=0; y<height; ++y)
 	{
-		f32 sx = 0.0f;
+		sx = 0.0f;
 		for (s32 x=0; x<width; ++x)
 		{
-			CColorConverter::convert_viaFormat(((u8*)Data)+ syval + ((s32)sx)*BytesPerPixel, Format, 1, ((u8*)target)+ yval + (x*bpp), format);
+			CColorConverter::convert_viaFormat(((u8*)Data)+(((s32)sy)*Size.Width + (s32)sx)*BytesPerPixel, Format, 1, ((u8*)target)+(y*pitch + x*bpp), format);
 			sx+=sourceXStep;
 		}
 		sy+=sourceYStep;
-		syval=((s32)sy)*Pitch;
-		yval+=pitch;
 	}
 }
 
@@ -1352,8 +1330,8 @@ void CImage::copyToScalingBoxFilter(IImage* target, s32 bias)
 
 	target->lock();
 
-	s32 fx = core::ceil32 ( sourceXStep );
-	s32 fy = core::ceil32 ( sourceYStep );
+	s32 fx = irr::core::ceil32 ( sourceXStep );
+	s32 fy = irr::core::ceil32 ( sourceYStep );
 	f32 sx;
 	f32 sy;
 

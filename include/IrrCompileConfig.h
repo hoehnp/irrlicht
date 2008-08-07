@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -6,7 +6,7 @@
 #define __IRR_COMPILE_CONFIG_H_INCLUDED__
 
 //! Irrlicht SDK Version
-#define IRRLICHT_SDK_VERSION "1.4.1"
+#define IRRLICHT_SDK_VERSION "1.3.1"
 
 //! The defines for different operating system are:
 //! _IRR_XBOX_PLATFORM_ for XBox
@@ -14,23 +14,17 @@
 //! _IRR_WINDOWS_API_ for Windows or XBox
 //! _IRR_LINUX_PLATFORM_ for Linux (it is defined here if no other os is defined)
 //! _IRR_SOLARIS_PLATFORM_ for Solaris
-//! _IRR_OSX_PLATFORM_ for Apple systems running OSX
 //! _IRR_POSIX_API_ for Posix compatible systems
 //! _IRR_USE_SDL_DEVICE_ for platform independent SDL framework
 //! _IRR_USE_WINDOWS_DEVICE_ for Windows API based device
-//! _IRR_USE_WINDOWS_CE_DEVICE_ for Windows CE API based device
 //! _IRR_USE_LINUX_DEVICE_ for X11 based device
-//! _IRR_USE_OSX_DEVICE_ for Cocoa native windowing on OSX
-//! Note: PLATFORM defines the OS specific layer, API can groups several platforms
-//! DEVICE is the windowing system used, several PLATFORMs support more than one DEVICE
-//! Moreover, the DEVICE defined here is not directly related to the Irrlicht devices created in the app (but may depend on each other).
+//! MACOSX for Mac OS X
 
 //#define _IRR_USE_SDL_DEVICE_ 1
 
 //! WIN32 for Windows32
 //! WIN64 for Windows64
-// The windows platform and API support SDL and WINDOW device
-#if defined(_WIN32) || defined(_WIN64) || defined(WIN32) || defined(WIN64) || defined(_WIN32_WCE)
+#if defined(WIN32) || defined(WIN64)
 #define _IRR_WINDOWS_
 #define _IRR_WINDOWS_API_
 #ifndef _IRR_USE_SDL_DEVICE_
@@ -38,24 +32,12 @@
 #endif
 #endif
 
-// XBox only suppots the native Window stuff
 #if defined(_XBOX)
 #define _IRR_XBOX_PLATFORM_
 #define _IRR_WINDOWS_API_
-#define _IRR_USE_WINDOWS_DEVICE_
 #endif
 
-#if defined(__APPLE__) || defined(MACOSX)
-#if !defined(MACOSX)
-#define MACOSX // legacy support
-#endif
-#define _IRR_OSX_PLATFORM_
-#if !defined(_IRR_USE_LINUX_DEVICE_) // for X11 windowing declare this
-#define _IRR_USE_OSX_DEVICE_
-#endif
-#endif
-
-#if !defined(_IRR_WINDOWS_API_) && !defined(_IRR_OSX_PLATFORM_)
+#if !defined(_IRR_WINDOWS_API_) && !defined(MACOSX)
 #if defined(__sparc__) || defined(__sun__)
 #define __BIG_ENDIAN__
 #define _IRR_SOLARIS_PLATFORM_
@@ -82,7 +64,7 @@ to the compiler settings: -DIRR_COMPILE_WITH_DX9_DEV_PACK
 and this to the linker settings: -ld3dx9 -ld3dx8 **/
 #if defined(_IRR_WINDOWS_API_) && (!defined(__GNUC__) || defined(IRR_COMPILE_WITH_DX9_DEV_PACK))
 
-//#define _IRR_COMPILE_WITH_DIRECT3D_8_
+#define _IRR_COMPILE_WITH_DIRECT3D_8_
 #define _IRR_COMPILE_WITH_DIRECT3D_9_
 
 #endif
@@ -110,7 +92,7 @@ define out. */
 //! Define _IRR_OPENGL_USE_EXTPOINTER_ if the OpenGL renderer should use OpenGL extensions via function pointers.
 /** On some systems there is no support for the dynamic extension of OpenGL
 	via function pointers such that this has to be undef'ed. */
-#if !defined(_IRR_OSX_PLATFORM_) && !defined(_IRR_SOLARIS_PLATFORM_)
+#if !defined(MACOSX) && !defined(_IRR_SOLARIS_PLATFORM_)
 #define _IRR_OPENGL_USE_EXTPOINTER_
 #endif
 
@@ -121,10 +103,6 @@ define out. */
 //#define _IRR_LINUX_X11_RANDR_
 #endif
 
-//! Define _IRR_COMPILE_WITH_GUI_ to compile the engine with the built-in GUI
-/** Disable this if you are using an external library to draw the GUI. If you disable this then
-you will not be able to use anything provided by the GUI Environment, including loading fonts. */
-#define _IRR_COMPILE_WITH_GUI_
 
 //! Define _IRR_COMPILE_WITH_ZLIB_ to enable compiling the engine using zlib.
 /** This enables the engine to read from compressed .zip archives. If you
@@ -172,11 +150,6 @@ watch registers, variables etc. This works with ASM, HLSL, and both with pixel a
 Note that the engine will run in D3D REF for this, which is a lot slower than HAL. */
 #define _IRR_D3D_NO_SHADER_DEBUGGING
 
-//! Define _IRR_USE_NVIDIA_PERFHUD_ to opt-in to using the nVidia PerHUD tool
-/** Enable, by opting-in, to use the nVidia PerfHUD performance analysis driver
-tool <http://developer.nvidia.com/object/nvperfhud_home.html>. */
-#undef _IRR_USE_NVIDIA_PERFHUD_
-
 
 #ifdef _IRR_WINDOWS_API_
 
@@ -214,7 +187,7 @@ tool <http://developer.nvidia.com/object/nvperfhud_home.html>. */
 #endif
 
 //! Define one of the three setting for Burning's Video Software Rasterizer
-/** So if we were marketing guys we could say Irrlicht has 4 Software-Rasterizers.
+/** So if we were marketing guys we could says Irrlicht has 4 Software-Rasterizers.
 	In a Nutshell:
 		All Burnings Rasterizers use 32 Bit Backbuffer, 32Bit Texture & 32 Bit Z or WBuffer,
 		16 Bit/32 Bit can be adjusted on a global flag.
@@ -225,7 +198,7 @@ tool <http://developer.nvidia.com/object/nvperfhud_home.html>. */
 
 		BURNINGVIDEO_RENDERER_FAST
 			32 Bit + Per Pixel Perspective Correct + SubPixel/SubTexel Correct + WBuffer +
-			Bilinear Dithering TextureFiltering + WBuffer
+			Bilinear Dithering TextureFilterung + WBuffer
 
 		BURNINGVIDEO_RENDERER_ULTRA_FAST
 			16Bit + SubPixel/SubTexel Correct + ZBuffer
@@ -236,98 +209,11 @@ tool <http://developer.nvidia.com/object/nvperfhud_home.html>. */
 //#define BURNINGVIDEO_RENDERER_ULTRA_FAST
 
 
-//! Define _IRR_COMPILE_WITH_SKINNED_MESH_SUPPORT_ if you want to use bone based
-/** animated meshes. If you compile without this, you will be unable to load
-B3D, MS3D or X meshes */
-#define _IRR_COMPILE_WITH_SKINNED_MESH_SUPPORT_
-
-#ifdef _IRR_COMPILE_WITH_SKINNED_MESH_SUPPORT_
-//! Define _IRR_COMPILE_WITH_B3D_LOADER_ if you want to use Blitz3D files
-#define _IRR_COMPILE_WITH_B3D_LOADER_
-//! Define _IRR_COMPILE_WITH_B3D_LOADER_ if you want to Milkshape files
-#define _IRR_COMPILE_WITH_MS3D_LOADER_
-//! Define _IRR_COMPILE_WITH_X_LOADER_ if you want to use Microsoft X files
-#define _IRR_COMPILE_WITH_X_LOADER_
-#endif
-
-//! Define _IRR_COMPILE_WITH_IRR_MESH_LOADER_ if you want to load Irrlicht Engine .irrmesh files
-#define _IRR_COMPILE_WITH_IRR_MESH_LOADER_
-
-//! Define _IRR_COMPILE_WITH_MD2_LOADER_ if you want to load Quake 2 animated files
-#define _IRR_COMPILE_WITH_MD2_LOADER_
-//! Define _IRR_COMPILE_WITH_MD3_LOADER_ if you want to load Quake 3 animated files
-#define _IRR_COMPILE_WITH_MD3_LOADER_
-
-//! Define _IRR_COMPILE_WITH_3DS_LOADER_ if you want to load 3D Studio Max files
-#define _IRR_COMPILE_WITH_3DS_LOADER_
-//! Define _IRR_COMPILE_WITH_COLLADA_LOADER_ if you want to load Collada files
-#define _IRR_COMPILE_WITH_COLLADA_LOADER_
-//! Define _IRR_COMPILE_WITH_CSM_LOADER_ if you want to load Cartography Shop files
-#define _IRR_COMPILE_WITH_CSM_LOADER_
-//! Define _IRR_COMPILE_WITH_BSP_LOADER_ if you want to load Quake 3 BSP files
-#define _IRR_COMPILE_WITH_BSP_LOADER_
-//! Define _IRR_COMPILE_WITH_DMF_LOADER_ if you want to load DeleD files
-#define _IRR_COMPILE_WITH_DMF_LOADER_
-//! Define _IRR_COMPILE_WITH_LMTS_LOADER_ if you want to load LMTools files
-#define _IRR_COMPILE_WITH_LMTS_LOADER_
-//! Define _IRR_COMPILE_WITH_MY3D_LOADER_ if you want to load MY3D files
-#define _IRR_COMPILE_WITH_MY3D_LOADER_
-//! Define _IRR_COMPILE_WITH_OBJ_LOADER_ if you want to load Wavefront OBJ files
-#define _IRR_COMPILE_WITH_OBJ_LOADER_
-//! Define _IRR_COMPILE_WITH_OCT_LOADER_ if you want to load FSRad OCT files
-#define _IRR_COMPILE_WITH_OCT_LOADER_
-//! Define _IRR_COMPILE_WITH_OGRE_LOADER_ if you want to load Ogre 3D files
-#define _IRR_COMPILE_WITH_OGRE_LOADER_
-//! Define _IRR_COMPILE_WITH_LWO_LOADER_ if you want to load Lightwave3D files
-#define _IRR_COMPILE_WITH_LWO_LOADER_
-//! Define _IRR_COMPILE_WITH_STL_LOADER_ if you want to load .stl files
-#define _IRR_COMPILE_WITH_STL_LOADER_
-
-//! Define _IRR_COMPILE_WITH_IRR_WRITER_ if you want to write static .irr files
-#define _IRR_COMPILE_WITH_IRR_WRITER_
-//! Define _IRR_COMPILE_WITH_COLLADA_WRITER_ if you want to write Collada files
-#define _IRR_COMPILE_WITH_COLLADA_WRITER_
-//! Define _IRR_COMPILE_WITH_STL_WRITER_ if you want to write .stl files
-#define _IRR_COMPILE_WITH_STL_WRITER_
-
-//! Define _IRR_COMPILE_WITH_BMP_LOADER_ if you want to load .bmp files
-//! Disabling this loader will also disable the built-in font
-#define _IRR_COMPILE_WITH_BMP_LOADER_
-//! Define _IRR_COMPILE_WITH_JPG_LOADER_ if you want to load .jpg files
-#define _IRR_COMPILE_WITH_JPG_LOADER_
-//! Define _IRR_COMPILE_WITH_PCX_LOADER_ if you want to load .pcx files
-#define _IRR_COMPILE_WITH_PCX_LOADER_
-//! Define _IRR_COMPILE_WITH_PNG_LOADER_ if you want to load .png files
-#define _IRR_COMPILE_WITH_PNG_LOADER_
-//! Define _IRR_COMPILE_WITH_PPM_LOADER_ if you want to load .ppm/.pgm/.pbm files
-#define _IRR_COMPILE_WITH_PPM_LOADER_
-//! Define _IRR_COMPILE_WITH_PSD_LOADER_ if you want to load .psd files
-#define _IRR_COMPILE_WITH_PSD_LOADER_
-//! Define _IRR_COMPILE_WITH_TGA_LOADER_ if you want to load .tga files
-#define _IRR_COMPILE_WITH_TGA_LOADER_
-//! Define _IRR_COMPILE_WITH_WAL_LOADER_ if you want to load .wal files
-#define _IRR_COMPILE_WITH_WAL_LOADER_
-
-//! Define _IRR_COMPILE_WITH_BMP_WRITER_ if you want to write .bmp files
-#define _IRR_COMPILE_WITH_BMP_WRITER_
-//! Define _IRR_COMPILE_WITH_JPG_WRITER_ if you want to write .jpg files
-#define _IRR_COMPILE_WITH_JPG_WRITER_
-//! Define _IRR_COMPILE_WITH_PCX_WRITER_ if you want to write .pcx files
-#define _IRR_COMPILE_WITH_PCX_WRITER_
-//! Define _IRR_COMPILE_WITH_PNG_WRITER_ if you want to write .png files
-#define _IRR_COMPILE_WITH_PNG_WRITER_
-//! Define _IRR_COMPILE_WITH_PPM_WRITER_ if you want to write .ppm files
-#define _IRR_COMPILE_WITH_PPM_WRITER_
-//! Define _IRR_COMPILE_WITH_PSD_WRITER_ if you want to write .psd files
-#define _IRR_COMPILE_WITH_PSD_WRITER_
-//! Define _IRR_COMPILE_WITH_TGA_WRITER_ if you want to write .tga files
-#define _IRR_COMPILE_WITH_TGA_WRITER_
-
 //! Set FPU settings
 /** Irrlicht should use approximate float and integer fpu techniques
 precision will be lower but speed higher. currently X86 only
 */
-#if !defined(_IRR_OSX_PLATFORM_) && !defined(_IRR_SOLARIS_PLATFORM_)
+#if !defined(MACOSX) && !defined(_IRR_SOLARIS_PLATFORM_)
 	//#define IRRLICHT_FAST_MATH
 #endif
 
@@ -338,18 +224,5 @@ precision will be lower but speed higher. currently X86 only
 #undef _IRR_COMPILE_WITH_DIRECT3D_9_
 #endif
 
-// WinCE does not have OpenGL or DirectX9
-#if defined(_WIN32_WCE)
-	#undef _IRR_COMPILE_WITH_OPENGL_
-	#undef _IRR_COMPILE_WITH_DIRECT3D_8_
-	#undef _IRR_COMPILE_WITH_DIRECT3D_9_
-	#undef _IRR_COMPILE_WITH_SOFTWARE_
-	#undef BURNINGVIDEO_RENDERER_BEAUTIFUL
-	#undef _IRR_USE_WINDOWS_DEVICE_
-	#define _IRR_USE_WINDOWS_CE_DEVICE_
-	#define BURNINGVIDEO_RENDERER_CE
-#endif
-
 #endif // __IRR_COMPILE_CONFIG_H_INCLUDED__
-
 

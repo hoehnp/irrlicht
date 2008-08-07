@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -1957,7 +1957,7 @@ public:
 
 	virtual void setString(const char* text) 
 	{
-		sscanf(text, "0x%x", (unsigned int*)(&Value));
+		sscanf(text, "0x%x", (int*)(&Value));
 	}
 
 	virtual E_ATTRIBUTE_TYPE getType() const

@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt / Gaz Davidson
+// Copyright (C) 2002-2007 Nikolaus Gebhardt / Gaz Davidson
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -183,7 +183,7 @@ void CGUITextureCacheBrowser::updateAbsolutePosition()
 }
 
 //! called if an event happened.
-bool CGUITextureCacheBrowser::OnEvent(const SEvent &event)
+bool CGUITextureCacheBrowser::OnEvent(SEvent event)
 {
 	switch(event.EventType)
 	{
@@ -216,7 +216,7 @@ bool CGUITextureCacheBrowser::OnEvent(const SEvent &event)
 				if (!Environment->hasFocus(this))
 				{
 					Dragging = true;
-					//Environment->setFocus(this);
+					Environment->setFocus(this);
 					if (Parent)
 						Parent->bringToFront(this);
 				}
@@ -244,7 +244,7 @@ bool CGUITextureCacheBrowser::OnEvent(const SEvent &event)
 			break;
 		case EMIE_LMOUSE_LEFT_UP:
 			Dragging = false;
-			//Environment->removeFocus(this);
+			Environment->removeFocus(this);
 			return true;
 		case EMIE_MOUSE_MOVED:
 			if (Dragging)

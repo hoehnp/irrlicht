@@ -16,9 +16,7 @@ a quake 3 level. I will not explain it, because it should already be known from 
 
 using namespace irr;
 
-#ifdef _MSC_VER
 #pragma comment(lib, "Irrlicht.lib")
-#endif
 
 
 int main()
@@ -73,10 +71,10 @@ int main()
 	is a class which can fetch the triangles from scene nodes for doing different
 	things with them, for example collision detection. There are different triangle
 	selectors, and all can be created with the ISceneManager. In this example,
-	we create an OctTreeTriangleSelector, which optimizes the triangle output a
+	we create an OctTreeTriangleSelector, which optimizes the triangle output a l
 	little bit by reducing it like an octree. This is very useful for huge meshes
 	like quake 3 levels.
-	After we created the triangle selector, we attach it to the q3node. This is not
+	Afte we created the triangle selector, we attach it to the q3node. This is not
 	necessary, but in this way, we do not need to care for the selector, for example
 	dropping it after we do not need it anymore.
 	*/
@@ -89,6 +87,7 @@ int main()
 
 		selector = smgr->createOctTreeTriangleSelector(q3levelmesh->getMesh(0), q3node, 128);
 		q3node->setTriangleSelector(selector);
+		selector->drop();
 	}
 
 
@@ -124,15 +123,12 @@ int main()
 		smgr->addCameraSceneNodeFPS(0, 100.0f, 300.0f, -1, 0, 0, true);
 	camera->setPosition(core::vector3df(-100,50,-150));
 
-	if (selector)
-	{
-		scene::ISceneNodeAnimator* anim = smgr->createCollisionResponseAnimator(
-			selector, camera, core::vector3df(30,50,30),
-			core::vector3df(0,-3,0), 
-			core::vector3df(0,50,0));
-		camera->addAnimator(anim);
-		anim->drop();
-	}
+	scene::ISceneNodeAnimator* anim = smgr->createCollisionResponseAnimator(
+		selector, camera, core::vector3df(30,50,30),
+		core::vector3df(0,-3,0), 
+		core::vector3df(0,50,0));
+	camera->addAnimator(anim);
+	anim->drop();
 
 	/*
 	Because collision detection is no big deal in irrlicht, I'll describe how to
@@ -159,7 +155,7 @@ int main()
 	// add 3 animated faeries.
 
 	video::SMaterial material;
-	material.setTexture(0, driver->getTexture("../../media/faerie2.bmp"));
+	material.Textures[0] = driver->getTexture("../../media/faerie2.bmp");
 	material.Lighting = true;
 
 	scene::IAnimatedMeshSceneNode* node = 0;
@@ -183,7 +179,7 @@ int main()
 		node->getMaterial(0) = material;
 	}
 
-	material.setTexture(0, 0);
+	material.Textures[0] = 0;
 	material.Lighting = false;
 
 	// Add a light
@@ -285,7 +281,6 @@ int main()
 		}
 	}
 
-	selector->drop();
 	device->drop();
 	
 	return 0;

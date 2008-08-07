@@ -1,4 +1,4 @@
-// Copyright 2006-2008 Asger Feldthaus
+// Copyright 2006-2007 Asger Feldthaus
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -38,7 +38,6 @@ CGUIPanel::CGUIPanel( IGUIEnvironment* environment, IGUIElement* parent, s32 id,
     
     VScrollBar = environment->addScrollBar( false, rct, 0, id );
 	VScrollBar->setSubElement(true);
-	VScrollBar->setTabStop(false);
 	VScrollBar->setAlignment(EGUIA_LOWERRIGHT, EGUIA_LOWERRIGHT, EGUIA_UPPERLEFT, EGUIA_LOWERRIGHT);
     VScrollBar->grab();
 	IGUIElement::addChild(VScrollBar);
@@ -47,7 +46,6 @@ CGUIPanel::CGUIPanel( IGUIEnvironment* environment, IGUIElement* parent, s32 id,
     
     HScrollBar = environment->addScrollBar( true, rct, 0, id );
 	HScrollBar->setSubElement(true);
-	HScrollBar->setTabStop(false);
 	HScrollBar->setAlignment(EGUIA_UPPERLEFT, EGUIA_LOWERRIGHT, EGUIA_LOWERRIGHT, EGUIA_LOWERRIGHT);
     HScrollBar->grab();
 	IGUIElement::addChild(HScrollBar);
@@ -93,10 +91,11 @@ void CGUIPanel::draw()
 	}
 
     video::IVideoDriver* driver = Environment->getVideoDriver();
-    IGUISkin* skin = Environment->getSkin();
-    if (Border && skin)
+    
+    if (Border)
     {
-        skin->draw3DSunkenPane( this, skin->getColor( EGDC_APP_WORKSPACE), false, true, AbsoluteRect, &AbsoluteClippingRect );
+        IGUISkin* skin = Environment->getSkin();
+        skin->draw3DSunkenPane( this, skin->getColor( EGDC_APP_WORKSPACE), true,true, AbsoluteRect, &AbsoluteClippingRect );
     }
 
 	IGUIElement::draw();
@@ -165,7 +164,7 @@ void CGUIPanel::setHScrollBarMode( E_SCROLL_BAR_MODE mode )
 	NeedsUpdate = true;
 }
 
-bool CGUIPanel::OnEvent(const SEvent &event)
+bool CGUIPanel::OnEvent( SEvent event )
 {
     // Redirect mouse wheel to scrollbar
     if ( event.EventType == EET_MOUSE_INPUT_EVENT && event.MouseInput.Event == EMIE_MOUSE_WHEEL )
@@ -182,6 +181,7 @@ bool CGUIPanel::OnEvent(const SEvent &event)
 			HScrollBar->OnEvent(event);
 			return true;
 		}
+		return false;
     }
     else
     {
@@ -192,9 +192,11 @@ bool CGUIPanel::OnEvent(const SEvent &event)
 
 			return true;
 		}
+		else
+			return IGUIElement::OnEvent( event );
     }
 
-	return IGUIElement::OnEvent(event);
+	return false;
 }
 
 void CGUIPanel::moveInnerPane()
@@ -230,14 +232,14 @@ void CGUIPanel::resizeInnerPane()
 	// get desired size (total size of all children)
 	core::rect<s32> totalRect(0,0,0,0);
 
-	core::list<IGUIElement*>::ConstIterator it;
-       
-	for ( it = InnerPane->getChildren().begin();
-		it != InnerPane->getChildren().end(); ++it )
+	core::list<IGUIElement*>::Iterator it = InnerPane->getChildren().begin();
+
+	while ( it != InnerPane->getChildren().end() )
 	{
 		core::rect<s32> rct = (*it)->getRelativePosition();
 		totalRect.addInternalPoint(rct.UpperLeftCorner);
 		totalRect.addInternalPoint(rct.LowerRightCorner);
+		it++;
 	}
 
 	// move children if pane needs to grow
@@ -252,10 +254,11 @@ void CGUIPanel::resizeInnerPane()
 	{
 		totalRect += adjustedMovement;
 
-		for (it = InnerPane->getChildren().begin();
-			it != InnerPane->getChildren().end(); ++it )
+		it = InnerPane->getChildren().begin();
+		while ( it != InnerPane->getChildren().end() )
 		{
 			(*it)->move(adjustedMovement);
+			it++;
 		}
 	}
 

@@ -1,11 +1,5 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
-// This file is part of the "Irrlicht Engine".
-// For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #include "CImageWriterTGA.h"
-
-#ifdef _IRR_COMPILE_WITH_TGA_WRITER_
-
 #include "CImageLoaderTGA.h"
 #include "IWriteFile.h"
 #include "CColorConverter.h"
@@ -28,12 +22,12 @@ CImageWriterTGA::CImageWriterTGA()
 #endif
 }
 
-bool CImageWriterTGA::isAWriteableFileExtension(const c8* fileName) const
+bool CImageWriterTGA::isAWriteableFileExtension(const c8* fileName)
 {
 	return strstr(fileName, ".tga") != 0;
 }
 
-bool CImageWriterTGA::writeImage(io::IWriteFile *file, IImage *image,u32 param) const
+bool CImageWriterTGA::writeImage(io::IWriteFile *file, IImage *image,u32 param)
 {
 	STGAHeader imageHeader;
 	imageHeader.IdLength = 0;
@@ -138,6 +132,3 @@ bool CImageWriterTGA::writeImage(io::IWriteFile *file, IImage *image,u32 param) 
 
 } // namespace video
 } // namespace irr
-
-#endif
-

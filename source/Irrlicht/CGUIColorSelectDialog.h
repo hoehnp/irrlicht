@@ -1,12 +1,9 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #ifndef __C_GUI_COLOR_SELECT_DIALOG_H_INCLUDED__
 #define __C_GUI_COLOR_SELECT_DIALOG_H_INCLUDED__
-
-#include "IrrCompileConfig.h"
-#ifdef _IRR_COMPILE_WITH_GUI_
 
 #include "IGUIColorSelectDialog.h"
 #include "IGUIButton.h"
@@ -32,7 +29,7 @@ namespace gui
 		virtual ~CGUIColorSelectDialog();
 
 		//! called if an event happened.
-		virtual bool OnEvent(const SEvent& event);
+		virtual bool OnEvent(SEvent event);
 
 		//! draws the element and its children
 		virtual void draw();
@@ -75,6 +72,5 @@ namespace gui
 } // end namespace gui
 } // end namespace irr
 
-#endif // _IRR_COMPILE_WITH_GUI_
+#endif
 
-#endif // __C_GUI_COLOR_SELECT_DIALOG_H_INCLUDED__

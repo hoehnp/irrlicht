@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -19,15 +19,15 @@ namespace video
 
 // Irrlicht Engine OpenGL render path parallax map vertex shader
 // I guess it could be optimized a lot, because I wrote it in D3D ASM and
-// transferred it 1:1 to OpenGL
+// transfered it 1:1 to OpenGL
 const char OPENGL_PARALLAX_MAP_VSH[] =
 	"!!ARBvp1.0\n"\
 	"#input\n"\
 	"# 0-3: transposed world matrix;\n"\
 	"#;12: Light01 position \n"\
-	"#;13: x,y,z: Light01 color; .w: 1/LightRadius^2 \n"\
+	"#;13: x,y,z: Light01 color; .w: 1/LightRadius² \n"\
 	"#;14: Light02 position \n"\
-	"#;15: x,y,z: Light02 color; .w: 1/LightRadius^2 \n"\
+	"#;15: x,y,z: Light02 color; .w: 1/LightRadius² \n"\
 	"#;16: Eye position \n"\
 	"\n"\
 	"ATTRIB InPos = vertex.position;\n"\
@@ -197,7 +197,7 @@ const char OPENGL_PARALLAX_MAP_PSH[] =
 	"\n"\
 	"# calculate color of light2; \n"\
 	"MAD temp2, light2Vector, {2,2,2,2}, {-1,-1,-1,-1}; \n"\
-	"DP3_SAT temp2, normalMapColor, temp2; \n"\
+	"DP3_SAT temp2, normalMapColor, light2Vector; \n"\
 	"MAD temp, light2Color, temp2, temp; \n"\
 	"\n"\
 	"# luminance * base color; \n"\
@@ -211,17 +211,12 @@ COpenGLParallaxMapRenderer::COpenGLParallaxMapRenderer(video::COpenGLDriver* dri
 	s32& outMaterialTypeNr, IMaterialRenderer* baseMaterial)
 	: COpenGLShaderMaterialRenderer(driver, 0, baseMaterial), CompiledShaders(true)
 {
-
-	#ifdef _DEBUG
-	setDebugName("COpenGLParallaxMapRenderer");
-	#endif
-
 	// set this as callback. We could have done this in
 	// the initialization list, but some compilers don't like it.
 
 	CallBack = this;
 
-	// basically, this simply compiles the hard coded shaders if the
+	// basicly, this thing simply compiles these hardcoded shaders if the
 	// hardware is able to do them, otherwise it maps to the base material
 
 	if (!driver->queryFeature(video::EVDF_ARB_FRAGMENT_PROGRAM_1) ||
@@ -240,7 +235,7 @@ COpenGLParallaxMapRenderer::COpenGLParallaxMapRenderer(video::COpenGLDriver* dri
 	if (renderer)
 	{
 		// use the already compiled shaders
-		video::COpenGLParallaxMapRenderer* nmr = reinterpret_cast<video::COpenGLParallaxMapRenderer*>(renderer);
+		video::COpenGLParallaxMapRenderer* nmr = (video::COpenGLParallaxMapRenderer*)renderer;
 		CompiledShaders = false;
 
 		VertexShader = nmr->VertexShader;
@@ -253,10 +248,6 @@ COpenGLParallaxMapRenderer::COpenGLParallaxMapRenderer(video::COpenGLDriver* dri
 		// compile shaders on our own
 		init(outMaterialTypeNr, OPENGL_PARALLAX_MAP_VSH, OPENGL_PARALLAX_MAP_PSH, EVT_TANGENTS);
 	}
-
-	// fallback if compilation has failed
-	if (-1==outMaterialTypeNr)
-		outMaterialTypeNr = driver->addMaterialRenderer(this);
 }
 
 
@@ -275,7 +266,7 @@ COpenGLParallaxMapRenderer::~COpenGLParallaxMapRenderer()
 }
 
 
-void COpenGLParallaxMapRenderer::OnSetMaterial(const video::SMaterial& material,
+void COpenGLParallaxMapRenderer::OnSetMaterial(video::SMaterial& material,
 	const video::SMaterial& lastMaterial,
 	bool resetAllRenderstates, video::IMaterialRendererServices* services)
 {
@@ -288,7 +279,7 @@ void COpenGLParallaxMapRenderer::OnSetMaterial(const video::SMaterial& material,
 
 
 //! Returns the render capability of the material.
-s32 COpenGLParallaxMapRenderer::getRenderCapability() const
+s32 COpenGLParallaxMapRenderer::getRenderCapability()
 {
 	if (Driver->queryFeature(video::EVDF_ARB_FRAGMENT_PROGRAM_1) &&
 		Driver->queryFeature(video::EVDF_ARB_VERTEX_PROGRAM_1))
@@ -326,7 +317,7 @@ void COpenGLParallaxMapRenderer::OnSetConstants(IMaterialRendererServices* servi
 	core::matrix4 tr(worldViewProj.getTransposed());
 	services->setVertexShaderConstant(tr.pointer(), 8, 4);
 
-	// here we fetch the fixed function lights from the driver
+	// here we've got to fetch the fixed function lights from the driver
 	// and set them as constants
 
 	u32 cnt = driver->getDynamicLightCount();

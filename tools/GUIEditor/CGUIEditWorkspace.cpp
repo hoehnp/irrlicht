@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt / Gaz Davidson
+// Copyright (C) 2002-2007 Nikolaus Gebhardt / Gaz Davidson
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -117,7 +117,7 @@ IGUIElement* CGUIEditWorkspace::getEditableElementFromPoint(IGUIElement *start, 
 
 	// we have to search from back to front.
 
-	core::list<IGUIElement*>::ConstIterator it = start->getChildren().getLast();
+	core::list<IGUIElement*>::Iterator it = start->getChildren().getLast();
 	s32 count=0;
 	while(it != start->getChildren().end())
 	{
@@ -141,6 +141,22 @@ IGUIElement* CGUIEditWorkspace::getEditableElementFromPoint(IGUIElement *start, 
 		target = start;
 
 	return target;
+}
+
+bool CGUIEditWorkspace::isMyChild(IGUIElement* target)
+{
+	if (!target)
+		return false;
+
+	IGUIElement *current = target;
+	while(current->getParent())
+	{
+		current = current->getParent();
+		if (current == this)
+			return true;
+	}
+
+	return false;
 }
 
 void CGUIEditWorkspace::setSelectedElement(IGUIElement *sel)
@@ -174,13 +190,14 @@ IGUIElement* CGUIEditWorkspace::getSelectedElement()
 void CGUIEditWorkspace::selectNextSibling()
 {
 	IGUIElement* p=0;
+	core::list<IGUIElement*>::Iterator it;
 
 	if (!SelectedElement)
 		p = Parent;
 	else
 		p = SelectedElement->getParent();
 
-	core::list<IGUIElement*>::ConstIterator it = p->getChildren().begin();
+	it = p->getChildren().begin();
 	// find selected element
 	if (SelectedElement)
 		while (*it != SelectedElement)
@@ -197,13 +214,14 @@ void CGUIEditWorkspace::selectNextSibling()
 void CGUIEditWorkspace::selectPreviousSibling()
 {
 	IGUIElement* p=0;
+	core::list<IGUIElement*>::Iterator it;
 
 	if (!SelectedElement)
 		p = Parent;
 	else
 		p = SelectedElement->getParent();
 
-	core::list<IGUIElement*>::ConstIterator it = p->getChildren().getLast();
+	it = p->getChildren().getLast();
 	// find selected element
 	if (SelectedElement)
 		while (*it != SelectedElement)
@@ -219,7 +237,7 @@ void CGUIEditWorkspace::selectPreviousSibling()
 }
 
 //! called if an event happened.
-bool CGUIEditWorkspace::OnEvent(const SEvent &e)
+bool CGUIEditWorkspace::OnEvent(SEvent e)
 {
 	IGUIFileOpenDialog* dialog=0;
 	switch(e.EventType)
@@ -414,7 +432,7 @@ bool CGUIEditWorkspace::OnEvent(const SEvent &e)
 				sub->addItem(L"Default factory",-1,true, true);
 
 				// add elements from each factory
-				for (i=0; u32(i) < Environment->getRegisteredGUIElementFactoryCount(); ++i)
+				for (i=0; i < Environment->getRegisteredGUIElementFactoryCount(); ++i)
 				{
 					sub2 = sub->getSubMenu(i);
 
@@ -426,7 +444,7 @@ bool CGUIEditWorkspace::OnEvent(const SEvent &e)
 						c++;
 					}
 
-					if (u32(i+1) < Environment->getRegisteredGUIElementFactoryCount())
+					if (i+1 < Environment->getRegisteredGUIElementFactoryCount())
 					{
 						core::stringw strFact;
 						strFact = L"Factory ";
@@ -572,7 +590,7 @@ bool CGUIEditWorkspace::OnEvent(const SEvent &e)
 		// load a gui file
 		case EGET_FILE_SELECTED:
 			dialog = (IGUIFileOpenDialog*)e.GUIEvent.Caller;
-			Environment->loadGUI(core::stringc(dialog->getFileName()).c_str());
+			Environment->loadGUI(core::stringc(dialog->getFilename()).c_str());
 			break;
 
 		case EGET_MENU_ITEM_SELECTED:
@@ -593,7 +611,7 @@ bool CGUIEditWorkspace::OnEvent(const SEvent &e)
 					el = Parent;
 					grab();
 					// remove all children
-					while(Children.end() != el->getChildren().begin())
+					while(el->getChildren().begin() != Children.end())
 						el->removeChild(*(el->getChildren().begin()));
 					// attach to parent again
 					el->addChild(this);
@@ -682,9 +700,8 @@ bool CGUIEditWorkspace::OnEvent(const SEvent &e)
 		break;
 	}
 
-	// even if we didn't absorb the event, 
 	// we never pass events back to the GUI we're editing!
-	return false;
+	return true;
 }
 
 
@@ -787,7 +804,7 @@ void CGUIEditWorkspace::setDrawGrid(bool drawGrid)
 	DrawGrid = drawGrid;
 }
 
-void CGUIEditWorkspace::setGridSize(const core::dimension2di& gridSize)
+void CGUIEditWorkspace::setGridSize(core::dimension2di	&gridSize)
 {
 	GridSize = gridSize;
 	if (GridSize.Width < 2)
@@ -893,9 +910,8 @@ void CGUIEditWorkspace::deserializeAttributes(io::IAttributes* in, io::SAttribut
 	setDrawGrid(in->getAttributeAsBool("DrawGrid"));
 	setUseGrid(in->getAttributeAsBool("UseGrid"));
 
-	core::position2di tmpp = in->getAttributeAsPosition2d("GridSize");
-	core::dimension2di tmpd(tmpp.X, tmpp.Y);
-	setGridSize(tmpd);
+	core::position2di tmpd = in->getAttributeAsPosition2d("GridSize");
+	setGridSize(core::dimension2di(tmpd.X, tmpd.Y));
 	setMenuCommandIDStart(in->getAttributeAsInt("MenuCommandStart"));
 }
 

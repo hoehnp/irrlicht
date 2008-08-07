@@ -1,18 +1,16 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #ifndef __E_GUI_ELEMENT_TYPES_H_INCLUDED__
 #define __E_GUI_ELEMENT_TYPES_H_INCLUDED__
 
-#include "irrTypes.h"
-
 namespace irr
 {
 namespace gui
 {
 
-//! List of all basic Irrlicht GUI elements.
+//! List of all basic Irrlicht GUI elements. 
 /** An IGUIElement returns this when calling IGUIElement::getType(); */
 enum EGUI_ELEMENT_TYPE
 {
@@ -61,9 +59,6 @@ enum EGUI_ELEMENT_TYPE
 	//! A scroll bar (IGUIScrollBar)
 	EGUIET_SCROLL_BAR,
 
-	//! A spin box (IGUISpinBox)
-	EGUIET_SPIN_BOX,
-
 	//! A static text (IGUIStaticText)
 	EGUIET_STATIC_TEXT,
 
@@ -72,9 +67,6 @@ enum EGUI_ELEMENT_TYPE
 
 	//! A tab control
 	EGUIET_TAB_CONTROL,
-
-	//! A Table
-	EGUIET_TABLE,
 
 	//! A tool bar (IGUIToolBar)
 	EGUIET_TOOL_BAR,
@@ -88,7 +80,7 @@ enum EGUI_ELEMENT_TYPE
 	//! Unknown type.
 	EGUIET_ELEMENT,
 
-	//! This enum is never used, it only forces the compiler to
+	//! This enum is never used, it only forces the compiler to 
 	//! compile these enumeration values to 32 bit.
 	EGUIET_FORCE_32_BIT = 0x7fffffff
 
@@ -112,11 +104,9 @@ const c8* const GUIElementTypeNames[] =
 	"messageBox",
 	"modalScreen",
 	"scrollBar",
-	"spinBox",
 	"staticText",
 	"tab",
 	"tabControl",
-	"table",
 	"toolBar",
 	"window",
 	0
@@ -126,7 +116,4 @@ const c8* const GUIElementTypeNames[] =
 } // end namespace irr
 
 #endif
-
-
-
 

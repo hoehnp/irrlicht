@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -36,19 +36,19 @@ public:
 	virtual ~CD3D9Texture();
 
 	//! lock function
-	virtual void* lock(bool readOnly = false);
+	virtual void* lock();
 
 	//! unlock function
 	virtual void unlock();
 
 	//! Returns original size of the texture.
-	virtual const core::dimension2d<s32>& getOriginalSize() const;
+	virtual const core::dimension2d<s32>& getOriginalSize();
 
 	//! Returns (=size) of the texture.
-	virtual const core::dimension2d<s32>& getSize() const;
+	virtual const core::dimension2d<s32>& getSize();
 
 	//! returns driver type of texture (=the driver, who created the texture)
-	virtual E_DRIVER_TYPE getDriverType() const;
+	virtual E_DRIVER_TYPE getDriverType();
 
 	//! returns color format of texture
 	virtual ECOLOR_FORMAT getColorFormat() const;
@@ -57,7 +57,7 @@ public:
 	virtual u32 getPitch() const;
 
 	//! returns the DIRECT3D9 Texture
-	IDirect3DTexture9* getDX9Texture() const;
+	IDirect3DTexture9* getDX9Texture();
 
 	//! returns if texture has mipmap levels
 	bool hasMipMaps() const;
@@ -67,7 +67,7 @@ public:
 	virtual void regenerateMipMapLevels();
 
 	//! returns if it is a render target
-	virtual bool isRenderTarget() const;
+	bool isRenderTarget();
 
 	//! Returns pointer to the render target surface
 	IDirect3DSurface9* getRenderTargetSurface();
@@ -77,31 +77,29 @@ private:
 	void createRenderTarget();
 
 	//! returns the size of a texture which would be the optimize size for rendering it
-	inline s32 getTextureSizeFromSurfaceSize(s32 size) const;
+	inline s32 getTextureSizeFromImageSize(s32 size);
 
 	//! creates the hardware texture
-	bool createTexture(u32 flags, IImage * image);
+	void createTexture(u32 flags);
 
 	//! copies the image to the texture
-	bool copyTexture(IImage * image);
+	bool copyTexture();
 
-	//! Get D3D color format from Irrlicht color format.
-	D3DFORMAT getD3DFormatFromColorFormat(ECOLOR_FORMAT format) const;
+	//! optimized for 16 bit to 16 copy.
+	bool copyTo16BitTexture();
 
-	//! Get Irrlicht color format from D3D color format.
-	ECOLOR_FORMAT getColorFormatFromD3DFormat(D3DFORMAT format);
+	//! copies texture to 32 bit hardware texture
+	bool copyTo32BitTexture();
 
-	//! Helper function for mipmap generation.
-	bool createMipMaps(u32 level=1);
-
-	//! Helper function for mipmap generation.
+	bool createMipMaps(s32 level=1);
+	
 	void copy16BitMipMap(char* src, char* tgt,
-		s32 width, s32 height,  s32 pitchsrc, s32 pitchtgt) const;
+		s32 width, s32 height,  s32 pitchsrc, s32 pitchtgt);
 
-	//! Helper function for mipmap generation.
 	void copy32BitMipMap(char* src, char* tgt,
-		s32 width, s32 height,  s32 pitchsrc, s32 pitchtgt) const;
+		s32 width, s32 height,  s32 pitchsrc, s32 pitchtgt);
 
+	IImage* Image;
 	IDirect3DDevice9* Device;
 	IDirect3DTexture9* Texture;
 	IDirect3DSurface9* RTTSurface;
@@ -123,5 +121,4 @@ private:
 #endif // _IRR_COMPILE_WITH_DIRECT3D_9_
 
 #endif // __C_DIRECTX9_TEXTURE_H_INCLUDED__
-
 

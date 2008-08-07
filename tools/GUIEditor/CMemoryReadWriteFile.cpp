@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -14,7 +14,7 @@ CMemoryReadWriteFile::CMemoryReadWriteFile(const c8* filename)
 }
 
 
-s32 CMemoryReadWriteFile::write(const void* buffer, u32 sizeToWrite)
+s32 CMemoryReadWriteFile::write(const void* buffer, s32 sizeToWrite)
 {
 
 	// no point in writing 0 bytes
@@ -34,7 +34,7 @@ s32 CMemoryReadWriteFile::write(const void* buffer, u32 sizeToWrite)
 	
 }
 
-bool CMemoryReadWriteFile::seek(long finalPos, bool relativeMovement)
+bool CMemoryReadWriteFile::seek(s32 finalPos, bool relativeMovement)
 {
 	if (relativeMovement)
 	{
@@ -55,12 +55,12 @@ bool CMemoryReadWriteFile::seek(long finalPos, bool relativeMovement)
 
 }
 
-const c8* CMemoryReadWriteFile::getFileName() const
+const c8* CMemoryReadWriteFile::getFileName()
 {
 	return FileName.c_str();
 }
 
-long CMemoryReadWriteFile::getPos() const
+s32 CMemoryReadWriteFile::getPos()
 {
 	return Pos;
 }
@@ -71,7 +71,7 @@ core::array<c8>& CMemoryReadWriteFile::getData()
 }
 
 
-long CMemoryReadWriteFile::getSize() const
+s32 CMemoryReadWriteFile::getSize()
 {
 	return Data.size();
 }
@@ -94,4 +94,3 @@ s32 CMemoryReadWriteFile::read(void* buffer, u32 sizeToRead)
 
 	return sizeToRead;
 }
-

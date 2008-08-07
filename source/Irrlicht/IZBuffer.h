@@ -1,11 +1,11 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #ifndef __I_Z_BUFFER_H_INCLUDED__
 #define __I_Z_BUFFER_H_INCLUDED__
 
-#include "IReferenceCounted.h"
+#include "IUnknown.h"
 #include "dimension2d.h"
 #include "S2DVertex.h"
 
@@ -13,7 +13,7 @@ namespace irr
 {
 namespace video
 {
-	class IZBuffer : public virtual IReferenceCounted
+	class IZBuffer : public virtual IUnknown
 	{
 	public:
 
@@ -27,7 +27,7 @@ namespace video
 		virtual void setSize(const core::dimension2d<s32>& size) = 0;
 
 		//! returns the size of the zbuffer
-		virtual const core::dimension2d<s32>& getSize() const = 0;
+		virtual const core::dimension2d<s32>& getSize() = 0;
 
 		//! locks the zbuffer
 		virtual TZBufferType* lock() = 0;

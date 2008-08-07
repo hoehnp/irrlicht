@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine" and the "irrXML" project.
 // For conditions of distribution and use, see copyright notice in irrlicht.h and irrXML.h
 
@@ -13,37 +13,40 @@ namespace irr
 namespace core
 {
 
-// we write [16] here instead of [] to work around a swig bug
-const float fast_atof_table[16] = {
-	0.f,
-	0.1f,
-	0.01f,
-	0.001f,
-	0.0001f,
-	0.00001f,
-	0.000001f,
-	0.0000001f,
-	0.00000001f,
-	0.000000001f,
-	0.0000000001f,
-	0.00000000001f,
-	0.000000000001f,
-	0.0000000000001f,
-	0.00000000000001f,
-	0.000000000000001f
-};
+const float fast_atof_table[16] =	{  // we write [16] here instead of [] to work around a swig bug
+										0.f,
+										0.1f,
+										0.01f,
+										0.001f,
+										0.0001f,
+										0.00001f,
+										0.000001f,
+										0.0000001f,
+										0.00000001f,
+										0.000000001f,
+										0.0000000001f,
+										0.00000000001f,
+										0.000000000001f,
+										0.0000000000001f,
+										0.00000000000001f,
+										0.000000000000001f
+									};
 
-inline u32 strtol10(const char* in, const char** out=0)
+inline u32 strtol10( const char* in, const char* &out)
 {
 	u32 value = 0;
+	c8 symbol;
 
-	while ( ( *in >= '0') && ( *in <= '9' ))
+	while ( 1 )
 	{
-		value = ( value * 10 ) + ( *in - '0' );
-		++in;
+		symbol = *in;
+		if ( symbol < '0' || symbol > '9' )
+			break;
+
+		value = ( value * 10 ) + ( symbol - '0' );
+		in += 1;
 	}
-	if (out)
-		*out = in;
+	out = in;
 	return value;
 }
 
@@ -58,19 +61,21 @@ inline const char* fast_atof_move( const char* c, float& out)
 
 	if (*c=='-')
 	{
-		++c;
+		c++;
 		inv = true;
 	}
 
 	//f = (float)strtol(c, &t, 10);
-	f = (float) strtol10 ( c, &c );
+	f = (float) strtol10 ( c, t );
+
+	c = t;
 
 	if (*c == '.')
 	{
-		++c;
+		c++;
 
 		//float pl = (float)strtol(c, &t, 10);
-		float pl = (float) strtol10 ( c, &t );
+		float pl = (float) strtol10 ( c, t );
 		pl *= fast_atof_table[t-c];
 
 		f += pl;
@@ -83,19 +88,20 @@ inline const char* fast_atof_move( const char* c, float& out)
 			//float exp = (float)strtol(c, &t, 10);
 			bool einv = (*c=='-');
 			if (einv)
-				++c;
+				c++;
 
-			float exp = (float)strtol10(c, &c);
+			float exp = (float)strtol10(c, t);
 			if (einv)
 				exp *= -1.0f;
 
 			f *= (float)pow(10.0f, exp);
+			c = t;
 		}
 	}
 
 	if (inv)
 		f *= -1.0f;
-
+	
 	out = f;
 	return c;
 }

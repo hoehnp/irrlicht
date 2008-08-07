@@ -109,13 +109,8 @@ int main()
 	*/
 
 	IrrlichtDevice *device =
-#ifdef _IRR_OSX_PLATFORM_
-		createDevice( video::EDT_OPENGL, dimension2d<s32>(640, 480), 16,
-			false, false, false, 0);
-#else
 		createDevice( video::EDT_SOFTWARE, dimension2d<s32>(640, 480), 16,
 			false, false, false, 0);
-#endif
 
 	/*
 	Set the caption of the window to some nice text. Note that there is 
@@ -138,7 +133,7 @@ int main()
 	We add a hello world label to the window, using the GUI environment.
 	*/
 	guienv->addStaticText(L"Hello World! This is the Irrlicht Software renderer!",
-		rect<s32>(10,10,260,22), true);
+		rect<int>(10,10,260,22), true);
 
 	/*
 	To display something interesting, we load a Quake 2 model 

@@ -24,7 +24,6 @@ int main()
 	printf("Please press 'y' if you want to use realtime shadows.\n");
 
 	std::cin >> i;
-
 	bool shadows = (i == 'y');
 
 	// ask user for driver
@@ -100,7 +99,7 @@ int main()
 
 	mesh = smgr->addHillPlaneMesh("myHill",
 		core::dimension2d<f32>(20,20),
-		core::dimension2d<u32>(40,40), 0, 0,
+		core::dimension2d<s32>(40,40), 0, 0,
 		core::dimension2d<f32>(0,0),
 		core::dimension2d<f32>(10,10));
 
@@ -122,7 +121,7 @@ int main()
 	// create light
 
 	node = smgr->addLightSceneNode(0, core::vector3df(0,0,0),
-		video::SColorf(1.0f, 0.6f, 0.7f, 1.0f), 1200.0f);
+		video::SColorf(1.0f, 0.6f, 0.7f, 1.0f), 600.0f);
 	scene::ISceneNodeAnimator* anim = 0;
 	anim = smgr->createFlyCircleAnimator (core::vector3df(0,150,0),250.0f);
 	node->addAnimator(anim);
@@ -188,49 +187,8 @@ int main()
 	paf->drop();
 
 	ps->setMaterialFlag(video::EMF_LIGHTING, false);
-	ps->setMaterialFlag(video::EMF_ZWRITE_ENABLE, false);
 	ps->setMaterialTexture(0, driver->getTexture("../../media/fire.bmp"));
 	ps->setMaterialType(video::EMT_TRANSPARENT_VERTEX_ALPHA);
-
-	/* 
-	Next we add a volumetric light node, which adds a glowing fake area light to 
-	the scene. Like with the billboards and particle systems we also assign a 
-	texture for the desired effect, though this time we'll use a texture animator 
-	to create the illusion of a magical glowing area effect.
-	*/
-	scene::IVolumeLightSceneNode * n = smgr->addVolumeLightSceneNode(0, -1,
-							32, // Subdivisions on U axis
-							32, // Subdivisions on V axis
-							video::SColor(0, 255, 255, 255),  // foot color
-							video::SColor(0, 0, 0, 0)         // tail color
-							);
-	   
-	if (n) 
-	{
-		n->setScale(core::vector3df(56.0f, 56.0f, 56.0f));
-		n->setPosition(core::vector3df(-120,50,40));
-		
-		// load textures for animation
-		core::array<video::ITexture*> textures;
-		for (s32 g=7; g > 0; --g)
-		{
-			core::stringc tmp;
-			tmp = "../../media/portal";
-			tmp += g;
-			tmp += ".bmp";
-			video::ITexture* t = driver->getTexture( tmp.c_str () );
-			textures.push_back(t);
-		}
-
-		// create texture animator
-		scene::ISceneNodeAnimator *glow = smgr->createTextureAnimator(textures, 150);
-
-		// add the animator
-		n->addAnimator(glow);
-
-		// drop the animator because it was created with a create() function
-		glow->drop();
-	}
 
 	/*
 	As our last special effect, we want a dynamic shadow be casted from an animated
@@ -290,13 +248,13 @@ int main()
 
 		if (lastFPS != fps)
 		{
-			core::stringw str = L"Irrlicht Engine - SpecialFX example [";
-			str += driver->getName();
-			str += "] FPS:";
-			str += fps;
+		  core::stringw str = L"Irrlicht Engine - SpecialFX example [";
+		  str += driver->getName();
+		  str += "] FPS:";
+		  str += fps;
 
-			device->setWindowCaption(str.c_str());
-			lastFPS = fps;
+		  device->setWindowCaption(str.c_str());
+		  lastFPS = fps;
 		}
 	}
 

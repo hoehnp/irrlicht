@@ -1,10 +1,8 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
 #include "CGUIInOutFader.h"
-#ifdef _IRR_COMPILE_WITH_GUI_
-
 #include "IGUIEnvironment.h"
 #include "IVideoDriver.h"
 #include "os.h"
@@ -31,6 +29,14 @@ CGUIInOutFader::CGUIInOutFader(IGUIEnvironment* environment, IGUIElement* parent
 }
 
 
+
+//! destructor
+CGUIInOutFader::~CGUIInOutFader()
+{
+}
+
+
+
 //! draws the element and its children
 void CGUIInOutFader::draw()
 {
@@ -44,7 +50,7 @@ void CGUIInOutFader::draw()
 		return;
 	}
 
-	video::IVideoDriver* driver = Environment->getVideoDriver();
+	irr::video::IVideoDriver* driver = Environment->getVideoDriver();
 
 	if (driver)
 	{
@@ -153,7 +159,7 @@ void CGUIInOutFader::fadeOut(u32 time)
 }
 
 //! Writes attributes of the element.
-void CGUIInOutFader::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options=0) const
+void CGUIInOutFader::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options=0)
 {
 	IGUIInOutFader::serializeAttributes(out,options);
 
@@ -175,6 +181,3 @@ void CGUIInOutFader::deserializeAttributes(io::IAttributes* in, io::SAttributeRe
 
 } // end namespace gui
 } // end namespace irr
-
-#endif // _IRR_COMPILE_WITH_GUI_
-

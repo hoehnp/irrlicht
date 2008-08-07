@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 //
@@ -59,10 +59,7 @@ namespace scene
 	class COCTLoader : public IMeshLoader
 	{
 	public:
-		void OCTLoadLights(io::IReadFile* file, ISceneManager * scene,
-				ISceneNode * parent = 0, f32 radius = 500.0f,
-				f32 intensityScale = 0.0000001f*2.5,
-				bool rewind = true);
+		void OCTLoadLights(irr::io::IReadFile* file, irr::scene::ISceneManager * scene, irr::scene::ISceneNode * parent = 0, f32 radius = 500.0f, f32 intensityScale = 0.0000001f*2.5, bool rewind = true);
 
 		//! constructor
 		COCTLoader(video::IVideoDriver* driver);
@@ -72,16 +69,16 @@ namespace scene
 
 		//! returns true if the file maybe is able to be loaded by this class
 		//! based on the file extension (e.g. ".cob")
-		virtual bool isALoadableFileExtension(const c8* fileName) const;
+		virtual bool isALoadableFileExtension(const c8* fileName);
 
 		//! creates/loads an animated mesh from the file.
 		//! \return Pointer to the created mesh. Returns 0 if loading failed.
 		//! If you no longer need the mesh, you should call IAnimatedMesh::drop().
-		//! See IReferenceCounted::drop() for more information.
-		virtual IAnimatedMesh* createMesh(io::IReadFile* file);
+		//! See IUnknown::drop() for more information.
+		virtual IAnimatedMesh* createMesh(irr::io::IReadFile* file);
 
 	private:
-		core::vector3df GetFaceNormal(f32 a[3], f32 b[3], f32 c[3]);
+		void GetFaceNormal(f32 a[3], f32 b[3], f32 c[3], f32 out[3]);
 
 		struct octHeader {
 			u32 numVerts;

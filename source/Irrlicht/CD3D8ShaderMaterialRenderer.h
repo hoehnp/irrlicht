@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -37,7 +37,7 @@ public:
 	//! Destructor
 	~CD3D8ShaderMaterialRenderer();
 
-	virtual void OnSetMaterial(const video::SMaterial& material, const video::SMaterial& lastMaterial,
+	virtual void OnSetMaterial(video::SMaterial& material, const video::SMaterial& lastMaterial,
 		bool resetAllRenderstates, video::IMaterialRendererServices* services);
 
 	virtual void OnUnsetMaterial();
@@ -45,7 +45,7 @@ public:
 	virtual bool OnRender(IMaterialRendererServices* service, E_VERTEX_TYPE vtxtype);
 
 	//! Returns if the material is transparent.
-	virtual bool isTransparent() const;
+	virtual bool isTransparent();
 
 protected:
 

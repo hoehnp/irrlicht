@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -38,13 +38,13 @@ namespace scene
 		//! Returns if the attached scene node is falling, which means that
 		//! there is no blocking wall from the scene node in the direction of
 		//! the gravity.
-		virtual bool isFalling() const;
+		virtual bool isFalling();
 
 		//! Sets the radius of the ellipsoid with which collision detection and
 		//! response is done. 
 		virtual void setEllipsoidRadius(const core::vector3df& radius);
 
-		//! Returns the radius of the ellipsoid with which the collision detection and
+		//! Returns the radius of the ellipsoid with wich the collision detection and
 		//! response is done.
 		virtual core::vector3df getEllipsoidRadius() const;
 
@@ -72,7 +72,7 @@ namespace scene
 		virtual void animateNode(ISceneNode* node, u32 timeMs);
 
 		//! Writes attributes of the scene node animator.
-		virtual void serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options=0) const;
+		virtual void serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options=0);
 
 		//! Reads attributes of the scene node animator.
 		virtual void deserializeAttributes(io::IAttributes* in, io::SAttributeReadWriteOptions* options=0);
@@ -81,9 +81,6 @@ namespace scene
 		virtual ESCENE_NODE_ANIMATOR_TYPE getType() const { return ESNAT_COLLISION_RESPONSE; }
 
 	private:
-
-		void setNode(ISceneNode* node);
-
 		core::vector3df LastPosition;
 		core::vector3df Radius;
 		core::vector3df Gravity;
@@ -96,8 +93,6 @@ namespace scene
 		u32 FallStartTime;
 		f32 SlidingSpeed;
 		bool Falling;
-		bool IsCamera;
-		bool AnimateCameraTarget;
 
 		core::triangle3df RefTriangle;
 	};

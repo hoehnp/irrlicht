@@ -1,4 +1,4 @@
-// Copyright 2006-2008 Asger Feldthaus
+// Copyright 2006-2007 Asger Feldthaus
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -79,7 +79,7 @@ public:
 	//! returns the visible area inside the panel, excluding scrollbar and border
 	core::rect<s32> getClientArea() const;
     
-    virtual bool OnEvent(const SEvent &event);
+    virtual bool OnEvent(SEvent event);
 
 	//! adds a child to the panel
 	virtual void addChild(IGUIElement* child);

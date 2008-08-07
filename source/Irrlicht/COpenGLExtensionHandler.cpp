@@ -1,15 +1,10 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
-// This file is part of the "Irrlicht Engine".
-// For conditions of distribution and use, see copyright notice in irrlicht.h
+#include "COpenGLExtensionHandler.h"
+#include "irrString.h"
+#include "SMaterial.h" // for MATERIAL_MAX_TEXTURES
 
 #include "IrrCompileConfig.h"
 
 #ifdef _IRR_COMPILE_WITH_OPENGL_
-
-#include "COpenGLExtensionHandler.h"
-#include "irrString.h"
-#include "SMaterial.h" // for MATERIAL_MAX_TEXTURES
-#include "fast_atof.h"
 
 namespace irr
 {
@@ -19,10 +14,11 @@ namespace video
 COpenGLExtensionHandler::COpenGLExtensionHandler() :
 		StencilBuffer(false),
 		MultiTextureExtension(false), MultiSamplingExtension(false), AnisotropyExtension(false),
+		SeparateStencilExtension(false),
 		TextureCompressionExtension(false),
-		MaxTextureUnits(1), MaxLights(1), MaxIndices(65535),
-		MaxAnisotropy(1.0f), MaxUserClipPlanes(0),
-		Version(0), ShaderLanguageVersion(0)
+		PackedDepthStencilExtension(false),
+		MaxTextureUnits(1), MaxLights(1), MaxIndices(1),
+		MaxAnisotropy(1.0f), Version(0)
 #ifdef _IRR_OPENGL_USE_EXTPOINTER_
 	,pGlActiveTextureARB(0), pGlClientActiveTextureARB(0),
 	pGlGenProgramsARB(0), pGlBindProgramARB(0), pGlProgramStringARB(0),
@@ -35,7 +31,9 @@ COpenGLExtensionHandler::COpenGLExtensionHandler() :
 	pGlUniformMatrix3fvARB(0), pGlUniformMatrix4fvARB(0), pGlGetActiveUniformARB(0), pGlPointParameterfARB(0), pGlPointParameterfvARB(0),
 	pGlStencilFuncSeparate(0), pGlStencilOpSeparate(0),
 	pGlStencilFuncSeparateATI(0), pGlStencilOpSeparateATI(0),
-	pGlCompressedTexImage2D(0),
+	#ifdef PFNGLCOMPRESSEDTEXIMAGE2DPROC
+		pGlCompressedTexImage2D(0),
+	#endif
 #ifdef _IRR_USE_WINDOWS_DEVICE_
 	wglSwapIntervalEXT(0),
 #elif defined(GLX_SGI_swap_control)
@@ -44,12 +42,7 @@ COpenGLExtensionHandler::COpenGLExtensionHandler() :
 	pGlBindFramebufferEXT(0), pGlDeleteFramebuffersEXT(0), pGlGenFramebuffersEXT(0),
 	pGlCheckFramebufferStatusEXT(0), pGlFramebufferTexture2DEXT(0),
 	pGlBindRenderbufferEXT(0), pGlDeleteRenderbuffersEXT(0), pGlGenRenderbuffersEXT(0),
-	pGlRenderbufferStorageEXT(0), pGlFramebufferRenderbufferEXT(0),
-	pGlGenBuffersARB(0), pGlBindBufferARB(0), pGlBufferDataARB(0), pGlDeleteBuffersARB(0),
-	pGlBufferSubDataARB(0), pGlGetBufferSubDataARB(0), pGlMapBufferARB(0), pGlUnmapBufferARB(0),
-	pGlIsBufferARB(0), pGlGetBufferParameterivARB(0), pGlGetBufferPointervARB(0)
-
-
+	pGlRenderbufferStorageEXT(0), pGlFramebufferRenderbufferEXT(0)
 #endif // _IRR_OPENGL_USE_EXTPOINTER_
 {
 	for (u32 i=0; i<IRR_OpenGL_Feature_Count; ++i)
@@ -65,34 +58,40 @@ void COpenGLExtensionHandler::dump() const
 
 void COpenGLExtensionHandler::initExtensions(bool stencilBuffer)
 {
-	const f32 ogl_ver = core::fast_atof(reinterpret_cast<const c8*>(glGetString(GL_VERSION)));
-	Version = core::floor32(ogl_ver)*100+core::ceil32(core::fract(ogl_ver)*10.0f);
+	const f32 ver = (f32)atof((c8*)glGetString(GL_VERSION));
+	Version = core::floor32(ver)*100+(s32)(ver-floor(ver));
 	if ( Version >= 102)
 		os::Printer::log("OpenGL driver version is 1.2 or better.", ELL_INFORMATION);
 	else
 		os::Printer::log("OpenGL driver version is not 1.2 or better.", ELL_WARNING);
 
+	const GLubyte* t = glGetString(GL_EXTENSIONS);
+//	os::Printer::log((const c8*)t, ELL_INFORMATION);
+	#ifdef GLU_VERSION_1_3
+	const GLubyte* gluVersion = gluGetString(GLU_VERSION);
+
+	if (gluVersion[0]>1 || gluVersion[3]>2)
 	{
-		const char* t = reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS));
-		const size_t len = strlen(t);
+		for (u32 i=0; i<IRR_OpenGL_Feature_Count; ++i)
+			FeatureAvailable[i] = gluCheckExtension((const GLubyte*)OpenGLFeatureStrings[i], t);
+	}
+	else
+	#endif
+	{
+		s32 len = (s32)strlen((const char*)t);
 		c8 *str = new c8[len+1];
 		c8* p = str;
 
-		for (size_t i=0; i<len; ++i)
+		for (s32 i=0; i<len; ++i)
 		{
-			str[i] = static_cast<char>(t[i]);
+			str[i] = (char)t[i];
 
 			if (str[i] == ' ')
 			{
 				str[i] = 0;
-				for (u32 j=0; j<IRR_OpenGL_Feature_Count; ++j)
-				{
-					if (!strcmp(OpenGLFeatureStrings[j], p))
-					{
-						FeatureAvailable[j] = true;
-						break;
-					}
-				}
+				for (u32 i=0; i<IRR_OpenGL_Feature_Count; ++i)
+					if (strstr(p, OpenGLFeatureStrings[i]))
+						FeatureAvailable[i] = true;
 
 				p = p + strlen(p) + 1;
 			}
@@ -104,7 +103,10 @@ void COpenGLExtensionHandler::initExtensions(bool stencilBuffer)
 	MultiTextureExtension = FeatureAvailable[IRR_ARB_multitexture];
 	MultiSamplingExtension = FeatureAvailable[IRR_ARB_multisample];
 	AnisotropyExtension = FeatureAvailable[IRR_EXT_texture_filter_anisotropic];
+	SeparateStencilExtension = FeatureAvailable[IRR_ATI_separate_stencil];
 	TextureCompressionExtension = FeatureAvailable[IRR_ARB_texture_compression];
+	PackedDepthStencilExtension = FeatureAvailable[IRR_EXT_packed_depth_stencil];
+	SeparateSpecularColorExtension = FeatureAvailable[IRR_EXT_separate_specular_color];
 	StencilBuffer=stencilBuffer;
 
 #ifdef _IRR_WINDOWS_API_
@@ -150,36 +152,24 @@ void COpenGLExtensionHandler::initExtensions(bool stencilBuffer)
 	pGlStencilOpSeparateATI = (PFNGLSTENCILOPSEPARATEATIPROC) wglGetProcAddress("glStencilOpSeparateATI");
 
 	// compressed textures
+	#ifdef PFNGLCOMPRESSEDTEXIMAGE2DPROC
 	pGlCompressedTexImage2D = (PFNGLCOMPRESSEDTEXIMAGE2DPROC) wglGetProcAddress("glCompressedTexImage2D");
+	#endif
 
-	// FrameBufferObjects
-	pGlBindFramebufferEXT = (PFNGLBINDFRAMEBUFFEREXTPROC) wglGetProcAddress("glBindFramebufferEXT");
-	pGlDeleteFramebuffersEXT = (PFNGLDELETEFRAMEBUFFERSEXTPROC) wglGetProcAddress("glDeleteFramebuffersEXT");
-	pGlGenFramebuffersEXT = (PFNGLGENFRAMEBUFFERSEXTPROC) wglGetProcAddress("glGenFramebuffersEXT");
-	pGlCheckFramebufferStatusEXT = (PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC) wglGetProcAddress("glCheckFramebufferStatusEXT");
-	pGlFramebufferTexture2DEXT = (PFNGLFRAMEBUFFERTEXTURE2DEXTPROC) wglGetProcAddress("glFramebufferTexture2DEXT");
-	pGlBindRenderbufferEXT = (PFNGLBINDRENDERBUFFEREXTPROC) wglGetProcAddress("glBindRenderbufferEXT");
-	pGlDeleteRenderbuffersEXT = (PFNGLDELETERENDERBUFFERSEXTPROC) wglGetProcAddress("glDeleteRenderbuffersEXT");
-	pGlGenRenderbuffersEXT = (PFNGLGENRENDERBUFFERSEXTPROC) wglGetProcAddress("glGenRenderbuffersEXT");
-	pGlRenderbufferStorageEXT = (PFNGLRENDERBUFFERSTORAGEEXTPROC) wglGetProcAddress("glRenderbufferStorageEXT");
-	pGlFramebufferRenderbufferEXT = (PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC) wglGetProcAddress("glFramebufferRenderbufferEXT");
-
-	// get vertex buffer extension
-	pGlGenBuffersARB = (PFNGLGENBUFFERSARBPROC) wglGetProcAddress("glGenBuffersARB");
-	pGlBindBufferARB = (PFNGLBINDBUFFERARBPROC) wglGetProcAddress("glBindBufferARB");
-	pGlBufferDataARB = (PFNGLBUFFERDATAARBPROC) wglGetProcAddress("glBufferDataARB");
-	pGlDeleteBuffersARB = (PFNGLDELETEBUFFERSARBPROC) wglGetProcAddress("glDeleteBuffersARB");
-	pGlBufferSubDataARB= (PFNGLBUFFERSUBDATAARBPROC) wglGetProcAddress("glBufferSubDataARB");
-	pGlGetBufferSubDataARB= (PFNGLGETBUFFERSUBDATAARBPROC)wglGetProcAddress("glGetBufferSubDataARB");
-	pGlMapBufferARB= (PFNGLMAPBUFFERARBPROC) wglGetProcAddress("glMapBufferARB");
-	pGlUnmapBufferARB= (PFNGLUNMAPBUFFERARBPROC) wglGetProcAddress("glUnmapBufferARB");
-	pGlIsBufferARB= (PFNGLISBUFFERARBPROC) wglGetProcAddress("glIsBufferARB");
-	pGlGetBufferParameterivARB= (PFNGLGETBUFFERPARAMETERIVARBPROC) wglGetProcAddress("glGetBufferParameterivARB");
-	pGlGetBufferPointervARB= (PFNGLGETBUFFERPOINTERVARBPROC) wglGetProcAddress("glGetBufferPointervARB");
-
+        // FrameBufferObjects
+        pGlBindFramebufferEXT = (PFNGLBINDFRAMEBUFFEREXTPROC) wglGetProcAddress("glBindFramebufferEXT");
+        pGlDeleteFramebuffersEXT = (PFNGLDELETEFRAMEBUFFERSEXTPROC) wglGetProcAddress("glDeleteFramebuffersEXT");
+        pGlGenFramebuffersEXT = (PFNGLGENFRAMEBUFFERSEXTPROC) wglGetProcAddress("glGenFramebuffersEXT");
+        pGlCheckFramebufferStatusEXT = (PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC) wglGetProcAddress("glCheckFramebufferStatusEXT");
+        pGlFramebufferTexture2DEXT = (PFNGLFRAMEBUFFERTEXTURE2DEXTPROC) wglGetProcAddress("glFramebufferTexture2DEXT");
+        pGlBindRenderbufferEXT = (PFNGLBINDRENDERBUFFEREXTPROC) wglGetProcAddress("glBindRenderbufferEXT");
+        pGlDeleteRenderbuffersEXT = (PFNGLDELETERENDERBUFFERSEXTPROC) wglGetProcAddress("glDeleteRenderbuffersEXT");
+        pGlGenRenderbuffersEXT = (PFNGLGENRENDERBUFFERSEXTPROC) wglGetProcAddress("glGenRenderbuffersEXT");
+        pGlRenderbufferStorageEXT = (PFNGLRENDERBUFFERSTORAGEEXTPROC) wglGetProcAddress("glRenderbufferStorageEXT");
+        pGlFramebufferRenderbufferEXT = (PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC) wglGetProcAddress("glFramebufferRenderbufferEXT");
 
 	// vsync extension
-	wglSwapIntervalEXT = (PFNWGLSWAPINTERVALFARPROC) wglGetProcAddress("wglSwapIntervalEXT");
+	wglSwapIntervalEXT = (PFNWGLSWAPINTERVALFARPROC)wglGetProcAddress( "wglSwapIntervalEXT" );
 
 #elif defined(_IRR_USE_LINUX_DEVICE_) || defined (_IRR_USE_SDL_DEVICE_)
 	#ifdef _IRR_OPENGL_USE_EXTPOINTER_
@@ -313,8 +303,10 @@ void COpenGLExtensionHandler::initExtensions(bool stencilBuffer)
 		IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glStencilOpSeparateATI"));
 
 	// compressed textures
+	#ifdef PFNGLCOMPRESSEDTEXIMAGE2DPROC
 	pGlCompressedTexImage2D = (PFNGLCOMPRESSEDTEXIMAGE2DPROC)
 		IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glCompressedTexImage2D"));
+	#endif
 
 	#if defined(GLX_SGI_swap_control) && !defined(_IRR_USE_SDL_DEVICE_)
 		// get vsync extension
@@ -352,80 +344,13 @@ void COpenGLExtensionHandler::initExtensions(bool stencilBuffer)
 	pGlFramebufferRenderbufferEXT = (PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC)
 	IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glFramebufferRenderbufferEXT"));
 
-	pGlGenBuffersARB = (PFNGLGENBUFFERSARBPROC)
-	IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glGenBuffersARB"));
-
-	pGlBindBufferARB = (PFNGLBINDBUFFERARBPROC)
-	IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glBindBufferARB"));
-
-	pGlBufferDataARB = (PFNGLBUFFERDATAARBPROC)
-	IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glBufferDataARB"));
-
-	pGlDeleteBuffersARB = (PFNGLDELETEBUFFERSARBPROC)
-	IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glDeleteBuffersARB"));
-
-	pGlBufferSubDataARB = (PFNGLBUFFERSUBDATAARBPROC)
-	IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glBufferSubDataARB"));
-
-	pGlGetBufferSubDataARB = (PFNGLGETBUFFERSUBDATAARBPROC)
-	IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glGetBufferSubDataARB"));
-
-	pGlMapBufferARB = (PFNGLMAPBUFFERARBPROC)
-	IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glMapBufferARB"));
-
-	pGlUnmapBufferARB = (PFNGLUNMAPBUFFERARBPROC)
-	IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glUnmapBufferARB"));
-
-	pGlIsBufferARB = (PFNGLISBUFFERARBPROC)
-	IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glIsBufferARB"));
-
-	pGlGetBufferParameterivARB = (PFNGLGETBUFFERPARAMETERIVARBPROC)
-	IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glGetBufferParameterivARB"));
-
-	pGlGetBufferPointervARB = (PFNGLGETBUFFERPOINTERVARBPROC)
-	IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glGetBufferPointervARB"));
-
-
 	#endif // _IRR_OPENGL_USE_EXTPOINTER_
 #endif // _IRR_WINDOWS_API_
 
 	// set some properties
-#if defined(GL_ARB_multitexture) || defined(GL_VERSION_1_3)
-	if (Version>102 || FeatureAvailable[IRR_ARB_multitexture])
-	{
-		GLint num;
-		glGetIntegerv(GL_MAX_TEXTURE_UNITS, &num);
-		MaxTextureUnits=num;
-	}
-#endif
+	glGetIntegerv(GL_MAX_TEXTURE_UNITS, &MaxTextureUnits);
 	glGetIntegerv(GL_MAX_LIGHTS, &MaxLights);
-#ifdef GL_EXT_texture_filter_anisotropic
-	if (FeatureAvailable[IRR_EXT_texture_filter_anisotropic])
-		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &MaxAnisotropy);
-#endif
-#ifdef GL_VERSION_1_2
-	if (Version>101)
-		glGetIntegerv(GL_MAX_ELEMENTS_INDICES, &MaxIndices);
-#endif
-	glGetIntegerv(GL_MAX_CLIP_PLANES, reinterpret_cast<GLint*>(&MaxUserClipPlanes));
-#if defined(GL_ARB_shading_language_100) || defined (GL_VERSION_2_0)
-	if (FeatureAvailable[IRR_ARB_shading_language_100] || Version>=200)
-	{
-		glGetError(); // clean error buffer
-#ifdef GL_SHADING_LANGUAGE_VERSION
-		const GLubyte* shaderVersion = glGetString(GL_SHADING_LANGUAGE_VERSION);
-#else
-		const GLubyte* shaderVersion = glGetString(GL_SHADING_LANGUAGE_VERSION_ARB);
-#endif
-		if (glGetError() == GL_INVALID_ENUM)
-			ShaderLanguageVersion = 100;
-		else
-		{
-			const f32 sl_ver = core::fast_atof(reinterpret_cast<const c8*>(shaderVersion));
-			ShaderLanguageVersion = core::floor32(sl_ver)*100+core::ceil32(core::fract(sl_ver)*10.0f);
-		}
-	}
-#endif
+	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &MaxAnisotropy);
 
 #ifdef _IRR_OPENGL_USE_EXTPOINTER_
 	if (!pGlActiveTextureARB || !pGlClientActiveTextureARB)
@@ -440,7 +365,8 @@ void COpenGLExtensionHandler::initExtensions(bool stencilBuffer)
 		MultiTextureExtension = false;
 		os::Printer::log("Warning: OpenGL device only has one texture unit. Disabling multitexturing.", ELL_WARNING);
 	}
-	MaxTextureUnits = core::min_(MaxTextureUnits,MATERIAL_MAX_TEXTURES);
+	MaxTextureUnits = core::min_((u32)MaxTextureUnits,MATERIAL_MAX_TEXTURES);
+	glGetIntegerv(GL_MAX_ELEMENTS_INDICES, &MaxIndices);
 
 }
 
@@ -465,17 +391,11 @@ bool COpenGLExtensionHandler::queryFeature(E_VIDEO_DRIVER_FEATURE feature) const
 	case EVDF_ARB_FRAGMENT_PROGRAM_1:
 		return FeatureAvailable[IRR_ARB_fragment_program];
 	case EVDF_ARB_GLSL:
-		return (FeatureAvailable[IRR_ARB_shading_language_100]||Version>=200);
+		return FeatureAvailable[IRR_ARB_shading_language_100];
 	case EVDF_TEXTURE_NPOT:
-		// Some ATI cards seem to have only SW support in OpenGL 2.0
-		// drivers if the extension is not exposed, so we skip this
-		// extra test for now!
-		// return (FeatureAvailable[IRR_ARB_texture_non_power_of_two]||Version>=200);
-		return (FeatureAvailable[IRR_ARB_texture_non_power_of_two]);
+		return FeatureAvailable[IRR_ARB_texture_non_power_of_two];
 	case EVDF_FRAMEBUFFER_OBJECT:
 		return FeatureAvailable[IRR_EXT_framebuffer_object];
-	case EVDF_VERTEX_BUFFER_OBJECT:
-		return FeatureAvailable[IRR_ARB_vertex_buffer_object];
 	default:
 		return false;
 	};
@@ -486,5 +406,4 @@ bool COpenGLExtensionHandler::queryFeature(E_VIDEO_DRIVER_FEATURE feature) const
 }
 
 #endif
-
 

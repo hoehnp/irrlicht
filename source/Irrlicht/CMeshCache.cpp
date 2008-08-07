@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -218,21 +218,6 @@ void CMeshCache::clear()
 
 	Meshes.clear();
 }
-
-//! Clears all meshes that are held in the mesh cache but not used anywhere else.
-void CMeshCache::clearUnusedMeshes()
-{
-	for (u32 i=0; i<Meshes.size(); ++i)
-	{
-		if (Meshes[i].Mesh->getReferenceCount() == 1)
-		{
-			Meshes[i].Mesh->drop();
-			Meshes.erase(i);
-			--i;
-		}
-	}
-}
-
 
 } // end namespace scene
 } // end namespace irr

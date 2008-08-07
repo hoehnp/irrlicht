@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -14,10 +14,10 @@ namespace irr
 {
 namespace core
 {
-
+	
 	//! 3d triangle template class for doing collision detection and other things.
 	template <class T>
-	class triangle3d
+	class triangle3d  
 	{
 	public:
 
@@ -44,7 +44,7 @@ namespace core
 		//! and false otherwise.
 		bool isTotalInsideBox(const aabbox3d<T>& box) const
 		{
-			return (box.isPointInside(pointA) &&
+			return (box.isPointInside(pointA) && 
 				box.isPointInside(pointB) &&
 				box.isPointInside(pointC));
 		}
@@ -64,7 +64,7 @@ namespace core
 
 			if (d1 < d2)
 				return d1 < d3 ? rab : rca;
-
+            
 			return d2 < d3 ? rbc : rca;
 		}
 
@@ -79,33 +79,31 @@ namespace core
 				isOnSameSide(p, pointC, pointA, pointB));
 		}
 
-		//! Check if a point is inside the triangle. This method is an
-		//! implementation of the example used in a paper by Kasper
-		//! Fauerby original written by Keidy from Mr-Gamemaker.
-		//! \param p: Point to test. Assumes that this point is already
-		//! on the plane of the triangle.
-		//! \return Returns true if the point is inside the triangle,
-		//! otherwise false.
+		//! Check if a point is inside the triangle. This method is an implementation
+		//! of the example used in a paper by Kasper Fauerby original written
+		//! by Keidy from Mr-Gamemaker.
+		//! \param p: Point to test. Assumes that this point is already on the plane
+		//! of the triangle.
+		//! \return Returns true if the point is inside the triangle, otherwise false.
 		bool isPointInsideFast(const vector3d<T>& p) const
 		{
-			const vector3d<T> f = pointB - pointA;
-			const vector3d<T> g = pointC - pointA;
+			vector3d<T> f = pointB - pointA;
+			vector3d<T> g = pointC - pointA;
 
-			const f32 a = f.dotProduct(f);
-			const f32 b = f.dotProduct(g);
-			const f32 c = g.dotProduct(g);
+			f32 a = f.dotProduct(f);
+			f32 b = f.dotProduct(g);
+			f32 c = g.dotProduct(g);
 
-			const vector3d<T> vp = p - pointA;
-			const f32 d = vp.dotProduct(f);
-			const f32 e = vp.dotProduct(g);
+			f32 ac_bb = (a*c)-(b*b);
+			vector3d<T> vp = p - pointA;
 
+			f32 d = vp.dotProduct(f);
+			f32 e = vp.dotProduct(g);
 			f32 x = (d*c)-(e*b);
 			f32 y = (e*a)-(d*b);
-			const f32 ac_bb = (a*c)-(b*b);
 			f32 z = x+y-ac_bb;
 
-			// return sign(z) && !(sign(x)||sign(y))
-			return (( (IR(z)) & ~((IR(x))|(IR(y))) ) & 0x80000000)!=0;
+			return (( ((u32&)z)& ~(((u32&)x)|((u32&)y))) & 0x80000000)!=0;
 		}
 
 
@@ -137,11 +135,11 @@ namespace core
 			if (getIntersectionOfPlaneWithLine(linePoint, lineVect, outIntersection))
 				return isPointInside(outIntersection);
 
-			return false;
+			return false;			
 		}
 
 
-		//! Calculates the intersection between a 3d line and
+		//! Calculates the intersection between a 3d line and 
 		//! the plane the triangle is on.
 		//! \param lineVect: Vector of the line to intersect with.
 		//! \param linePoint: Point of the line to intersect with.
@@ -162,7 +160,7 @@ namespace core
 			return true;
 		}
 
-
+		
 		//! Returns the normal of the triangle.
 		//! Please note: The normal is not normalized.
 		vector3d<T> getNormal() const
@@ -180,9 +178,9 @@ namespace core
 		//! false if it is backfacing.
 		bool isFrontFacing(const vector3d<T>& lookDirection) const
 		{
-			const vector3d<T> n = getNormal().normalize();
-			const f32 d = (f32)n.dotProduct(lookDirection);
-			return F32_LOWER_EQUAL_0(d);
+			vector3d<T> n = getNormal();
+			n.normalize();
+			return F32_LOWER_EQUAL_0(n.dotProduct(lookDirection));
 		}
 
 		//! Returns the plane of this triangle.
@@ -207,12 +205,12 @@ namespace core
 		}
 
 		//! the three points of the triangle
-		vector3d<T> pointA;
-		vector3d<T> pointB;
-		vector3d<T> pointC;
+		vector3d<T> pointA; 
+		vector3d<T> pointB; 
+		vector3d<T> pointC; 
 
 	private:
-		bool isOnSameSide(const vector3d<T>& p1, const vector3d<T>& p2,
+		bool isOnSameSide(const vector3d<T>& p1, const vector3d<T>& p2, 
 			const vector3d<T>& a, const vector3d<T>& b) const
 		{
 			vector3d<T> bminusa = b - a;

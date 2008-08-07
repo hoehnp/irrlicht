@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -21,8 +21,7 @@
 		#define bswap_32(X) ( (((X)&0x000000FF)<<24) | (((X)&0xFF000000) >> 24) | (((X)&0x0000FF00) << 8) | (((X) &0x00FF0000) >> 8))
 	#endif
 #else
-	#if defined(_IRR_OSX_PLATFORM_)
-		#include <libkern/OSByteOrder.h>
+	#ifdef MACOSX
 		#define bswap_16(X) OSReadSwapInt16(&X,0)
 		#define bswap_32(X) OSReadSwapInt32(&X,0)
 	#elif defined(__FreeBSD__)
@@ -68,27 +67,18 @@ namespace os
 	//! prints a debuginfo string
 	void Printer::print(const c8* message)
 	{
-#if !defined (_WIN32_WCE )
 		c8* tmp = new c8[strlen(message) + 2];
 		sprintf(tmp, "%s\n", message);
 		OutputDebugString(tmp);
 		printf(tmp);
 		delete [] tmp;
-#endif
 	}
 
-	static LARGE_INTEGER HighPerformanceFreq;
-	static BOOL HighPerformanceTimerSupport = FALSE;
-	static BOOL MultiCore = FALSE;
+	LARGE_INTEGER HighPerformanceFreq;
+	BOOL HighPerformanceTimerSupport = FALSE;
 
 	void Timer::initTimer()
 	{
-#if !defined(_WIN32_WCE)
-		// disable hires timer on multiple core systems, bios bugs result in bad hires timers.
-		SYSTEM_INFO sysinfo;
-		GetSystemInfo(&sysinfo);
-		MultiCore = (sysinfo.dwNumberOfProcessors > 1);	
-#endif
 		HighPerformanceTimerSupport = QueryPerformanceFrequency(&HighPerformanceFreq);
 		initVirtualTimer();
 	}
@@ -97,26 +87,10 @@ namespace os
 	{
 		if (HighPerformanceTimerSupport)
 		{
-#if !defined(_WIN32_WCE)
-			// Avoid potential timing inaccuracies across multiple cores by 
-			// temporarily setting the affinity of this process to one core.
-			DWORD_PTR affinityMask;
-			if(MultiCore)
-				affinityMask = SetThreadAffinityMask(GetCurrentThread(), 1); 
-#endif
 			LARGE_INTEGER nTime;
-			BOOL queriedOK = QueryPerformanceCounter(&nTime);
-
-#if !defined(_WIN32_WCE)
-			// Restore the true affinity.
-			if(MultiCore)
-				(void)SetThreadAffinityMask(GetCurrentThread(), affinityMask);
-#endif
-			if(queriedOK)
-				return u32((nTime.QuadPart) * 1000 / HighPerformanceFreq.QuadPart);
-
+			QueryPerformanceCounter(&nTime);
+			return u32((nTime.QuadPart) * 1000 / HighPerformanceFreq.QuadPart);
 		}
-
 		return GetTickCount();
 	}
 
@@ -151,7 +125,7 @@ namespace os
 
 	u32 Timer::getRealTime()
 	{
-		timeval tv;
+		static timeval tv;
 		gettimeofday(&tv, 0);
 		return (u32)(tv.tv_sec * 1000) + (tv.tv_usec / 1000);
 	}
@@ -299,5 +273,4 @@ namespace os
 
 } // end namespace os
 } // end namespace irr
-
 

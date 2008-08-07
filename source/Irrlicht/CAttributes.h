@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -28,7 +28,7 @@ public:
 	~CAttributes();
 
 	//! Returns amount of attributes in this collection of attributes.
-	virtual u32 getAttributeCount() const;
+	virtual s32 getAttributeCount();
 
 	//! Returns attribute name by index. 
 	//! \param index: Index value, must be between 0 and getAttributeCount()-1.
@@ -62,11 +62,10 @@ public:
 	//! Reads attributes from a xml file.
 	//! \param readCurrentElementOnly: If set to true, reading only works if current element has the name 'attributes'.
 	//! IF set to false, the first appearing list attributes are read.
-	virtual bool read(io::IXMLReader* reader, bool readCurrentElementOnly=false,
-					  const wchar_t* nonDefaultElementName = 0);
+	virtual bool read(irr::io::IXMLReader* reader, bool readCurrentElementOnly=false);
 
 	//! Write these attributes into a xml file
-	virtual bool write(io::IXMLWriter* writer, bool writeXMLHeader=false, const wchar_t* nonDefaultElementName=0);
+	virtual bool write(io::IXMLWriter* writer, bool writeXMLHeader=false);
 
 
 	/*
@@ -431,10 +430,10 @@ public:
 	*/ 
 
 	//! Adds an attribute as matrix
-	virtual void addMatrix(const c8* attributeName, const core::matrix4& v);
+	virtual void addMatrix(const c8* attributeName, core::matrix4 v);
 
 	//! Sets an attribute as matrix
-	virtual void setAttribute(const c8* attributeName, const core::matrix4& v);
+	virtual void setAttribute(const c8* attributeName, core::matrix4 v);
 
 	//! Gets an attribute as a matrix4
 	//! \param attributeName: Name of the attribute to get.
@@ -446,7 +445,7 @@ public:
 	virtual core::matrix4 getAttributeAsMatrix(s32 index);
 
 	//! Sets an attribute as matrix
-	virtual void setAttribute(s32 index, const core::matrix4& v);
+	virtual void setAttribute(s32 index, core::matrix4 v);
 
 	/*
 		quaternion attribute
@@ -655,7 +654,7 @@ protected:
 };
 
 
-class IAttribute : public virtual IReferenceCounted
+class IAttribute : public virtual IUnknown
 {
 public:
 

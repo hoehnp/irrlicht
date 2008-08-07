@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -35,7 +35,7 @@ namespace io
 		}
 
 		//! Returns size of file in bytes
-		virtual long getSize() const
+		virtual int getSize()
 		{
 			return ReadFile->getSize();
 		}
@@ -54,7 +54,7 @@ namespace io
 		if (!file)
 			return 0;
 
-		return new CXMLReaderImpl<wchar_t, IReferenceCounted>(new CIrrXMLFileReadCallBack(file)); 
+		return new CXMLReaderImpl<wchar_t, IUnknown>(new CIrrXMLFileReadCallBack(file)); 
 	}
 
 	//! Creates an instance of an UFT-8 or ASCII character xml parser. 
@@ -63,7 +63,7 @@ namespace io
 		if (!file)
 			return 0;
 
-		return new CXMLReaderImpl<char, IReferenceCounted>(new CIrrXMLFileReadCallBack(file)); 
+		return new CXMLReaderImpl<char, IUnknown>(new CIrrXMLFileReadCallBack(file)); 
 	}
 
 } // end namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -23,7 +23,7 @@ namespace scene
 			: ISceneNode(parent, mgr, id) {}
 
 		//! sets the mesh from which the shadow volume should be generated.
-		virtual void setMeshToRenderFrom(const IMesh* mesh) = 0;
+		virtual void setMeshToRenderFrom(IMesh* mesh) = 0;
 	};
 
 } // end namespace scene

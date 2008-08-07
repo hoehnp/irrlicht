@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -22,7 +22,7 @@ CTextSceneNode::CTextSceneNode(ISceneNode* parent, ISceneManager* mgr, s32 id,
 			gui::IGUIFont* font, scene::ISceneCollisionManager* coll,
 			const core::vector3df& position, const wchar_t* text,
 			video::SColor color)
-	: ISceneNode(parent, mgr, id, position), ITextSceneNode(parent, mgr, id, position), Text(text), Color(color),
+	: ITextSceneNode(parent, mgr, id, position), Text(text), Color(color),
 		Font(font), Coll(coll)
 	
 {
@@ -46,9 +46,10 @@ CTextSceneNode::~CTextSceneNode()
 void CTextSceneNode::OnRegisterSceneNode()
 {
 	if (IsVisible)
+	{
 		SceneManager->registerNodeForRendering(this, ESNRP_TRANSPARENT);
-
-	ISceneNode::OnRegisterSceneNode();
+		ISceneNode::OnRegisterSceneNode();
+	}
 }
 
 //! renders the node.
@@ -93,18 +94,18 @@ CBillboardTextSceneNode::CBillboardTextSceneNode(ISceneNode* parent, ISceneManag
 	gui::IGUIFont* font,const wchar_t* text,
 	const core::vector3df& position, const core::dimension2d<f32>& size,
 	video::SColor shade_top,video::SColor shade_bottom )
-: ISceneNode(parent, mgr, id, position), ITextSceneNode(parent, mgr, id, position), IBillboardSceneNode(parent, mgr, id, position),
+: ITextSceneNode(parent, mgr, id, position),
 	Font(0), Shade_top(shade_top), Shade_bottom(shade_bottom), Mesh(0)
 {
 	#ifdef _DEBUG
 	setDebugName("CBillboardTextSceneNode");
 	#endif
 
-	Material.MaterialType = video::EMT_TRANSPARENT_ALPHA_CHANNEL;
-	Material.MaterialTypeParam = 1.f / 255.f;
+	Material.MaterialType = video::EMT_TRANSPARENT_ALPHA_CHANNEL_REF;
+	Material.MaterialTypeParam = 0.5f;
 	Material.BackfaceCulling = false;
 	Material.Lighting = false;
-	Material.ZBuffer = true;
+	Material.ZBuffer = false;
 	Material.ZWriteEnable = false;
 
 	if (font)
@@ -121,7 +122,7 @@ CBillboardTextSceneNode::CBillboardTextSceneNode(ISceneNode* parent, ISceneManag
 			{
 				SMeshBuffer *mb = new SMeshBuffer();
 				mb->Material = Material;
-				mb->Material.setTexture(0, Font->getSpriteBank()->getTexture(i));
+				mb->Material.Textures[0] = Font->getSpriteBank()->getTexture(i);
 				Mesh->addMeshBuffer(mb);
 				mb->drop();
 			}
@@ -157,13 +158,6 @@ void CBillboardTextSceneNode::setText(const wchar_t* text)
 	Text = text;
 
 	Symbol.clear();
-
-	// clear mesh
-	for (u32 j=0; j < Mesh->getMeshBufferCount(); ++j)
-	{
-		((SMeshBuffer*)Mesh->getMeshBuffer(j))->Indices.clear();
-		((SMeshBuffer*)Mesh->getMeshBuffer(j))->Vertices.clear();
-	}
 
 	if (!Font)
 		return;
@@ -228,6 +222,7 @@ void CBillboardTextSceneNode::setText(const wchar_t* text)
 		info.firstVert = firstVert;
 
 		Symbol.push_back(info);
+
 	}
 }
 
@@ -332,7 +327,10 @@ void CBillboardTextSceneNode::render()
 	core::matrix4 mat;
 	driver->setTransform(video::ETS_WORLD, mat);
 
-	for (u32 i = 0; i < Mesh->getMeshBufferCount(); ++i)
+	
+
+	u32 i;
+	for ( i = 0; i < Mesh->getMeshBufferCount(); ++i )
 	{
 		driver->setMaterial(Mesh->getMeshBuffer(i)->getMaterial());
 		driver->drawMeshBuffer(Mesh->getMeshBuffer(i));
@@ -346,8 +344,8 @@ void CBillboardTextSceneNode::render()
 		driver->setMaterial(m);
 		driver->draw3DBox(BBox, video::SColor(0,208,195,152));
 	}
-}
 
+}
 
 //! returns the axis aligned bounding box of this node
 const core::aabbox3d<f32>& CBillboardTextSceneNode::getBoundingBox() const
@@ -383,7 +381,7 @@ video::SMaterial& CBillboardTextSceneNode::getMaterial(u32 i)
 
 
 //! returns amount of materials used by this scene node.
-u32 CBillboardTextSceneNode::getMaterialCount() const
+u32 CBillboardTextSceneNode::getMaterialCount()
 {
 	if (Mesh)
 		return Mesh->getMeshBufferCount();
@@ -393,60 +391,18 @@ u32 CBillboardTextSceneNode::getMaterialCount() const
 
 
 //! gets the size of the billboard
-const core::dimension2d<f32>& CBillboardTextSceneNode::getSize() const
+const core::dimension2d<f32>& CBillboardTextSceneNode::getSize()
 {
 	return Size;
 }
+
+
 
 
 //! sets the color of the text
 void CBillboardTextSceneNode::setTextColor(video::SColor color)
 {
 	Color = color;
-}
-
-//! Set the color of all vertices of the billboard
-//! \param overallColor: the color to set
-void CBillboardTextSceneNode::setColor(const video::SColor & overallColor)
-{
-	for ( u32 i = 0; i != Text.size (); ++i )
-	{
-		const SSymbolInfo &info = Symbol[i];
-		SMeshBuffer* buf = (SMeshBuffer*)Mesh->getMeshBuffer(info.bufNo);
-		buf->Vertices[info.firstVert+0].Color = overallColor;
-		buf->Vertices[info.firstVert+1].Color = overallColor;
-		buf->Vertices[info.firstVert+2].Color = overallColor;
-		buf->Vertices[info.firstVert+3].Color = overallColor;
-	}
-}
-
-
-//! Set the color of the top and bottom vertices of the billboard
-//! \param topColor: the color to set the top vertices
-//! \param bottomColor: the color to set the bottom vertices
-void CBillboardTextSceneNode::setColor(const video::SColor & topColor, const video::SColor & bottomColor)
-{
-	Shade_bottom = bottomColor;
-	Shade_top = topColor;
-	for ( u32 i = 0; i != Text.size (); ++i )
-	{
-		const SSymbolInfo &info = Symbol[i];
-		SMeshBuffer* buf = (SMeshBuffer*)Mesh->getMeshBuffer(info.bufNo);
-		buf->Vertices[info.firstVert+0].Color = Shade_bottom;
-		buf->Vertices[info.firstVert+3].Color = Shade_bottom;
-		buf->Vertices[info.firstVert+1].Color = Shade_top;
-		buf->Vertices[info.firstVert+2].Color = Shade_top;
-	}
-}
-
-
-//! Gets the color of the top and bottom vertices of the billboard
-//! \param topColor: stores the color of the top vertices
-//! \param bottomColor: stores the color of the bottom vertices
-void CBillboardTextSceneNode::getColor(video::SColor & topColor, video::SColor & bottomColor) const
-{
-	topColor = Shade_top;
-	bottomColor = Shade_bottom;
 }
 
 

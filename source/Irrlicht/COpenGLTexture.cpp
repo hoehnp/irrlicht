@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2008 Nikolaus Gebhardt
+// Copyright (C) 2002-2007 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -20,25 +20,21 @@ namespace irr
 namespace video
 {
 
-#ifdef GL_EXT_framebuffer_object
 // helper function for render to texture
-static bool checkFBOStatus(COpenGLDriver* Driver);
-#endif
+bool checkFBOStatus(COpenGLDriver* Driver);
 
 //! constructor for usual textures
-COpenGLTexture::COpenGLTexture(IImage* origImage, const char* name, COpenGLDriver* driver)
-	: ITexture(name), Driver(driver), Image(0),
-	TextureName(0), InternalFormat(GL_RGBA), PixelFormat(GL_BGRA_EXT),
-	PixelType(GL_UNSIGNED_BYTE),
-	ColorFrameBuffer(0), DepthRenderBuffer(0), StencilRenderBuffer(0),
-	HasMipMaps(true), IsRenderTarget(false), AutomaticMipmapUpdate(false),
-	UseStencil(false), ReadOnlyLock(false)
+COpenGLTexture::COpenGLTexture(IImage* image, const char* name, COpenGLDriver* driver)
+ : ITexture(name), Driver(driver), Image(0),
+  TextureName(0), InternalFormat(GL_RGBA), PixelFormat(GL_BGRA_EXT),
+  PixelType(GL_UNSIGNED_BYTE), HasMipMaps(true),
+  ColorFrameBuffer(0), DepthRenderBuffer(0), StencilRenderBuffer(0), Locks(0)
 {
 	#ifdef _DEBUG
 	setDebugName("COpenGLTexture");
 	#endif
 
-	getImageData(origImage);
+	getImageData(image);
 
 	HasMipMaps = Driver->getTextureCreationFlag(ETCF_CREATE_MIP_MAPS);
 	if (Image)
@@ -48,18 +44,15 @@ COpenGLTexture::COpenGLTexture(IImage* origImage, const char* name, COpenGLDrive
 	}
 }
 
-
-//! RTT ColorFrameBuffer constructor
+//! ColorFrameBuffer constructor
 COpenGLTexture::COpenGLTexture(const core::dimension2d<s32>& size,
+                                bool extPackedDepthStencilSupported,
                                 const char* name,
-                                COpenGLDriver* driver,
-				bool useStencil)
-	: ITexture(name), ImageSize(size), Driver(driver), Image(0),
-	TextureName(0), InternalFormat(GL_RGBA), PixelFormat(GL_RGBA),
-	PixelType(GL_UNSIGNED_BYTE),
-	ColorFrameBuffer(0), DepthRenderBuffer(0), StencilRenderBuffer(0),
-	HasMipMaps(false), IsRenderTarget(true), AutomaticMipmapUpdate(false),
-	UseStencil(useStencil), ReadOnlyLock(false)
+                                COpenGLDriver* driver)
+ : ITexture(name), ImageSize(size), Driver(driver), Image(0),
+  TextureName(0), InternalFormat(GL_RGB8), PixelFormat(GL_RGBA),
+  PixelType(GL_UNSIGNED_BYTE), HasMipMaps(false),
+  ColorFrameBuffer(0), DepthRenderBuffer(0), StencilRenderBuffer(0), Locks(0)
 {
 	#ifdef _DEBUG
 	setDebugName("COpenGLTexture_FBO");
@@ -74,56 +67,45 @@ COpenGLTexture::COpenGLTexture(const core::dimension2d<s32>& size,
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	if (useStencil)
-	{
 #ifdef GL_EXT_packed_depth_stencil
-		if (Driver->queryOpenGLFeature(COpenGLExtensionHandler::IRR_EXT_packed_depth_stencil))
-		{
-			// generate packed depth stencil texture
-			glGenTextures(1, &DepthRenderBuffer);
-			glBindTexture(GL_TEXTURE_2D, DepthRenderBuffer);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_STENCIL_EXT, ImageSize.Width,
-				ImageSize.Height, 0, GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT, 0);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			StencilRenderBuffer = DepthRenderBuffer; // stencil is packed with depth
-		}
-		else // generate separate stencil and depth textures
-#endif
-		{
-			// generate depth texture
-			glGenTextures(1, &DepthRenderBuffer);
-			glBindTexture(GL_TEXTURE_2D, DepthRenderBuffer);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, ImageSize.Width,
-				ImageSize.Height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-			// we 're in trouble! the code below does not complete
-			// the FBO currently...  stencil buffer is only
-			// supported with EXT_packed_depth_stencil extension
-			// (above)
-
-//			// generate stencil texture
-//			glGenTextures(1, &StencilRenderBuffer);
-//			glBindTexture(GL_TEXTURE_2D, StencilRenderBuffer);
-//			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-//			glTexImage2D(GL_TEXTURE_2D, 0, GL_STENCIL_INDEX, ImageSize.Width,
-//			ImageSize.Height, 0, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, 0);
-//			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-//			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		}
-	}
-#ifdef GL_EXT_framebuffer_object
-	else
+	if (extPackedDepthStencilSupported)
 	{
-		// generate depth buffer
-		Driver->extGlGenFramebuffers(1, &DepthRenderBuffer);
-		Driver->extGlBindRenderbuffer(GL_RENDERBUFFER_EXT, DepthRenderBuffer);
+		// generate packed depth stencil texture
+		glGenTextures(1, &DepthRenderBuffer);
+		glBindTexture(GL_TEXTURE_2D, DepthRenderBuffer);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_STENCIL_EXT, ImageSize.Width,
+			ImageSize.Height, 0, GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT, 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		StencilRenderBuffer = DepthRenderBuffer; // stencil is packed with depth
+	}
+	else // generate separate stencil and depth textures
+#endif
+	{
+		// generate depth texture
+		glGenTextures(1, &DepthRenderBuffer);
+		glBindTexture(GL_TEXTURE_2D, DepthRenderBuffer);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, ImageSize.Width,
+			ImageSize.Height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        // we 're in trouble! the code below does not complete the FBO currently...
+        // stencil buffer is only supported with EXT_packed_depth_stencil extension (above)
+
+//        // generate stencil texture
+//        glGenTextures(1, &StencilRenderBuffer);
+//        glBindTexture(GL_TEXTURE_2D, StencilRenderBuffer);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+//        glTexImage2D(GL_TEXTURE_2D, 0, GL_STENCIL_INDEX, ImageSize.Width,
+//                        ImageSize.Height, 0, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, 0);
+//        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+//        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	}
 
+#ifdef GL_EXT_framebuffer_object
 	// generate frame buffer
 	Driver->extGlGenFramebuffers(1, &ColorFrameBuffer);
 	Driver->extGlBindFramebuffer(GL_FRAMEBUFFER_EXT, ColorFrameBuffer);
@@ -137,39 +119,26 @@ COpenGLTexture::COpenGLTexture(const core::dimension2d<s32>& size,
 	// attach depth texture to depth buffer
 	Driver->extGlFramebufferTexture2D(GL_FRAMEBUFFER_EXT,
 						GL_DEPTH_ATTACHMENT_EXT,
-						useStencil?GL_TEXTURE_2D:GL_RENDERBUFFER_EXT,
+						GL_TEXTURE_2D,
 						DepthRenderBuffer,
 						0);
-	if (useStencil)
-	{
-		// attach stencil texture to stencil buffer
-		Driver->extGlFramebufferTexture2D(GL_FRAMEBUFFER_EXT,
+	// attach stencil texture to stencil buffer
+	Driver->extGlFramebufferTexture2D(GL_FRAMEBUFFER_EXT,
 						GL_STENCIL_ATTACHMENT_EXT,
 						GL_TEXTURE_2D,
 						StencilRenderBuffer,
 						0);
-	}
-	else
-		Driver->extGlRenderbufferStorage(GL_RENDERBUFFER_EXT,
-				GL_DEPTH_COMPONENT, ImageSize.Width,
-				ImageSize.Height);
-
 	glGetError();
 
 	// check the status
 	if (!checkFBOStatus(Driver))
 	{
-		printf("FBO=%u, Color=%u, Depth=%u, Stencil=%u\n",
+		printf("FBO=%d, Color=%d, Depth=%d, Stencil=%d\n",
 			ColorFrameBuffer, TextureName, DepthRenderBuffer, StencilRenderBuffer);
 		if (ColorFrameBuffer)
 			Driver->extGlDeleteFramebuffers(1, &ColorFrameBuffer);
 		if (DepthRenderBuffer)
-		{
-			if (useStencil)
-				glDeleteTextures(1, &DepthRenderBuffer);
-			else
-				Driver->extGlDeleteRenderbuffers(1, &DepthRenderBuffer);
-		}
+			glDeleteTextures(1, &DepthRenderBuffer);
 		if (StencilRenderBuffer && StencilRenderBuffer != DepthRenderBuffer)
 			glDeleteTextures(1, &StencilRenderBuffer);
 		ColorFrameBuffer = 0;
@@ -180,64 +149,26 @@ COpenGLTexture::COpenGLTexture(const core::dimension2d<s32>& size,
 #endif
 }
 
-
 //! destructor
 COpenGLTexture::~COpenGLTexture()
 {
 	if (ColorFrameBuffer)
 		Driver->extGlDeleteFramebuffers(1, &ColorFrameBuffer);
-	if (DepthRenderBuffer && UseStencil)
+	if (DepthRenderBuffer)
 		glDeleteTextures(1, &DepthRenderBuffer);
-	else
-		Driver->extGlDeleteRenderbuffers(1, &DepthRenderBuffer);
 	if (StencilRenderBuffer && StencilRenderBuffer != DepthRenderBuffer)
 		glDeleteTextures(1, &StencilRenderBuffer);
+	ColorFrameBuffer = 0;
+	DepthRenderBuffer = 0;
+	StencilRenderBuffer = 0;
 
 	glDeleteTextures(1, &TextureName);
 	if (Image)
+	{
 		Image->drop();
-}
-
-
-ECOLOR_FORMAT COpenGLTexture::getBestColorFormat(ECOLOR_FORMAT format)
-{
-	ECOLOR_FORMAT destFormat = ECF_A8R8G8B8;
-	switch (format)
-	{
-		case ECF_A1R5G5B5:
-			if (!Driver->getTextureCreationFlag(ETCF_ALWAYS_32_BIT))
-				destFormat = ECF_A1R5G5B5;
-		break;
-		case ECF_R5G6B5:
-			if (!Driver->getTextureCreationFlag(ETCF_ALWAYS_32_BIT))
-				destFormat = ECF_A1R5G5B5;
-		break;
-		case ECF_A8R8G8B8:
-			if (Driver->getTextureCreationFlag(ETCF_ALWAYS_16_BIT) ||
-					Driver->getTextureCreationFlag(ETCF_OPTIMIZED_FOR_SPEED))
-				destFormat = ECF_A1R5G5B5;
-		break;
-		case ECF_R8G8B8:
-			if (Driver->getTextureCreationFlag(ETCF_ALWAYS_16_BIT) ||
-					Driver->getTextureCreationFlag(ETCF_OPTIMIZED_FOR_SPEED))
-				destFormat = ECF_A1R5G5B5;
-		break;
+		Image=0;
 	}
-	if (Driver->getTextureCreationFlag(ETCF_NO_ALPHA_CHANNEL))
-	{
-		switch (destFormat)
-		{
-			case ECF_A1R5G5B5:
-				destFormat = ECF_R5G6B5;
-			break;
-			case ECF_A8R8G8B8:
-				destFormat = ECF_R8G8B8;
-			break;
-			default:
-			break;
-		}
-	}
-	return destFormat;
+	ImageSize.Width=ImageSize.Height=0;
 }
 
 
@@ -258,7 +189,7 @@ void COpenGLTexture::getImageData(IImage* image)
 	}
 
 	core::dimension2d<s32> nImageSize;
-	if (Driver->queryFeature(EVDF_TEXTURE_NPOT))
+	if (Driver && Driver->queryFeature(EVDF_TEXTURE_NPOT))
 		nImageSize=ImageSize;
 	else
 	{
@@ -266,7 +197,28 @@ void COpenGLTexture::getImageData(IImage* image)
 		nImageSize.Height = getTextureSizeFromSurfaceSize(ImageSize.Height);
 	}
 
-	ECOLOR_FORMAT destFormat = getBestColorFormat(image->getColorFormat());
+	ECOLOR_FORMAT destFormat = ECF_A8R8G8B8;
+	switch (image->getColorFormat())
+	{
+		case ECF_A1R5G5B5:
+			if (!Driver->getTextureCreationFlag(ETCF_ALWAYS_32_BIT))
+				destFormat = ECF_A1R5G5B5;
+		break;
+		case ECF_R5G6B5:
+			if (!Driver->getTextureCreationFlag(ETCF_ALWAYS_32_BIT))
+				destFormat = ECF_A1R5G5B5;
+		break;
+		case ECF_A8R8G8B8:
+			if (Driver->getTextureCreationFlag(ETCF_ALWAYS_16_BIT) ||
+					Driver->getTextureCreationFlag(ETCF_OPTIMIZED_FOR_SPEED))
+				destFormat = ECF_A1R5G5B5;
+		break;
+		case ECF_R8G8B8:
+			if (Driver->getTextureCreationFlag(ETCF_ALWAYS_16_BIT) ||
+					Driver->getTextureCreationFlag(ETCF_OPTIMIZED_FOR_SPEED))
+				destFormat = ECF_A1R5G5B5;
+		break;
+	}
 	if (ImageSize==nImageSize)
 		Image = new CImage(destFormat, image);
 	else
@@ -278,18 +230,13 @@ void COpenGLTexture::getImageData(IImage* image)
 }
 
 
+
 //! copies the the texture into an open gl texture.
 void COpenGLTexture::copyTexture(bool newTexture)
 {
 	glBindTexture(GL_TEXTURE_2D, TextureName);
 	if (Driver->testGLError())
 		os::Printer::log("Could not bind Texture", ELL_ERROR);
-
-	if (!Image)
-	{
-		os::Printer::log("No image for OpenGL texture to upload", ELL_ERROR);
-		return;
-	}
 
 	switch (Image->getColorFormat())
 	{
@@ -300,57 +247,52 @@ void COpenGLTexture::copyTexture(bool newTexture)
 			break;
 		case ECF_R5G6B5:
 			InternalFormat=GL_RGB;
-			PixelFormat=GL_BGR;
-			PixelType=GL_UNSIGNED_SHORT_5_6_5_REV;
+			PixelFormat=GL_RGB;
+			PixelType=GL_UNSIGNED_SHORT_5_6_5;
 			break;
 		case ECF_R8G8B8:
-			InternalFormat=GL_RGB;
-			PixelFormat=GL_BGR;
+			InternalFormat=GL_RGB8;
+			PixelFormat=GL_RGB;
 			PixelType=GL_UNSIGNED_BYTE;
 			break;
 		case ECF_A8R8G8B8:
 			InternalFormat=GL_RGBA;
 			PixelFormat=GL_BGRA_EXT;
-			if (Driver->Version > 101)
-				PixelType=GL_UNSIGNED_INT_8_8_8_8_REV;
+			PixelType=GL_UNSIGNED_INT_8_8_8_8_REV;
 			break;
 		default:
 			os::Printer::log("Unsupported texture format", ELL_ERROR);
 			break;
 	}
 
-	if (newTexture)
+	#ifndef DISABLE_MIPMAPPING
+	if (HasMipMaps && Driver && Driver->queryFeature(EVDF_MIP_MAP_AUTO_UPDATE))
 	{
-		#ifndef DISABLE_MIPMAPPING
-		if (HasMipMaps && Driver->queryFeature(EVDF_MIP_MAP_AUTO_UPDATE))
-		{
-			// automatically generate and update mipmaps
-			glTexParameteri( GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE );
-			AutomaticMipmapUpdate=true;
-		}
-		else
-		{
-			AutomaticMipmapUpdate=false;
-			regenerateMipMapLevels();
-		}
-		if (HasMipMaps) // might have changed in regenerateMipMapLevels
-		{
-			// enable bilinear mipmap filter
-			glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST );
-			glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		}
-		else
-		#else
-			HasMipMaps=false;
-			os::Printer::log("Did not create OpenGL texture mip maps.", ELL_ERROR);
-		#endif
-		{
-			// enable bilinear filter without mipmaps
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		}
+		// automatically generate and update mipmaps
+		glTexParameteri( GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE );
+		AutomaticMipmapUpdate=true;
 	}
-
+	else
+	{
+		AutomaticMipmapUpdate=false;
+		regenerateMipMapLevels();
+	}
+	if (HasMipMaps) // might have changed in regenerateMipMapLevels
+	{
+		// enable bilinear mipmap filter
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	}
+	else
+	#else
+		HasMipMaps=false;
+		os::Printer::log("Did not create OpenGL texture mip maps.", ELL_ERROR);
+	#endif
+	{
+		// enable bilinear filter without mipmaps
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	}
 	void* source = Image->lock();
 	if (newTexture)
 		glTexImage2D(GL_TEXTURE_2D, 0, InternalFormat, Image->getDimension().Width,
@@ -365,8 +307,9 @@ void COpenGLTexture::copyTexture(bool newTexture)
 }
 
 
+
 //! returns the size of a texture which would be the optimal size for rendering it
-inline s32 COpenGLTexture::getTextureSizeFromSurfaceSize(s32 size) const
+inline s32 COpenGLTexture::getTextureSizeFromSurfaceSize(s32 size)
 {
 	s32 ts = 0x01;
 	while(ts < size)
@@ -377,80 +320,34 @@ inline s32 COpenGLTexture::getTextureSizeFromSurfaceSize(s32 size) const
 
 
 //! lock function
-void* COpenGLTexture::lock(bool readOnly)
+void* COpenGLTexture::lock()
 {
-	ReadOnlyLock |= readOnly;
-
-	if (!Image)
-		Image = new CImage(ECF_A8R8G8B8, ImageSize);
-	if (IsRenderTarget)
+	if (Image)
 	{
-		u8* pPixels = static_cast<u8*>(Image->lock());
-		if (!pPixels)
-		{
-			return 0;
-		}
-		// we need to keep the correct texture bound...
-		GLint tmpTexture;
-		glGetIntegerv(GL_TEXTURE_BINDING_2D, &tmpTexture);
-		glBindTexture(GL_TEXTURE_2D, TextureName);
-
-		// allows to read pixels in top-to-bottom order
-#ifdef GL_MESA_pack_invert
-		if (Driver->FeatureAvailable[COpenGLExtensionHandler::IRR_MESA_pack_invert])
-			glPixelStorei(GL_PACK_INVERT_MESA, GL_TRUE);
-#endif
-
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, pPixels);
-
-#ifdef GL_MESA_pack_invert
-		if (Driver->FeatureAvailable[COpenGLExtensionHandler::IRR_MESA_pack_invert])
-			glPixelStorei(GL_PACK_INVERT_MESA, GL_FALSE);
-		else
-#endif
-		{
-			// opengl images are horizontally flipped, so we have to fix that here.
-			const s32 pitch=Image->getPitch();
-			u8* p2 = pPixels + (ImageSize.Height - 1) * pitch;
-			u8* tmpBuffer = new u8[pitch];
-			for (s32 i=0; i < ImageSize.Height; i += 2)
-			{
-				memcpy(tmpBuffer, pPixels, pitch);
-				memcpy(pPixels, p2, pitch);
-				memcpy(p2, tmpBuffer, pitch);
-				pPixels += pitch;
-				p2 -= pitch;
-			}
-			delete [] tmpBuffer;
-		}
-		Image->unlock();
-
-		//reset old bound texture
-		glBindTexture(GL_TEXTURE_2D, tmpTexture);
+		++Locks;
+		return Image->lock();
 	}
-	return Image->lock();
+	else
+		return 0;
 }
+
 
 
 //! unlock function
 void COpenGLTexture::unlock()
 {
-	Image->unlock();
-	if (!ReadOnlyLock)
+	if (Image)
+	{
+		--Locks;
+		Image->unlock();
 		copyTexture(false);
-	ReadOnlyLock = false;
+	}
 }
 
 
-//! Returns size of the original image.
-const core::dimension2d<s32>& COpenGLTexture::getOriginalSize() const
-{
-	return ImageSize;
-}
 
-
-//! Returns size of the texture.
-const core::dimension2d<s32>& COpenGLTexture::getSize() const
+//! Returns original size of the texture.
+const core::dimension2d<s32>& COpenGLTexture::getOriginalSize()
 {
 	if (Image)
 		return Image->getDimension();
@@ -459,11 +356,21 @@ const core::dimension2d<s32>& COpenGLTexture::getSize() const
 }
 
 
-//! returns driver type of texture, i.e. the driver, which created the texture
-E_DRIVER_TYPE COpenGLTexture::getDriverType() const
+
+//! Returns (=size) of the texture.
+const core::dimension2d<s32>& COpenGLTexture::getSize()
+{
+	return ImageSize;
+}
+
+
+
+//! returns driver type of texture (=the driver, who created the texture)
+E_DRIVER_TYPE COpenGLTexture::getDriverType()
 {
 	return EDT_OPENGL;
 }
+
 
 
 //! returns color format of texture
@@ -476,6 +383,7 @@ ECOLOR_FORMAT COpenGLTexture::getColorFormat() const
 }
 
 
+
 //! returns pitch of texture (in bytes)
 u32 COpenGLTexture::getPitch() const
 {
@@ -486,11 +394,13 @@ u32 COpenGLTexture::getPitch() const
 }
 
 
+
 //! return open gl texture name
-GLuint COpenGLTexture::getOpenGLTextureName() const
+GLuint COpenGLTexture::getOpenGLTextureName()
 {
 	return TextureName;
 }
+
 
 
 //! Returns whether this texture has mipmaps
@@ -501,54 +411,48 @@ bool COpenGLTexture::hasMipMaps() const
 }
 
 
+
 //! Regenerates the mip map levels of the texture. Useful after locking and
 //! modifying the texture
+//! MipMap updates are automatically performed by OpenGL.
 void COpenGLTexture::regenerateMipMapLevels()
 {
 	if (AutomaticMipmapUpdate || !HasMipMaps)
 		return;
-	if ((Image->getDimension().Width==1) && (Image->getDimension().Height==1))
-		return;
-
-	// Manually create mipmaps
-	u32 width=Image->getDimension().Width;
-	u32 height=Image->getDimension().Height;
-	u32 i=0;
-	u8* target = new u8[Image->getImageDataSizeInBytes()];
-	do
+	void* source = Image->lock();
+	if (gluBuild2DMipmaps(GL_TEXTURE_2D, InternalFormat,
+			ImageSize.Width, ImageSize.Height,
+			PixelFormat, PixelType, source))
 	{
+		Image->unlock();
+		return;
+	}
+
+	// This code is wrong as it does not take into account the image scaling
+	// Therefore it is currently disabled
+	u32 width=ImageSize.Width>>1;
+	u32 height=ImageSize.Height>>1;
+	u32 i=1;
+	u8* target = new u8[Image->getImageDataSizeInBytes()];
+	while (width>1 || height>1)
+	{
+		Image->copyToScaling(target, width, height, Image->getColorFormat(), Image->getPitch());
+		glTexImage2D(GL_TEXTURE_2D, i, InternalFormat, Image->getDimension().Width,
+			Image->getDimension().Height, 0, PixelFormat, PixelType, target);
 		if (width>1)
 			width>>=1;
 		if (height>1)
 			height>>=1;
 		++i;
-		Image->copyToScaling(target, width, height, Image->getColorFormat());
-		glTexImage2D(GL_TEXTURE_2D, i, InternalFormat, width, height,
-				0, PixelFormat, PixelType, target);
 	}
-	while (width!=1 || height!=1);
 	delete [] target;
 	Image->unlock();
 }
 
-
-bool COpenGLTexture::isFrameBufferObject() const
+bool COpenGLTexture::isFrameBufferObject()
 {
     return ColorFrameBuffer != 0;
 }
-
-
-bool COpenGLTexture::isRenderTarget() const
-{
-    return IsRenderTarget;
-}
-
-
-void COpenGLTexture::setIsRenderTarget(bool isTarget)
-{
-    IsRenderTarget = isTarget;
-}
-
 
 //! Bind ColorFrameBuffer (valid only if isFrameBufferObject() returns true).
 void COpenGLTexture::bindFrameBufferObject()
@@ -559,7 +463,6 @@ void COpenGLTexture::bindFrameBufferObject()
 #endif
 }
 
-
 //! Unbind ColorFrameBuffer (valid only if isFrameBufferObject() returns true).
 void COpenGLTexture::unbindFrameBufferObject()
 {
@@ -569,10 +472,9 @@ void COpenGLTexture::unbindFrameBufferObject()
 #endif
 }
 
-
-#ifdef GL_EXT_framebuffer_object
 bool checkFBOStatus(COpenGLDriver* Driver)
 {
+#ifdef GL_EXT_framebuffer_object
 	GLenum status = Driver->extGlCheckFramebufferStatus(GL_FRAMEBUFFER_EXT);
 
 	switch (status)
@@ -620,10 +522,9 @@ bool checkFBOStatus(COpenGLDriver* Driver)
 			break;
 	}
 	os::Printer::log("FBO error", ELL_ERROR);
+#endif
 	return false;
 }
-#endif
-
 
 } // end namespace video
 } // end namespace irr

@@ -61,7 +61,7 @@ namespace gui
 				AttribButton->drop();
 		}
 
-		virtual bool OnEvent(const SEvent &e)
+		virtual bool OnEvent(SEvent e)
 		{
 
 			if (IsEnabled)
