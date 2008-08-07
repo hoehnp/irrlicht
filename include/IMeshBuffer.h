@@ -9,7 +9,6 @@
 #include "SMaterial.h"
 #include "aabbox3d.h"
 #include "S3DVertex.h"
-#include "EHardwareBufferFlags.h"
 
 namespace irr
 {
@@ -55,19 +54,16 @@ namespace scene
 		EPT_POINT_SPRITES
 	};
 
-	enum E_BUFFER_TYPE
-	{
-		EBT_NONE=0,
-		EBT_VERTEX,
-		EBT_INDEX,
-		EBT_VERTEX_AND_INDEX
-	};
+
 
 	//! Struct for holding a mesh with a single material
 	/** SMeshBuffer is a simple implementation of a MeshBuffer. */
 	class IMeshBuffer : public virtual IReferenceCounted
 	{
 	public:
+
+		//! Destructor
+		virtual ~IMeshBuffer() { }
 
 		//! Get the material of this meshbuffer
 		/** \return Material of this buffer. */
@@ -119,18 +115,6 @@ namespace scene
 		//! Recalculates the bounding box. Should be called if the mesh changed.
 		virtual void recalculateBoundingBox() = 0;
 
-		//! returns position of vertex i
-		virtual const core::vector3df& getPosition(u32 i) const = 0;
-
-		//! returns position of vertex i
-		virtual core::vector3df& getPosition(u32 i) = 0;
-
-		//! returns normal of vertex i
-		virtual const core::vector3df& getNormal(u32 i) const = 0;
-
-		//! returns normal of vertex i
-		virtual core::vector3df& getNormal(u32 i) = 0;
-
 		//! Append the vertices and indices to the current buffer
 		/** Only works for compatible vertex types.
 		\param vertices Pointer to a vertex array.
@@ -143,26 +127,6 @@ namespace scene
 		/** Only works for compatible vertex types
 		\param other Buffer to append to this one. */
 		virtual void append(const IMeshBuffer* const other) = 0;
-
-		//! get the current hardware mapping hint
-		virtual const E_HARDWARE_MAPPING getHardwareMappingHint() const = 0;
-
-		//! set the hardware mapping hint, for driver
-		virtual void setHardwareMappingHint( E_HARDWARE_MAPPING NewMappingHint ) = 0;
-
-		//! flags the meshbuffer as changed, reloads hardware buffers
-		virtual void setDirty(E_BUFFER_TYPE Buffer=EBT_VERTEX_AND_INDEX) = 0;
-
-		//to be spit into vertex and index buffers:
-		//! Get the currently used ID for identification of changes.
-		/** This shouldn't be used for anything outside the VideoDriver. */
-		virtual const u32 getChangedID_Vertex() const = 0;
-
-		//! Get the currently used ID for identification of changes.
-		/** This shouldn't be used for anything outside the VideoDriver. */
-		virtual const u32 getChangedID_Index() const = 0;
-
-		u32 HardwareHint;
 	};
 
 } // end namespace scene

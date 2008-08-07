@@ -39,9 +39,10 @@ void CLightSceneNode::OnRegisterSceneNode()
 	doLightRecalc();
 
 	if (IsVisible)
+	{
 		SceneManager->registerNodeForRendering(this, ESNRP_LIGHT);
-
-	ISceneNode::OnRegisterSceneNode();
+		ISceneNode::OnRegisterSceneNode();
+	}
 }
 
 

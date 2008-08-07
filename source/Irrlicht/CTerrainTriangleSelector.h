@@ -10,6 +10,7 @@
 #define __C_TERRAIN_TRIANGLE_SELECTOR_H__
 
 #include "ITriangleSelector.h"
+#include "IMesh.h"
 #include "irrArray.h"
 
 namespace irr
@@ -31,7 +32,7 @@ public:
 	CTerrainTriangleSelector(ITerrainSceneNode* node, s32 LOD );
 
 	//! Destructor
-	virtual ~CTerrainTriangleSelector();
+	~CTerrainTriangleSelector();
 
 	//! Clears and sets triangle data
 	virtual void setTriangleData ( ITerrainSceneNode* node, s32 LOD );
@@ -46,7 +47,7 @@ public:
 
 	//! Gets all triangles which have or may have contact with a 3d line.
 	virtual void getTriangles ( core::triangle3df* triangles, s32 arraySize,
-		s32& outTriangleCount, const core::line3d<f32>& line, 
+        s32& outTriangleCount, const core::line3d<f32>& line, 
 		const core::matrix4* transform = 0 ) const;
 
 	//! Returns amount of all available triangles in this selector

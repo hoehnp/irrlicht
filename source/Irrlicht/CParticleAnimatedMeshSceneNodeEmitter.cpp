@@ -28,11 +28,6 @@ CParticleAnimatedMeshSceneNodeEmitter::CParticleAnimatedMeshSceneNodeEmitter(
 	MinLifeTime(lifeTimeMin), MaxLifeTime(lifeTimeMax),
 	Time(0), Emitted(0), MaxAngleDegrees(maxAngleDegrees)
 {
-
-	#ifdef _DEBUG
-	setDebugName("CParticleAnimatedMeshSceneNodeEmitter");
-	#endif
-
 	AnimatedMesh = node->getMesh();
 	BaseMesh = AnimatedMesh->getMesh(0);
 
@@ -77,12 +72,24 @@ s32 CParticleAnimatedMeshSceneNodeEmitter::emitt(u32 now, u32 timeSinceLastCall,
 				{
 					for( u32 k=0; k<frameMesh->getMeshBuffer(j)->getVertexCount(); ++k )
 					{
-						p.pos = frameMesh->getMeshBuffer(j)->getPosition(k);
-						if( UseNormalDirection )
-							p.vector = frameMesh->getMeshBuffer(j)->getNormal(k) /
-								NormalDirectionModifier;
-						else
-							p.vector = Direction;
+						switch( frameMesh->getMeshBuffer(j)->getVertexType() )
+						{
+						case video::EVT_STANDARD:
+							p.pos = ((video::S3DVertex*)frameMesh->getMeshBuffer(j)->getVertices())[k].Pos;
+							if( UseNormalDirection )
+								p.vector = ((video::S3DVertex*)frameMesh->getMeshBuffer(j)->getVertices())[k].Normal / NormalDirectionModifier;
+							else
+								p.vector = Direction;
+							break;
+						case video::EVT_TANGENTS:
+							p.pos = ((video::S3DVertexTangents*)frameMesh->getMeshBuffer(j)->getVertices())[k].Pos;
+							if( UseNormalDirection )
+								p.vector = ((video::S3DVertexTangents*)frameMesh->getMeshBuffer(j)->getVertices())[k].Normal /
+									NormalDirectionModifier;
+							else
+								p.vector = Direction;
+							break;
+						}
 
 						p.startTime = now;
 
@@ -123,17 +130,27 @@ s32 CParticleAnimatedMeshSceneNodeEmitter::emitt(u32 now, u32 timeSinceLastCall,
 					randomMB = MBNumber;
 				}
 
-				u32 vertexNumber = frameMesh->getMeshBuffer(randomMB)->getVertexCount();
-				if (!vertexNumber)
-					continue;
-				vertexNumber = os::Randomizer::rand() % vertexNumber;
+				u32 vertexNumber = os::Randomizer::rand() % frameMesh->getMeshBuffer(randomMB)->getVertexCount();
 
-				p.pos = frameMesh->getMeshBuffer(randomMB)->getPosition(vertexNumber);
-				if( UseNormalDirection )
-					p.vector = frameMesh->getMeshBuffer(randomMB)->getNormal(vertexNumber) /
-						NormalDirectionModifier;
-				else
-					p.vector = Direction;
+				switch( frameMesh->getMeshBuffer(randomMB)->getVertexType() )
+				{
+				case video::EVT_STANDARD:
+					p.pos = ((video::S3DVertex*)frameMesh->getMeshBuffer(randomMB)->getVertices())[vertexNumber].Pos;
+					if( UseNormalDirection )
+						p.vector = ((video::S3DVertex*)frameMesh->getMeshBuffer(randomMB)->getVertices())[vertexNumber].Normal /
+							NormalDirectionModifier;
+					else
+						p.vector = Direction;
+					break;
+				case video::EVT_TANGENTS:
+					p.pos = ((video::S3DVertexTangents*)frameMesh->getMeshBuffer(randomMB)->getVertices())[vertexNumber].Pos;
+					if( UseNormalDirection )
+						p.vector = ((video::S3DVertexTangents*)frameMesh->getMeshBuffer(randomMB)->getVertices())[vertexNumber].Normal /
+							NormalDirectionModifier;
+					else
+						p.vector = Direction;
+					break;
+				}
 
 				p.startTime = now;
 

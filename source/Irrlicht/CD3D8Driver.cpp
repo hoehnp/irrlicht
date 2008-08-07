@@ -358,7 +358,7 @@ bool CD3D8Driver::initDriver(const core::dimension2d<s32>& screenSize, HWND hwnd
 	// set exposed data
 	ExposedData.D3D8.D3D8 = pID3D;
 	ExposedData.D3D8.D3DDev8 = pID3DDevice;
-	ExposedData.D3D8.HWnd = hwnd;
+	ExposedData.D3D8.HWnd = reinterpret_cast<s32>(hwnd);
 
 	ResetRenderStates = true;
 
@@ -469,7 +469,7 @@ bool CD3D8Driver::reset()
 
 
 //! applications must call this method after performing any rendering. returns false if failed.
-bool CD3D8Driver::endScene( void* windowId, core::rect<s32>* sourceRect )
+bool CD3D8Driver::endScene( s32 windowId, core::rect<s32>* sourceRect )
 {
 	CNullDriver::endScene();
 
@@ -1024,36 +1024,14 @@ void CD3D8Driver::draw2DImage(const video::ITexture* texture, const core::rect<s
 	tcoords.LowerRightCorner.X = (f32)sourceRect.LowerRightCorner.X / (f32)ss.Width;
 	tcoords.LowerRightCorner.Y = (f32)sourceRect.LowerRightCorner.Y / (f32)ss.Height;
 
-	core::rect<s32> clippedRect(destRect);
-	if (clipRect)
-	{
-		clippedRect.clipAgainst(*clipRect);
-
-		//tcoords must be clipped by the same factors
-		const f32 tcWidth = tcoords.getWidth();
-		const f32 tcHeight = tcoords.getHeight();
-
-		const f32 invDestRectWidth = 1.f / (f32)(destRect.getWidth());
-		f32 scale = (f32)(clippedRect.UpperLeftCorner.X - destRect.UpperLeftCorner.X) * invDestRectWidth;
-		tcoords.UpperLeftCorner.X += scale * tcWidth;
-		scale = (f32)(destRect.LowerRightCorner.X - clippedRect.LowerRightCorner.X) * invDestRectWidth;
-		tcoords.LowerRightCorner.X -= scale * tcWidth;
-
-		const f32 invDestRectHeight = 1.f / (f32)(destRect.getHeight());
-		scale = (f32)(clippedRect.UpperLeftCorner.Y - destRect.UpperLeftCorner.Y) * invDestRectHeight;
-		tcoords.UpperLeftCorner.Y += scale * tcHeight;
-		scale = (f32)(destRect.LowerRightCorner.Y - clippedRect.LowerRightCorner.Y) * invDestRectHeight;
-		tcoords.LowerRightCorner.Y -= scale * tcHeight;
-	}
-
 	const core::dimension2d<s32>& renderTargetSize = getCurrentRenderTargetSize();
 	core::rect<f32> npos;
 	f32 xFact = 2.0f / ( renderTargetSize.Width );
 	f32 yFact = 2.0f / ( renderTargetSize.Height );
-	npos.UpperLeftCorner.X = ( clippedRect.UpperLeftCorner.X * xFact ) - 1.0f;
-	npos.UpperLeftCorner.Y = 1.0f - ( clippedRect.UpperLeftCorner.Y * yFact );
-	npos.LowerRightCorner.X = ( clippedRect.LowerRightCorner.X * xFact ) - 1.0f;
-	npos.LowerRightCorner.Y = 1.0f - ( clippedRect.LowerRightCorner.Y * yFact );
+	npos.UpperLeftCorner.X = ( destRect.UpperLeftCorner.X * xFact ) - 1.0f;
+	npos.UpperLeftCorner.Y = 1.0f - ( destRect.UpperLeftCorner.Y * yFact );
+	npos.LowerRightCorner.X = ( destRect.LowerRightCorner.X * xFact ) - 1.0f;
+	npos.LowerRightCorner.Y = 1.0f - ( destRect.LowerRightCorner.Y * yFact );
 
 	video::SColor temp[4] =
 	{
@@ -1355,18 +1333,12 @@ void CD3D8Driver::setBasicRenderStates(const SMaterial& material, const SMateria
 	// back face culling
 
 
-	if (resetAllRenderstates || (lastmaterial.FrontfaceCulling != material.FrontfaceCulling) || (lastmaterial.BackfaceCulling != material.BackfaceCulling))
+	if (resetAllRenderstates || lastmaterial.BackfaceCulling != material.BackfaceCulling)
 	{
-		if (material.FrontfaceCulling && material.BackfaceCulling)
-			pID3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW|D3DCULL_CCW);
-		else
-		if (material.FrontfaceCulling)
-			pID3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
-		else
 		if (material.BackfaceCulling)
-			pID3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
+			pID3DDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CCW);
 		else
-			pID3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+			pID3DDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_NONE);
 	}
 
 	// fog
@@ -1643,8 +1615,8 @@ void CD3D8Driver::setRenderStates2DMode(bool alpha, bool texture, bool alphaChan
 
 		// unset last 3d material
 		if (CurrentRenderMode == ERM_3D &&
-			Material.MaterialType >= 0 && LastMaterial.MaterialType < (s32)MaterialRenderers.size())
-			MaterialRenderers[LastMaterial.MaterialType].Renderer->OnUnsetMaterial();
+			Material.MaterialType >= 0 && Material.MaterialType < (s32)MaterialRenderers.size())
+			MaterialRenderers[Material.MaterialType].Renderer->OnUnsetMaterial();
 	}
 
 	if (texture)
@@ -2183,5 +2155,4 @@ IVideoDriver* createDirectX8Driver(const core::dimension2d<s32>& screenSize, HWN
 
 } // end namespace video
 } // end namespace irr
-
 

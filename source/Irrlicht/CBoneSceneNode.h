@@ -38,12 +38,13 @@ namespace scene
 		//! returns the axis aligned bounding box of this node
 		virtual const core::aabbox3d<f32>& getBoundingBox() const;
 
-		/*
 		//! Returns the relative transformation of the scene node.
 		//virtual core::matrix4 getRelativeTransformation() const;
-		*/
 
 		virtual void OnAnimate(u32 timeMs);
+
+
+		void helper_updateAbsolutePositionOfAllChildren(ISceneNode *Node);
 
 		virtual void updateAbsolutePositionOfAllChildren();
 
@@ -59,14 +60,12 @@ namespace scene
 			SkinningSpace=space;
 		}
 
-		virtual E_BONE_SKINNING_SPACE getSkinningSpace() const
+		virtual E_BONE_SKINNING_SPACE getSkinningSpace()
 		{
 			return SkinningSpace;
 		}
 
 	private:
-		void helper_updateAbsolutePositionOfAllChildren(ISceneNode *Node);
-
 		u32 BoneIndex;
 		core::stringc BoneName;
 

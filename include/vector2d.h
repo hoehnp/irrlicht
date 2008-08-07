@@ -69,8 +69,8 @@ public:
 		return core::equals(X, other.X) && core::equals(Y, other.Y);
 	}
 
-	vector2d<T>& set(T nx, T ny) {X=nx; Y=ny; return *this; }
-	vector2d<T>& set(const vector2d<T>& p) { X=p.X; Y=p.Y; return *this; }
+	void set(T nx, T ny) {X=nx; Y=ny; }
+	void set(const vector2d<T>& p) { X=p.X; Y=p.Y;}
 
 	//! Gets the length of the vector.
 	/** \return The length of the vector. */
@@ -109,13 +109,12 @@ public:
 
 	//! rotates the point around a center by an amount of degrees.
 	/** \param degrees Amount of degrees to rotate by.
-	\param center Rotation center.
-	\return This vector after transformation. */
-	vector2d<T>& rotateBy(f64 degrees, const vector2d<T>& center)
+	\param center Rotation center. */
+	void rotateBy(f64 degrees, const vector2d<T>& center)
 	{
 		degrees *= DEGTORAD64;
-		const T cs = (T)cos(degrees);
-		const T sn = (T)sin(degrees);
+		T cs = (T)cos(degrees);
+		T sn = (T)sin(degrees);
 
 		X -= center.X;
 		Y -= center.Y;
@@ -124,7 +123,6 @@ public:
 
 		X += center.X;
 		Y += center.Y;
-		return *this;
 	}
 
 	//! Normalize the vector.
@@ -217,7 +215,7 @@ public:
 	\return True if this vector is between begin and end, false if not. */
 	bool isBetweenPoints(const vector2d<T>& begin, const vector2d<T>& end) const
 	{
-		const T f = (end - begin).getLengthSQ();
+		T f = (end - begin).getLengthSQ();
 		return getDistanceFromSQ(begin) < f &&
 			getDistanceFromSQ(end) < f;
 	}
@@ -253,11 +251,10 @@ public:
 	/** \param a first vector to interpolate with
 	\param b second vector to interpolate with
 	\param t value between 0.0f and 1.0f. */
-	vector2d<T>& interpolate(const vector2d<T>& a, const vector2d<T>& b, const f32 t)
+	void interpolate(const vector2d<T>& a, const vector2d<T>& b, const f32 t)
 	{
 		X = b.X + ( ( a.X - b.X ) * t );
 		Y = b.Y + ( ( a.Y - b.Y ) * t );
-		return *this;
 	}
 
 	//! X coordinate of vector.
@@ -271,8 +268,7 @@ public:
 	//! Typedef for integer 2d vector.
 	typedef vector2d<s32> vector2di;
 
-	template<class S, class T>
-	vector2d<T> operator*(const S scalar, const vector2d<T>& vector) { return vector*scalar; }
+	template<class S, class T> vector2d<T> operator*(const S scalar, const vector2d<T>& vector) { return vector*scalar; }
 
 } // end namespace core
 } // end namespace irr

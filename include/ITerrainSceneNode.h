@@ -72,11 +72,6 @@ namespace scene
 		/** \return Pointer to the mesh. */
 		virtual IMesh* getMesh() = 0;
 
-
-		//! Returns a pointer to the buffer used by the terrain (most users will not need this)
-		virtual IMeshBuffer* getRenderBuffer() = 0;
-
-
 		//! Gets the meshbuffer data based on a specified level of detail.
 		/** \param mb A reference to an SMeshBuffer object
 		\param LOD The level of detail you want the indices from. */
@@ -90,7 +85,7 @@ namespace scene
 		then get the CurrentLOD. If the CurrentLOD is set to -1,
 		meaning it's not shown, then it will retrieve the triangles at
 		the highest LOD ( 0 ).
-		\return Number of indices put into the buffer. */
+		\return Number if indices put into the buffer. */
 		virtual s32 getIndicesForPatch(core::array<u32>& indices,
 			s32 patchX, s32 patchZ, s32 LOD = 0 ) = 0;
 

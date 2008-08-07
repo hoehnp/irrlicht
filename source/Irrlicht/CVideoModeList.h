@@ -21,6 +21,9 @@ namespace video
 		//! constructor
 		CVideoModeList();
 
+		//! destructor
+		virtual ~CVideoModeList();
+
 		//! Gets amount of video modes in the list.
 		virtual s32 getVideoModeCount() const;
 
@@ -31,7 +34,7 @@ namespace video
 		virtual s32 getVideoModeDepth(s32 modeNumber) const;
 
 		//! Returns current desktop screen resolution.
-		virtual const core::dimension2d<s32>& getDesktopResolution() const;
+		virtual core::dimension2d<s32> getDesktopResolution() const;
 
 		//! Returns the pixel depth of a video mode in bits.
 		virtual s32 getDesktopDepth() const;

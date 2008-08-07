@@ -82,9 +82,6 @@ namespace scene
 		//! same as getJointNode(const c8* jointName), but based on id
 		virtual IBoneSceneNode* getJointNode(u32 jointID);
 
-		//! Gets joint count.
-		virtual u32 getJointCount() const;
-
 		//! Redundant command, please use getJointNode.
 		virtual ISceneNode* getMS3DJointNode(const c8* jointName);
 

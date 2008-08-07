@@ -37,7 +37,7 @@ namespace video
 		virtual bool beginScene(bool backBuffer, bool zBuffer, SColor color);
 
 		//! applications must call this method after performing any rendering. returns false if failed.
-		virtual bool endScene( void* windowId=0, core::rect<s32>* sourceRect=0 );
+		virtual bool endScene( s32 windowId = 0, core::rect<s32>* sourceRect=0 );
 
 		//! queries the features of the driver, returns true if feature is available
 		virtual bool queryFeature(E_VIDEO_DRIVER_FEATURE feature) const;
@@ -58,32 +58,6 @@ namespace video
 
 		//! gets the area of the current viewport
 		virtual const core::rect<s32>& getViewPort() const;
-
-		struct SHWBufferLink_d3d9 : public SHWBufferLink
-		{
-			SHWBufferLink_d3d9(const scene::IMeshBuffer *_MeshBuffer): SHWBufferLink(_MeshBuffer), vertexBuffer(0), indexBuffer(0){}
-
-			IDirect3DVertexBuffer9* vertexBuffer;
-			IDirect3DIndexBuffer9* indexBuffer;
-
-			u32 vertexBufferSize;
-            u32 indexBufferSize;
- 		};
-
-		bool updateVertexHardwareBuffer(SHWBufferLink_d3d9 *HWBuffer);
-		bool updateIndexHardwareBuffer(SHWBufferLink_d3d9 *HWBuffer);
-
-		//! updates hardware buffer if needed
-		virtual bool updateHardwareBuffer(SHWBufferLink *HWBuffer);
-
-		//! Create hardware buffer from mesh
-		virtual SHWBufferLink *createHardwareBuffer(const scene::IMeshBuffer* mb);
-
-		//! Delete hardware buffer (only some drivers can)
-		virtual void deleteHardwareBuffer(SHWBufferLink *HWBuffer);
-
-		//! Draw hardware buffer
-		virtual void drawHardwareBuffer(SHWBufferLink *HWBuffer);
 
 		//! draws a vertex primitive list
 		virtual void drawVertexPrimitiveList(const void* vertices, u32 vertexCount,
@@ -218,9 +192,6 @@ namespace video
 		//! \param enable: If true, enable the clipping plane else disable it.
 		virtual void enableClipPlane(u32 index, bool enable);
 
-		//! Returns the graphics card vendor name.
-		virtual core::stringc getVendorInfo() {return vendorName;};
-
 	private:
 
 		// enumeration for rendering modes such as 2d and 3d for minizing the switching of renderStates.
@@ -324,8 +295,6 @@ namespace video
 		bool Fullscreen;
 
 		SColorf AmbientLight;
-
-		core::stringc vendorName;
 	};
 
 
@@ -335,7 +304,4 @@ namespace video
 
 #endif // _IRR_COMPILE_WITH_DIRECT3D_9_
 #endif // __C_VIDEO_DIRECTX_8_H_INCLUDED__
-
-
-
 

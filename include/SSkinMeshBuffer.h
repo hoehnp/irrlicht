@@ -19,7 +19,7 @@ namespace scene
 struct SSkinMeshBuffer : public IMeshBuffer
 {
 	//! Default constructor
-	SSkinMeshBuffer(video::E_VERTEX_TYPE vt=video::EVT_STANDARD) : ChangedID_Vertex(1),ChangedID_Index(1),MappingHint(EHM_NEVER),VertexType(vt)
+	SSkinMeshBuffer(video::E_VERTEX_TYPE vt=video::EVT_STANDARD) : VertexType(vt)
 	{
 		#ifdef _DEBUG
 		setDebugName("SSkinMeshBuffer");
@@ -226,98 +226,12 @@ struct SSkinMeshBuffer : public IMeshBuffer
 		}
 	}
 
-	//! returns position of vertex i
-	virtual const core::vector3df& getPosition(u32 i) const
-	{
-		switch (VertexType)
-		{
-			case video::EVT_2TCOORDS:
-				return Vertices_2TCoords[i].Pos;
-			case video::EVT_TANGENTS:
-				return Vertices_Tangents[i].Pos;
-			default:
-				return Vertices_Standard[i].Pos;
-		}
-	}
-
-	//! returns position of vertex i
-	virtual core::vector3df& getPosition(u32 i)
-	{
-		switch (VertexType)
-		{
-			case video::EVT_2TCOORDS:
-				return Vertices_2TCoords[i].Pos;
-			case video::EVT_TANGENTS:
-				return Vertices_Tangents[i].Pos;
-			default:
-				return Vertices_Standard[i].Pos;
-		}
-	}
-
-	//! returns normal of vertex i
-	virtual const core::vector3df& getNormal(u32 i) const
-	{
-		switch (VertexType)
-		{
-			case video::EVT_2TCOORDS:
-				return Vertices_2TCoords[i].Normal;
-			case video::EVT_TANGENTS:
-				return Vertices_Tangents[i].Normal;
-			default:
-				return Vertices_Standard[i].Normal;
-		}
-	}
-
-	//! returns normal of vertex i
-	virtual core::vector3df& getNormal(u32 i)
-	{
-		switch (VertexType)
-		{
-			case video::EVT_2TCOORDS:
-				return Vertices_2TCoords[i].Normal;
-			case video::EVT_TANGENTS:
-				return Vertices_Tangents[i].Normal;
-			default:
-				return Vertices_Standard[i].Normal;
-		}
-	}
-
 	//! append the vertices and indices to the current buffer
 	virtual void append(const void* const vertices, u32 numVertices, const u16* const indices, u32 numIndices) {}
 
 	//! append the meshbuffer to the current buffer
 	virtual void append(const IMeshBuffer* const other) {}
 
-	//! get the current hardware mapping hint
-	virtual const E_HARDWARE_MAPPING getHardwareMappingHint() const
-	{
-		return MappingHint;
-	}
-
-	//! set the hardware mapping hint, for driver
-	virtual void setHardwareMappingHint( E_HARDWARE_MAPPING NewMappingHint )
-	{
-		MappingHint=NewMappingHint;
-	}
-
-	//! flags the mesh as changed, reloads hardware buffers
-	virtual void setDirty(E_BUFFER_TYPE Buffer=EBT_VERTEX_AND_INDEX)
-	{
-		if (Buffer==EBT_VERTEX_AND_INDEX || Buffer==EBT_VERTEX)
-			++ChangedID_Vertex;
-		if (Buffer==EBT_VERTEX_AND_INDEX || Buffer==EBT_INDEX)
-			++ChangedID_Index;
-	}
-
-	virtual const u32 getChangedID_Vertex() const {return ChangedID_Vertex;}
-
-	virtual const u32 getChangedID_Index() const {return ChangedID_Index;}
-
-	u32 ChangedID_Vertex;
-	u32 ChangedID_Index;
-
-	// hardware mapping hint
-	E_HARDWARE_MAPPING MappingHint;
 
 	//ISkinnedMesh::SJoint *AttachedJoint;
 	core::matrix4 Transformation;

@@ -164,7 +164,8 @@ namespace gui
 		\param rect: Defining area where to draw.
 		\param clip: Clip area.	*/
 		virtual void draw3DTabButton(IGUIElement* element, bool active,
-			const core::rect<s32>& rect, const core::rect<s32>* clip=0, EGUI_ALIGNMENT alignment=EGUIA_UPPERLEFT);
+						const core::rect<s32>& rect,
+						const core::rect<s32>* clip=0);
 
 		//! draws a tab control body
 		/**	\param element: Pointer to the element which wishes to draw this. This parameter
@@ -174,8 +175,10 @@ namespace gui
 		\param background: Specifies if the background should be drawn.
 		\param rect: Defining area where to draw.
 		\param clip: Clip area.	*/
-		virtual void draw3DTabBody(IGUIElement* element, bool border, bool background,
-			const core::rect<s32>& rect, const core::rect<s32>* clip=0, s32 tabHeight=-1, EGUI_ALIGNMENT alignment=EGUIA_UPPERLEFT);
+		virtual void draw3DTabBody(IGUIElement* element, bool border,
+						bool background,
+						const core::rect<s32>& rect,
+						const core::rect<s32>* clip=0);
 
 		//! draws an icon, usually from the skin's sprite bank
 		/**	\param element: Pointer to the element which wishes to draw this icon. 
@@ -240,5 +243,4 @@ namespace gui
 #endif // _IRR_COMPILE_WITH_GUI_
 
 #endif
-
 

@@ -41,11 +41,6 @@ COpenGLSLMaterialRenderer::COpenGLSLMaterialRenderer(video::COpenGLDriver* drive
 	: Driver(driver), CallBack(callback), BaseMaterial(baseMaterial),
 		Program(0), UserData(userData)
 {
-
-	#ifdef _DEBUG
-	setDebugName("COpenGLSLMaterialRenderer");
-	#endif
-
 	//entry points must always be main, and the compile target isn't selectable
 	//it is fine to ignore what has been asked for, as the compiler should spot anything wrong
 	//just check that GLSL is available
@@ -107,14 +102,11 @@ void COpenGLSLMaterialRenderer::init(s32& outMaterialTypeNr,
 		return;
 
 #if defined(GL_ARB_vertex_shader) && defined (GL_ARB_fragment_shader)
-	if (vertexShaderProgram)
-		if (!createShader(GL_VERTEX_SHADER_ARB, vertexShaderProgram))
-			return;
+	if (!createShader(GL_VERTEX_SHADER_ARB, vertexShaderProgram))
+		return;
 
-
-	if (pixelShaderProgram)
-		if (!createShader(GL_FRAGMENT_SHADER_ARB, pixelShaderProgram))
-			return;
+	if (!createShader(GL_FRAGMENT_SHADER_ARB, pixelShaderProgram))
+		return;
 #endif
 
 	if (!linkProgram())
@@ -148,10 +140,6 @@ void COpenGLSLMaterialRenderer::OnSetMaterial(const video::SMaterial& material,
 		if (BaseMaterial)
 			BaseMaterial->OnSetMaterial(material, material, true, this);
 	}
-
-	//let callback know used material
-	if (CallBack)
-		CallBack->OnSetMaterial(material);
 
 	for (u32 i=0; i<MATERIAL_MAX_TEXTURES; ++i)
 		Driver->setTexture(i, material.getTexture(i));
@@ -325,33 +313,31 @@ bool COpenGLSLMaterialRenderer::setPixelShaderConstant(const c8* name, const f32
 		return false;
 
 #ifdef GL_ARB_shader_objects
-	GLint Location=Driver->extGlGetUniformLocation(Program,name);
-
 	switch (UniformInfo[i].type)
 	{
 		case GL_FLOAT:
-			Driver->extGlUniform1fv(Location, count, floats);
+			Driver->extGlUniform1fv(i, count, floats);
 			break;
 		case GL_FLOAT_VEC2_ARB:
-			Driver->extGlUniform2fv(Location, count/2, floats);
+			Driver->extGlUniform2fv(i, count/2, floats);
 			break;
 		case GL_FLOAT_VEC3_ARB:
-			Driver->extGlUniform3fv(Location, count/3, floats);
+			Driver->extGlUniform3fv(i, count/3, floats);
 			break;
 		case GL_FLOAT_VEC4_ARB:
-			Driver->extGlUniform4fv(Location, count/4, floats);
+			Driver->extGlUniform4fv(i, count/4, floats);
 			break;
 		case GL_FLOAT_MAT2_ARB:
-			Driver->extGlUniformMatrix2fv(Location, count/4, false, floats);
+			Driver->extGlUniformMatrix2fv(i, count/4, false, floats);
 			break;
 		case GL_FLOAT_MAT3_ARB:
-			Driver->extGlUniformMatrix3fv(Location, count/9, false, floats);
+			Driver->extGlUniformMatrix3fv(i, count/9, false, floats);
 			break;
 		case GL_FLOAT_MAT4_ARB:
-			Driver->extGlUniformMatrix4fv(Location, count/16, false, floats);
+			Driver->extGlUniformMatrix4fv(i, count/16, false, floats);
 			break;
 		default:
-			Driver->extGlUniform1iv(Location, count, reinterpret_cast<const GLint*>(floats));
+			Driver->extGlUniform1iv(i, count, reinterpret_cast<const GLint*>(floats));
 			break;
 	}
 #endif

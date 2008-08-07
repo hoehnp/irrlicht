@@ -32,11 +32,8 @@ namespace video
 		//! This flag is ignored, if the material type is a transparent type.
 		EMF_ZWRITE_ENABLE,
 
-		//! Is backface culling enabled? Default: true
+		//! Is backfaceculling enabled? Default: true
 		EMF_BACK_FACE_CULLING,
-
-		//! Is frontface culling enabled? Default: false
-		EMF_FRONT_FACE_CULLING,
 
 		//! Is bilinear filtering enabled? Default: true
 		EMF_BILINEAR_FILTER,

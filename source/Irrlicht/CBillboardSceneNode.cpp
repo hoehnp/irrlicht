@@ -15,9 +15,9 @@ namespace scene
 
 //! constructor
 CBillboardSceneNode::CBillboardSceneNode(ISceneNode* parent, ISceneManager* mgr, s32 id,
-			const core::vector3df& position, const core::dimension2d<f32>& size,
-			video::SColor shade_top, video::SColor shade_down)
-	: ISceneNode(parent, mgr, id, position), IBillboardSceneNode(parent, mgr, id, position)
+				const core::vector3df& position, const core::dimension2d<f32>& size,
+				video::SColor shade_top, video::SColor shade_down)
+	: IBillboardSceneNode(parent, mgr, id, position)
 {
 	#ifdef _DEBUG
 	setDebugName("CBillboardSceneNode");
@@ -50,9 +50,10 @@ CBillboardSceneNode::CBillboardSceneNode(ISceneNode* parent, ISceneManager* mgr,
 void CBillboardSceneNode::OnRegisterSceneNode()
 {
 	if (IsVisible)
+	{
 		SceneManager->registerNodeForRendering(this);
-
-	ISceneNode::OnRegisterSceneNode();
+		ISceneNode::OnRegisterSceneNode();
+	}
 }
 
 
@@ -108,7 +109,8 @@ void CBillboardSceneNode::render()
 		driver->draw3DBox(BBox, video::SColor(0,208,195,152));
 	}
 
-	driver->setTransform(video::ETS_WORLD, core::IdentityMatrix);
+	core::matrix4 mat;
+	driver->setTransform(video::ETS_WORLD, mat);
 
 	driver->setMaterial(Material);
 

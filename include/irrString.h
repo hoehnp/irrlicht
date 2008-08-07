@@ -436,7 +436,7 @@ public:
 	{
 		if (!str)
 			return false;
-		s32 i;
+		u32 i;
 		for(i=0; array[i] && str[i] && i < n; ++i)
 			if (array[i] != str[i])
 				return false;
@@ -713,13 +713,10 @@ public:
 	//! \param length: Length of substring.
 	string<T> subString(u32 begin, s32 length) const
 	{
-		// if start after string
-		// or no proper substring length
-		if ((length <= 0) || (begin>=size()))
-			return string<T>("");
-		// clamp length to maximal value
 		if ((length+begin) > size())
 			length = size()-begin;
+		if (length <= 0)
+			return string<T>("");
 
 		string<T> o;
 		o.reserve(length+1);
@@ -813,11 +810,11 @@ public:
 		const u32 whitespacecount = 4;
 
 		// find start and end of real string without whitespace
-		const s32 begin = findFirstCharNotInList(whitespace, whitespacecount);
+		s32 begin = findFirstCharNotInList(whitespace, whitespacecount);
 		if (begin == -1)
 			return (*this="");
 
-		const s32 end = findLastCharNotInList(whitespace, whitespacecount);
+		s32 end = findLastCharNotInList(whitespace, whitespacecount);
 
 		return (*this = subString(begin, (end +1) - begin));
 	}
@@ -835,6 +832,8 @@ public:
 
 		--used;
 	}
+
+
 
 private:
 /*

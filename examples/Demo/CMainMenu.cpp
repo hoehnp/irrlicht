@@ -121,7 +121,7 @@ bool CMainMenu::run(bool& outFullscreen, bool& outMusic, bool& outShadows,
 	box->addItem(L"OpenGL 1.5");
 	box->addItem(L"Direct3D 8.1");
 	box->addItem(L"Direct3D 9.0c");
-	box->addItem(L"Burning's Video 0.39");
+	box->addItem(L"Burning's Video 0.38");
 	box->addItem(L"Irrlicht Software Renderer 1.0");
 	box->setSelected(selected);
 
@@ -179,9 +179,6 @@ bool CMainMenu::run(bool& outFullscreen, bool& outMusic, bool& outShadows,
 		modelNode->getMaterial(0).Shininess = 28.f;
 		modelNode->getMaterial(0).NormalizeNormals = true;
 		modelNode->setMD2Animation ( scene::EMAT_STAND );
-
-		//modelNode->setMD2Animation ( scene::EMAT_JUMP );
-		//modelNode->setDebugDataVisible ( scene::EDS_BBOX_ALL );
 		//modelNode->setFrameLoop ( 0, 0 );
 	}
 

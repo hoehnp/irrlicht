@@ -192,6 +192,10 @@ void CAnimatedMeshSceneNode::OnRegisterSceneNode()
 			SceneManager->registerNodeForRendering(this, scene::ESNRP_TRANSPARENT);
 
 		ISceneNode::OnRegisterSceneNode();
+
+		for (u32 j=0; j<JointChildSceneNodes.size(); ++j)
+			if (JointChildSceneNodes[j])
+				JointChildSceneNodes[j]->OnRegisterSceneNode();
 	}
 }
 
@@ -400,7 +404,6 @@ void CAnimatedMeshSceneNode::render()
 			driver->setTransform(video::ETS_WORLD, AbsoluteTransformation);
 		}
 
-		driver->setTransform(video::ETS_WORLD, AbsoluteTransformation);
 		if ( DebugDataVisible & scene::EDS_BBOX )
 			driver->draw3DBox(Box, video::SColor(0,255,255,255));
 
@@ -576,8 +579,6 @@ IShadowVolumeSceneNode* CAnimatedMeshSceneNode::addShadowVolumeSceneNode(s32 id,
 }
 
 
-//! Returns a pointer to a child node, which has the same transformation as
-//! the corresponding joint, if the mesh in this scene node is a skinned mesh.
 IBoneSceneNode* CAnimatedMeshSceneNode::getJointNode(const c8* jointName)
 {
 	if (!Mesh || Mesh->getMeshType() != EAMT_SKINNED)
@@ -585,9 +586,10 @@ IBoneSceneNode* CAnimatedMeshSceneNode::getJointNode(const c8* jointName)
 
 	checkJoints();
 
+
 	ISkinnedMesh *skinnedMesh=(ISkinnedMesh*)Mesh;
 
-	const s32 number = skinnedMesh->getJointNumber(jointName);
+	s32 number = skinnedMesh->getJointNumber(jointName);
 
 	if (number == -1)
 	{
@@ -605,8 +607,6 @@ IBoneSceneNode* CAnimatedMeshSceneNode::getJointNode(const c8* jointName)
 }
 
 
-//! Returns a pointer to a child node, which has the same transformation as
-//! the corresponding joint, if the mesh in this scene node is a skinned mesh.
 IBoneSceneNode* CAnimatedMeshSceneNode::getJointNode(u32 jointID)
 {
 	if (JointChildSceneNodes.size() <= jointID)
@@ -618,20 +618,9 @@ IBoneSceneNode* CAnimatedMeshSceneNode::getJointNode(u32 jointID)
 	return JointChildSceneNodes[jointID];
 }
 
-//! Gets joint count.
-u32 CAnimatedMeshSceneNode::getJointCount() const
-{
-	if (!Mesh || Mesh->getMeshType() != EAMT_SKINNED)
-		return 0;
-
-	ISkinnedMesh *skinnedMesh=(ISkinnedMesh*)Mesh;
-
-	return skinnedMesh->getJointCount();
-}
-
 
 //! Returns a pointer to a child node, which has the same transformation as
-//! the corresponding joint, if the mesh in this scene node is a ms3d mesh.
+//! the corrsesponding joint, if the mesh in this scene node is a ms3d mesh.
 ISceneNode* CAnimatedMeshSceneNode::getMS3DJointNode(const c8* jointName)
 {
 	return  getJointNode(jointName);
@@ -639,7 +628,7 @@ ISceneNode* CAnimatedMeshSceneNode::getMS3DJointNode(const c8* jointName)
 
 
 //! Returns a pointer to a child node, which has the same transformation as
-//! the corresponding joint, if the mesh in this scene node is a .x mesh.
+//! the corrsesponding joint, if the mesh in this scene node is a ms3d mesh.
 ISceneNode* CAnimatedMeshSceneNode::getXJointNode(const c8* jointName)
 {
 	return  getJointNode(jointName);
@@ -669,6 +658,7 @@ bool CAnimatedMeshSceneNode::removeChild(ISceneNode* child)
 				return true;
 			}
 		}
+
 		return true;
 	}
 
@@ -823,7 +813,6 @@ void CAnimatedMeshSceneNode::setMesh(IAnimatedMesh* mesh)
 		Mesh->grab();
 }
 
-
 // returns the absolute transformation for a special MD3 Tag if the mesh is a md3 mesh,
 // or the absolutetransformation if it's a normal scenenode
 const SMD3QuaterionTag& CAnimatedMeshSceneNode::getMD3TagTransformation( const core::stringc & tagname)
@@ -911,11 +900,19 @@ void CAnimatedMeshSceneNode::animateJoints(bool CalculateAbsolutePositions)
 
 			CSkinnedMesh* skinnedMesh=reinterpret_cast<CSkinnedMesh*>(Mesh);
 
-			skinnedMesh->transferOnlyJointsHintsToMesh( JointChildSceneNodes );
-
 			skinnedMesh->animateMesh(frame, 1.0f);
 
 			skinnedMesh->recoverJointsFromMesh( JointChildSceneNodes);
+
+			if (CalculateAbsolutePositions)
+			{
+				//---slow---
+				for (u32 n=0;n<JointChildSceneNodes.size();++n)
+					if (JointChildSceneNodes[n]->getParent()==this)
+					{
+						JointChildSceneNodes[n]->updateAbsolutePositionOfAllChildren(); //temp, should be an option
+					}
+			}
 
 			//-----------------------------------------
 			//		Transition
@@ -964,23 +961,11 @@ void CAnimatedMeshSceneNode::animateJoints(bool CalculateAbsolutePositions)
 					//			TransitingBlend));
 				}
 			}
-
-
-
-			if (CalculateAbsolutePositions)
-			{
-				//---slow---
-				for (u32 n=0;n<JointChildSceneNodes.size();++n)
-				{
-					if (JointChildSceneNodes[n]->getParent()==this)
-					{
-						JointChildSceneNodes[n]->updateAbsolutePositionOfAllChildren(); //temp, should be an option
-					}
-				}
-			}
 		}
 	}
 }
+
+
 
 
 void CAnimatedMeshSceneNode::checkJoints()
@@ -999,7 +984,6 @@ void CAnimatedMeshSceneNode::checkJoints()
 		JointMode=EJUOR_READ;
 	}
 }
-
 
 void CAnimatedMeshSceneNode::beginTransition()
 {
@@ -1022,7 +1006,6 @@ void CAnimatedMeshSceneNode::beginTransition()
 
 		Transiting = core::reciprocal((f32)TransitionTime);
 	}
-	TransitingBlend = 0.f;
 }
 
 

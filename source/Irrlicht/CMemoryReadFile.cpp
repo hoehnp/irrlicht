@@ -12,12 +12,15 @@ namespace io
 
 
 CMemoryReadFile::CMemoryReadFile(void* memory, long len, const c8* fileName, bool d)
-: Buffer(memory), Len(len), Pos(0), Filename(fileName), deleteMemoryWhenDropped(d)
+: Buffer(memory), Len(len), Pos(0), deleteMemoryWhenDropped(d)
 {
 	#ifdef _DEBUG
-	setDebugName("CMemoryReadFile");
+	setDebugName("CReadFile");
 	#endif
+
+	Filename = fileName;
 }
+
 
 
 CMemoryReadFile::~CMemoryReadFile()
@@ -25,6 +28,7 @@ CMemoryReadFile::~CMemoryReadFile()
 	if (deleteMemoryWhenDropped)
 		delete [] (c8*)Buffer;
 }
+
 
 
 //! returns how much was read
@@ -70,11 +74,13 @@ bool CMemoryReadFile::seek(long finalPos, bool relativeMovement)
 }
 
 
+
 //! returns size of file
 long CMemoryReadFile::getSize() const
 {
 	return Len;
 }
+
 
 
 //! returns where in the file we are.
@@ -84,11 +90,13 @@ long CMemoryReadFile::getPos() const
 }
 
 
+
 //! returns name of file
 const c8* CMemoryReadFile::getFileName() const
 {
 	return Filename.c_str();
 }
+
 
 
 IReadFile* createMemoryReadFile(void* memory, long size, const c8* fileName, bool deleteMemoryWhenDropped)

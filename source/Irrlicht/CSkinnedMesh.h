@@ -95,9 +95,6 @@ namespace scene
 		//! Tranfers the joint data to the mesh
 		virtual void transferJointsToMesh(const core::array<IBoneSceneNode*> &JointChildSceneNodes);
 
-		//! Tranfers the joint hints to the mesh
-		virtual void transferOnlyJointsHintsToMesh(const core::array<IBoneSceneNode*> &JointChildSceneNodes);
-
 		//! Creates an array of joints from this mesh
 		virtual void createJoints(core::array<IBoneSceneNode*> &JointChildSceneNodes,
 				IAnimatedMeshSceneNode* AnimatedMeshSceneNode,
@@ -105,12 +102,6 @@ namespace scene
 
 		//! Convertes the mesh to contain tangent information
 		virtual void convertMeshToTangents();
-
-		//! Does the mesh have no animation
-		virtual bool isStatic();
-
-		//! (This feature is not implemented in irrlicht yet)
-		virtual bool setHardwareSkinning(bool on);
 
 		//Interface for the mesh loaders (finalize should lock these functions, and they should have some prefix like loader_
 
@@ -128,15 +119,22 @@ namespace scene
 		//! loaders should call this after populating the mesh
 		virtual void finalize();
 
+
+
+
 		virtual SSkinMeshBuffer *createBuffer();
 
 		virtual SJoint *createJoint(SJoint *parent=0);
 
 		virtual SPositionKey *createPositionKey(SJoint *joint);
-		virtual SRotationKey *createRotationKey(SJoint *joint);
 		virtual SScaleKey *createScaleKey(SJoint *joint);
+		virtual SRotationKey *createRotationKey(SJoint *joint);
 
 		virtual SWeight *createWeight(SJoint *joint);
+
+
+
+
 
 private:
 
@@ -153,7 +151,7 @@ private:
 				core::vector3df &scale, s32 &scaleHint,
 				core::quaternion &rotation, s32 &rotationHint);
 
-		void CalculateGlobalMatrices(SJoint *Joint,SJoint *ParentJoint);
+		void CalculateGlobalMatrixes(SJoint *Joint,SJoint *ParentJoint);
 
 		void SkinJoint(SJoint *Joint, SJoint *ParentJoint);
 
@@ -176,14 +174,11 @@ private:
 
 		f32 AnimationFrames;
 
-		f32 LastAnimatedFrame;
-		f32 LastSkinnedFrame;
+		f32 lastAnimatedFrame;
+		f32 lastSkinnedFrame;
 		bool BoneControlUsed;
 
 		bool AnimateNormals;
-
-		bool HardwareSkinning;
-
 
 		E_INTERPOLATION_MODE InterpolationMode;
 

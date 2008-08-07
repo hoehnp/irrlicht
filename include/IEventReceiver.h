@@ -24,14 +24,14 @@ namespace irr
 		//! A mouse input event.
 		/** Mouse events are created by the device and passed to IrrlichtDevice::postEventFromUser
 		in response to mouse input received from the operating system.
-		Mouse events are first passed to the user receiver, then to the GUI environment and its elements,
-		then finally the input receiving scene manager where it is passed to the active camera.
-		*/
+		Mouse events are first passed to the user receiver, then to the GUI environment (and possibly
+		many GUI elements), then finally the input receiving scene manager (and possibly the active
+		camera) */
 		EET_MOUSE_INPUT_EVENT,
 
-		//! A key input event.
-		/** Like mouse events, keyboard events are created by the device and passed to 
-		IrrlichtDevice::postEventFromUser. They take the same path as mouse events. */
+		//! A key input evant.
+		/** Keyboard events are also created by the device and passed to IrrlichtDevice::postEventFromUser.
+		They take the same path as mouse events. */
 		EET_KEY_INPUT_EVENT,
 
 		//! A log event
@@ -40,18 +40,8 @@ namespace irr
 		EET_LOG_TEXT_EVENT,
 
 		//! A user event with user data.
-		/** This is not used by Irrlicht and can be used to send user
-		specific data though the system. The Irrlicht 'window handle'
-		can be obtained from IrrlichtDevice::getExposedVideoData()
-		The usage and behaviour depends on the operating system:
-		Windows: send a WM_USER message to the Irrlicht Window; the
-			wParam and lParam will be used to populate the
-			UserData1 and UserData2 members of the SUserEvent.
-		Linux: send a ClientMessage via XSendEvent to the Irrlicht
-			Window; the data.l[0] and data.l[1] members will be
-			casted to s32 and used as UserData1 and UserData2.
-		MacOS: Not yet implemented
-		*/
+		/** This is not used by Irrlicht and can be used
+		to send user specific data though the system. */
 		EET_USER_EVENT
 	};
 
@@ -161,12 +151,7 @@ namespace irr
 			EGET_COMBO_BOX_CHANGED,
 
 			//! The value of a spin box has changed
-			EGET_SPINBOX_CHANGED,
-			//! A table has changed
-			EGET_TABLE_CHANGED,
-			EGET_TABLE_HEADER_CHANGED,
-			EGET_TABLE_SELECTED_AGAIN
-
+			EGET_SPINBOX_CHANGED
 		};
 	} // end namespace gui
 
@@ -242,6 +227,9 @@ struct SEvent
 
 		//! Another user specified data as int
 		s32 UserData2;
+
+		//! Some user specified data as float
+		f32 UserData3;
 	};
 
 	EEVENT_TYPE EventType;

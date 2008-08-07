@@ -288,13 +288,6 @@ namespace core
 			\return Altered matrix */
 			CMatrix4<T>& setTextureTranslate( f32 x, f32 y );
 
-			//! Set texture transformation translation, using a transposed representation
-			/** Doesn't clear other elements than those affected.
-			\param x Offset on x axis
-			\param y Offset on y axis
-			\return Altered matrix */
-			CMatrix4<T>& setTextureTranslateTransposed( f32 x, f32 y );
-
 			//! Set texture transformation scale
 			/** Doesn't clear other elements than those affected.
 			\param sx Scale factor on x axis
@@ -1671,15 +1664,6 @@ namespace core
 		return *this;
 	}
 
-
-	template <class T>
-	inline CMatrix4<T>& CMatrix4<T>::setTextureTranslateTransposed ( f32 x, f32 y )
-	{
-		M[2] = (T)x;
-		M[6] = (T)y;
-		definitelyIdentityMatrix = definitelyIdentityMatrix && (x==0.0f) && (y==0.0f) ;
-		return *this;
-	}
 
 	template <class T>
 	inline CMatrix4<T>& CMatrix4<T>::setTextureScale ( f32 sx, f32 sy )

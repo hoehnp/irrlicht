@@ -65,8 +65,7 @@ void CDepthBuffer::setSize(const core::dimension2d<s32>& size)
 	if (Buffer)
 		delete [] Buffer;
 
-	Pitch = size.Width * sizeof ( fp24 );
-	TotalSize = Pitch * size.Height;
+	TotalSize = size.Width * size.Height * sizeof ( fp24 );
 	Buffer = new u8[TotalSize];
 }
 
@@ -79,6 +78,19 @@ const core::dimension2d<s32>& CDepthBuffer::getSize() const
 }
 
 
+
+//! locks the zbuffer
+fp24* CDepthBuffer::lock()
+{
+	return (fp24*) Buffer;
+}
+
+
+
+//! unlocks the zbuffer
+void CDepthBuffer::unlock()
+{
+}
 
 } // end namespace video
 } // end namespace irr

@@ -116,7 +116,6 @@ int main()
 		createDevice( video::EDT_SOFTWARE, dimension2d<s32>(640, 480), 16,
 			false, false, false, 0);
 #endif
-
 	/*
 	Set the caption of the window to some nice text. Note that there is 
 	a 'L' in front of the string. The Irrlicht Engine uses wide character

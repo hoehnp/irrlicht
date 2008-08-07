@@ -32,7 +32,7 @@ namespace scene
 	example easily possible to attach a light to a moving car, or to place
 	a walking character on a moving platform on a moving ship.
 	*/
-	class ISceneNode : virtual public io::IAttributeExchangingObject
+	class ISceneNode : public io::IAttributeExchangingObject
 	{
 	public:
 
@@ -42,12 +42,12 @@ namespace scene
 				const core::vector3df& rotation = core::vector3df(0,0,0),
 				const core::vector3df& scale = core::vector3df(1.0f, 1.0f, 1.0f))
 			: RelativeTranslation(position), RelativeRotation(rotation), RelativeScale(scale),
-				Parent(0), ID(id), SceneManager(mgr), TriangleSelector(0),
+				Parent(parent), ID(id), SceneManager(mgr), TriangleSelector(0),
 				AutomaticCullingState(EAC_BOX), IsVisible(true),
 				DebugDataVisible(EDS_OFF), IsDebugObject(false)
 		{
-			if (parent)
-				parent->addChild(this);
+			if (Parent)
+				Parent->addChild(this);
 
 			updateAbsolutePosition();
 		}
@@ -165,7 +165,7 @@ namespace scene
 
 		//! Get the absolute transformation of the node. Is recalculated every OnAnimate()-call.
 		//! \return The absolute transformation matrix.
-		virtual const core::matrix4& getAbsoluteTransformation() const
+		const core::matrix4& getAbsoluteTransformation() const
 		{
 			return AbsoluteTransformation;
 		}
@@ -396,7 +396,7 @@ namespace scene
 
 		//! Gets the relative scale of the scene node.
 		/** \return The scale of the scene node. */
-		virtual const core::vector3df& getScale() const
+		virtual core::vector3df getScale() const
 		{
 			return RelativeScale;
 		}
@@ -431,7 +431,7 @@ namespace scene
 		//! Gets the position of the node.
 		/** Note that the position is relative to the parent.
 		\return The current position of the node relative to the parent. */
-		virtual const core::vector3df& getPosition() const
+		virtual const core::vector3df getPosition() const
 		{
 			return RelativeTranslation;
 		}

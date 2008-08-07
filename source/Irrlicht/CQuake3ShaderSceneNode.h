@@ -23,9 +23,8 @@ public:
 
 	CQuake3ShaderSceneNode( ISceneNode* parent, ISceneManager* mgr,s32 id,
 				io::IFileSystem *fileSystem,IMeshBuffer *buffer,
-				const quake3::SShader * shader);
-
-	virtual ~CQuake3ShaderSceneNode();
+				const quake3::SShader * shader
+		);
 
 	virtual void OnRegisterSceneNode();
 	virtual void render();
@@ -36,9 +35,9 @@ public:
 	virtual video::SMaterial& getMaterial(u32 i);
 
 private:
-	SMeshBuffer* MeshBuffer;
-	SMeshBufferLightMap* Original;
-	const quake3::SShader* Shader;
+	SMeshBuffer MeshBuffer;
+	SMeshBufferLightMap Original;
+	const quake3::SShader * Shader;
 
 	struct SQ3Texture
 	{
@@ -62,15 +61,18 @@ private:
 	void vertextransform_wave ( f32 dt, quake3::SModifierFunction &function );
 	void vertextransform_bulge( f32 dt, quake3::SModifierFunction &function );
 	void vertextransform_autosprite( f32 dt, quake3::SModifierFunction &function );
-	void vertextransform_tcgen ( f32 dt, quake3::SModifierFunction &function );
-	void vertextransform_rgbgen ( f32 dt, quake3::SModifierFunction &function );
+
+	void rgbgen ( f32 dt, quake3::SModifierFunction &function );
+	u32 tcgen ( f32 dt, quake3::SModifierFunction &function, core::matrix4 &texture );
 
 	void transformtex ( const core::matrix4 &m, const u32 clamp );
 
 	f32 TimeAbs;
-	void animate( u32 stage, core::matrix4 &texture );
+	u32 animate( u32 stage, core::matrix4 &texture );
 
-	bool isTransparent() const;
+
+	s32 PassedCulling;
+	s32 StageCall;
 
 };
 

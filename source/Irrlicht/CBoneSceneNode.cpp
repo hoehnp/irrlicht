@@ -18,10 +18,6 @@ CBoneSceneNode::CBoneSceneNode(ISceneNode* parent, ISceneManager* mgr, s32 id,
 : IBoneSceneNode(parent, mgr, id), BoneIndex(boneIndex), BoneName(boneName),
 	AnimationMode(EBAM_AUTOMATIC), SkinningSpace(EBSS_LOCAL)
 {
-
-	#ifdef _DEBUG
-	setDebugName("CBoneSceneNode");
-	#endif
 }
 
 
@@ -122,7 +118,7 @@ void CBoneSceneNode::deserializeAttributes(io::IAttributes* in, io::SAttributeRe
 	BoneIndex = in->getAttributeAsInt("BoneIndex");
 	BoneName = in->getAttributeAsString("BoneName");
 	AnimationMode = (E_BONE_ANIMATION_MODE)in->getAttributeAsEnumeration("AnimationMode", BoneAnimationModeNames);
-	// TODO: add/replace bone in parent with bone from mesh
+	// todo: add/replace bone in parent with bone from mesh
 }
 
 

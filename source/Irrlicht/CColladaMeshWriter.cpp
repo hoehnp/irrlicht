@@ -24,11 +24,6 @@ CColladaMeshWriter::CColladaMeshWriter(video::IVideoDriver* driver,
 					io::IFileSystem* fs)
 	: FileSystem(fs), VideoDriver(driver), Writer(0)
 {
-
-	#ifdef _DEBUG
-	setDebugName("CColladaMeshWriter");
-	#endif
-
 	if (VideoDriver)
 		VideoDriver->grab();
 
@@ -75,8 +70,8 @@ bool CColladaMeshWriter::writeMesh(io::IWriteFile* file, scene::IMesh* mesh, s32
 	Writer->writeXMLHeader();
 
 	Writer->writeElement(L"COLLADA", false,
-		L"xmlns", L"http://www.collada.org/2005/11/COLLADASchema",
-		L"version", L"1.4.1");
+		L"xmlns", L"http://www.collada.org/2005/COLLADASchema",
+		L"version", L"1.2.0");
 	Writer->writeLineBreak();
 
 	// write asset data
@@ -84,29 +79,15 @@ bool CColladaMeshWriter::writeMesh(io::IWriteFile* file, scene::IMesh* mesh, s32
 	Writer->writeElement(L"asset", false);
 	Writer->writeLineBreak();
 
-	Writer->writeElement(L"contributor", false);
-	Writer->writeLineBreak();
-	Writer->writeElement(L"authoring_tool", false);
-	Writer->writeText(L"Irrlicht Engine / irrEdit");  // this code has originated from irrEdit 0.7
-	Writer->writeClosingTag(L"authoring_tool");
-	Writer->writeLineBreak();
-	Writer->writeClosingTag(L"contributor");
-	Writer->writeLineBreak();
-
-	// The next two are required
-	Writer->writeElement(L"created", false);
-	Writer->writeText(L"2008-01-31T00:00:00Z");
-	Writer->writeClosingTag(L"created");
-	Writer->writeLineBreak();
-
-	Writer->writeElement(L"modified", false);
-	Writer->writeText(L"2008-01-31T00:00:00Z");
-	Writer->writeClosingTag(L"modified");
-	Writer->writeLineBreak();
-
 	Writer->writeElement(L"revision", false);
 	Writer->writeText(L"1.0");
 	Writer->writeClosingTag(L"revision");
+	Writer->writeLineBreak();
+
+	Writer->writeElement(L"authoring_tool", false);
+	core::stringw strautoring = L"Irrlicht Engine / irrEdit";  // this code has originated from irrEdit 0.7
+	Writer->writeText(strautoring.c_str());
+	Writer->writeClosingTag(L"authoring_tool");
 	Writer->writeLineBreak();
 
 	Writer->writeClosingTag(L"asset");
@@ -114,7 +95,7 @@ bool CColladaMeshWriter::writeMesh(io::IWriteFile* file, scene::IMesh* mesh, s32
 
 	// write all materials
 
-	Writer->writeElement(L"library_materials", false);
+	Writer->writeElement(L"library", false,	L"type", L"MATERIAL");
 	Writer->writeLineBreak();
 
 	u32 i;
@@ -124,40 +105,8 @@ bool CColladaMeshWriter::writeMesh(io::IWriteFile* file, scene::IMesh* mesh, s32
 		strMat += i;
 
 		Writer->writeElement(L"material", false,
-			L"id", strMat.c_str(),
-			L"name", strMat.c_str());
-		Writer->writeLineBreak();
-
-		strMat += L"-fx";
-		Writer->writeElement(L"instance_effect", true,
-			L"url", (core::stringw(L"#") + strMat).c_str());
-		Writer->writeLineBreak();
-
-		Writer->writeClosingTag(L"material");
-		Writer->writeLineBreak();
-	}
-
-	Writer->writeClosingTag(L"library_materials");
-	Writer->writeLineBreak();
-
-	Writer->writeElement(L"library_effects", false);
-	Writer->writeLineBreak();
-
-	for (i=0; i<mesh->getMeshBufferCount(); ++i)
-	{
-		core::stringw strMat = "mat";
-		strMat += i;
-		strMat += L"-fx";
-
-		Writer->writeElement(L"effect", false,
-			L"id", strMat.c_str(),
-			L"name", strMat.c_str());
-		Writer->writeLineBreak();
-		Writer->writeElement(L"profile_COMMON", false);
-		Writer->writeLineBreak();
-		Writer->writeElement(L"technique", false, L"sid", L"common");
-		Writer->writeLineBreak();
-		Writer->writeElement(L"blinn", false);
+			L"name", strMat.c_str(),
+			L"id", strMat.c_str());
 		Writer->writeLineBreak();
 
 		// write all interesting material parameters as parameter
@@ -168,109 +117,31 @@ bool CColladaMeshWriter::writeMesh(io::IWriteFile* file, scene::IMesh* mesh, s32
 		u32 count = attributes->getAttributeCount();
 		for (u32 attridx=0; attridx<count; ++attridx)
 		{
-			core::stringc str = attributes->getAttributeName(attridx);
-			if (str=="Emissive")
-			{
-				Writer->writeElement(L"emission", false);
-				Writer->writeLineBreak();
-				Writer->writeElement(L"color", false);
-				Writer->writeLineBreak();
+			core::stringw str = attributes->getAttributeName(attridx);
 
-				str = attributes->getAttributeAsString(attridx);
-				str.replace(',',' ');
-				Writer->writeText(core::stringw(str.c_str()).c_str());
+			Writer->writeElement(L"param", false,
+				L"name", str.c_str(),
+				L"type", attributes->getAttributeTypeString(attridx) );
 
-				Writer->writeClosingTag(L"color");
-				Writer->writeLineBreak();
-				Writer->writeClosingTag(L"emission");
-				Writer->writeLineBreak();
-			}
-			else
-			if (str=="Ambient")
-			{
-				Writer->writeElement(L"ambient", false);
-				Writer->writeLineBreak();
-				Writer->writeElement(L"color", false);
-				Writer->writeLineBreak();
+			str = attributes->getAttributeAsString(attridx).c_str();
+			Writer->writeText(str.c_str());
 
-				str = attributes->getAttributeAsString(attridx);
-				str.replace(',',' ');
-				Writer->writeText(core::stringw(str.c_str()).c_str());
-
-				Writer->writeClosingTag(L"color");
-				Writer->writeLineBreak();
-				Writer->writeClosingTag(L"ambient");
-				Writer->writeLineBreak();
-			}
-			else
-			if (str=="Diffuse")
-			{
-				Writer->writeElement(L"diffuse", false);
-				Writer->writeLineBreak();
-				Writer->writeElement(L"color", false);
-				Writer->writeLineBreak();
-
-				str = attributes->getAttributeAsString(attridx);
-				str.replace(',',' ');
-				Writer->writeText(core::stringw(str.c_str()).c_str());
-
-				Writer->writeClosingTag(L"color");
-				Writer->writeLineBreak();
-				Writer->writeClosingTag(L"diffuse");
-				Writer->writeLineBreak();
-			}
-			else
-			if (str=="Specular")
-			{
-				Writer->writeElement(L"specular", false);
-				Writer->writeLineBreak();
-				Writer->writeElement(L"color", false);
-				Writer->writeLineBreak();
-
-				str = attributes->getAttributeAsString(attridx);
-				str.replace(',',' ');
-				Writer->writeText(core::stringw(str.c_str()).c_str());
-
-				Writer->writeClosingTag(L"color");
-				Writer->writeLineBreak();
-				Writer->writeClosingTag(L"specular");
-				Writer->writeLineBreak();
-			}
-			else
-			if (str=="Shininess")
-			{
-				Writer->writeElement(L"shininess", false);
-				Writer->writeLineBreak();
-				Writer->writeElement(L"float", false);
-				Writer->writeLineBreak();
-
-				Writer->writeText(core::stringw(attributes->getAttributeAsString(attridx).c_str()).c_str());
-
-				Writer->writeClosingTag(L"float");
-				Writer->writeLineBreak();
-				Writer->writeClosingTag(L"shininess");
-				Writer->writeLineBreak();
-			}
+			Writer->writeClosingTag(L"param");
+			Writer->writeLineBreak();
 		}
 
 		attributes->drop();
 
-		Writer->writeClosingTag(L"blinn");
-		Writer->writeLineBreak();
-		Writer->writeClosingTag(L"technique");
-		Writer->writeLineBreak();
-		Writer->writeClosingTag(L"profile_COMMON");
-		Writer->writeLineBreak();
-		Writer->writeClosingTag(L"effect");
+		Writer->writeClosingTag(L"material");
 		Writer->writeLineBreak();
 	}
 
-	Writer->writeClosingTag(L"library_effects");
+	Writer->writeClosingTag(L"library");
 	Writer->writeLineBreak();
 
 	// write mesh
 
-	Writer->writeElement(L"library_geometries", false);
+	Writer->writeElement(L"library", false,	L"type", L"GEOMETRY");
 	Writer->writeLineBreak();
 
 	Writer->writeElement(L"geometry", false, L"id", L"mesh", L"name", L"mesh");
@@ -308,8 +179,8 @@ bool CColladaMeshWriter::writeMesh(io::IWriteFile* file, scene::IMesh* mesh, s32
 	Writer->writeLineBreak();
 
 	core::stringw vertexCountStr = (totalVertexCount*3);
-	Writer->writeElement(L"float_array", false, L"id", L"mesh-Pos-array",
-				L"count", vertexCountStr.c_str());
+	Writer->writeElement(L"array", false, L"id", L"mesh-Pos-array",
+							L"type", L"float", L"count", vertexCountStr.c_str());
 	Writer->writeLineBreak();
 
 	for (i=0; i<mesh->getMeshBufferCount(); ++i)
@@ -381,30 +252,30 @@ bool CColladaMeshWriter::writeMesh(io::IWriteFile* file, scene::IMesh* mesh, s32
 		}
 	}
 
-	Writer->writeClosingTag(L"float_array");
+	Writer->writeClosingTag(L"array");
 	Writer->writeLineBreak();
 
-	Writer->writeElement(L"technique_common", false);
-	Writer->writeLineBreak();
-
-	vertexCountStr = totalVertexCount;
-
-		Writer->writeElement(L"accessor", false, L"source", L"#mesh-Pos-array",
-					L"count", vertexCountStr.c_str(), L"stride", L"3");
+		Writer->writeElement(L"technique", false, L"profile", L"COMMON");
 		Writer->writeLineBreak();
 
-			Writer->writeElement(L"param", true, L"name", L"X", L"type", L"float");
+		vertexCountStr = totalVertexCount;
+
+			Writer->writeElement(L"accessor", false, L"source", L"#mesh-Pos-array",
+					L"count", vertexCountStr.c_str(), L"stride", L"3");
 			Writer->writeLineBreak();
-			Writer->writeElement(L"param", true, L"name", L"Y", L"type", L"float");
+
+			Writer->writeElement(L"param", true, L"name", L"X", L"type", L"float", L"flow", L"OUT");
 			Writer->writeLineBreak();
-			Writer->writeElement(L"param", true, L"name", L"Z", L"type", L"float");
+			Writer->writeElement(L"param", true, L"name", L"Y", L"type", L"float", L"flow", L"OUT");
+			Writer->writeLineBreak();
+			Writer->writeElement(L"param", true, L"name", L"Z", L"type", L"float", L"flow", L"OUT");
 			Writer->writeLineBreak();
 
 			Writer->writeClosingTag(L"accessor");
 			Writer->writeLineBreak();
 
-	Writer->writeClosingTag(L"technique_common");
-	Writer->writeLineBreak();
+		Writer->writeClosingTag(L"technique");
+		Writer->writeLineBreak();
 
 	Writer->writeClosingTag(L"source");
 	Writer->writeLineBreak();
@@ -415,8 +286,8 @@ bool CColladaMeshWriter::writeMesh(io::IWriteFile* file, scene::IMesh* mesh, s32
 	Writer->writeLineBreak();
 
 	vertexCountStr = (totalVertexCount*2);
-	Writer->writeElement(L"float_array", false, L"id", L"mesh-TexCoord0-array",
-				L"count", vertexCountStr.c_str());
+	Writer->writeElement(L"array", false, L"id", L"mesh-TexCoord0-array",
+							L"type", L"float", L"count", vertexCountStr.c_str());
 	Writer->writeLineBreak();
 
 	for (i=0; i<mesh->getMeshBufferCount(); ++i)
@@ -482,28 +353,28 @@ bool CColladaMeshWriter::writeMesh(io::IWriteFile* file, scene::IMesh* mesh, s32
 		}
 	}
 
-	Writer->writeClosingTag(L"float_array");
+	Writer->writeClosingTag(L"array");
 	Writer->writeLineBreak();
 
-	Writer->writeElement(L"technique_common", false);
-	Writer->writeLineBreak();
-
-	vertexCountStr = totalVertexCount;
-
-		Writer->writeElement(L"accessor", false, L"source", L"#mesh-TexCoord0-array",
-					L"count", vertexCountStr.c_str(), L"stride", L"2");
+		Writer->writeElement(L"technique", false, L"profile", L"COMMON");
 		Writer->writeLineBreak();
+
+		vertexCountStr = totalVertexCount;
+
+			Writer->writeElement(L"accessor", false, L"source", L"#mesh-TexCoord0-array",
+					L"count", vertexCountStr.c_str(), L"stride", L"2");
+			Writer->writeLineBreak();
 
 			Writer->writeElement(L"param", true, L"name", L"U", L"type", L"float", L"flow", L"OUT");
 			Writer->writeLineBreak();
 			Writer->writeElement(L"param", true, L"name", L"V", L"type", L"float", L"flow", L"OUT");
 			Writer->writeLineBreak();
 
-		Writer->writeClosingTag(L"accessor");
-		Writer->writeLineBreak();
+			Writer->writeClosingTag(L"accessor");
+			Writer->writeLineBreak();
 
-	Writer->writeClosingTag(L"technique_common");
-	Writer->writeLineBreak();
+		Writer->writeClosingTag(L"technique");
+		Writer->writeLineBreak();
 
 	Writer->writeClosingTag(L"source");
 	Writer->writeLineBreak();
@@ -514,8 +385,8 @@ bool CColladaMeshWriter::writeMesh(io::IWriteFile* file, scene::IMesh* mesh, s32
 	Writer->writeLineBreak();
 
 	vertexCountStr = (totalVertexCount*3);
-	Writer->writeElement(L"float_array", false, L"id", L"mesh-Normal-array",
-				L"count", vertexCountStr.c_str());
+	Writer->writeElement(L"array", false, L"id", L"mesh-Normal-array",
+			L"type", L"float", L"count", vertexCountStr.c_str());
 	Writer->writeLineBreak();
 
 	for (i=0; i<mesh->getMeshBufferCount(); ++i)
@@ -587,13 +458,13 @@ bool CColladaMeshWriter::writeMesh(io::IWriteFile* file, scene::IMesh* mesh, s32
 		}
 	}
 
-	Writer->writeClosingTag(L"float_array");
+	Writer->writeClosingTag(L"array");
 	Writer->writeLineBreak();
 
-	Writer->writeElement(L"technique_common", false);
-	Writer->writeLineBreak();
+		Writer->writeElement(L"technique", false, L"profile", L"COMMON");
+		Writer->writeLineBreak();
 
-	vertexCountStr = totalVertexCount;
+		vertexCountStr = totalVertexCount;
 
 		Writer->writeElement(L"accessor", false, L"source", L"#mesh-Normal-array",
 								L"count", vertexCountStr.c_str(), L"stride", L"3");
@@ -609,8 +480,8 @@ bool CColladaMeshWriter::writeMesh(io::IWriteFile* file, scene::IMesh* mesh, s32
 		Writer->writeClosingTag(L"accessor");
 		Writer->writeLineBreak();
 
-	Writer->writeClosingTag(L"technique_common");
-	Writer->writeLineBreak();
+		Writer->writeClosingTag(L"technique");
+		Writer->writeLineBreak();
 
 	Writer->writeClosingTag(L"source");
 	Writer->writeLineBreak();
@@ -623,8 +494,8 @@ bool CColladaMeshWriter::writeMesh(io::IWriteFile* file, scene::IMesh* mesh, s32
 		Writer->writeLineBreak();
 
 		vertexCountStr = (totalTCoords2Count*2);
-		Writer->writeElement(L"float_array", false, L"id", L"mesh-TexCoord1-array",
-								L"count", vertexCountStr.c_str());
+		Writer->writeElement(L"array", false, L"id", L"mesh-TexCoord1-array",
+								L"type", L"float", L"count", vertexCountStr.c_str());
 		Writer->writeLineBreak();
 
 		for (i=0; i<mesh->getMeshBufferCount(); ++i)
@@ -665,13 +536,13 @@ bool CColladaMeshWriter::writeMesh(io::IWriteFile* file, scene::IMesh* mesh, s32
 			} // end this buffer has 2 texture coordinates
 		}
 
-		Writer->writeClosingTag(L"float_array");
+		Writer->writeClosingTag(L"array");
 		Writer->writeLineBreak();
 
-		Writer->writeElement(L"technique_common", false);
-		Writer->writeLineBreak();
+			Writer->writeElement(L"technique", false, L"profile", L"COMMON");
+			Writer->writeLineBreak();
 
-		vertexCountStr = totalTCoords2Count;
+			vertexCountStr = totalTCoords2Count;
 
 			Writer->writeElement(L"accessor", false, L"source", L"#mesh-TexCoord1-array",
 									L"count", vertexCountStr.c_str(), L"stride", L"2");
@@ -685,8 +556,8 @@ bool CColladaMeshWriter::writeMesh(io::IWriteFile* file, scene::IMesh* mesh, s32
 			Writer->writeClosingTag(L"accessor");
 			Writer->writeLineBreak();
 
-		Writer->writeClosingTag(L"technique_common");
-		Writer->writeLineBreak();
+			Writer->writeClosingTag(L"technique");
+			Writer->writeLineBreak();
 
 		Writer->writeClosingTag(L"source");
 		Writer->writeLineBreak();
@@ -713,12 +584,12 @@ bool CColladaMeshWriter::writeMesh(io::IWriteFile* file, scene::IMesh* mesh, s32
 	{
 		scene::IMeshBuffer* buffer = mesh->getMeshBuffer(i);
 
-		const u32 polyCount = buffer->getIndexCount() / 3;
+		u32 polyCount = buffer->getIndexCount() / 3;
 		core::stringw strPolyCount = polyCount;
 		core::stringw strMat = "#mat";
 		strMat += i;
 
-		Writer->writeElement(L"triangles", false, L"count", strPolyCount.c_str(),
+		Writer->writeElement(L"polygons", false, L"count", strPolyCount.c_str(),
 								L"material", strMat.c_str());
 		Writer->writeLineBreak();
 
@@ -743,10 +614,10 @@ bool CColladaMeshWriter::writeMesh(io::IWriteFile* file, scene::IMesh* mesh, s32
 		s32 normalIdx = globalIndices[i].NormalStartIndex;
 		s32 tCoord2Idx = globalIndices[i].TCoord1StartIndex;
 
-		Writer->writeElement(L"p", false);
-
 		for (u32 p=0; p<polyCount; ++p)
 		{
+			Writer->writeElement(L"p", false);
+
 			core::stringw strP;
 
 			strP += buffer->getIndices()[(p*3) + 0] + posIdx;
@@ -783,17 +654,16 @@ bool CColladaMeshWriter::writeMesh(io::IWriteFile* file, scene::IMesh* mesh, s32
 				strP += " ";
 				strP += buffer->getIndices()[(p*3) + 2] + tCoord2Idx;
 			}
-			strP += " ";
 
 			Writer->writeText(strP.c_str());
-		}
 
-		Writer->writeClosingTag(L"p");
-		Writer->writeLineBreak();
+			Writer->writeClosingTag(L"p");
+			Writer->writeLineBreak();
+		}
 
 		// close index buffer section
 
-		Writer->writeClosingTag(L"triangles");
+		Writer->writeClosingTag(L"polygons");
 		Writer->writeLineBreak();
 	}
 
@@ -804,7 +674,7 @@ bool CColladaMeshWriter::writeMesh(io::IWriteFile* file, scene::IMesh* mesh, s32
 	Writer->writeClosingTag(L"geometry");
 	Writer->writeLineBreak();
 
-	Writer->writeClosingTag(L"library_geometries");
+	Writer->writeClosingTag(L"library");
 	Writer->writeLineBreak();
 
 	// close everything

@@ -46,8 +46,6 @@ void CDemo::run()
 	}
 
 	device = createDevice(driverType,resolution, 32, fullscreen, shadows, vsync, this);
-	if ( 0 == device )
-		return;
 
 	if (device->getFileSystem()->existFile("irrlicht.dat"))
 		device->getFileSystem()->addZipFileArchive("irrlicht.dat");
@@ -368,7 +366,7 @@ void CDemo::loadSceneData()
 				quakeLevelNode, 128);
 
 			// if not using shader and no gamma it's better to use more lighting, because
-			// quake3 level are usually dark
+			// quake3 level are dark
 			quakeLevelNode->setMaterialType ( video::EMT_LIGHTMAP_M4 );
 
 			// set additive blending if wanted
@@ -468,11 +466,9 @@ void CDemo::loadSceneData()
 	core::array<video::ITexture*> textures;
 	for (s32 g=1; g<8; ++g)
 	{
-		core::stringc tmp;
-		tmp = "../../media/portal";
-		tmp += g;
-		tmp += ".bmp";
-		video::ITexture* t = driver->getTexture( tmp.c_str () );
+		char tmp[64];
+		sprintf(tmp, "../../media/portal%d.bmp", g);
+		video::ITexture* t = driver->getTexture(tmp);
 		textures.push_back(t);
 	}
 
@@ -538,7 +534,6 @@ void CDemo::loadSceneData()
 	paf->drop();
 
 	campFire->setMaterialFlag(video::EMF_LIGHTING, false);
-	campFire->setMaterialFlag(video::EMF_ZWRITE_ENABLE, false);
 	campFire->setMaterialTexture(0, driver->getTexture("../../media/fireball.bmp"));
 	campFire->setMaterialType(video::EMT_TRANSPARENT_VERTEX_ALPHA);
 
@@ -730,7 +725,7 @@ void CDemo::createParticleImpacts()
 			#ifdef USE_IRRKLANG
 			if (irrKlang)
 			{
-				audio::ISound* sound = 
+				irrklang::ISound* sound = 
 					irrKlang->play3D(impactSound, Impacts[i].pos, false, false, true);
 
 				if (sound)
@@ -758,14 +753,14 @@ void CDemo::createParticleImpacts()
 #ifdef USE_IRRKLANG
 void CDemo::startIrrKlang()
 {
-	irrKlang = audio::createIrrKlangDevice();
+	irrKlang = irrklang::createIrrKlangDevice();
 
 	if (!irrKlang)
 		return;
 
 	// play music
 
-	audio::ISound* snd = irrKlang->play2D("../../media/IrrlichtTheme.ogg", true, false, true);
+	irrklang::ISound* snd = irrKlang->play2D("../../media/IrrlichtTheme.ogg", true, false, true);
 	if ( !snd )
 		snd = irrKlang->play2D("IrrlichtTheme.ogg", true, false, true);
 

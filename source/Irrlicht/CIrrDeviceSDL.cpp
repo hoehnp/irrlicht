@@ -23,9 +23,9 @@ namespace irr
 {
 	namespace video
 	{
-		IVideoDriver* createOpenGLDriver(const SIrrlichtCreationParameters& params,
-				io::IFileSystem* io);
-	} // end namespace video
+		IVideoDriver* createOpenGLDriver(const core::dimension2d<s32>& screenSize,
+			bool fullscreen, bool stencilBuffer, io::IFileSystem* io, bool vsync, bool antiAlias);
+	}
 
 } // end namespace irr
 
@@ -37,13 +37,18 @@ namespace irr
 const char* wmDeleteWindow = "WM_DELETE_WINDOW";
 
 //! constructor
-CIrrDeviceSDL::CIrrDeviceSDL(const SIrrlichtCreationParameters& param)
-	: CIrrDeviceStub(param),
-	Screen((SDL_Surface*)param.WindowId), SDL_Flags(SDL_HWSURFACE|SDL_ANYFORMAT),
-	MouseX(0), MouseY(0),
-	Width(param.WindowSize.Width), Height(param.WindowSize.Height),
-	Close(0), Resizeable(false),
-	WindowHasFocus(false), WindowMinimized(false)
+CIrrDeviceSDL::CIrrDeviceSDL(video::E_DRIVER_TYPE driverType,
+				const core::dimension2d<s32>& windowSize,
+				u32 bits,
+				bool fullscreen, bool stencilbuffer, bool vsync,
+				bool antiAlias, IEventReceiver* receiver,
+				void* windowID, const char* version)
+	: CIrrDeviceStub(version, receiver), Depth(bits),
+	Fullscreen(fullscreen), Stencilbuffer(stencilbuffer), Vsync(vsync),
+	AntiAlias(antiAlias), Resizeable(false),
+	Screen((SDL_Surface*)windowID), SDL_Flags(SDL_HWSURFACE|SDL_ANYFORMAT),
+	Width(windowSize.Width), Height(windowSize.Height), Close(0),
+	WindowActive(false)
 {
 	#ifdef _DEBUG
 	setDebugName("CIrrDeviceSDL");
@@ -51,7 +56,7 @@ CIrrDeviceSDL::CIrrDeviceSDL(const SIrrlichtCreationParameters& param)
 
 	// Initialize SDL... Timer for sleep, video for the obvious, and
 	// noparachute prevents SDL from catching fatal errors.
-	if (SDL_Init( SDL_INIT_TIMER|SDL_INIT_VIDEO|SDL_INIT_NOPARACHUTE ) < 0)
+	if ( SDL_Init( SDL_INIT_TIMER|SDL_INIT_VIDEO|SDL_INIT_NOPARACHUTE ) < 0 )
 	{
 		os::Printer::log( "Unable to initialize SDL!", SDL_GetError());
 		Close = 1;
@@ -73,70 +78,67 @@ CIrrDeviceSDL::CIrrDeviceSDL(const SIrrlichtCreationParameters& param)
 
 	// create keymap
 	createKeyMap();
-	// enable key to character translation
-	SDL_EnableUNICODE(1);
 
-	if ( CreationParams.Fullscreen )
+	if ( Fullscreen )
 		SDL_Flags |= SDL_FULLSCREEN;
-	if (CreationParams.DriverType == video::EDT_OPENGL)
+	if (driverType == video::EDT_OPENGL)
 		SDL_Flags |= SDL_OPENGL;
 	else
 		SDL_Flags |= SDL_DOUBLEBUF;
 	// create window
-	if (CreationParams.DriverType != video::EDT_NULL)
+	if (driverType != video::EDT_NULL)
 	{
 		// create the window, only if we do not use the null device
-		createWindow();
+		createWindow(driverType);
 	}
 
 	// create cursor control
 	CursorControl = new CCursorControl(this);
 
 	// create driver
-	createDriver();
+	createDriver(driverType, windowSize);
 
 	if (VideoDriver)
 		createGUIAndScene();
 }
 
 
+
 //! destructor
 CIrrDeviceSDL::~CIrrDeviceSDL()
 {
-	// only free surfaces created by us
-	if (Screen && !CreationParams.WindowId)
+	if (Screen)
 		SDL_FreeSurface(Screen);
 	SDL_Quit();
 }
 
 
-bool CIrrDeviceSDL::createWindow()
+
+bool CIrrDeviceSDL::createWindow(video::E_DRIVER_TYPE driverType)
 {
 	if ( Close )
 		return false;
 
-	if (CreationParams.DriverType == video::EDT_OPENGL)
+	if (driverType == video::EDT_OPENGL)
 	{
-		if (CreationParams.Bits==16)
+		if (Depth==16)
 		{
-			SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 4 );
-			SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 4 );
-			SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 4 );
-			SDL_GL_SetAttribute( SDL_GL_ALPHA_SIZE, CreationParams.WithAlphaChannel?1:0 );
+			SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 5 );
+			SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 5 );
+			SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 5 );
 		}
 		else
 		{
 			SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 8 );
 			SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 8 );
 			SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 8 );
-			SDL_GL_SetAttribute( SDL_GL_ALPHA_SIZE, CreationParams.WithAlphaChannel?8:0 );
 		}
-		SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, CreationParams.ZBufferBits);
+		SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, Depth);
 		SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 	}
 
 	if ( !Screen )
-		Screen = SDL_SetVideoMode( Width, Height, CreationParams.Bits, SDL_Flags );
+		Screen = SDL_SetVideoMode( Width, Height, Depth, SDL_Flags );
 	if ( !Screen )
 	{
 		os::Printer::log( "Could not initialize display!" );
@@ -148,9 +150,10 @@ bool CIrrDeviceSDL::createWindow()
 
 
 //! create the driver
-void CIrrDeviceSDL::createDriver()
+void CIrrDeviceSDL::createDriver(video::E_DRIVER_TYPE driverType,
+				const core::dimension2d<s32>& windowSize)
 {
-	switch(CreationParams.DriverType)
+	switch(driverType)
 	{
 	case video::EDT_DIRECT3D8:
 	case video::EDT_DIRECT3D9:
@@ -159,7 +162,7 @@ void CIrrDeviceSDL::createDriver()
 
 	case video::EDT_SOFTWARE:
 		#ifdef _IRR_COMPILE_WITH_SOFTWARE_
-		VideoDriver = video::createSoftwareDriver(CreationParams.WindowSize, CreationParams.Fullscreen, FileSystem, this);
+		VideoDriver = video::createSoftwareDriver(windowSize, Fullscreen, FileSystem, this);
 		#else
 		os::Printer::log("No Software driver support compiled in.", ELL_ERROR);
 		#endif
@@ -167,7 +170,7 @@ void CIrrDeviceSDL::createDriver()
 		
 	case video::EDT_BURNINGSVIDEO:
 		#ifdef _IRR_COMPILE_WITH_BURNINGSVIDEO_
-		VideoDriver = video::createSoftwareDriver2(CreationParams.WindowSize, CreationParams.Fullscreen, FileSystem, this);
+		VideoDriver = video::createSoftwareDriver2(windowSize, Fullscreen, FileSystem, this);
 		#else
 		os::Printer::log("Burning's video driver was not compiled in.", ELL_ERROR);
 		#endif
@@ -175,14 +178,14 @@ void CIrrDeviceSDL::createDriver()
 
 	case video::EDT_OPENGL:
 	#ifdef _IRR_COMPILE_WITH_OPENGL_
-		VideoDriver = video::createOpenGLDriver(CreationParams, FileSystem);
+		VideoDriver = video::createOpenGLDriver(windowSize, Fullscreen, Stencilbuffer, FileSystem, Vsync, AntiAlias);
 	#else
 		os::Printer::log("No OpenGL support compiled in.", ELL_ERROR);
 	#endif
 		break;
 
 	case video::EDT_NULL:
-		VideoDriver = video::createNullDriver(FileSystem, CreationParams.WindowSize);
+		VideoDriver = video::createNullDriver(FileSystem, windowSize);
 		break;
 
 	default:
@@ -199,7 +202,6 @@ bool CIrrDeviceSDL::run()
 	os::Timer::tick();
 
 	SEvent irrevent;
-	SDL_Event SDL_event;
 
 	while ( !Close && SDL_PollEvent( &SDL_event ) )
 	{
@@ -255,11 +257,8 @@ bool CIrrDeviceSDL::run()
 				if (idx != -1)
 				{
 					irrevent.EventType = irr::EET_KEY_INPUT_EVENT;
-					irrevent.KeyInput.Char = SDL_event.key.keysym.unicode;
 					irrevent.KeyInput.Key = (EKEY_CODE)KeyMap[idx].Win32Key;
 					irrevent.KeyInput.PressedDown = (SDL_event.type == SDL_KEYDOWN);
-					irrevent.KeyInput.Shift = SDL_event.key.keysym.mod & KMOD_SHIFT;
-					irrevent.KeyInput.Control = SDL_event.key.keysym.mod & KMOD_CTRL;
 					postEventFromUser(irrevent);
 				}
 				else
@@ -272,12 +271,8 @@ bool CIrrDeviceSDL::run()
 			break;
 
 		case SDL_ACTIVEEVENT:
-			if ((SDL_event.active.state == SDL_APPMOUSEFOCUS) ||
-					(SDL_event.active.state == SDL_APPINPUTFOCUS))
-				WindowHasFocus = (SDL_event.active.gain==1);
-			else
-			if (SDL_event.active.state == SDL_APPACTIVE)
-				WindowMinimized = (SDL_event.active.gain!=1);
+			if (SDL_event.active.state == SDL_APPMOUSEFOCUS)
+				WindowActive = (SDL_event.active.gain==1);
 			break;
 
 		default:
@@ -300,7 +295,7 @@ void CIrrDeviceSDL::yield()
 //! pause execution for a specified time
 void CIrrDeviceSDL::sleep(u32 timeMs, bool pauseTimer)
 {
-	const bool wasStopped = Timer ? Timer->isStopped() : true;
+	bool wasStopped = Timer ? Timer->isStopped() : true;
 	if (pauseTimer && !wasStopped)
 		Timer->stop();
 	
@@ -321,7 +316,7 @@ void CIrrDeviceSDL::setWindowCaption(const wchar_t* text)
 
 
 //! presents a surface in the client area
-void CIrrDeviceSDL::present(video::IImage* surface, void* windowId, core::rect<s32>* src)
+void CIrrDeviceSDL::present(video::IImage* surface, s32 windowId, core::rect<s32>* src)
 {
 	SDL_Rect srcClip;
 	SDL_Surface *sdlSurface = SDL_CreateRGBSurfaceFrom(
@@ -353,7 +348,7 @@ void CIrrDeviceSDL::closeDevice()
 
 
 
-//! \return Pointer to a list with all video modes supported
+//! \return Returns a pointer to a list with all video modes supported
 video::IVideoModeList* CIrrDeviceSDL::getVideoModeList()
 {
 	if (!VideoModeList.getVideoModeCount())
@@ -361,7 +356,7 @@ video::IVideoModeList* CIrrDeviceSDL::getVideoModeList()
 		// enumerate video modes.
 		const SDL_VideoInfo *vi = SDL_GetVideoInfo();
 		SDL_Rect **modes = SDL_ListModes(vi->vfmt, SDL_Flags);
-		if (modes != 0)
+		if (modes != (SDL_Rect **)0)
 		{
 			if (modes == (SDL_Rect **)-1)
 				os::Printer::log("All modes available.\n");
@@ -377,6 +372,7 @@ video::IVideoModeList* CIrrDeviceSDL::getVideoModeList()
 }
 
 
+
 //! Sets if the window should be resizeable in windowed mode.
 void CIrrDeviceSDL::setResizeAble(bool resize)
 {
@@ -387,55 +383,17 @@ void CIrrDeviceSDL::setResizeAble(bool resize)
 		else
 			SDL_Flags &= ~SDL_RESIZABLE;
 		SDL_FreeSurface(Screen);
-		Screen = SDL_SetVideoMode( Width, Height, CreationParams.Bits, SDL_Flags );
+		Screen = SDL_SetVideoMode( Width, Height, Depth, SDL_Flags );
 		Resizeable = resize;
 	}
 }
 
 
+
 //! returns if window is active. if not, nothing need to be drawn
 bool CIrrDeviceSDL::isWindowActive() const
 {
-	return (WindowHasFocus && !WindowMinimized);
-}
-
-
-//! returns if window has focus.
-bool CIrrDeviceSDL::isWindowFocused() const
-{
-	return WindowHasFocus;
-}
-
-
-//! returns if window is minimized.
-bool CIrrDeviceSDL::isWindowMinimized() const
-{
-	return WindowMinimized;
-}
-
-
-//! returns color format of the window.
-video::ECOLOR_FORMAT CIrrDeviceSDL::getColorFormat() const
-{
-	if (Screen)
-	{
-		if (Screen->format->BitsPerPixel==16)
-		{
-			if (Screen->format->Amask != 0)
-				return video::ECF_A1R5G5B5;
-			else
-				return video::ECF_R5G6B5;
-		}
-		else
-		{
-			if (Screen->format->Amask != 0)
-				return video::ECF_A8R8G8B8;
-			else
-				return video::ECF_R8G8B8;
-		}
-	}
-	else
-		return CIrrDeviceStub::getColorFormat();
+	return WindowActive;
 }
 
 
@@ -445,44 +403,51 @@ void CIrrDeviceSDL::createKeyMap()
 	// the lookuptable, but I'll leave it like that until
 	// I find a better version.
 
-	KeyMap.reallocate(105);
-
-	// buttons missing
-
 	KeyMap.push_back(SKeyMap(SDLK_BACKSPACE, KEY_BACK));
 	KeyMap.push_back(SKeyMap(SDLK_TAB, KEY_TAB));
+
+	//KeyMap.push_back(SKeyMap(XK_Linefeed, 0)); // ???
+
 	KeyMap.push_back(SKeyMap(SDLK_CLEAR, KEY_CLEAR));
 	KeyMap.push_back(SKeyMap(SDLK_RETURN, KEY_RETURN));
-
-	// combined modifiers missing
-
 	KeyMap.push_back(SKeyMap(SDLK_PAUSE, KEY_PAUSE));
-	KeyMap.push_back(SKeyMap(SDLK_CAPSLOCK, KEY_CAPITAL));
 
-	// asian letter keys missing
+	//KeyMap.push_back(SKeyMap(XK_Scroll_Lock, 0)); // ???
+	//KeyMap.push_back(SKeyMap(XK_Sys_Req, 0)); // ???
 
 	KeyMap.push_back(SKeyMap(SDLK_ESCAPE, KEY_ESCAPE));
-
-	// asian letter keys missing
-
-	KeyMap.push_back(SKeyMap(SDLK_SPACE, KEY_SPACE));
-	KeyMap.push_back(SKeyMap(SDLK_PAGEUP, KEY_PRIOR));
-	KeyMap.push_back(SKeyMap(SDLK_PAGEDOWN, KEY_NEXT));
-	KeyMap.push_back(SKeyMap(SDLK_END, KEY_END));
+	KeyMap.push_back(SKeyMap(SDLK_DELETE, KEY_DELETE));
 	KeyMap.push_back(SKeyMap(SDLK_HOME, KEY_HOME));
 	KeyMap.push_back(SKeyMap(SDLK_LEFT, KEY_LEFT));
 	KeyMap.push_back(SKeyMap(SDLK_UP, KEY_UP));
 	KeyMap.push_back(SKeyMap(SDLK_RIGHT, KEY_RIGHT));
 	KeyMap.push_back(SKeyMap(SDLK_DOWN, KEY_DOWN));
 
-	// select missing
-	KeyMap.push_back(SKeyMap(SDLK_PRINT, KEY_PRINT));
-	// execute missing
-	KeyMap.push_back(SKeyMap(SDLK_PRINT, KEY_SNAPSHOT));
+	KeyMap.push_back(SKeyMap(SDLK_PAGEUP, KEY_PRIOR));
+	KeyMap.push_back(SKeyMap(SDLK_PAGEDOWN, KEY_NEXT));
+	KeyMap.push_back(SKeyMap(SDLK_END, KEY_END));
+	KeyMap.push_back(SKeyMap(SDLK_HOME, KEY_HOME));
+	KeyMap.push_back(SKeyMap(SDLK_SPACE, KEY_SPACE));
+	KeyMap.push_back(SKeyMap(SDLK_TAB, KEY_TAB));
+	KeyMap.push_back(SKeyMap(SDLK_RETURN, KEY_RETURN));
 
-	KeyMap.push_back(SKeyMap(SDLK_INSERT, KEY_INSERT));
-	KeyMap.push_back(SKeyMap(SDLK_DELETE, KEY_DELETE));
-	KeyMap.push_back(SKeyMap(SDLK_HELP, KEY_HELP));
+	KeyMap.push_back(SKeyMap(SDLK_F1,  KEY_F1));
+	KeyMap.push_back(SKeyMap(SDLK_F2,  KEY_F2));
+	KeyMap.push_back(SKeyMap(SDLK_F3,  KEY_F3));
+	KeyMap.push_back(SKeyMap(SDLK_F4,  KEY_F4));
+	KeyMap.push_back(SKeyMap(SDLK_F5,  KEY_F5));
+	KeyMap.push_back(SKeyMap(SDLK_F6,  KEY_F6));
+	KeyMap.push_back(SKeyMap(SDLK_F7,  KEY_F7));
+	KeyMap.push_back(SKeyMap(SDLK_F8,  KEY_F8));
+	KeyMap.push_back(SKeyMap(SDLK_F9,  KEY_F9));
+	KeyMap.push_back(SKeyMap(SDLK_F10, KEY_F10));
+	KeyMap.push_back(SKeyMap(SDLK_F11, KEY_F11));
+	KeyMap.push_back(SKeyMap(SDLK_F12, KEY_F12));
+
+	KeyMap.push_back(SKeyMap(SDLK_LSHIFT, KEY_LSHIFT));
+	KeyMap.push_back(SKeyMap(SDLK_RSHIFT, KEY_RSHIFT));
+	KeyMap.push_back(SKeyMap(SDLK_LCTRL,  KEY_LCONTROL));
+	KeyMap.push_back(SKeyMap(SDLK_RCTRL,  KEY_RCONTROL));
 
 	KeyMap.push_back(SKeyMap(SDLK_0, KEY_KEY_0));
 	KeyMap.push_back(SKeyMap(SDLK_1, KEY_KEY_1));
@@ -494,6 +459,14 @@ void CIrrDeviceSDL::createKeyMap()
 	KeyMap.push_back(SKeyMap(SDLK_7, KEY_KEY_7));
 	KeyMap.push_back(SKeyMap(SDLK_8, KEY_KEY_8));
 	KeyMap.push_back(SKeyMap(SDLK_9, KEY_KEY_9));
+
+	//KeyMap.push_back(SKeyMap(XK_colon, 0)); //?
+	//KeyMap.push_back(SKeyMap(XK_semicolon, 0)); //?
+	//KeyMap.push_back(SKeyMap(XK_less, 0)); //?
+	//KeyMap.push_back(SKeyMap(XK_equal, 0)); //?
+	//KeyMap.push_back(SKeyMap(XK_greater, 0)); //?
+	//KeyMap.push_back(SKeyMap(XK_question, 0)); //?
+	//KeyMap.push_back(SKeyMap(XK_at, 0)); //?
 
 	KeyMap.push_back(SKeyMap(SDLK_a, KEY_KEY_A));
 	KeyMap.push_back(SKeyMap(SDLK_b, KEY_KEY_B));
@@ -522,67 +495,30 @@ void CIrrDeviceSDL::createKeyMap()
 	KeyMap.push_back(SKeyMap(SDLK_y, KEY_KEY_Y));
 	KeyMap.push_back(SKeyMap(SDLK_z, KEY_KEY_Z));
 
-	KeyMap.push_back(SKeyMap(SDLK_LSUPER, KEY_LWIN));
-	KeyMap.push_back(SKeyMap(SDLK_RSUPER, KEY_RWIN));
-	// apps missing
-	KeyMap.push_back(SKeyMap(SDLK_POWER, KEY_SLEEP)); //??
-
-	KeyMap.push_back(SKeyMap(SDLK_KP0, KEY_NUMPAD0));
-	KeyMap.push_back(SKeyMap(SDLK_KP1, KEY_NUMPAD1));
-	KeyMap.push_back(SKeyMap(SDLK_KP2, KEY_NUMPAD2));
-	KeyMap.push_back(SKeyMap(SDLK_KP3, KEY_NUMPAD3));
-	KeyMap.push_back(SKeyMap(SDLK_KP4, KEY_NUMPAD4));
-	KeyMap.push_back(SKeyMap(SDLK_KP5, KEY_NUMPAD5));
-	KeyMap.push_back(SKeyMap(SDLK_KP6, KEY_NUMPAD6));
-	KeyMap.push_back(SKeyMap(SDLK_KP7, KEY_NUMPAD7));
-	KeyMap.push_back(SKeyMap(SDLK_KP8, KEY_NUMPAD8));
-	KeyMap.push_back(SKeyMap(SDLK_KP9, KEY_NUMPAD9));
-	KeyMap.push_back(SKeyMap(SDLK_KP_MULTIPLY, KEY_MULTIPLY));
-	KeyMap.push_back(SKeyMap(SDLK_KP_PLUS, KEY_ADD));
-//	KeyMap.push_back(SKeyMap(SDLK_KP_, KEY_SEPARATOR));
-	KeyMap.push_back(SKeyMap(SDLK_KP_MINUS, KEY_SUBTRACT));
-	KeyMap.push_back(SKeyMap(SDLK_KP_PERIOD, KEY_DECIMAL));
-	KeyMap.push_back(SKeyMap(SDLK_KP_DIVIDE, KEY_DIVIDE));
-
-	KeyMap.push_back(SKeyMap(SDLK_F1,  KEY_F1));
-	KeyMap.push_back(SKeyMap(SDLK_F2,  KEY_F2));
-	KeyMap.push_back(SKeyMap(SDLK_F3,  KEY_F3));
-	KeyMap.push_back(SKeyMap(SDLK_F4,  KEY_F4));
-	KeyMap.push_back(SKeyMap(SDLK_F5,  KEY_F5));
-	KeyMap.push_back(SKeyMap(SDLK_F6,  KEY_F6));
-	KeyMap.push_back(SKeyMap(SDLK_F7,  KEY_F7));
-	KeyMap.push_back(SKeyMap(SDLK_F8,  KEY_F8));
-	KeyMap.push_back(SKeyMap(SDLK_F9,  KEY_F9));
-	KeyMap.push_back(SKeyMap(SDLK_F10, KEY_F10));
-	KeyMap.push_back(SKeyMap(SDLK_F11, KEY_F11));
-	KeyMap.push_back(SKeyMap(SDLK_F12, KEY_F12));
-	KeyMap.push_back(SKeyMap(SDLK_F13, KEY_F13));
-	KeyMap.push_back(SKeyMap(SDLK_F14, KEY_F14));
-	KeyMap.push_back(SKeyMap(SDLK_F15, KEY_F15));
-	// no higher F-keys
-
-	KeyMap.push_back(SKeyMap(SDLK_NUMLOCK, KEY_NUMLOCK));
-	KeyMap.push_back(SKeyMap(SDLK_SCROLLOCK, KEY_SCROLL));
-	KeyMap.push_back(SKeyMap(SDLK_LSHIFT, KEY_LSHIFT));
-	KeyMap.push_back(SKeyMap(SDLK_RSHIFT, KEY_RSHIFT));
-	KeyMap.push_back(SKeyMap(SDLK_LCTRL,  KEY_LCONTROL));
-	KeyMap.push_back(SKeyMap(SDLK_RCTRL,  KEY_RCONTROL));
-	KeyMap.push_back(SKeyMap(SDLK_LALT,  KEY_LMENU));
-	KeyMap.push_back(SKeyMap(SDLK_RALT,  KEY_RMENU));
-
-	KeyMap.push_back(SKeyMap(SDLK_PLUS,   KEY_PLUS));
-	KeyMap.push_back(SKeyMap(SDLK_COMMA,  KEY_COMMA));
-	KeyMap.push_back(SKeyMap(SDLK_MINUS,  KEY_MINUS));
-	KeyMap.push_back(SKeyMap(SDLK_PERIOD, KEY_PERIOD));
-
-	// some special keys missing
+	//KeyMap.push_back(SKeyMap(XK_bracketleft, 0)); //?
+	//KeyMap.push_back(SKeyMap(XK_backslash, 0)); //?
+	//KeyMap.push_back(SKeyMap(XK_bracketright, 0)); //?
+	//KeyMap.push_back(SKeyMap(XK_asciicircum, 0)); //?
+	//KeyMap.push_back(SKeyMap(XK_underscore, 0)); //?
+	//KeyMap.push_back(SKeyMap(XK_grave, 0)); //?
+	//KeyMap.push_back(SKeyMap(XK_quoteleft, 0)); //?
 
 	KeyMap.sort();
 }
 
 IRRLICHT_API IrrlichtDevice* IRRCALLCONV createDeviceEx(const SIrrlichtCreationParameters& param)
 {
-	CIrrDeviceSDL* dev = new CIrrDeviceSDL(param);
+	CIrrDeviceSDL* dev = new CIrrDeviceSDL(
+		param.DriverType,
+		param.WindowSize,
+		param.Bits,
+		param.Fullscreen,
+		param.Stencilbuffer,
+		param.Vsync,
+		param.AntiAlias,
+		param.EventReceiver,
+		param.WindowId,
+		param.SDK_version_do_not_use);
 
 	if (dev && !dev->getVideoDriver() && param.DriverType != video::EDT_NULL)
 	{

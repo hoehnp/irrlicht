@@ -26,7 +26,11 @@ namespace irr
 	public:
 
 		//! constructor
-		CIrrDeviceSDL(const SIrrlichtCreationParameters& param);
+		CIrrDeviceSDL(video::E_DRIVER_TYPE deviceType, 
+			const core::dimension2d<s32>& windowSize, u32 bits,
+			bool fullscreen, bool stencilbuffer, bool vsync,
+			bool antiAlias, IEventReceiver* receiver,
+			void* windowID, const char* version);
 
 		//! destructor
 		virtual ~CIrrDeviceSDL();
@@ -46,17 +50,8 @@ namespace irr
 		//! returns if window is active. if not, nothing need to be drawn
 		virtual bool isWindowActive() const;
 
-		//! returns if window has focus.
-		bool isWindowFocused() const;
-
-		//! returns if window is minimized.
-		bool isWindowMinimized() const;
-			
-		//! returns color format of the window.
-		video::ECOLOR_FORMAT getColorFormat() const;
-
 		//! presents a surface in the client area
-		virtual void present(video::IImage* surface, void* windowId=0, core::rect<s32>* src=0);
+		virtual void present(video::IImage* surface, s32 windowId = 0, core::rect<s32>* src=0);
 
 		//! notifies the device that it should close itself
 		virtual void closeDevice();
@@ -161,23 +156,28 @@ namespace irr
 	private:
 
 		//! create the driver
-		void createDriver();
+		void createDriver(video::E_DRIVER_TYPE driverType,
+			const core::dimension2d<s32>& windowSize);
 
-		bool createWindow();
+		bool createWindow(video::E_DRIVER_TYPE driverType);
 
 		void createKeyMap();
 
+		s32 MouseX, MouseY;
+		u32 Depth;
+		bool Fullscreen;
+		bool Stencilbuffer;
+		bool Vsync;
+		bool AntiAlias;
+		bool Resizeable;
+		
 		SDL_Surface* Screen;
+		SDL_Event SDL_event;
 		int SDL_Flags;
 
-		s32 MouseX, MouseY;
-		
 		u32 Width, Height;
-
 		bool Close;
-		bool Resizeable;
-		bool WindowHasFocus;
-		bool WindowMinimized;
+		bool WindowActive;
 
 		struct SKeyMap
 		{

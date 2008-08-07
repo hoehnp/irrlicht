@@ -20,10 +20,10 @@ namespace scene
 
 
 //! constructor
-CQ3LevelMesh::CQ3LevelMesh(io::IFileSystem* fs, scene::ISceneManager* smgr)
+CQ3LevelMesh::CQ3LevelMesh(io::IFileSystem* fs, video::IVideoDriver* driver, scene::ISceneManager* smgr)
 : Textures(0), LightMaps(0),
  Vertices(0), Faces(0),	Planes(0), Nodes(0), Leafs(0), LeafFaces(0),
-	MeshVerts(0), Brushes(0), FileSystem(fs), SceneManager ( smgr )
+	MeshVerts(0), Brushes(0), Driver(driver), FileSystem(fs), SceneManager ( smgr )
 {
 	#ifdef _DEBUG
 	IReferenceCounted::setDebugName("CQ3LevelMesh");
@@ -34,10 +34,6 @@ CQ3LevelMesh::CQ3LevelMesh(io::IFileSystem* fs, scene::ISceneManager* smgr)
 		Mesh[i] = 0;
 	}
 
-	if (smgr)
-		Driver = smgr->getVideoDriver();
-	else
-		Driver = 0;
 	if (Driver)
 		Driver->grab();
 
@@ -187,14 +183,13 @@ void CQ3LevelMesh::loadTextures(tBSPLump* l, io::IReadFile* file)
 	file->seek(l->offset);
 	file->read(Textures, l->length);
 
-	for (int i=0;i<NumTextures;++i)
-	{
 	#ifdef __BIG_ENDIAN__
+	for (int i=0;i<NumTextures;i++)
+	{
 		Textures[i].flags = os::Byteswap::byteswap(Textures[i].flags);
 		Textures[i].contents = os::Byteswap::byteswap(Textures[i].contents);
-	#endif
-		os::Printer::log("Loaded texture", Textures[i].strName, ELL_INFORMATION);
 	}
+	#endif
 }
 
 
@@ -630,7 +625,7 @@ s32 CQ3LevelMesh::setShaderMaterial ( video::SMaterial &material, const tBSPFace
 	if ( face->lightmapID >= 0 )
 	{
 		material.setTexture(1, Lightmap [ face->lightmapID ]);
-		material.MaterialType = quake3::defaultMaterialType;
+		material.MaterialType = quake3::defaultLightMap;
 	}
 
 	// store shader ID
@@ -648,7 +643,7 @@ s32 CQ3LevelMesh::setShaderMaterial ( video::SMaterial &material, const tBSPFace
 	group = shader->getGroup ( 1 );
 	if ( group )
 	{
-		material.BackfaceCulling = quake3::isDisabled ( group->get ( "cull" ) );
+		material.BackfaceCulling = quake3::getBackfaceCulling ( group->get ( "cull" ) );
 
 		if ( group->isDefined ( "surfaceparm", "nolightmap" ) )
 		{
@@ -673,7 +668,7 @@ s32 CQ3LevelMesh::setShaderMaterial ( video::SMaterial &material, const tBSPFace
 		index = group->getIndex ( "depthwrite" );
 		if ( index >= 0 )
 		{
-			material.ZWriteEnable = true;
+			material.ZBuffer = true;
 		}
 
 		quake3::SBlendFunc blendfunc;
@@ -812,7 +807,7 @@ void CQ3LevelMesh::constructMesh2()
 			{
 				if ( 0 == toBuffer[g].takeVertexColor )
 				{
-					toBuffer[g].takeVertexColor = material.getTexture(0) == 0 || material.getTexture(1) == 0;
+					toBuffer[g].takeVertexColor = material.getTexture(0) == 0 || material.getTexture(1);
 				}
 				if (Faces[i].lightmapID < -1 || Faces[i].lightmapID > NumLightMaps-1)
 				{
@@ -826,24 +821,8 @@ void CQ3LevelMesh::constructMesh2()
 			}
 			else
 			{
-				// Construct a unique mesh for each shader or combine meshbuffers for same shader
-#if 0
-				buffer = 0;
-				if ( shader )
-				{
-					const quake3::SVarGroup *group = shader->getGroup ( 1 );
-					if ( group )
-					{
-						if ( group->getIndex ( "deformvertexes" ) >= 0 )
-						{
-							buffer = (SMeshBufferLightMap*) Mesh[ toBuffer[g].index ]->getMeshBuffer ( material );
-						}
-					}
-
-				}
-#else
 				buffer = (SMeshBufferLightMap*) Mesh[ toBuffer[g].index ]->getMeshBuffer ( material );
-#endif
+				//buffer = 0;
 				if ( 0 == buffer )
 				{
 					buffer = new scene::SMeshBufferLightMap();
@@ -972,14 +951,12 @@ inline f32 CQ3LevelMesh::Blend( const f64 s[3], const f64 t[3], const tBSPVertex
 	f64 res = 0.0;
 	f32 *ptr;
 
-	for( int i=0; i<3; ++i )
-	{
-		for( int j=0; j<3; ++j )
+	for( int i=0; i<3; i++ )
+		for( int j=0; j<3; j++ )
 		{
 			ptr = (f32 *)( (char*)v[i*3+j] + offset );
 			res += s[i] * t[j] *  (*ptr);
 		}
-	}
 
 	return (f32) res;
 }
@@ -1438,7 +1415,6 @@ const quake3::SShader * CQ3LevelMesh::getShader ( const c8 * filename, s32 fileN
 {
 	quake3::SShader search;
 	search.name = filename;
-	search.name.replace ( '\\', '/' );
 
 	s32 index;
 
@@ -1455,7 +1431,7 @@ const quake3::SShader * CQ3LevelMesh::getShader ( const c8 * filename, s32 fileN
 	{
 		// extract the shader name from the last path component in filename
 		// "scripts/[name].shader"
-		core::stringc cut ( search.name );
+		core::stringc cut ( filename );
 
 		s32 end = cut.findLast ( '/' );
 		s32 start = cut.findLast ( '/', end - 1 );
@@ -1466,16 +1442,13 @@ const quake3::SShader * CQ3LevelMesh::getShader ( const c8 * filename, s32 fileN
 	}
 	else
 	{
-		loadFile = search.name;
+		loadFile = filename;
 	}
 
 	// already loaded the file ?
 	index = ShaderFile.binary_search ( loadFile );
 	if ( index >= 0 )
 		return 0;
-
-	// add file to loaded files
-	ShaderFile.push_back ( loadFile );
 
 	if ( !FileSystem->existFile ( loadFile.c_str () ) )
 		return 0;
@@ -1487,6 +1460,9 @@ const quake3::SShader * CQ3LevelMesh::getShader ( const c8 * filename, s32 fileN
 	core::stringc message;
 	message = loadFile + " for " + core::stringc ( filename );
 	os::Printer::log("Loaded shader", message.c_str(), ELL_INFORMATION);
+
+	// add file to loaded files
+	ShaderFile.push_back ( loadFile );
 
 	// load script
 	core::array<u8> script;
@@ -1795,12 +1771,6 @@ void CQ3LevelMesh::loadTextures2()
 	core::stringc list;
 	core::stringc check;
 	quake3::tTexArray textureArray;
-
-	// pre-load shaders
-	for ( t=0; t< NumTextures; ++t)
-	{
-		shader = getShader ( Textures[t].strName, 0 );
-	}
 
 	for ( t=0; t< NumTextures; ++t)
 	{

@@ -32,29 +32,16 @@ namespace video
 		virtual const core::dimension2d<s32>& getSize() const;
 
 		//! locks the zbuffer
-		virtual void* lock()
-		{
-			return (void*) Buffer;
-		}
+		virtual fp24* lock();
 
 		//! unlocks the zbuffer
-		virtual void unlock()
-		{
-		}
-
-		//! returns pitch of depthbuffer (in bytes)
-		virtual u32 getPitch() const
-		{
-			return Pitch;
-		}
-
+		virtual void unlock();
 
 	private:
 
 		u8* Buffer;
 		core::dimension2d<s32> Size;
 		u32 TotalSize;
-		u32 Pitch;
 	};
 	
 } // end namespace video

@@ -113,9 +113,6 @@ struct SGroup
 CMS3DMeshFileLoader::CMS3DMeshFileLoader(video::IVideoDriver *driver)
 : Driver(driver), AnimatedMesh(0)
 {
-	#ifdef _DEBUG
-	setDebugName("CMS3DMeshFileLoader");
-	#endif
 }
 
 
@@ -349,14 +346,16 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 		tmpBuffer->Material.Shininess = material->Shininess;
 
 		core::stringc TexturePath(material->Texture);
-		if (TexturePath.trim()!="")
+		TexturePath.trim();
+		if (TexturePath!="")
 		{
 			TexturePath=stripPathFromString(file->getFileName(),true) + stripPathFromString(TexturePath,false);
 			tmpBuffer->Material.setTexture(0, Driver->getTexture(TexturePath.c_str()) );
 		}
 
 		core::stringc AlphamapPath=(const c8*)material->Alphamap;
-		if (AlphamapPath.trim()!="")
+		AlphamapPath.trim();
+		if (AlphamapPath!="")
 		{
 			AlphamapPath=stripPathFromString(file->getFileName(),true) + stripPathFromString(AlphamapPath,false);
 			tmpBuffer->Material.setTexture(2, Driver->getTexture(AlphamapPath.c_str()) );
@@ -380,6 +379,7 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 //	frameCount = os::Byteswap::byteswap(frameCount);
 #endif
 	pPtr += sizeof(int);
+
 
 	u16 jointCount = *(u16*)pPtr;
 #ifdef __BIG_ENDIAN__
@@ -431,12 +431,10 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 
 		/*if (pJoint->NumRotationKeyframes ||
 			pJoint->NumTranslationKeyframes)
-			HasAnimation = true;
-		 */
+			HasAnimation = true;*/
 
 		// get rotation keyframes
-		const u16 numRotationKeyframes = pJoint->NumRotationKeyframes;
-		for (j=0; j < numRotationKeyframes; ++j)
+		for (j=0; j < pJoint->NumRotationKeyframes; ++j)
 		{
 			MS3DKeyframe* kf = (MS3DKeyframe*)pPtr;
 #ifdef __BIG_ENDIAN__
@@ -466,8 +464,7 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 		}
 
 		// get translation keyframes
-		const u16 numTranslationKeyframes = pJoint->NumTranslationKeyframes;
-		for (j=0; j<numTranslationKeyframes; ++j)
+		for (j=0; j<pJoint->NumTranslationKeyframes; ++j)
 		{
 			MS3DKeyframe* kf = (MS3DKeyframe*)pPtr;
 #ifdef __BIG_ENDIAN__
@@ -634,7 +631,6 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 					break;
 				}
 			}
-
 			if (index == -1)
 			{
 				index = Vertices->size();
@@ -725,10 +721,10 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 }
 
 
-core::stringc CMS3DMeshFileLoader::stripPathFromString(const core::stringc& inString, bool returnPath) const
+core::stringc CMS3DMeshFileLoader::stripPathFromString(core::stringc string, bool returnPath)
 {
-	s32 slashIndex=inString.findLast('/'); // forward slash
-	s32 backSlash=inString.findLast('\\'); // back slash
+	s32 slashIndex=string.findLast('/'); // forward slash
+	s32 backSlash=string.findLast('\\'); // back slash
 
 	if (backSlash>slashIndex) slashIndex=backSlash;
 
@@ -737,13 +733,13 @@ core::stringc CMS3DMeshFileLoader::stripPathFromString(const core::stringc& inSt
 		if (returnPath)
 			return core::stringc(); //no path to return
 		else
-			return inString;
+			return string;
 	}
 
 	if (returnPath)
-		return inString.subString(0, slashIndex + 1);
+		return string.subString(0, slashIndex + 1);
 	else
-		return inString.subString(slashIndex+1, inString.size() - (slashIndex+1));
+		return string.subString(slashIndex+1, string.size() - (slashIndex+1));
 }
 
 

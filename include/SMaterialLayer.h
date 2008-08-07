@@ -98,7 +98,7 @@ namespace video
 
 		//! Texture Matrix
 		/** Do not access this element directly as the internal
-		resource management has to cope with Null pointers etc. */
+		ressource management has to cope with Null pointers etc. */
 		core::matrix4* TextureMatrix;
 
 		//! Texture Clamp Mode

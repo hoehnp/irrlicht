@@ -7,10 +7,9 @@
 
 #include "IMeshLoader.h"
 #include "IFileSystem.h"
-#include "ISceneManager.h"
+#include "IVideoDriver.h"
 #include "irrString.h"
 #include "SMeshBuffer.h"
-#include "irrMap.h"
 
 namespace irr
 {
@@ -23,7 +22,7 @@ class COBJMeshFileLoader : public IMeshLoader
 public:
 
 	//! Constructor
-	COBJMeshFileLoader(scene::ISceneManager* smgr, io::IFileSystem* fs);
+	COBJMeshFileLoader(io::IFileSystem* fs, video::IVideoDriver* driver);
 
 	//! destructor
 	virtual ~COBJMeshFileLoader();
@@ -42,9 +41,7 @@ private:
 
 	struct SObjMtl
 	{
-		SObjMtl() : Meshbuffer(0), Bumpiness (1.0f), Illumination(0),
-			RecalculateNormals(false)
-		{
+		SObjMtl() : Meshbuffer(0), Illumination(0) {
 			Meshbuffer = new SMeshBuffer();
 			Meshbuffer->Material.Shininess = 0.0f;
 			Meshbuffer->Material.AmbientColor = video::SColorf(0.2f, 0.2f, 0.2f, 1.0f).toSColor();
@@ -52,26 +49,12 @@ private:
 			Meshbuffer->Material.SpecularColor = video::SColorf(1.0f, 1.0f, 1.0f, 1.0f).toSColor();
 		}
 
-		SObjMtl(const SObjMtl& o)
-			: Name(o.Name), Group(o.Group),
-			Bumpiness(o.Bumpiness), Illumination(o.Illumination),
-			RecalculateNormals(false)
-		{
-			Meshbuffer = new SMeshBuffer();
-			Meshbuffer->Material = o.Meshbuffer->Material;
-		}
+		SObjMtl(SObjMtl& o) : Meshbuffer(o.Meshbuffer), Name(o.Name), Illumination(o.Illumination) { o.Meshbuffer->grab(); }
 
-		core::map<video::S3DVertex, int> VertMap;
 		scene::SMeshBuffer *Meshbuffer;
 		core::stringc Name;
-		core::stringc Group;
-		f32 Bumpiness;
 		c8 Illumination;
-		bool RecalculateNormals;
 	};
-
-	// helper method for material reading
-	const c8* readTextures(const c8* bufPtr, const c8* const bufEnd, SObjMtl* currMaterial, const core::stringc& relPath);
 
 	// returns a pointer to the first printable character available in the buffer
 	const c8* goFirstWord(const c8* buf, const c8* const bufEnd);
@@ -87,9 +70,9 @@ private:
 	const c8* goAndCopyNextWord(c8* outBuf, const c8* inBuf, u32 outBufLength, const c8* const pBufEnd);
 
 	//! Read the material from the given file
-	void readMTL(const c8* fileName, const core::stringc& relPath);
+	void readMTL(const c8* fileName, core::stringc relPath);
 	//! Find and return the material with the given name
-	SObjMtl* findMtl(const core::stringc& mtlName, const core::stringc& grpName);
+	SObjMtl * findMtl(const c8* mtlName);
 
 	//! Read RGB color
 	const c8* readColor(const c8* bufPtr, video::SColor& color, const c8* const pBufEnd);
@@ -107,8 +90,8 @@ private:
 
 	void cleanUp();
 
-	scene::ISceneManager* SceneManager;
 	io::IFileSystem* FileSystem;
+	video::IVideoDriver* Driver;
 
 	core::array<SObjMtl*> Materials;
 };

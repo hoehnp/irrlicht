@@ -77,6 +77,9 @@ namespace video
 	{
 	public:
 
+		//! Destructor
+		virtual ~IVideoDriver() {}
+
 		//! Applications must call this method before performing any rendering.
 		/** This method can clear the back- and the z-buffer.
 		\param backBuffer Specifies if the back buffer should be
@@ -103,7 +106,7 @@ namespace video
 		rectangle of the area to be presented. Set to null to present
 		everything. Note: not implemented in all devices.
 		\return False if failed and true if succeeded. */
-		virtual bool endScene( void* windowId=0, core::rect<s32>* sourceRect=0 ) = 0;
+		virtual bool endScene( s32 windowId = 0, core::rect<s32>* sourceRect=0 ) = 0;
 
 		//! Queries the features of the driver.
 		/** Returns true if a feature is available
@@ -222,12 +225,6 @@ namespace video
 		0 or another texture first. */
 		virtual void removeAllTextures() = 0;
 
-		//! Remove hardware buffer
-		virtual void removeHardwareBuffer(const scene::IMeshBuffer* mb) = 0;
-
-		//! Remove all hardware buffers
-		virtual void removeAllHardwareBuffers() = 0;
-
 		//! Creates a 1bit alpha channel of the texture based of an color key.
 		/** This makes the texture transparent at the regions where
 		this color key can be found when using for example draw2DImage
@@ -321,11 +318,11 @@ namespace video
 		\param vertices Pointer to array of vertices.
 		\param vertexCount Amount of vertices in the array.
 		\param indexList Pointer to array of indices.
-		\param primCount Amount of Primitives
+		\param triangleCount Amount of Triangles.
 		\param vType Vertex type, e.g. EVT_STANDARD for S3DVertex.
 		\param pType Primitive type, e.g. EPT_TRIANGLE_FAN for a triangle fan. */
 		virtual void drawVertexPrimitiveList(const void* vertices, u32 vertexCount,
-				const u16* indexList, u32 primCount,
+				const u16* indexList, u32 triangleCount,
 				E_VERTEX_TYPE vType, scene::E_PRIMITIVE_TYPE pType) = 0;
 
 		//! Draws an indexed triangle list.
@@ -636,15 +633,11 @@ namespace video
 				f32 density=0.01f, 
 				bool pixelFog=false, bool rangeFog=false) = 0;
 
-		//! Get the current color format of the color buffer
-		/** \return Color format of the color buffer. */
-		virtual ECOLOR_FORMAT getColorFormat() const = 0;
-
-		//! Get the size of the screen or render window.
+		//! Returns the size of the screen or render window.
 		/** \return Size of screen or render window. */
 		virtual const core::dimension2d<s32>& getScreenSize() const = 0;
 
-		//! Get the size of the current render target
+		//! Returns the size of the current render target
 		/** This method will return the screen size if the driver
 		doesn't support render to texture, or if the current render
 		target is the screen.
@@ -921,9 +914,6 @@ namespace video
 		\param color New color of the ambient light. */
 		virtual void setAmbientLight(const SColorf& color) = 0;
 
-		//! Returns the graphics card vendor name.
-		virtual core::stringc getVendorInfo() = 0;
-
 	};
 
 } // end namespace video
@@ -931,5 +921,4 @@ namespace video
 
 
 #endif
-
 

@@ -82,7 +82,6 @@
 				OutputFile="..\..\bin\Win32-visualstudio\Irrlicht.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories=""
 				IgnoreDefaultLibraryNames="libci.lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="..\obj\IrrDebug\Irrlicht.pdb"
@@ -338,10 +337,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\..\..\include\IReferenceCounted.h"
-				>
-			</File>
-			<File
 				RelativePath=".\..\..\include\IrrCompileConfig.h"
 				>
 			</File>
@@ -359,6 +354,10 @@
 			</File>
 			<File
 				RelativePath=".\..\..\include\ITimer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\..\..\include\IUnknown.h"
 				>
 			</File>
 			<File
@@ -677,14 +676,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\include\ISceneNodeAnimatorCameraFPS.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\include\ISceneNodeAnimatorCameraMaya.h"
-					>
-				</File>
-				<File
 					RelativePath=".\..\..\include\ISceneNodeAnimatorCollisionResponse.h"
 					>
 				</File>
@@ -694,6 +685,10 @@
 				</File>
 				<File
 					RelativePath=".\..\..\include\ISceneNodeFactory.h"
+					>
+				</File>
+				<File
+					RelativePath=".\..\..\include\ISceneNodeMeshLoader.h"
 					>
 				</File>
 				<File
@@ -714,10 +709,6 @@
 				</File>
 				<File
 					RelativePath=".\..\..\include\ITriangleSelector.h"
-					>
-				</File>
-				<File
-					RelativePath=".\..\..\include\IVolumeLightSceneNode.h"
 					>
 				</File>
 				<File
@@ -756,10 +747,6 @@
 			<Filter
 				Name="gui"
 				>
-				<File
-					RelativePath="..\..\include\EGUIAlignment.h"
-					>
-				</File>
 				<File
 					RelativePath=".\..\..\include\EGUIElementTypes.h"
 					>
@@ -1051,14 +1038,6 @@
 			</File>
 			<File
 				RelativePath="CGUITabControl.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CGUITable.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CGUITable.h"
 				>
 			</File>
 			<File
@@ -1373,14 +1352,6 @@
 					>
 				</File>
 				<File
-					RelativePath="CImageLoaderWAL.cpp"
-					>
-				</File>
-				<File
-					RelativePath="CImageLoaderWAL.h"
-					>
-				</File>
-				<File
 					RelativePath=".\CNullDriver.cpp"
 					>
 				</File>
@@ -1512,10 +1483,6 @@
 			<Filter
 				Name="Burning Video"
 				>
-				<File
-					RelativePath=".\CBurningShader_Raster_Reference.cpp"
-					>
-				</File>
 				<File
 					RelativePath=".\CDepthBuffer.cpp"
 					>
@@ -1781,14 +1748,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\CLWOMeshFileLoader.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CLWOMeshFileLoader.h"
-					>
-				</File>
-				<File
 					RelativePath=".\CMD2MeshFileLoader.cpp"
 					>
 				</File>
@@ -1822,6 +1781,10 @@
 				</File>
 				<File
 					RelativePath=".\CMY3DMeshFileLoader.h"
+					>
+				</File>
+				<File
+					RelativePath=".\CMY3DStuff.h"
 					>
 				</File>
 				<File
@@ -1910,6 +1873,22 @@
 				</File>
 				<File
 					RelativePath=".\CBoneSceneNode.h"
+					>
+				</File>
+				<File
+					RelativePath=".\CCameraFPSSceneNode.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\CCameraFPSSceneNode.h"
+					>
+				</File>
+				<File
+					RelativePath=".\CCameraMayaSceneNode.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\CCameraMayaSceneNode.h"
 					>
 				</File>
 				<File
@@ -2022,14 +2001,6 @@
 				</File>
 				<File
 					RelativePath=".\CTextSceneNode.h"
-					>
-				</File>
-				<File
-					RelativePath=".\CVolumeLightSceneNode.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CVolumeLightSceneNode.h"
 					>
 				</File>
 				<File
@@ -2168,22 +2139,6 @@
 			<Filter
 				Name="animators"
 				>
-				<File
-					RelativePath=".\CSceneNodeAnimatorCameraFPS.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CSceneNodeAnimatorCameraFPS.h"
-					>
-				</File>
-				<File
-					RelativePath=".\CSceneNodeAnimatorCameraMaya.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CSceneNodeAnimatorCameraMaya.h"
-					>
-				</File>
 				<File
 					RelativePath="CSceneNodeAnimatorCollisionResponse.cpp"
 					>

@@ -14,7 +14,6 @@ namespace irr
 {
 namespace io
 {
-	class IFileSystem;
 	class IReadFile;
 } // end namespace io
 namespace scene
@@ -27,7 +26,7 @@ class CXMeshFileLoader : public IMeshLoader
 public:
 
 	//! Constructor
-	CXMeshFileLoader(scene::ISceneManager* smgr, io::IFileSystem* fs);
+	CXMeshFileLoader(scene::ISceneManager* smgr);
 
 	//! returns true if the file maybe is able to be loaded by this class
 	//! based on the file extension (e.g. ".cob")
@@ -163,12 +162,13 @@ private:
 	f32 readFloat();
 	bool readVector2(core::vector2df& vec);
 	bool readVector3(core::vector3df& vec);
-	bool readMatrix(core::matrix4& mat);
+	bool readRGB(video::SColorf& color);
+	bool readRGBA(video::SColorf& color);
+
 	bool readRGB(video::SColor& color);
 	bool readRGBA(video::SColor& color);
 
 	ISceneManager*	SceneManager;
-	io::IFileSystem*	FileSystem;
 
 	core::array<CSkinnedMesh::SJoint*> *AllJoints;
 

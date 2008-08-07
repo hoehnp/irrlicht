@@ -23,9 +23,7 @@ CParticlePointEmitter::CParticlePointEmitter(
 	MinLifeTime(lifeTimeMin), MaxLifeTime(lifeTimeMax),
 	MaxAngleDegrees(maxAngleDegrees), Time(0), Emitted(0)
 {
-	#ifdef _DEBUG
-	setDebugName("CParticlePointEmitter");
-	#endif
+
 }
 
 

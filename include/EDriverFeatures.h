@@ -77,10 +77,7 @@ namespace video
 		EVDF_TEXTURE_NPOT,
 
 		//! Are framebuffer objects supported?
-		EVDF_FRAMEBUFFER_OBJECT,
-
-		//! Are vertex buffer objects supported?
-		EVDF_VERTEX_BUFFER_OBJECT
+		EVDF_FRAMEBUFFER_OBJECT
 	};
 
 } // end namespace video
@@ -88,5 +85,4 @@ namespace video
 
 
 #endif
-
 

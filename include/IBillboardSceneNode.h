@@ -17,7 +17,7 @@ namespace scene
 which always looks to the camera. It is usually used for explosions, fire,
 lensflares, particles and things like that.
 */
-class IBillboardSceneNode : virtual public ISceneNode
+class IBillboardSceneNode : public ISceneNode
 {
 public:
 

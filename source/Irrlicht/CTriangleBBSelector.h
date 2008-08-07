@@ -18,7 +18,7 @@ class CTriangleBBSelector : public CTriangleSelector
 public:
 
 	//! Constructs a selector based on a mesh
-	CTriangleBBSelector(const ISceneNode* node);
+	CTriangleBBSelector(ISceneNode* node);
 
 	//! Gets all triangles.
 	virtual void getTriangles(core::triangle3df* triangles, s32 arraySize, s32& outTriangleCount, 

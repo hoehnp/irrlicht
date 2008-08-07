@@ -78,7 +78,6 @@
 #include "IGUISpriteBank.h"
 #include "IGUIStaticText.h"
 #include "IGUITabControl.h"
-#include "IGUITable.h"
 #include "IGUIToolbar.h"
 #include "IGUIWindow.h"
 #include "IImage.h"
@@ -114,7 +113,6 @@
 #include "IReferenceCounted.h"
 #include "IVideoDriver.h"
 #include "IVideoModeList.h"
-#include "IVolumeLightSceneNode.h"
 #include "IWriteFile.h"
 #include "IXMLReader.h"
 #include "IXMLWriter.h"
@@ -272,6 +270,8 @@ namespace irr
 	\param vsync: Specifies vertical syncronisation: If set to true, the driver will wait
 	for the vertical retrace period, otherwise not.
 	\param receiver: A user created event receiver.
+	\param sdk_version_do_not_use: Don't use or change this parameter. Always set it to
+	IRRLICHT_SDK_VERSION, which is done by default. This is needed for sdk version checks.
 	\return Returns pointer to the created IrrlichtDevice or null if the
 	device could not be created.
 	*/
@@ -283,7 +283,8 @@ namespace irr
 		bool fullscreen = false,
 		bool stencilbuffer = false,
 		bool vsync = false,
-		IEventReceiver* receiver = 0);
+		IEventReceiver* receiver = 0,
+		const c8* sdk_version_do_not_use = IRRLICHT_SDK_VERSION);
 
 	//! Creates an Irrlicht device with the option to specify advanced parameters.
 	/** Usually you should used createDevice() for creating an Irrlicht Engine device.
@@ -333,5 +334,4 @@ namespace irr
 */
 
 #endif
-
 

@@ -18,7 +18,7 @@ namespace scene
 	{
 	public:
 		//! Default constructor for empty meshbuffer
-		CMeshBuffer():ChangedID_Vertex(1),ChangedID_Index(1),MappingHint(EHM_NEVER) // everything's default constructed
+		CMeshBuffer() // everything's default constructed
 		{
 			#ifdef _DEBUG
 			setDebugName("SMeshBuffer");
@@ -129,30 +129,6 @@ namespace scene
 			return T().getType();
 		}
 
-		//! returns position of vertex i
-		virtual const core::vector3df& getPosition(u32 i) const
-		{
-			return Vertices[i].Pos;
-		}
-
-		//! returns position of vertex i
-		virtual core::vector3df& getPosition(u32 i)
-		{
-			return Vertices[i].Pos;
-		}
-
-		//! returns normal of vertex i
-		virtual const core::vector3df& getNormal(u32 i) const
-		{
-			return Vertices[i].Normal;
-		}
-
-		//! returns normal of vertex i
-		virtual core::vector3df& getNormal(u32 i)
-		{
-			return Vertices[i].Normal;
-		}
-
 
 		//! Append the vertices and indices to the current buffer
 		/** Only works for compatible types, i.e. either the same type
@@ -209,41 +185,6 @@ namespace scene
 			}
 			BoundingBox.addInternalBox(other->getBoundingBox());
 		}
-
-		//! get the current hardware mapping hint
-		virtual const E_HARDWARE_MAPPING getHardwareMappingHint() const
-		{
-			return MappingHint;
-		}
-
-		//! set the hardware mapping hint, for driver
-		virtual void setHardwareMappingHint( E_HARDWARE_MAPPING NewMappingHint )
-		{
-			MappingHint=NewMappingHint;
-		}
-
-		//! flags the mesh as changed, reloads hardware buffers
-		virtual void setDirty(E_BUFFER_TYPE Buffer=EBT_VERTEX_AND_INDEX)
-		{
-			if (Buffer==EBT_VERTEX_AND_INDEX ||Buffer==EBT_VERTEX)
-				++ChangedID_Vertex;
-			if (Buffer==EBT_VERTEX_AND_INDEX || Buffer==EBT_INDEX)
-				++ChangedID_Index;
-		}
-
-		//! Get the currently used ID for identification of changes.
-		/** This shouldn't be used for anything outside the VideoDriver. */
-		virtual const u32 getChangedID_Vertex() const {return ChangedID_Vertex;}
-
-		//! Get the currently used ID for identification of changes.
-		/** This shouldn't be used for anything outside the VideoDriver. */
-		virtual const u32 getChangedID_Index() const {return ChangedID_Index;}
-
-		u32 ChangedID_Vertex;
-		u32 ChangedID_Index;
-
-		//! hardware mapping hint
-		E_HARDWARE_MAPPING MappingHint;
 
 		//! Material for this meshbuffer.
 		video::SMaterial Material;

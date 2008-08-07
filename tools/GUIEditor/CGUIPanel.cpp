@@ -93,10 +93,11 @@ void CGUIPanel::draw()
 	}
 
     video::IVideoDriver* driver = Environment->getVideoDriver();
-    IGUISkin* skin = Environment->getSkin();
-    if (Border && skin)
+    
+    if (Border)
     {
-        skin->draw3DSunkenPane( this, skin->getColor( EGDC_APP_WORKSPACE), false, true, AbsoluteRect, &AbsoluteClippingRect );
+        IGUISkin* skin = Environment->getSkin();
+        skin->draw3DSunkenPane( this, skin->getColor( EGDC_APP_WORKSPACE), true,true, AbsoluteRect, &AbsoluteClippingRect );
     }
 
 	IGUIElement::draw();
