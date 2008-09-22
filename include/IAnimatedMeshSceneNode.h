@@ -9,12 +9,13 @@
 #include "IBoneSceneNode.h"
 #include "IAnimatedMeshMD2.h"
 #include "IAnimatedMeshMD3.h"
+#include "IShadowVolumeSceneNode.h"
 
 namespace irr
 {
 namespace scene
 {
-	class IShadowVolumeSceneNode;
+
 
 	enum E_JOINT_UPDATE_ON_RENDER
 	{
@@ -91,7 +92,6 @@ namespace scene
 		creation is easier, but with this method there occur ugly
 		looking artifacs when the camera is inside the shadow volume.
 		These error do not occur with the ZFail method.
-		\param shadowMesh: Optional custom mesh for shadow volume.
 		\param id: Id of the shadow scene node. This id can be used to
 		identify the node later.
 		\param zfailmethod: If set to true, the shadow will use the
@@ -101,8 +101,8 @@ namespace scene
 		\return Pointer to the created shadow scene node. This pointer
 		should not be dropped. See IReferenceCounted::drop() for more
 		information. */
-		virtual IShadowVolumeSceneNode* addShadowVolumeSceneNode(const IMesh* shadowMesh=0,
-			s32 id=-1, bool zfailmethod=true, f32 infinity=10000.0f) = 0;
+		virtual IShadowVolumeSceneNode* addShadowVolumeSceneNode(s32 id=-1,
+			bool zfailmethod=true, f32 infinity=10000.0f) = 0;
 
 
 		//! Get a pointer to a joint in the mesh (if the mesh is a bone based mesh).
@@ -124,10 +124,6 @@ namespace scene
 
 		//! same as getJointNode(const c8* jointName), but based on id
 		virtual IBoneSceneNode* getJointNode(u32 jointID) = 0;
-
-		//! Gets joint count.
-		/** \return Amount of joints in the mesh. */
-		virtual u32 getJointCount() const = 0;
 
 		//! Deprecated command, please use getJointNode
 		virtual ISceneNode* getMS3DJointNode(const c8* jointName) = 0;

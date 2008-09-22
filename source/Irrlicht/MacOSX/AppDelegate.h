@@ -12,6 +12,5 @@
 }
 
 - (id)initWithDevice:(irr::CIrrDeviceMacOSX *)device;
-- (BOOL)isQuit;
 
 @end

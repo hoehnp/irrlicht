@@ -41,6 +41,7 @@ public:
 	}
 
 
+
 	//! Constructor
 	string(const string<T>& other)
 	: array(0), allocated(0), used(0)
@@ -49,8 +50,9 @@ public:
 	}
 
 
+
 	//! Constructs a string from a float
-	explicit string(const double number)
+	string(const double number)
 	: array(0), allocated(0), used(0)
 	{
 		c8 tmpbuf[255];
@@ -59,8 +61,9 @@ public:
 	}
 
 
+
 	//! Constructs a string from an int
-	explicit string(int number)
+	string(int number)
 	: array(0), allocated(0), used(0)
 	{
 		// store if negative and make positive
@@ -108,8 +111,9 @@ public:
 	}
 
 
+
 	//! Constructs a string from an unsigned int
-	explicit string(unsigned int number)
+	string(unsigned int number)
 	: array(0), allocated(0), used(0)
 	{
 		// temporary buffer for 16 numbers
@@ -140,6 +144,7 @@ public:
 	}
 
 
+
 	//! Constructor for copying a string from a pointer with a given length
 	template <class B>
 	string(const B* const c, u32 length)
@@ -162,6 +167,7 @@ public:
 	}
 
 
+
 	//! Constructor for unicode and ascii strings
 	template <class B>
 	string(const B* const c)
@@ -171,11 +177,13 @@ public:
 	}
 
 
+
 	//! destructor
 	~string()
 	{
 		allocator.deallocate(array); // delete [] array;
 	}
+
 
 
 	//! Assignment operator
@@ -194,6 +202,7 @@ public:
 
 		return *this;
 	}
+
 
 
 	//! Assignment operator for strings, ascii and unicode
@@ -238,8 +247,7 @@ public:
 		return *this;
 	}
 
-
-	//! Append operator for other strings
+	//! Add operator for other strings
 	string<T> operator+(const string<T>& other) const
 	{
 		string<T> str(*this);
@@ -248,8 +256,7 @@ public:
 		return str;
 	}
 
-
-	//! Append operator for strings, ascii and unicode
+	//! Add operator for strings, ascii and unicode
 	template <class B>
 	string<T> operator+(const B* const c) const
 	{
@@ -276,7 +283,7 @@ public:
 	}
 
 
-	//! Equality operator
+	//! Comparison operator
 	bool operator ==(const T* const str) const
 	{
 		if (!str)
@@ -291,7 +298,8 @@ public:
 	}
 
 
-	//! Equality operator
+
+	//! Comparison operator
 	bool operator ==(const string<T>& other) const
 	{
 		for(u32 i=0; array[i] && other.array[i]; ++i)
@@ -302,7 +310,7 @@ public:
 	}
 
 
-	//! Is smaller comparator
+	//! Is smaller operator
 	bool operator <(const string<T>& other) const
 	{
 		for(u32 i=0; array[i] && other.array[i]; ++i)
@@ -320,34 +328,39 @@ public:
 	}
 
 
-	//! Inequality operator
+
+	//! Equals not operator
 	bool operator !=(const T* const str) const
 	{
 		return !(*this == str);
 	}
 
 
-	//! Inequality operator
+
+	//! Equals not operator
 	bool operator !=(const string<T>& other) const
 	{
 		return !(*this == other);
 	}
 
 
+
 	//! Returns length of string
-	/** \return Length of the string in characters. */
+	/** \return Returns length of the string in characters. */
 	u32 size() const
 	{
 		return used-1;
 	}
 
 
+
 	//! Returns character string
-	/** \return pointer to C-style zero terminated string. */
+	/** \return Returns pointer to C-style zero terminated string. */
 	const T* c_str() const
 	{
 		return array;
 	}
+
 
 
 	//! Makes the string lower case.
@@ -356,6 +369,7 @@ public:
 		for (u32 i=0; i<used; ++i)
 			array[i] = ansi_lower ( array[i] );
 	}
+
 
 
 	//! Makes the string upper case.
@@ -373,9 +387,10 @@ public:
 	}
 
 
-	//! Compares the strings ignoring case.
+
+	//! Compares the string ignoring case.
 	/** \param other: Other string to compare.
-	\return True if the strings are equal ignoring case. */
+	\return Returns true if the string are equal ignoring case. */
 	bool equals_ignore_case(const string<T>& other) const
 	{
 		for(u32 i=0; array[i] && other[i]; ++i)
@@ -385,10 +400,9 @@ public:
 		return used == other.used;
 	}
 
-
-	//! Compares the strings ignoring case.
+	//! Compares the string ignoring case.
 	/** \param other: Other string to compare.
-	\return True if this string is smaller ignoring case. */
+	\return Returns true if the string is smaller ignoring case. */
 	bool lower_ignore_case(const string<T>& other) const
 	{
 		for(u32 i=0; array[i] && other.array[i]; ++i)
@@ -402,10 +416,8 @@ public:
 	}
 
 
+
 	//! compares the first n characters of the strings
-	/** \param other Other string to compare.
-	\param n Number of characters to compare
-	\return True if the n first characters of this string are smaller. */
 	bool equalsn(const string<T>& other, u32 n) const
 	{
 		u32 i;
@@ -420,9 +432,6 @@ public:
 
 
 	//! compares the first n characters of the strings
-	/** \param str Other string to compare.
-	\param n Number of characters to compare
-	\return True if the n first characters of this string are smaller. */
 	bool equalsn(const T* const str, u32 n) const
 	{
 		if (!str)
@@ -450,7 +459,6 @@ public:
 		array[used-2] = character;
 		array[used-1] = 0;
 	}
-
 
 	//! Appends a char string to this string
 	/** \param other: Char string to append. */
@@ -705,13 +713,10 @@ public:
 	//! \param length: Length of substring.
 	string<T> subString(u32 begin, s32 length) const
 	{
-		// if start after string
-		// or no proper substring length
-		if ((length <= 0) || (begin>=size()))
-			return string<T>("");
-		// clamp length to maximal value
 		if ((length+begin) > size())
 			length = size()-begin;
+		if (length <= 0)
+			return string<T>("");
 
 		string<T> o;
 		o.reserve(length+1);
@@ -726,8 +731,6 @@ public:
 	}
 
 
-	//! Appends a character to this string
-	/** \param character: Character to append. */
 	string<T>& operator += (T c)
 	{
 		append(c);
@@ -735,8 +738,6 @@ public:
 	}
 
 
-	//! Appends a char string to this string
-	/** \param other: Char string to append. */
 	string<T>& operator += (const T* const c)
 	{
 		append(c);
@@ -744,8 +745,6 @@ public:
 	}
 
 
-	//! Appends a string to this string
-	/** \param other: String to append. */
 	string<T>& operator += (const string<T>& other)
 	{
 		append(other);
@@ -803,7 +802,6 @@ public:
 				array[i] = replaceWith;
 	}
 
-
 	//! trims the string.
 	/** Removes whitespace from begin and end of the string. */
 	string<T>& trim()
@@ -812,20 +810,19 @@ public:
 		const u32 whitespacecount = 4;
 
 		// find start and end of real string without whitespace
-		const s32 begin = findFirstCharNotInList(whitespace, whitespacecount);
+		s32 begin = findFirstCharNotInList(whitespace, whitespacecount);
 		if (begin == -1)
 			return (*this="");
 
-		const s32 end = findLastCharNotInList(whitespace, whitespacecount);
+		s32 end = findLastCharNotInList(whitespace, whitespacecount);
 
 		return (*this = subString(begin, (end +1) - begin));
 	}
 
 
-	//! Erases a character from the string.
-	/** May be slow, because all elements
-	following after the erased element have to be copied.
-	\param index: Index of element to be erased. */
+	//! Erases a character from the string. May be slow, because all elements
+	//! following after the erased element have to be copied.
+	//! \param index: Index of element to be erased.
 	void erase(u32 index)
 	{
 		_IRR_DEBUG_BREAK_IF(index>=used) // access violation
@@ -835,6 +832,8 @@ public:
 
 		--used;
 	}
+
+
 
 private:
 /*

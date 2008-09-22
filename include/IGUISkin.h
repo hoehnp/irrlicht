@@ -6,7 +6,6 @@
 #define __I_GUI_SKIN_H_INCLUDED__
 
 #include "IAttributeExchangingObject.h"
-#include "EGUIAlignment.h"
 #include "SColor.h"
 #include "rect.h"
 
@@ -462,7 +461,7 @@ namespace gui
 		\param rect: Defining area where to draw.
 		\param clip: Clip area. */
 		virtual void draw3DTabButton(IGUIElement* element, bool active,
-			const core::rect<s32>& rect, const core::rect<s32>* clip=0, gui::EGUI_ALIGNMENT alignment=EGUIA_UPPERLEFT) = 0;
+			const core::rect<s32>& rect, const core::rect<s32>* clip=0) = 0;
 
 		//! draws a tab control body
 		/** \param element: Pointer to the element which wishes to draw this. This parameter
@@ -473,7 +472,7 @@ namespace gui
 		\param rect: Defining area where to draw.
 		\param clip: Clip area. */
 		virtual void draw3DTabBody(IGUIElement* element, bool border, bool background,
-			const core::rect<s32>& rect, const core::rect<s32>* clip=0, s32 tabHeight=-1, gui::EGUI_ALIGNMENT alignment=EGUIA_UPPERLEFT ) = 0;
+			const core::rect<s32>& rect, const core::rect<s32>* clip=0) = 0;
 
 		//! draws an icon, usually from the skin's sprite bank
 		/** \param element: Pointer to the element which wishes to draw this icon.
@@ -510,7 +509,4 @@ namespace gui
 } // end namespace irr
 
 #endif
-
-
-
 

@@ -36,7 +36,7 @@ struct SExposedVideoData
 
 			//! Window handle.
 			/** Get with for example HWND h = reinterpret_cast<HWND>(exposedData.D3D9.HWnd) */
-			void* HWnd;
+			s32 HWnd;
 
 		} D3D9;
 
@@ -50,7 +50,7 @@ struct SExposedVideoData
 
 			//! Window handle.
 			/** Get with for example with: HWND h = reinterpret_cast<HWND>(exposedData.D3D8.HWnd) */
-			void* HWnd;
+			s32 HWnd;
 
 		} D3D8;
 
@@ -58,22 +58,21 @@ struct SExposedVideoData
 		{
 			//! Private GDI Device Context.
 			/** Get if for example with: HDC h = reinterpret_cast<HDC>(exposedData.OpenGLWin32.HDc) */
-			void* HDc;
+			s32 HDc;
 
 			//! Permanent Rendering Context.
 			/** Get if for example with: HGLRC h = reinterpret_cast<HGLRC>(exposedData.OpenGLWin32.HRc) */
-			void* HRc;
+			s32 HRc;
 
 			//! Window handle.
 			/** Get with for example with: HWND h = reinterpret_cast<HWND>(exposedData.OpenGLWin32.HWnd) */
-			void* HWnd;
+			s32 HWnd;
 		} OpenGLWin32;
 
 		struct
 		{
 			// XWindow handles
 			void* X11Display;
-			void* X11Context;
 			unsigned long X11Window;
 		} OpenGLLinux;
 	};

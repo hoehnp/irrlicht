@@ -826,14 +826,6 @@ SOURCE=.\CImageWriterTGA.cpp
 
 SOURCE=.\CImageWriterTGA.h
 # End Source File
-# Begin Source File
-
-SOURCE=.\CImageWriterWAL.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CImageWriterWAL.h
-# End Source File
 # End Group
 # Begin Source File
 
@@ -1326,14 +1318,6 @@ SOURCE=.\CLMTSMeshFileLoader.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CLWOMeshFileLoader.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CLWOMeshFileLoader.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\CMD2MeshFileLoader.cpp
 # End Source File
 # Begin Source File
@@ -1399,6 +1383,10 @@ SOURCE=.\CMY3DMeshFileLoader.cpp
 # Begin Source File
 
 SOURCE=.\CMY3DMeshFileLoader.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\CMY3DStuff.h
 # End Source File
 # Begin Source File
 
@@ -1674,10 +1662,6 @@ SOURCE=.\CSTLMeshWriter.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\COBJMeshWriter.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=.\CTerrainSceneNode.cpp
 # End Source File
 # Begin Source File
@@ -1699,14 +1683,6 @@ SOURCE=.\CTextSceneNode.cpp
 # Begin Source File
 
 SOURCE=.\CTextSceneNode.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\CVolumeLightSceneNode.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\CVolumeLightSceneNode.h
 # End Source File
 # Begin Source File
 
@@ -1941,6 +1917,14 @@ SOURCE=.\zlib\zutil.h
 # Begin Source File
 
 SOURCE=.\jpeglib\cderror.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\jpeglib\cdjpeg.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\jpeglib\cdjpeg.h
 # End Source File
 # Begin Source File
 
@@ -2376,10 +2360,6 @@ SOURCE=.\changes.txt
 # Begin Source File
 
 SOURCE=.\glxext.h
-# End Source File
-# End Target
-
-SOURCE=.\CBurningShader_Raster_Reference.cpp
 # End Source File
 # End Target
 # End Project

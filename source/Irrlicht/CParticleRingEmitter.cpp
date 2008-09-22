@@ -23,9 +23,6 @@ CParticleRingEmitter::CParticleRingEmitter(
 		MaxStartColor(maxStartColor), MinLifeTime(lifeTimeMin), MaxLifeTime(lifeTimeMax),
 		Time(0), Emitted(0), MaxAngleDegrees(maxAngleDegrees)
 {
-	#ifdef _DEBUG
-	setDebugName("CParticleRingEmitter");
-	#endif
 }
 
 
@@ -57,7 +54,10 @@ s32 CParticleRingEmitter::emitt(u32 now, u32 timeSinceLastCall, SParticle*& outA
 				distance *= -1.0f;
 			distance += Radius;
 
-			p.pos.set(Center.X + distance, Center.Y, Center.Z + distance);
+			p.pos.X = Center.X + distance;
+			p.pos.Y = Center.Y;
+			p.pos.Z = Center.Z + distance;
+
 			p.pos.rotateXZBy( ( os::Randomizer::rand() % 3600 ) * 0.1f, Center );
 
 			p.startTime = now;

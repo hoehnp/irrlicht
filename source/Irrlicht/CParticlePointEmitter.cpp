@@ -23,9 +23,7 @@ CParticlePointEmitter::CParticlePointEmitter(
 	MinLifeTime(lifeTimeMin), MaxLifeTime(lifeTimeMax),
 	MaxAngleDegrees(maxAngleDegrees), Time(0), Emitted(0)
 {
-	#ifdef _DEBUG
-	setDebugName("CParticlePointEmitter");
-	#endif
+
 }
 
 
@@ -49,9 +47,9 @@ s32 CParticlePointEmitter::emitt(u32 now, u32 timeSinceLastCall, SParticle*& out
 		if (MaxAngleDegrees)
 		{
 			core::vector3df tgt = Direction;
-			tgt.rotateXYBy((os::Randomizer::rand()%(MaxAngleDegrees*2)) - MaxAngleDegrees);
-			tgt.rotateYZBy((os::Randomizer::rand()%(MaxAngleDegrees*2)) - MaxAngleDegrees);
-			tgt.rotateXZBy((os::Randomizer::rand()%(MaxAngleDegrees*2)) - MaxAngleDegrees);
+			tgt.rotateXYBy((os::Randomizer::rand()%(MaxAngleDegrees*2)) - MaxAngleDegrees, core::vector3df(0,0,0));
+			tgt.rotateYZBy((os::Randomizer::rand()%(MaxAngleDegrees*2)) - MaxAngleDegrees, core::vector3df(0,0,0));
+			tgt.rotateXZBy((os::Randomizer::rand()%(MaxAngleDegrees*2)) - MaxAngleDegrees, core::vector3df(0,0,0));
 			Particle.vector = tgt;
 		}
 

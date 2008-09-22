@@ -83,6 +83,19 @@ namespace scene
 		//! Transparent scene nodes, drawn after shadow nodes. They are sorted from back to front and drawn in that order.
 		ESNRP_TRANSPARENT,
 
+		//! Scene Nodes with special support
+		ESNRP_SHADER_0,
+		ESNRP_SHADER_1,
+		ESNRP_SHADER_2,
+		ESNRP_SHADER_3,
+		ESNRP_SHADER_4,
+		ESNRP_SHADER_5,
+		ESNRP_SHADER_6,
+		ESNRP_SHADER_7,
+		ESNRP_SHADER_8,
+		ESNRP_SHADER_9,
+		ESNRP_SHADER_10,
+
 		//! Never used, value specifing how much parameters there are.
 		ESNRP_COUNT
 	};
@@ -108,7 +121,6 @@ namespace scene
 	class IMetaTriangleSelector;
 	class IMeshManipulator;
 	class ITextSceneNode;
-	class IVolumeLightSceneNode;
 	class ISceneNodeFactory;
 	class ISceneNodeAnimatorFactory;
 	class ISceneUserDataSerializer;
@@ -361,29 +373,6 @@ namespace scene
 		 This pointer should not be dropped. See IReferenceCounted::drop() for more information. */
 		virtual gui::IGUIEnvironment* getGUIEnvironment() = 0;
 
-		//! adds Volume Lighting Scene Node.
-		//! the returned pointer must not be dropped.
-		/** Example Usage:
-			scene::IVolumeLightSceneNode * n = smgr->addVolumeLightSceneNode(NULL, -1,
-						32, 32, //Subdivide U/V
-						video::SColor(0, 180, 180, 180),   //foot color
-						video::SColor(0, 0, 0, 0)         //tail color
-						);
-			if (n)
-			{
-				n->setScale(core::vector3df(46.0f, 45.0f, 46.0f));
-				n->getMaterial(0).setTexture(0, smgr->getVideoDriver()->getTexture("lightFalloff.png"));
-			}
-		**/
-		virtual IVolumeLightSceneNode* addVolumeLightSceneNode(ISceneNode* parent=0, s32 id=-1,
-			const u32 subdivU = 32, const u32 subdivV = 32,
-			const video::SColor foot = video::SColor(51, 0, 230, 180),
-			const video::SColor tail = video::SColor(0, 0, 0, 0),
-			const core::vector3df& position = core::vector3df(0,0,0),
-			const core::vector3df& rotation = core::vector3df(0,0,0),
-			const core::vector3df& scale = core::vector3df(1.0f, 1.0f, 1.0f)) = 0;
-
-
 		//! Adds a test scene node for test purposes to the scene.
 		/** It is a simple cube of (1,1,1) size.
 		\param size: Size of the cube.
@@ -396,7 +385,7 @@ namespace scene
 		\return Returns pointer to the created test scene node. This
 		pointer should not be dropped. See IReferenceCounted::drop()
 		for more information. */
-		virtual IMeshSceneNode* addCubeSceneNode(f32 size=10.0f, ISceneNode* parent=0, s32 id=-1,
+		virtual ISceneNode* addCubeSceneNode(f32 size=10.0f, ISceneNode* parent=0, s32 id=-1,
 			const core::vector3df& position = core::vector3df(0,0,0),
 			const core::vector3df& rotation = core::vector3df(0,0,0),
 			const core::vector3df& scale = core::vector3df(1.0f, 1.0f, 1.0f)) = 0;
@@ -414,7 +403,7 @@ namespace scene
 		\return Returns pointer to the created test scene node. This
 		pointer should not be dropped. See IReferenceCounted::drop()
 		for more information. */
-		virtual IMeshSceneNode* addSphereSceneNode(f32 radius=5.0f, s32 polyCount=16,
+		virtual ISceneNode* addSphereSceneNode(f32 radius=5.0f, s32 polyCount=16,
 				ISceneNode* parent=0, s32 id=-1,
 				const core::vector3df& position = core::vector3df(0,0,0),
 				const core::vector3df& rotation = core::vector3df(0,0,0),
@@ -492,7 +481,7 @@ namespace scene
 		 \return Pointer to the OctTree if successful, otherwise 0.
 		 This pointer should not be dropped. See IReferenceCounted::drop() for more information. */
 		virtual ISceneNode* addOctTreeSceneNode(IAnimatedMesh* mesh, ISceneNode* parent=0,
-			s32 id=-1, s32 minimalPolysPerNode=512, bool alsoAddIfMeshPointerZero=false) = 0;
+			s32 id=-1, s32 minimalPolysPerNode=256, bool alsoAddIfMeshPointerZero=false) = 0;
 
 		//! Adds a scene node for rendering using a octtree to the scene graph.
 		/** This a good method for rendering scenes with lots of
@@ -526,8 +515,8 @@ namespace scene
 			const core::vector3df& lookat = core::vector3df(0,0,100), s32 id=-1) = 0;
 
 		//! Adds a maya style user controlled camera scene node to the scene graph.
-		/** This is a standard camera with an animator that provides mouse control similar
-		 to camera in the 3D Software Maya by Alias Wavefront.
+		/** The maya camera is able to be controlled with the mouse similar
+		 like in the 3D Software Maya by Alias Wavefront.
 		 \param parent: Parent scene node of the camera. Can be null.
 		 \param rotateSpeed: Rotation speed of the camera.
 		 \param zoomSpeed: Zoom speed of the camera.
@@ -539,7 +528,7 @@ namespace scene
 			f32 rotateSpeed = -1500.0f, f32 zoomSpeed = 200.0f,
 			f32 translationSpeed = 1500.0f, s32 id=-1) = 0;
 
-		//! Adds a camera scene node with an animator which provides mouse and keyboard control like in most first person shooters (FPS).
+		//! Adds a camera scene node which is able to be controlled with the mouse and keys like in most first person shooters (FPS).
 		/** Look with the mouse, move with cursor keys. If you do not like the default
 		 key layout, you may want to specify your own. For example to make the camera
 		 be controlled by the cursor keys AND the keys W,A,S, and D, do something
@@ -880,7 +869,7 @@ namespace scene
 		 of triangles created depends on the size of this texture, so use a small
 		 heightmap to increase rendering speed.
 		 \param stretchSize: Parameter defining how big a is pixel on the heightmap.
-		 \param maxHeight: Defines how high a white pixel on the heighmap is.
+		 \param maxHeight: Defines how height a white pixel on the heighmap is.
 		 \param defaultVertexBlockSize: Defines the initial dimension between vertices.
 		 \return Returns null if the creation failed. The reason could be that you
 		 specified some invalid parameters, that a mesh with that name already
@@ -893,15 +882,6 @@ namespace scene
 			const core::dimension2d<s32>& defaultVertexBlockSize = core::dimension2d<s32>(64,64)) = 0;
 
 		//! add a static arrow mesh to the meshpool
-		/** \param name Name of the mesh
-		\param vtxColor0 color of the cylinder
-		\param vtxColor1 color of the cone
-		\param tesselationCylinder Number of quads the cylinder side consists of
-		\param tesselationCone Number of triangles the cone's roof consits of
-		\param height Total height of the arrow
-		\param cylinderHeight Total height of the cylinder, should be lesser than total height
-		\param width0 Diameter of the cylinder
-		\param width1 Diameter of the cone's base, should be not smaller than the cylinder's diameter */
 		virtual IAnimatedMesh* addArrowMesh(const c8* name,
 				video::SColor vtxColor0=0xFFFFFFFF,
 				video::SColor vtxColor1=0xFFFFFFFF,
@@ -910,10 +890,6 @@ namespace scene
 				f32 width0=0.05f, f32 width1=0.3f) = 0;
 
 		//! add a static sphere mesh to the meshpool
-		/** \param name Name of the mesh
-		\param radius Radius of the sphere
-		\param polyCountX Number of quads used for the horizontal tiling
-		\param polyCountY Number of quads used for the vertical tiling */
 		virtual IAnimatedMesh* addSphereMesh(const c8* name,
 				f32 radius=5.f, u32 polyCountX = 16,
 				u32 polyCountY = 16) = 0;
@@ -954,7 +930,7 @@ namespace scene
 		virtual ISceneNode* getSceneNodeFromType(scene::ESCENE_NODE_TYPE type, ISceneNode* start=0) = 0;
 
 		//! Get scene nodes by type.
-		/** \param type: Type of scene node to find (ESNT_ANY will return all child nodes).
+		/** \param type: Type of scene node to find.
 		\param outNodes: array to be filled with results.
 		\param start: Scene node to start from. All children of this scene
 		node are searched. If null is specified, the root scene node is

@@ -17,10 +17,10 @@ namespace irr
 {
 
 //! constructor
-CIrrDeviceStub::CIrrDeviceStub(const SIrrlichtCreationParameters& params)
+CIrrDeviceStub::CIrrDeviceStub(const char* version, IEventReceiver* recv)
 : IrrlichtDevice(), VideoDriver(0), GUIEnvironment(0), SceneManager(0), 
-	Timer(0), CursorControl(0), UserReceiver(params.EventReceiver), Logger(0), Operator(0),
-	FileSystem(0), InputReceivingSceneManager(0), CreationParams(params)
+	Timer(0), CursorControl(0), UserReceiver(recv), Logger(0), Operator(0),
+	FileSystem(io::createFileSystem()), InputReceivingSceneManager(0)
 {
 	Timer = new CTimer();
 	if (os::Printer::Logger)
@@ -37,12 +37,11 @@ CIrrDeviceStub::CIrrDeviceStub(const SIrrlichtCreationParameters& params)
 
 	os::Printer::Logger = Logger;
 
-	FileSystem = io::createFileSystem();
 	core::stringc s = "Irrlicht Engine version ";
 	s.append(getVersion());
 	os::Printer::log(s.c_str(), ELL_INFORMATION);
 
-	checkVersion(params.SDK_version_do_not_use);
+	checkVersion(version);
 }
 
 
@@ -237,19 +236,6 @@ void CIrrDeviceStub::setInputReceivingSceneManager(scene::ISceneManager* sceneMa
 		InputReceivingSceneManager->grab();
 }
 
-
-//! Checks if the window is running in fullscreen mode
-bool CIrrDeviceStub::isFullscreen() const
-{
-	return CreationParams.Fullscreen;
-}
-
-
-//! returns color format
-video::ECOLOR_FORMAT CIrrDeviceStub::getColorFormat() const
-{
-	return video::ECF_R5G6B5;
-}
 
 
 } // end namespace irr

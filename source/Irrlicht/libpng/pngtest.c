@@ -1,9 +1,9 @@
 
 /* pngtest.c - a simple test program to test libpng
  *
- * Last changed in libpng 1.2.27 - [April 29, 2008]
+ * Last changed in libpng 1.2.6 - August 15, 2004
  * For conditions of distribution and use, see copyright notice in png.h
- * Copyright (c) 1998-2008 Glenn Randers-Pehrson
+ * Copyright (c) 1998-2004 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
  *
@@ -82,9 +82,8 @@ static float t_start, t_stop, t_decode, t_encode, t_misc;
 #endif
 
 #if defined(PNG_TIME_RFC1123_SUPPORTED)
-#define PNG_tIME_STRING_LENGTH 30
 static int tIME_chunk_present=0;
-static char tIME_string[PNG_tIME_STRING_LENGTH] = "no tIME chunk present in file";
+static char tIME_string[30] = "no tIME chunk present in file";
 #endif
 
 static int verbose = 0;
@@ -435,9 +434,8 @@ pngtest_write_data(png_structp png_ptr, png_bytep data, png_size_t length)
       png_error(png_ptr, "Write Error");
    }
 }
+
 #endif /* USE_FAR_KEYWORD */
-#endif /* PNG_NO_STDIO */
-/* END of code to validate stdio-free compilation */
 
 /* This function is called when there is a warning, but the library thinks
  * it can continue anyway.  Replacement functions don't have to do anything
@@ -465,6 +463,8 @@ pngtest_error(png_structp png_ptr, png_const_charp message)
    /* We can return because png_error calls the default handler, which is
     * actually OK in this case. */
 }
+#endif /* PNG_NO_STDIO */
+/* END of code to validate stdio-free compilation */
 
 /* START of code to validate memory allocation and deallocation */
 #if defined(PNG_USER_MEM_SUPPORTED) && PNG_DEBUG
@@ -658,8 +658,10 @@ test_one_file(PNG_CONST char *inname, PNG_CONST char *outname)
    read_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, png_voidp_NULL,
       png_error_ptr_NULL, png_error_ptr_NULL);
 #endif
+#if defined(PNG_NO_STDIO)
    png_set_error_fn(read_ptr, (png_voidp)inname, pngtest_error,
        pngtest_warning);
+#endif
 #ifdef PNG_WRITE_SUPPORTED
 #if defined(PNG_USER_MEM_SUPPORTED) && PNG_DEBUG
    write_ptr = png_create_write_struct_2(PNG_LIBPNG_VER_STRING, png_voidp_NULL,
@@ -669,8 +671,10 @@ test_one_file(PNG_CONST char *inname, PNG_CONST char *outname)
    write_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, png_voidp_NULL,
       png_error_ptr_NULL, png_error_ptr_NULL);
 #endif
+#if defined(PNG_NO_STDIO)
    png_set_error_fn(write_ptr, (png_voidp)inname, pngtest_error,
        pngtest_warning);
+#endif
 #endif
    png_debug(0, "Allocating read_info, write_info and end_info structures\n");
    read_info_ptr = png_create_info_struct(read_ptr);
@@ -689,7 +693,8 @@ test_one_file(PNG_CONST char *inname, PNG_CONST char *outname)
 #endif
    {
       fprintf(STDERR, "%s -> %s: libpng read error\n", inname, outname);
-      png_free(read_ptr, row_buf);
+      if (row_buf)
+         png_free(read_ptr, row_buf);
       png_destroy_read_struct(&read_ptr, &read_info_ptr, &end_info_ptr);
 #ifdef PNG_WRITE_SUPPORTED
       png_destroy_info_struct(write_ptr, &write_end_info_ptr);
@@ -1002,13 +1007,10 @@ test_one_file(PNG_CONST char *inname, PNG_CONST char *outname)
       {
          png_set_tIME(write_ptr, write_info_ptr, mod_time);
 #if defined(PNG_TIME_RFC1123_SUPPORTED)
-         /* we have to use png_memcpy instead of "=" because the string
+         /* we have to use png_strcpy instead of "=" because the string
             pointed to by png_convert_to_rfc1123() gets free'ed before
             we use it */
-         png_memcpy(tIME_string,
-                    png_convert_to_rfc1123(read_ptr, mod_time), 
-                    png_sizeof(tIME_string));
-         tIME_string[png_sizeof(tIME_string)-1] = '\0';
+         png_strcpy(tIME_string,png_convert_to_rfc1123(read_ptr, mod_time));
          tIME_chunk_present++;
 #endif /* PNG_TIME_RFC1123_SUPPORTED */
       }
@@ -1023,16 +1025,8 @@ test_one_file(PNG_CONST char *inname, PNG_CONST char *outname)
       if (png_get_tRNS(read_ptr, read_info_ptr, &trans, &num_trans,
          &trans_values))
       {
-         int sample_max = (1 << read_info_ptr->bit_depth);
-         /* libpng doesn't reject a tRNS chunk with out-of-range samples */
-         if (!((read_info_ptr->color_type == PNG_COLOR_TYPE_GRAY &&
-            (int)trans_values->gray > sample_max) ||
-            (read_info_ptr->color_type == PNG_COLOR_TYPE_RGB &&
-            ((int)trans_values->red > sample_max ||
-            (int)trans_values->green > sample_max ||
-            (int)trans_values->blue > sample_max))))
-           png_set_tRNS(write_ptr, write_info_ptr, trans, num_trans,
-              trans_values);
+         png_set_tRNS(write_ptr, write_info_ptr, trans, num_trans,
+            trans_values);
       }
    }
 #endif
@@ -1153,13 +1147,10 @@ test_one_file(PNG_CONST char *inname, PNG_CONST char *outname)
       {
          png_set_tIME(write_ptr, write_end_info_ptr, mod_time);
 #if defined(PNG_TIME_RFC1123_SUPPORTED)
-         /* we have to use png_memcpy instead of "=" because the string
+         /* we have to use png_strcpy instead of "=" because the string
             pointed to by png_convert_to_rfc1123() gets free'ed before
             we use it */
-         png_memcpy(tIME_string,
-                    png_convert_to_rfc1123(read_ptr, mod_time),
-                    png_sizeof(tIME_string));
-         tIME_string[png_sizeof(tIME_string)-1] = '\0';
+         png_strcpy(tIME_string,png_convert_to_rfc1123(read_ptr, mod_time));
          tIME_chunk_present++;
 #endif /* PNG_TIME_RFC1123_SUPPORTED */
       }
@@ -1560,4 +1551,4 @@ main(int argc, char *argv[])
 }
 
 /* Generate a compiler error if there is an old png.h in the search path. */
-typedef version_1_2_29 your_png_h_is_not_version_1_2_29;
+typedef version_1_2_18 your_png_h_is_not_version_1_2_18;

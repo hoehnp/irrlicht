@@ -26,9 +26,10 @@ CEmptySceneNode::CEmptySceneNode(ISceneNode* parent, ISceneManager* mgr, s32 id)
 void CEmptySceneNode::OnRegisterSceneNode()
 {
 	if (IsVisible)
+	{
 		SceneManager->registerNodeForRendering(this);
-
-	ISceneNode::OnRegisterSceneNode();
+		ISceneNode::OnRegisterSceneNode();
+	}
 }
 
 

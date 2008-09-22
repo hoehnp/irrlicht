@@ -27,7 +27,7 @@ public:
 	virtual ~CSoftwareTexture();
 
 	//! lock function
-	virtual void* lock(bool readOnly = false);
+	virtual void* lock();
 
 	//! unlock function
 	virtual void unlock();

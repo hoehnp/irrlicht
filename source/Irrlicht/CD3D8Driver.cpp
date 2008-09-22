@@ -61,6 +61,7 @@ CD3D8Driver::CD3D8Driver(const core::dimension2d<s32>& screenSize, HWND window,
 }
 
 
+
 //! destructor
 CD3D8Driver::~CD3D8Driver()
 {
@@ -357,7 +358,7 @@ bool CD3D8Driver::initDriver(const core::dimension2d<s32>& screenSize, HWND hwnd
 	// set exposed data
 	ExposedData.D3D8.D3D8 = pID3D;
 	ExposedData.D3D8.D3DDev8 = pID3DDevice;
-	ExposedData.D3D8.HWnd = hwnd;
+	ExposedData.D3D8.HWnd = reinterpret_cast<s32>(hwnd);
 
 	ResetRenderStates = true;
 
@@ -468,7 +469,7 @@ bool CD3D8Driver::reset()
 
 
 //! applications must call this method after performing any rendering. returns false if failed.
-bool CD3D8Driver::endScene( void* windowId, core::rect<s32>* sourceRect )
+bool CD3D8Driver::endScene( s32 windowId, core::rect<s32>* sourceRect )
 {
 	CNullDriver::endScene();
 
@@ -573,8 +574,11 @@ void CD3D8Driver::setTransform(E_TRANSFORMATION_STATE state, const core::matrix4
 	case ETS_TEXTURE_2:
 	case ETS_TEXTURE_3:
 		pID3DDevice->SetTextureStageState( state - ETS_TEXTURE_0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2 );
-		pID3DDevice->SetTransform((D3DTRANSFORMSTATETYPE)(D3DTS_TEXTURE0+ ( state - ETS_TEXTURE_0 )),
-			(D3DMATRIX*)((void*)mat.pointer()));
+		if (mat.isIdentity())
+			pID3DDevice->SetTransform( (D3DTRANSFORMSTATETYPE)(D3DTS_TEXTURE0+ ( state - ETS_TEXTURE_0 )), &UnitMatrixD3D8 );
+		else
+			pID3DDevice->SetTransform((D3DTRANSFORMSTATETYPE)(D3DTS_TEXTURE0+ ( state - ETS_TEXTURE_0 )),
+				(D3DMATRIX*)((void*)mat.pointer()));
 		break;
 	case ETS_COUNT:
 		break;
@@ -582,6 +586,7 @@ void CD3D8Driver::setTransform(E_TRANSFORMATION_STATE state, const core::matrix4
 
 	Matrices[state] = mat;
 }
+
 
 
 //! sets the current Texture
@@ -790,8 +795,8 @@ const core::rect<s32>& CD3D8Driver::getViewPort() const
 
 //! draws a vertex primitive list
 void CD3D8Driver::drawVertexPrimitiveList(const void* vertices, u32 vertexCount,
-		const void* indexList, u32 primitiveCount,
-		E_VERTEX_TYPE vType, scene::E_PRIMITIVE_TYPE pType, E_INDEX_TYPE iType)
+		const u16* indexList, u32 primitiveCount,
+		E_VERTEX_TYPE vType, scene::E_PRIMITIVE_TYPE pType)
 {
 	if (!checkPrimitiveCount(primitiveCount))
 		return;
@@ -1007,7 +1012,7 @@ void CD3D8Driver::draw2DImage(const video::ITexture* texture, const core::positi
 
 void CD3D8Driver::draw2DImage(const video::ITexture* texture, const core::rect<s32>& destRect,
 			const core::rect<s32>& sourceRect, const core::rect<s32>* clipRect,
-			const video::SColor* const colors, bool useAlphaChannelOfTexture)
+			video::SColor* colors, bool useAlphaChannelOfTexture)
 {
 	if(!texture)
 		return;
@@ -1050,7 +1055,7 @@ void CD3D8Driver::draw2DImage(const video::ITexture* texture, const core::rect<s
 	npos.LowerRightCorner.X = ( clippedRect.LowerRightCorner.X * xFact ) - 1.0f;
 	npos.LowerRightCorner.Y = 1.0f - ( clippedRect.LowerRightCorner.Y * yFact );
 
-	const video::SColor temp[4] =
+	video::SColor temp[4] =
 	{
 		0xFFFFFFFF,
 		0xFFFFFFFF,
@@ -1058,7 +1063,7 @@ void CD3D8Driver::draw2DImage(const video::ITexture* texture, const core::rect<s
 		0xFFFFFFFF
 	};
 
-	const video::SColor* const useColor = colors ? colors : temp;
+	video::SColor* useColor = colors ? colors : temp;
 
 	S3DVertex vtx[4]; // clock wise
 	vtx[0] = S3DVertex(npos.UpperLeftCorner.X, npos.UpperLeftCorner.Y, 0.0f,
@@ -1350,18 +1355,12 @@ void CD3D8Driver::setBasicRenderStates(const SMaterial& material, const SMateria
 	// back face culling
 
 
-	if (resetAllRenderstates || (lastmaterial.FrontfaceCulling != material.FrontfaceCulling) || (lastmaterial.BackfaceCulling != material.BackfaceCulling))
+	if (resetAllRenderstates || lastmaterial.BackfaceCulling != material.BackfaceCulling)
 	{
-		if (material.FrontfaceCulling && material.BackfaceCulling)
-			pID3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW|D3DCULL_CCW);
-		else
-		if (material.FrontfaceCulling)
-			pID3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
-		else
 		if (material.BackfaceCulling)
-			pID3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
+			pID3DDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CCW);
 		else
-			pID3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+			pID3DDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_NONE);
 	}
 
 	// fog
@@ -1537,9 +1536,10 @@ void CD3D8Driver::setRenderStatesStencilFillMode(bool alpha)
 {
 	if (CurrentRenderMode != ERM_STENCIL_FILL || Transformation3DChanged)
 	{
-		pID3DDevice->SetTransform(D3DTS_VIEW, &UnitMatrixD3D8);
-		pID3DDevice->SetTransform(D3DTS_WORLD, &UnitMatrixD3D8);
-		pID3DDevice->SetTransform(D3DTS_PROJECTION, &UnitMatrixD3D8);
+		core::matrix4 mat;
+		pID3DDevice->SetTransform(D3DTS_VIEW, (D3DMATRIX*)((void*)mat.pointer()));
+		pID3DDevice->SetTransform(D3DTS_WORLD, (D3DMATRIX*)((void*)mat.pointer()));
+		pID3DDevice->SetTransform(D3DTS_PROJECTION, (D3DMATRIX*)((void*)mat.pointer()));
 
 		pID3DDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
 		pID3DDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
@@ -1598,9 +1598,10 @@ void CD3D8Driver::setRenderStates2DMode(bool alpha, bool texture, bool alphaChan
 
 	if (CurrentRenderMode != ERM_2D || Transformation3DChanged)
 	{
-		pID3DDevice->SetTransform(D3DTS_VIEW, &UnitMatrixD3D8);
-		pID3DDevice->SetTransform(D3DTS_WORLD, &UnitMatrixD3D8);
-		pID3DDevice->SetTransform(D3DTS_PROJECTION, &UnitMatrixD3D8);
+		core::matrix4 mat;
+		pID3DDevice->SetTransform(D3DTS_VIEW, (D3DMATRIX*)((void*)mat.pointer()));
+		pID3DDevice->SetTransform(D3DTS_WORLD, (D3DMATRIX*)((void*)mat.pointer()));
+		pID3DDevice->SetTransform(D3DTS_PROJECTION, (D3DMATRIX*)((void*)mat.pointer()));
 
 		pID3DDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
 		//pID3DDevice->SetRenderState(D3DRS_SHADEMODE, D3DSHADE_FLAT);
@@ -1636,8 +1637,8 @@ void CD3D8Driver::setRenderStates2DMode(bool alpha, bool texture, bool alphaChan
 
 		// unset last 3d material
 		if (CurrentRenderMode == ERM_3D &&
-			Material.MaterialType >= 0 && LastMaterial.MaterialType < (s32)MaterialRenderers.size())
-			MaterialRenderers[LastMaterial.MaterialType].Renderer->OnUnsetMaterial();
+			Material.MaterialType >= 0 && Material.MaterialType < (s32)MaterialRenderers.size())
+			MaterialRenderers[Material.MaterialType].Renderer->OnUnsetMaterial();
 	}
 
 	if (texture)

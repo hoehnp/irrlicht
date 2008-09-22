@@ -6,7 +6,7 @@
 #define __IRR_COMPILE_CONFIG_H_INCLUDED__
 
 //! Irrlicht SDK Version
-#define IRRLICHT_SDK_VERSION "1.4.1"
+#define IRRLICHT_SDK_VERSION "1.4.2"
 
 //! The defines for different operating system are:
 //! _IRR_XBOX_PLATFORM_ for XBox
@@ -18,7 +18,6 @@
 //! _IRR_POSIX_API_ for Posix compatible systems
 //! _IRR_USE_SDL_DEVICE_ for platform independent SDL framework
 //! _IRR_USE_WINDOWS_DEVICE_ for Windows API based device
-//! _IRR_USE_WINDOWS_CE_DEVICE_ for Windows CE API based device
 //! _IRR_USE_LINUX_DEVICE_ for X11 based device
 //! _IRR_USE_OSX_DEVICE_ for Cocoa native windowing on OSX
 //! Note: PLATFORM defines the OS specific layer, API can groups several platforms
@@ -30,7 +29,7 @@
 //! WIN32 for Windows32
 //! WIN64 for Windows64
 // The windows platform and API support SDL and WINDOW device
-#if defined(_WIN32) || defined(_WIN64) || defined(WIN32) || defined(WIN64) || defined(_WIN32_WCE)
+#if defined(_WIN32) || defined(_WIN64) || defined(WIN32) || defined(WIN64)
 #define _IRR_WINDOWS_
 #define _IRR_WINDOWS_API_
 #ifndef _IRR_USE_SDL_DEVICE_
@@ -82,7 +81,7 @@ to the compiler settings: -DIRR_COMPILE_WITH_DX9_DEV_PACK
 and this to the linker settings: -ld3dx9 -ld3dx8 **/
 #if defined(_IRR_WINDOWS_API_) && (!defined(__GNUC__) || defined(IRR_COMPILE_WITH_DX9_DEV_PACK))
 
-//#define _IRR_COMPILE_WITH_DIRECT3D_8_
+#define _IRR_COMPILE_WITH_DIRECT3D_8_
 #define _IRR_COMPILE_WITH_DIRECT3D_9_
 
 #endif
@@ -172,11 +171,6 @@ watch registers, variables etc. This works with ASM, HLSL, and both with pixel a
 Note that the engine will run in D3D REF for this, which is a lot slower than HAL. */
 #define _IRR_D3D_NO_SHADER_DEBUGGING
 
-//! Define _IRR_USE_NVIDIA_PERFHUD_ to opt-in to using the nVidia PerHUD tool
-/** Enable, by opting-in, to use the nVidia PerfHUD performance analysis driver
-tool <http://developer.nvidia.com/object/nvperfhud_home.html>. */
-#undef _IRR_USE_NVIDIA_PERFHUD_
-
 
 #ifdef _IRR_WINDOWS_API_
 
@@ -214,7 +208,7 @@ tool <http://developer.nvidia.com/object/nvperfhud_home.html>. */
 #endif
 
 //! Define one of the three setting for Burning's Video Software Rasterizer
-/** So if we were marketing guys we could say Irrlicht has 4 Software-Rasterizers.
+/** So if we were marketing guys we could says Irrlicht has 4 Software-Rasterizers.
 	In a Nutshell:
 		All Burnings Rasterizers use 32 Bit Backbuffer, 32Bit Texture & 32 Bit Z or WBuffer,
 		16 Bit/32 Bit can be adjusted on a global flag.
@@ -278,8 +272,6 @@ B3D, MS3D or X meshes */
 #define _IRR_COMPILE_WITH_OCT_LOADER_
 //! Define _IRR_COMPILE_WITH_OGRE_LOADER_ if you want to load Ogre 3D files
 #define _IRR_COMPILE_WITH_OGRE_LOADER_
-//! Define _IRR_COMPILE_WITH_LWO_LOADER_ if you want to load Lightwave3D files
-#define _IRR_COMPILE_WITH_LWO_LOADER_
 //! Define _IRR_COMPILE_WITH_STL_LOADER_ if you want to load .stl files
 #define _IRR_COMPILE_WITH_STL_LOADER_
 
@@ -289,11 +281,8 @@ B3D, MS3D or X meshes */
 #define _IRR_COMPILE_WITH_COLLADA_WRITER_
 //! Define _IRR_COMPILE_WITH_STL_WRITER_ if you want to write .stl files
 #define _IRR_COMPILE_WITH_STL_WRITER_
-//! Define _IRR_COMPILE_WITH_OBJ_WRITER_ if you want to write .obj files
-#define _IRR_COMPILE_WITH_OBJ_WRITER_
 
 //! Define _IRR_COMPILE_WITH_BMP_LOADER_ if you want to load .bmp files
-//! Disabling this loader will also disable the built-in font
 #define _IRR_COMPILE_WITH_BMP_LOADER_
 //! Define _IRR_COMPILE_WITH_JPG_LOADER_ if you want to load .jpg files
 #define _IRR_COMPILE_WITH_JPG_LOADER_
@@ -307,8 +296,6 @@ B3D, MS3D or X meshes */
 #define _IRR_COMPILE_WITH_PSD_LOADER_
 //! Define _IRR_COMPILE_WITH_TGA_LOADER_ if you want to load .tga files
 #define _IRR_COMPILE_WITH_TGA_LOADER_
-//! Define _IRR_COMPILE_WITH_WAL_LOADER_ if you want to load .wal files
-#define _IRR_COMPILE_WITH_WAL_LOADER_
 
 //! Define _IRR_COMPILE_WITH_BMP_WRITER_ if you want to write .bmp files
 #define _IRR_COMPILE_WITH_BMP_WRITER_
@@ -340,18 +327,5 @@ precision will be lower but speed higher. currently X86 only
 #undef _IRR_COMPILE_WITH_DIRECT3D_9_
 #endif
 
-// WinCE does not have OpenGL or DirectX9
-#if defined(_WIN32_WCE)
-	#undef _IRR_COMPILE_WITH_OPENGL_
-	#undef _IRR_COMPILE_WITH_DIRECT3D_8_
-	#undef _IRR_COMPILE_WITH_DIRECT3D_9_
-	#undef _IRR_COMPILE_WITH_SOFTWARE_
-	#undef BURNINGVIDEO_RENDERER_BEAUTIFUL
-	#undef _IRR_USE_WINDOWS_DEVICE_
-	#define _IRR_USE_WINDOWS_CE_DEVICE_
-	#define BURNINGVIDEO_RENDERER_CE
-#endif
-
 #endif // __IRR_COMPILE_CONFIG_H_INCLUDED__
-
 

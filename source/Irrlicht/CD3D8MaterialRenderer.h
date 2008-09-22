@@ -293,7 +293,11 @@ public:
 			pID3DDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
 			pID3DDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA );
 
-			pID3DDevice->SetRenderState(D3DRS_ALPHAREF, core::floor32(material.MaterialTypeParam * 255.f));
+			s32 refValue = core::floor32(material.MaterialTypeParam * 255.f);
+			if ( !refValue )
+				refValue = 127; // default value
+
+			pID3DDevice->SetRenderState(D3DRS_ALPHAREF, refValue);
 			pID3DDevice->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATEREQUAL);
 			pID3DDevice->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
 		}
@@ -338,7 +342,11 @@ public:
 
 			pID3DDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
 
-			pID3DDevice->SetRenderState(D3DRS_ALPHAREF, core::floor32(material.MaterialTypeParam * 255.f));
+			s32 refValue = core::floor32(material.MaterialTypeParam * 255.f);
+			if ( !refValue )
+				refValue = 127; // default value
+
+			pID3DDevice->SetRenderState(D3DRS_ALPHAREF, refValue);
 			pID3DDevice->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATEREQUAL);
 			pID3DDevice->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
 		}

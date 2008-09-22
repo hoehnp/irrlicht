@@ -19,11 +19,7 @@ namespace core
 	public:
 		//! Default constructor (null vector).
 		vector3d() : X(0), Y(0), Z(0) {}
-		//! Constructor with three different values
 		vector3d(T nx, T ny, T nz) : X(nx), Y(ny), Z(nz) {}
-		//! Constructor with the same value for all elements
-		explicit vector3d(T n) : X(n), Y(n), Z(n) {}
-		//! Copy constructor
 		vector3d(const vector3d<T>& other) : X(other.X), Y(other.Y), Z(other.Z) {}
 
 		// operators
@@ -34,13 +30,9 @@ namespace core
 
 		vector3d<T> operator+(const vector3d<T>& other) const { return vector3d<T>(X + other.X, Y + other.Y, Z + other.Z); }
 		vector3d<T>& operator+=(const vector3d<T>& other) { X+=other.X; Y+=other.Y; Z+=other.Z; return *this; }
-		vector3d<T> operator+(const T val) const { return vector3d<T>(X + val, Y + val, Z + val); }
-		vector3d<T>& operator+=(const T val) { X+=val; Y+=val; Z+=val; return *this; }
 
 		vector3d<T> operator-(const vector3d<T>& other) const { return vector3d<T>(X - other.X, Y - other.Y, Z - other.Z); }
 		vector3d<T>& operator-=(const vector3d<T>& other) { X-=other.X; Y-=other.Y; Z-=other.Z; return *this; }
-		vector3d<T> operator-(const T val) const { return vector3d<T>(X - val, Y - val, Z - val); }
-		vector3d<T>& operator-=(const T val) { X-=val; Y-=val; Z-=val; return *this; }
 
 		vector3d<T> operator*(const vector3d<T>& other) const { return vector3d<T>(X * other.X, Y * other.Y, Z * other.Z); }
 		vector3d<T>& operator*=(const vector3d<T>& other) { X*=other.X; Y*=other.Y; Z*=other.Z; return *this; }
@@ -78,8 +70,8 @@ namespace core
 				core::equals(Z, other.Z, tolerance);
 		}
 
-		vector3d<T>& set(const T nx, const T ny, const T nz) {X=nx; Y=ny; Z=nz; return *this;}
-		vector3d<T>& set(const vector3d<T>& p) {X=p.X; Y=p.Y; Z=p.Z;return *this;}
+		void set(const T nx, const T ny, const T nz) {X=nx; Y=ny; Z=nz; }
+		void set(const vector3d<T>& p) { X=p.X; Y=p.Y; Z=p.Z;}
 
 		//! Get length of the vector.
 		T getLength() const { return (T) sqrt((f64)(X*X + Y*Y + Z*Z)); }
@@ -124,9 +116,9 @@ namespace core
 		\return True if this vector is between begin and end, false if not. */
 		bool isBetweenPoints(const vector3d<T>& begin, const vector3d<T>& end) const
 		{
-			const T f = (end - begin).getLengthSQ();
-			return getDistanceFromSQ(begin) <= f &&
-				getDistanceFromSQ(end) <= f;
+			T f = (end - begin).getLengthSQ();
+			return getDistanceFromSQ(begin) < f &&
+				getDistanceFromSQ(end) < f;
 		}
 
 		//! Normalizes the vector.
@@ -147,25 +139,24 @@ namespace core
 		}
 
 		//! Sets the length of the vector to a new value
-		vector3d<T>& setLength(T newlength)
+		void setLength(T newlength)
 		{
 			normalize();
-			return (*this *= newlength);
+			*this *= newlength;
 		}
 
 		//! Inverts the vector.
-		vector3d<T>& invert()
+		void invert()
 		{
 			X *= -1.0f;
 			Y *= -1.0f;
 			Z *= -1.0f;
-			return *this;
 		}
 
 		//! Rotates the vector by a specified number of degrees around the Y axis and the specified center.
 		/** \param degrees Number of degrees to rotate around the Y axis.
 		\param center The center of the rotation. */
-		void rotateXZBy(f64 degrees, const vector3d<T>& center=vector3d<T>())
+		void rotateXZBy(f64 degrees, const vector3d<T>& center)
 		{
 			degrees *= DEGTORAD64;
 			T cs = (T)cos(degrees);
@@ -180,7 +171,7 @@ namespace core
 		//! Rotates the vector by a specified number of degrees around the Z axis and the specified center.
 		/** \param degrees: Number of degrees to rotate around the Z axis.
 		\param center: The center of the rotation. */
-		void rotateXYBy(f64 degrees, const vector3d<T>& center=vector3d<T>())
+		void rotateXYBy(f64 degrees, const vector3d<T>& center)
 		{
 			degrees *= DEGTORAD64;
 			T cs = (T)cos(degrees);
@@ -195,7 +186,7 @@ namespace core
 		//! Rotates the vector by a specified number of degrees around the X axis and the specified center.
 		/** \param degrees: Number of degrees to rotate around the X axis.
 		\param center: The center of the rotation. */
-		void rotateYZBy(f64 degrees, const vector3d<T>& center=vector3d<T>())
+		void rotateYZBy(f64 degrees, const vector3d<T>& center)
 		{
 			degrees *= DEGTORAD64;
 			T cs = (T)cos(degrees);
@@ -234,69 +225,29 @@ namespace core
 		}
 
 		//! Gets the Y and Z rotations of a vector.
-		/** Thanks to Arras on the Irrlicht forums for this method.
+		/** Thanks to Arras on the Irrlicht forums to add this method.
 		\return A vector representing the rotation in degrees of
 		this vector. The Z component of the vector will always be 0. */
-		vector3d<T> getHorizontalAngle() const
+		vector3d<T> getHorizontalAngle()
 		{
 			vector3d<T> angle;
 
-			angle.Y = (T)(atan2(X, Z) * RADTODEG64);
+			angle.Y = (T)atan2(X, Z);
+			angle.Y *= (f32)RADTODEG64;
 
-			if (angle.Y < 0.0f)
-				angle.Y += 360.0f;
-			if (angle.Y >= 360.0f)
-				angle.Y -= 360.0f;
+			if (angle.Y < 0.0f) angle.Y += 360.0f;
+			if (angle.Y >= 360.0f) angle.Y -= 360.0f;
 
-			const f64 z1 = sqrt(X*X + Z*Z);
+			f32 z1 = sqrtf(X*X + Z*Z);
 
-			angle.X = (T)(atan2(z1, (f64)Y) * RADTODEG64 - 90.0);
+			angle.X = (T)atan2(z1, Y);
+			angle.X *= (f32)RADTODEG64;
+			angle.X -= 90.0f;
 
-			if (angle.X < 0.0f)
-				angle.X += 360.0f;
-			if (angle.X >= 360.0f)
-				angle.X -= 360.0f;
+			if (angle.X < 0.0f) angle.X += 360.0f;
+			if (angle.X >= 360.0f) angle.X -= 360.0f;
 
 			return angle;
-		}
-
-		//! Builds a direction vector from (this) rotation vector.
-		/** This vector is assumed to hold 3 Euler angle rotations, in degrees.
-		The implementation performs the same calculations as using a matrix to
-		do the rotation.
-		\param[in] forwards  The direction representing "forwards" which will be
-		rotated by this vector.  If you do not provide a
-		direction, then the positive Z axis (0, 0, 1) will
-		be assumed to be fowards.
-		\return A vector calculated by rotating the forwards direction by
-		the 3 Euler angles that this vector is assumed to represent. */
-		vector3d<T> rotationToDirection(const vector3d<T> & forwards = vector3d<T>(0, 0, 1)) const
-		{
-			const f64 cr = cos( core::DEGTORAD64 * X );
-			const f64 sr = sin( core::DEGTORAD64 * X );
-			const f64 cp = cos( core::DEGTORAD64 * Y );
-			const f64 sp = sin( core::DEGTORAD64 * Y );
-			const f64 cy = cos( core::DEGTORAD64 * Z );
-			const f64 sy = sin( core::DEGTORAD64 * Z );
-
-			const f64 srsp = sr*sp;
-			const f64 crsp = cr*sp;
-
-			const f64 pseudoMatrix[] = {
-				( cp*cy ), ( cp*sy ), ( -sp ),
-				( srsp*cy-cr*sy ), ( srsp*sy+cr*cy ), ( sr*cp ),
-				( crsp*cy+sr*sy ), ( crsp*sy-sr*cy ), ( cr*cp )};
-
-			return vector3d<T>(
-				(T)(forwards.X * pseudoMatrix[0] +
-					forwards.Y * pseudoMatrix[3] +
-					forwards.Z * pseudoMatrix[6]),
-				(T)(forwards.X * pseudoMatrix[1] +
-					forwards.Y * pseudoMatrix[4] +
-					forwards.Z * pseudoMatrix[7]),
-				(T)(forwards.X * pseudoMatrix[2] +
-					forwards.Y * pseudoMatrix[5] +
-					forwards.Z * pseudoMatrix[8]));
 		}
 
 		//! Fills an array of 4 values with the vector data (usually floats).
@@ -309,6 +260,7 @@ namespace core
 			array[2] = Z;
 			array[3] = 0;
 		}
+
 
 		//! X coordinate of the vector
 		T X;
@@ -325,8 +277,7 @@ namespace core
 	typedef vector3d<s32> vector3di;
 
 	//! Function multiplying a scalar and a vector component-wise.
-	template<class S, class T>
-	vector3d<T> operator*(const S scalar, const vector3d<T>& vector) { return vector*scalar; }
+	template<class S, class T> vector3d<T> operator*(const S scalar, const vector3d<T>& vector) { return vector*scalar; }
 
 } // end namespace core
 } // end namespace irr

@@ -37,8 +37,11 @@ inline u32 strtol10(const char* in, const char** out=0)
 {
 	u32 value = 0;
 
-	while ( ( *in >= '0') && ( *in <= '9' ))
+	while ( 1 )
 	{
+		if ( *in < '0' || *in > '9' )
+			break;
+
 		value = ( value * 10 ) + ( *in - '0' );
 		++in;
 	}

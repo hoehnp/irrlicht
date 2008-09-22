@@ -22,6 +22,9 @@ namespace scene
 	{
 	public:
 
+		//! Destructor
+		virtual ~IMesh() { }
+
 		//! Returns the amount of mesh buffers.
 		/** \return Returns the amount of mesh buffers (IMeshBuffer) in this mesh. */
 		virtual u32 getMeshBufferCount() const = 0;

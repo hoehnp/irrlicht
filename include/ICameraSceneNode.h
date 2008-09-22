@@ -31,15 +31,16 @@ namespace scene
 			const core::vector3df& scale = core::vector3df(1.0f,1.0f,1.0f))
 			: ISceneNode(parent, mgr, id, position, rotation, scale), IsOrthogonal(false) {}
 
+		//! Destructor
+		virtual ~ICameraSceneNode() {}
+
 		//! Sets the projection matrix of the camera.
 		/** The core::matrix4 class has some methods
 		to build a projection matrix. e.g: core::matrix4::buildProjectionMatrixPerspectiveFovLH.
 		Note that the matrix will only stay as set by this method until one of
 		the following Methods are called: setNearValue, setFarValue, setAspectRatio, setFOV.
-		\param projection The new projection matrix of the camera.
-		\param isOrthogonal Set this to true if the matrix is an
-		orthogonal one (e.g. from matrix4::buildProjectionMatrixOrtho... */
-		virtual void setProjectionMatrix(const core::matrix4& projection, bool isOrthogonal = false) = 0;
+		\param projection: The new projection matrix of the camera. */
+		virtual void setProjectionMatrix(const core::matrix4& projection) = 0;
 
 		//! Gets the current projection matrix of the camera.
 		/** \return Returns the current projection matrix of the camera. */
@@ -63,7 +64,7 @@ namespace scene
 
 		//! Gets the current look at target of the camera
 		/** \return Returns the current look at target of the camera */
-		virtual const core::vector3df& getTarget() const = 0;
+		virtual core::vector3df getTarget() const = 0;
 
 		//! Sets the up vector of the camera.
 		/** \param pos: New upvector of the camera. */
@@ -71,7 +72,7 @@ namespace scene
 
 		//! Gets the up vector of the camera.
 		/** \return Returns the up vector of the camera. */
-		virtual const core::vector3df& getUpVector() const = 0;
+		virtual core::vector3df getUpVector() const = 0;
 
 		//! Gets the value of the near plane of the camera.
 		/** \return Returns the value of the near plane of the camera. */
@@ -125,7 +126,18 @@ namespace scene
 			return IsOrthogonal;
 		}
 
-	protected:
+		//! Sets if this camera should return that it is orthogonal.
+		/** This setting does not change anything of the view or
+			projection matrix. However, the kind of camera
+			influences how collision detection and picking is done
+			and thus can be useful to query.
+		*/
+		void setIsOrthogonal( bool orthogonal )
+		{
+			IsOrthogonal = orthogonal;
+		}
+
+	private:
 
 		bool IsOrthogonal;
 	};

@@ -680,79 +680,41 @@ implementations to find out how to draw the part exactly.
 \param rect: Defining area where to draw.
 \param clip: Clip area.	*/
 void CGUISkin::draw3DTabButton(IGUIElement* element, bool active,
-	const core::rect<s32>& frameRect, const core::rect<s32>* clip, EGUI_ALIGNMENT alignment)
+				const core::rect<s32>& frameRect,
+				const core::rect<s32>* clip)
 {
 	if (!Driver)
 		return;
 
 	core::rect<s32> tr = frameRect;
 
-	if ( alignment == EGUIA_UPPERLEFT )
-	{
-		tr.LowerRightCorner.X -= 2;
-		tr.LowerRightCorner.Y = tr.UpperLeftCorner.Y + 1;
-		tr.UpperLeftCorner.X += 1;
-		Driver->draw2DRectangle(getColor(EGDC_3D_HIGH_LIGHT), tr, clip);
-		
-		// draw left highlight
-		tr = frameRect;
-		tr.LowerRightCorner.X = tr.UpperLeftCorner.X + 1;
-		tr.UpperLeftCorner.Y += 1;
-		Driver->draw2DRectangle(getColor(EGDC_3D_HIGH_LIGHT), tr, clip);
+	tr.LowerRightCorner.X -= 2;
+	tr.LowerRightCorner.Y = tr.UpperLeftCorner.Y + 1;
+	tr.UpperLeftCorner.X += 1;
+	Driver->draw2DRectangle(getColor(EGDC_3D_HIGH_LIGHT), tr, clip);
 
-		// draw grey background
-		tr = frameRect;
-		tr.UpperLeftCorner.X += 1;
-		tr.UpperLeftCorner.Y += 1;
-		tr.LowerRightCorner.X -= 2;
-		Driver->draw2DRectangle(getColor(EGDC_3D_FACE), tr, clip);
+	// draw left highlight
+	tr = frameRect;
+	tr.LowerRightCorner.X = tr.UpperLeftCorner.X + 1;
+	tr.UpperLeftCorner.Y += 1;
+	Driver->draw2DRectangle(getColor(EGDC_3D_HIGH_LIGHT), tr, clip);
 
-		
-		// draw right middle gray shadow
-		tr.LowerRightCorner.X += 1;
-		tr.UpperLeftCorner.X = tr.LowerRightCorner.X - 1;
-		Driver->draw2DRectangle(getColor(EGDC_3D_SHADOW), tr, clip);
+	// draw grey background
+	tr = frameRect;
+	tr.UpperLeftCorner.X += 1;
+	tr.UpperLeftCorner.Y += 1;
+	tr.LowerRightCorner.X -= 2;
+	Driver->draw2DRectangle(getColor(EGDC_3D_FACE), tr, clip);
 
-		
-		tr.LowerRightCorner.X += 1;
-		tr.UpperLeftCorner.X += 1;
-		tr.UpperLeftCorner.Y += 1;
-		Driver->draw2DRectangle(getColor(EGDC_3D_DARK_SHADOW), tr, clip);		
-	}
-	else
-	{
-		tr.LowerRightCorner.X -= 2;
-		tr.UpperLeftCorner.Y = tr.LowerRightCorner.Y - 1;
-		tr.UpperLeftCorner.X += 1;
-		Driver->draw2DRectangle(getColor(EGDC_3D_HIGH_LIGHT), tr, clip);
-		
-		// draw left highlight
-		tr = frameRect;
-		tr.LowerRightCorner.X = tr.UpperLeftCorner.X + 1;
-		tr.LowerRightCorner.Y -= 1;
-		Driver->draw2DRectangle(getColor(EGDC_3D_HIGH_LIGHT), tr, clip);
+	// draw right middle gray shadow
+	tr.LowerRightCorner.X += 1;
+	tr.UpperLeftCorner.X = tr.LowerRightCorner.X - 1;
+	Driver->draw2DRectangle(getColor(EGDC_3D_SHADOW), tr, clip);
 
-		// draw grey background
-		tr = frameRect;
-		tr.UpperLeftCorner.X += 1;
-		tr.UpperLeftCorner.Y -= 1;
-		tr.LowerRightCorner.X -= 2;
-		tr.LowerRightCorner.Y -= 1;
-		Driver->draw2DRectangle(getColor(EGDC_3D_FACE), tr, clip);
-		
-		// draw right middle gray shadow
-		tr.LowerRightCorner.X += 1;
-		tr.UpperLeftCorner.X = tr.LowerRightCorner.X - 1;
-		//tr.LowerRightCorner.Y -= 1;
-		Driver->draw2DRectangle(getColor(EGDC_3D_SHADOW), tr, clip);
-
-		
-		tr.LowerRightCorner.X += 1;
-		tr.UpperLeftCorner.X += 1;
-		tr.LowerRightCorner.Y -= 1;
-		Driver->draw2DRectangle(getColor(EGDC_3D_DARK_SHADOW), tr, clip);		
-	}
-
+	tr.LowerRightCorner.X += 1;
+	tr.UpperLeftCorner.X += 1;
+	tr.UpperLeftCorner.Y += 1;
+	Driver->draw2DRectangle(getColor(EGDC_3D_DARK_SHADOW), tr, clip);
 }
 
 
@@ -765,85 +727,46 @@ implementations to find out how to draw the part exactly.
 \param rect: Defining area where to draw.
 \param clip: Clip area.	*/
 void CGUISkin::draw3DTabBody(IGUIElement* element, bool border, bool background,
-	const core::rect<s32>& rect, const core::rect<s32>* clip, s32 tabHeight, EGUI_ALIGNMENT alignment)
+	const core::rect<s32>& rect, const core::rect<s32>* clip)
 {
 	if (!Driver)
 		return;
 
 	core::rect<s32> tr = rect;
 
-	if ( tabHeight == -1 )
-		tabHeight = getSize(gui::EGDS_BUTTON_HEIGHT);
-
 	// draw border.
 	if (border)
 	{
-		if ( alignment == EGUIA_UPPERLEFT )
-		{
-			// draw left hightlight
-			tr.UpperLeftCorner.Y += tabHeight + 2;
-			tr.LowerRightCorner.X = tr.UpperLeftCorner.X + 1;
-			Driver->draw2DRectangle(getColor(EGDC_3D_HIGH_LIGHT), tr, clip);
+		// draw left hightlight
+		tr.UpperLeftCorner.Y += getSize(gui::EGDS_BUTTON_HEIGHT) + 2;
+		tr.LowerRightCorner.X = tr.UpperLeftCorner.X + 1;
+		Driver->draw2DRectangle(getColor(EGDC_3D_HIGH_LIGHT), tr, clip);
 
-			
-			// draw right shadow
-			tr.UpperLeftCorner.X = rect.LowerRightCorner.X - 1;
-			tr.LowerRightCorner.X = tr.UpperLeftCorner.X + 1;
-			Driver->draw2DRectangle(getColor(EGDC_3D_SHADOW), tr, clip);
+		// draw right shadow
+		tr.UpperLeftCorner.X = rect.LowerRightCorner.X - 1;
+		tr.LowerRightCorner.X = tr.UpperLeftCorner.X + 1;
+		Driver->draw2DRectangle(getColor(EGDC_3D_SHADOW), tr, clip);
 
-			// draw lower shadow
-			tr = rect;
-			tr.UpperLeftCorner.Y = tr.LowerRightCorner.Y - 1;
-			Driver->draw2DRectangle(getColor(EGDC_3D_SHADOW), tr, clip);
-			
-		}
-		else
-		{
-			// draw left hightlight
-			tr.LowerRightCorner.Y -= tabHeight + 2;
-			tr.LowerRightCorner.X = tr.UpperLeftCorner.X + 1;
-			Driver->draw2DRectangle(getColor(EGDC_3D_HIGH_LIGHT), tr, clip);
-			
-			// draw right shadow
-			tr.UpperLeftCorner.X = rect.LowerRightCorner.X - 1;
-			tr.LowerRightCorner.X = tr.UpperLeftCorner.X + 1;
-			Driver->draw2DRectangle(getColor(EGDC_3D_SHADOW), tr, clip);
-			
-			// draw lower shadow
-			tr = rect;
-			tr.LowerRightCorner.Y = tr.UpperLeftCorner.Y + 1;
-			Driver->draw2DRectangle(getColor(EGDC_3D_HIGH_LIGHT), tr, clip);
-			
-		}
+		// draw lower shadow
+		tr = rect;
+		tr.UpperLeftCorner.Y = tr.LowerRightCorner.Y - 1;
+		Driver->draw2DRectangle(getColor(EGDC_3D_SHADOW), tr, clip);
 	}
 
 	if (background)
 	{
-		
-		if ( alignment == EGUIA_UPPERLEFT )
-		{
-			tr = rect;
-			tr.UpperLeftCorner.Y += tabHeight + 2;
-			tr.LowerRightCorner.X -= 1;
-			tr.UpperLeftCorner.X += 1;
-			tr.LowerRightCorner.Y -= 1;
-		}
-		else
-		{
-			tr = rect;
-			tr.UpperLeftCorner.X += 1;
-			tr.UpperLeftCorner.Y -= 1;
-			tr.LowerRightCorner.X -= 1;
-			tr.LowerRightCorner.Y -= tabHeight + 2;
-			//tr.UpperLeftCorner.X += 1;
-		}
+		tr = rect;
+		tr.UpperLeftCorner.Y += getSize(gui::EGDS_BUTTON_HEIGHT) + 2;
+		tr.LowerRightCorner.X -= 1;
+		tr.UpperLeftCorner.X += 1;
+		tr.LowerRightCorner.Y -= 1;
 
 		if (!UseGradient)
 			Driver->draw2DRectangle(getColor(EGDC_3D_FACE), tr, clip);
 		else
 		{
-			video::SColor c1 = getColor(EGDC_3D_FACE);
-			video::SColor c2 = getColor(EGDC_3D_SHADOW);
+			const video::SColor c1 = getColor(EGDC_3D_FACE);
+			const video::SColor c2 = getColor(EGDC_3D_SHADOW);
 			Driver->draw2DRectangle(tr, c1, c1, c2, c2, clip);
 		}
 	}
@@ -932,5 +855,4 @@ void CGUISkin::deserializeAttributes(io::IAttributes* in, io::SAttributeReadWrit
 } // end namespace irr
 
 #endif // _IRR_COMPILE_WITH_GUI_
-
 

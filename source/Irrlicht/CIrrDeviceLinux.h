@@ -47,7 +47,10 @@ namespace irr
 	public:
 
 		//! constructor
-		CIrrDeviceLinux(const SIrrlichtCreationParameters& param);
+		CIrrDeviceLinux(video::E_DRIVER_TYPE deviceType,
+			const core::dimension2d<s32>& windowSize, u32 bits,
+			bool fullscreen, bool stencilbuffer, bool vsync, bool antiAlias, IEventReceiver* receiver,
+			const char* version);
 
 		//! destructor
 		virtual ~CIrrDeviceLinux();
@@ -68,17 +71,8 @@ namespace irr
 		//! returns if window is active. if not, nothing need to be drawn
 		virtual bool isWindowActive() const;
 
-		//! returns if window has focus.
-		virtual bool isWindowFocused() const;
-
-		//! returns if window is minimized.
-		virtual bool isWindowMinimized() const;
-
-		//! returns color format of the window.
-		virtual video::ECOLOR_FORMAT getColorFormat() const;
-
 		//! presents a surface in the client area
-		virtual void present(video::IImage* surface, void* windowId=0, core::rect<s32>* src=0 );
+		virtual void present(video::IImage* surface, s32 windowId = 0, core::rect<s32>* src=0 );
 
 		//! notifies the device that it should close itself
 		virtual void closeDevice();
@@ -93,9 +87,10 @@ namespace irr
 	private:
 
 		//! create the driver
-		void createDriver();
+		void createDriver(const core::dimension2d<s32>& windowSize,
+					bool vsync);
 
-		bool createWindow();
+		bool createWindow(const core::dimension2d<s32>& windowSize, u32 bits);
 
 		void createKeyMap();
 
@@ -189,20 +184,20 @@ namespace irr
 					{
 						XWarpPointer(Device->display,
 							None,
-							Device->window, 0, 0,
-							Device->Width,
-							Device->Height,
+				 			Device->window, 0, 0,
+				 			Device->Width,
+				 			Device->Height, 
 							ReferenceRect.UpperLeftCorner.X + x,
 							ReferenceRect.UpperLeftCorner.Y + y);
-
+						
 					}
 					else
 					{
 						XWarpPointer(Device->display,
 							None,
-							Device->window, 0, 0,
-							Device->Width,
-							Device->Height, x, y);
+				 			Device->window, 0, 0,
+				 			Device->Width,
+				 			Device->Height, x, y);
 					}
 					XFlush(Device->display);
 				}
@@ -222,7 +217,7 @@ namespace irr
 			virtual core::position2d<f32> getRelativePosition()
 			{
 				updateCursorPos();
-
+				
 				if (!UseReferenceRect)
 				{
 					return core::position2d<f32>(CursorPos.X / (f32)Device->Width,
@@ -279,15 +274,15 @@ namespace irr
 #endif
 			}
 
-			CIrrDeviceLinux* Device;
 			core::position2d<s32> CursorPos;
+			CIrrDeviceLinux* Device;
+			bool IsVisible;
+			bool Null;
+			bool UseReferenceRect;
 			core::rect<s32> ReferenceRect;
 #ifdef _IRR_COMPILE_WITH_X11_
 			Cursor invisCursor;
 #endif
-			bool IsVisible;
-			bool Null;
-			bool UseReferenceRect;
 		};
 
 		friend class CCursorControl;
@@ -312,9 +307,14 @@ namespace irr
 		GLXContext Context;
 		#endif
 #endif
-		u32 Width, Height;
+		bool Fullscreen;
+		bool StencilBuffer;
+		bool AntiAlias;
+		video::E_DRIVER_TYPE DriverType;
+
+		u32 Width, Height, Depth;
 		bool Close;
-		bool WindowHasFocus;
+		bool WindowActive;
 		bool WindowMinimized;
 		bool UseXVidMode;
 		bool UseXRandR;

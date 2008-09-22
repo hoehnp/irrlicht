@@ -186,12 +186,12 @@ namespace core
 			void transformPlane( const core::plane3d<f32> &in, core::plane3d<f32> &out) const;
 
 			//! Transforms a axis aligned bounding box
-			/** The result box of this operation may not be accurate at all. For
-			correct results, use transformBoxEx() */
+			/** The result box of this operation may not be very accurate. For
+			accurate results, use transformBoxEx() */
 			void transformBox(core::aabbox3d<f32>& box) const;
 
-			//! Transforms a axis aligned bounding box
-			/** The result box of this operation should by accurate, but this operation
+			//! Transforms a axis aligned bounding box more accurately than transformBox()
+			/** The result box of this operation should by quite accurate, but this operation
 			is slower than transformBox(). */
 			void transformBoxEx(core::aabbox3d<f32>& box) const;
 
@@ -287,13 +287,6 @@ namespace core
 			\param y Offset on y axis
 			\return Altered matrix */
 			CMatrix4<T>& setTextureTranslate( f32 x, f32 y );
-
-			//! Set texture transformation translation, using a transposed representation
-			/** Doesn't clear other elements than those affected.
-			\param x Offset on x axis
-			\param y Offset on y axis
-			\return Altered matrix */
-			CMatrix4<T>& setTextureTranslateTransposed( f32 x, f32 y );
 
 			//! Set texture transformation scale
 			/** Doesn't clear other elements than those affected.
@@ -1665,15 +1658,6 @@ namespace core
 
 
 	template <class T>
-	inline CMatrix4<T>& CMatrix4<T>::setTextureTranslateTransposed ( f32 x, f32 y )
-	{
-		M[2] = (T)x;
-		M[6] = (T)y;
-		definitelyIdentityMatrix = definitelyIdentityMatrix && (x==0.0f) && (y==0.0f) ;
-		return *this;
-	}
-
-	template <class T>
 	inline CMatrix4<T>& CMatrix4<T>::setTextureScale ( f32 sx, f32 sy )
 	{
 		M[0] = (T)sx;
@@ -1733,7 +1717,7 @@ namespace core
 	//! Typedef for f32 matrix
 	typedef CMatrix4<f32> matrix4;
 	//! global const identity matrix
-	extern const matrix4 IdentityMatrix;
+	const matrix4 IdentityMatrix(matrix4::EM4CONST_IDENTITY);
 
 } // end namespace core
 } // end namespace irr

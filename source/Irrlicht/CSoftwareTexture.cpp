@@ -59,7 +59,7 @@ CSoftwareTexture::~CSoftwareTexture()
 
 
 //! lock function
-void* CSoftwareTexture::lock(bool readOnly)
+void* CSoftwareTexture::lock()
 {
 	return Image->lock();
 }

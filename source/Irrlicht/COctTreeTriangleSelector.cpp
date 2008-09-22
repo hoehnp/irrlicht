@@ -13,8 +13,8 @@ namespace scene
 {
 
 //! constructor
-COctTreeTriangleSelector::COctTreeTriangleSelector(const IMesh* mesh,
-		const ISceneNode* node, s32 minimalPolysPerNode)
+COctTreeTriangleSelector::COctTreeTriangleSelector(IMesh* mesh,
+		ISceneNode* node, s32 minimalPolysPerNode)
 	: CTriangleSelector(mesh, node), Root(0), NodeCount(0),
 	 MinimalPolysPerNode(minimalPolysPerNode)
 {
@@ -108,6 +108,7 @@ void COctTreeTriangleSelector::constructOctTree(SOctTreeNode* node)
 }
 
 
+
 //! Gets all triangles which lie within a specific bounding box.
 void COctTreeTriangleSelector::getTriangles(core::triangle3df* triangles, 
 					s32 arraySize, s32& outTriangleCount, 
@@ -121,7 +122,7 @@ void COctTreeTriangleSelector::getTriangles(core::triangle3df* triangles,
 	{
 		mat = SceneNode->getAbsoluteTransformation();
 		mat.makeInverse();
-		mat.transformBoxEx(invbox);
+		mat.transformBox(invbox);
 	}
 
 	mat.makeIdentity();

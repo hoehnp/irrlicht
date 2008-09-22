@@ -25,10 +25,6 @@ CParticleCylinderEmitter::CParticleCylinderEmitter(
 	MinLifeTime(lifeTimeMin), MaxLifeTime(lifeTimeMax), Time(0), Emitted(0),
 	MaxAngleDegrees(maxAngleDegrees)
 {
-
-	#ifdef _DEBUG
-	setDebugName("CParticleCylinderEmitter");
-	#endif
 }
 
 
@@ -62,7 +58,9 @@ s32 CParticleCylinderEmitter::emitt(u32 now, u32 timeSinceLastCall, SParticle*& 
 				distance = Radius;
 
 			// Random direction from center
-			p.pos.set(Center.X + distance, Center.Y, Center.Z + distance);
+			p.pos.X = Center.X + distance;
+			p.pos.Y = Center.Y;
+			p.pos.Z = Center.Z + distance;
 			p.pos.rotateXZBy( os::Randomizer::rand() % 360, Center );
 
 			// Random length

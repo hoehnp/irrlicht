@@ -71,7 +71,8 @@ public:
 		// if not end reached, parse the node
 		if (P && (unsigned int)(P - TextBegin) < TextSize - 1 && *P != 0)
 		{
-			return parseCurrentNode();
+			parseCurrentNode();
+			return true;
 		}
 
 		_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
@@ -209,8 +210,7 @@ public:
 private:
 
 	// Reads the current xml node
-	// return false if no further node is found
-	bool parseCurrentNode()
+	void parseCurrentNode()
 	{
 		char_type* start = P;
 
@@ -218,15 +218,14 @@ private:
 		while(*P != L'<' && *P)
 			++P;
 
-		// not a node, so return false
 		if (!*P)
-			return false;
+			return;
 
 		if (P - start > 0)
 		{
 			// we found some text, store it
 			if (setText(start, P))
-				return true;
+				return;
 		}
 
 		++P;
@@ -248,7 +247,6 @@ private:
 			parseOpeningXMLElement();
 			break;
 		}
-		return true;
 	}
 
 
@@ -552,9 +550,7 @@ private:
 	//! reads the xml file and converts it into the wanted character format.
 	bool readFile(IFileReadCallBack* callback)
 	{
-		long size = callback->getSize();		
-		if (size<0)
-			return false;
+		int size = callback->getSize();		
 		size += 4; // We need two terminating 0's at the end.
 		           // For ASCII we need 1 0's, for UTF-16 2, for UTF-32 4.
 

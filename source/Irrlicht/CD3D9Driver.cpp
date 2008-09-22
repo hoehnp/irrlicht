@@ -202,18 +202,6 @@ bool CD3D9Driver::initDriver(const core::dimension2d<s32>& screenSize, HWND hwnd
 		sprintf(tmp, "%s %s %d.%d.%d.%d", dai.Description, dai.Driver, Product, Version,
 			SubVersion, Build);
 		os::Printer::log(tmp, ELL_INFORMATION);
-
-		// Assign vendor name based on vendor id.
-		switch(dai.VendorId)
-		{
-			case 0x1002 : vendorName = "ATI Technologies Inc."; break;
-			case 0x10DE : vendorName = "NVIDIA Corporation"; break;
-			case 0x102B : vendorName = "Matrox Electronic Systems Ltd."; break;
-			case 0x121A : vendorName = "3dfx Interactive Inc"; break;
-			case 0x5333 : vendorName = "S3 Graphics Co., Ltd."; break;
-			case 0x8086 : vendorName = "Intel Corporation"; break;
-			default: vendorName = "Unknown VendorId: ";vendorName += (u32)dai.VendorId; break;
-		}
 	}
 
 	D3DDISPLAYMODE d3ddm;
@@ -253,22 +241,9 @@ bool CD3D9Driver::initDriver(const core::dimension2d<s32>& screenSize, HWND hwnd
 		present.Windowed		= TRUE;
 	}
 
-	UINT adapter = D3DADAPTER_DEFAULT;
 	D3DDEVTYPE devtype = D3DDEVTYPE_HAL;
 	#ifndef _IRR_D3D_NO_SHADER_DEBUGGING
 	devtype = D3DDEVTYPE_REF;
-	#elif defined(_IRR_USE_NVIDIA_PERFHUD_)
-	for (UINT adapter_i = 0; adapter_i < pID3D->GetAdapterCount(); ++adapter_i)
-	{
-		D3DADAPTER_IDENTIFIER9 identifier;
-		pID3D->GetAdapterIdentifier(adapter_i,0,&identifier);
-		if (strstr(identifier.Description,"PerfHUD") != 0)
-		{
-			adapter = adapter_i;
-			devtype = D3DDEVTYPE_REF;
-			break;
-		}
-	}
 	#endif
 
 	// enable anti alias if possible and desired
@@ -276,7 +251,7 @@ bool CD3D9Driver::initDriver(const core::dimension2d<s32>& screenSize, HWND hwnd
 	{
 		DWORD qualityLevels = 0;
 
-		if (SUCCEEDED(pID3D->CheckDeviceMultiSampleType(adapter,
+		if (SUCCEEDED(pID3D->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT,
 				devtype, present.BackBufferFormat, !fullScreen,
 				D3DMULTISAMPLE_4_SAMPLES, &qualityLevels)))
 		{
@@ -286,7 +261,7 @@ bool CD3D9Driver::initDriver(const core::dimension2d<s32>& screenSize, HWND hwnd
 			present.SwapEffect         = D3DSWAPEFFECT_DISCARD;
 		}
 		else
-		if (SUCCEEDED(pID3D->CheckDeviceMultiSampleType(adapter,
+		if (SUCCEEDED(pID3D->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT,
 				devtype, present.BackBufferFormat, !fullScreen,
 				D3DMULTISAMPLE_2_SAMPLES, &qualityLevels)))
 		{
@@ -296,7 +271,7 @@ bool CD3D9Driver::initDriver(const core::dimension2d<s32>& screenSize, HWND hwnd
 			present.SwapEffect         = D3DSWAPEFFECT_DISCARD;
 		}
 		else
-		if (SUCCEEDED(pID3D->CheckDeviceMultiSampleType(adapter,
+		if (SUCCEEDED(pID3D->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT,
 					devtype, present.BackBufferFormat, !fullScreen,
 					D3DMULTISAMPLE_NONMASKABLE, &qualityLevels)))
 		{
@@ -316,17 +291,17 @@ bool CD3D9Driver::initDriver(const core::dimension2d<s32>& screenSize, HWND hwnd
 	if (StencilBuffer)
 	{
 		present.AutoDepthStencilFormat = D3DFMT_D24S8;
-		if(FAILED(pID3D->CheckDeviceFormat(adapter, devtype,
+		if(FAILED(pID3D->CheckDeviceFormat(D3DADAPTER_DEFAULT, devtype,
 			present.BackBufferFormat, D3DUSAGE_DEPTHSTENCIL,
 			D3DRTYPE_SURFACE, present.AutoDepthStencilFormat)))
 		{
 			present.AutoDepthStencilFormat = D3DFMT_D24X4S4;
-			if(FAILED(pID3D->CheckDeviceFormat(adapter, devtype,
+			if(FAILED(pID3D->CheckDeviceFormat(D3DADAPTER_DEFAULT, devtype,
 				present.BackBufferFormat, D3DUSAGE_DEPTHSTENCIL,
 				D3DRTYPE_SURFACE, present.AutoDepthStencilFormat)))
 			{
 				present.AutoDepthStencilFormat = D3DFMT_D15S1;
-				if(FAILED(pID3D->CheckDeviceFormat(adapter, devtype,
+				if(FAILED(pID3D->CheckDeviceFormat(D3DADAPTER_DEFAULT, devtype,
 					present.BackBufferFormat, D3DUSAGE_DEPTHSTENCIL,
 					D3DRTYPE_SURFACE, present.AutoDepthStencilFormat)))
 				{
@@ -336,7 +311,7 @@ bool CD3D9Driver::initDriver(const core::dimension2d<s32>& screenSize, HWND hwnd
 			}
 		}
 		else
-		if(FAILED(pID3D->CheckDepthStencilMatch(adapter, devtype,
+		if(FAILED(pID3D->CheckDepthStencilMatch(D3DADAPTER_DEFAULT, devtype,
 			present.BackBufferFormat, present.BackBufferFormat, present.AutoDepthStencilFormat)))
 		{
 			os::Printer::log("Depth-stencil format is not compatible with display format, disabling stencil buffer.", ELL_WARNING);
@@ -347,17 +322,17 @@ bool CD3D9Driver::initDriver(const core::dimension2d<s32>& screenSize, HWND hwnd
 	if (!StencilBuffer)
 	{
 		present.AutoDepthStencilFormat = D3DFMT_D32;
-		if(FAILED(pID3D->CheckDeviceFormat(adapter, devtype,
+		if(FAILED(pID3D->CheckDeviceFormat(D3DADAPTER_DEFAULT, devtype,
 			present.BackBufferFormat, D3DUSAGE_DEPTHSTENCIL,
 			D3DRTYPE_SURFACE, present.AutoDepthStencilFormat)))
 		{
 			present.AutoDepthStencilFormat = D3DFMT_D24X8;
-			if(FAILED(pID3D->CheckDeviceFormat(adapter, devtype,
+			if(FAILED(pID3D->CheckDeviceFormat(D3DADAPTER_DEFAULT, devtype,
 				present.BackBufferFormat, D3DUSAGE_DEPTHSTENCIL,
 				D3DRTYPE_SURFACE, present.AutoDepthStencilFormat)))
 			{
 				present.AutoDepthStencilFormat = D3DFMT_D16;
-				if(FAILED(pID3D->CheckDeviceFormat(adapter, devtype,
+				if(FAILED(pID3D->CheckDeviceFormat(D3DADAPTER_DEFAULT, devtype,
 					present.BackBufferFormat, D3DUSAGE_DEPTHSTENCIL,
 					D3DRTYPE_SURFACE, present.AutoDepthStencilFormat)))
 				{
@@ -381,15 +356,15 @@ bool CD3D9Driver::initDriver(const core::dimension2d<s32>& screenSize, HWND hwnd
 	}
 	else
 	{
-		hr = pID3D->CreateDevice(adapter, devtype, hwnd,
+		hr = pID3D->CreateDevice(D3DADAPTER_DEFAULT, devtype, hwnd,
 				fpuPrecision | D3DCREATE_HARDWARE_VERTEXPROCESSING, &present, &pID3DDevice);
 
 		if(FAILED(hr))
-			hr = pID3D->CreateDevice(adapter, devtype, hwnd,
+			hr = pID3D->CreateDevice(D3DADAPTER_DEFAULT, devtype, hwnd,
 					fpuPrecision | D3DCREATE_MIXED_VERTEXPROCESSING , &present, &pID3DDevice);
 
 		if(FAILED(hr))
-			hr = pID3D->CreateDevice(adapter, devtype, hwnd,
+			hr = pID3D->CreateDevice(D3DADAPTER_DEFAULT, devtype, hwnd,
 					fpuPrecision | D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present, &pID3DDevice);
 
 		if (FAILED(hr))
@@ -428,7 +403,7 @@ bool CD3D9Driver::initDriver(const core::dimension2d<s32>& screenSize, HWND hwnd
 	// set exposed data
 	ExposedData.D3D9.D3D9 = pID3D;
 	ExposedData.D3D9.D3DDev9 = pID3DDevice;
-	ExposedData.D3D9.HWnd = hwnd;
+	ExposedData.D3D9.HWnd =  reinterpret_cast<s32>(hwnd);
 
 	ResetRenderStates = true;
 
@@ -503,7 +478,7 @@ bool CD3D9Driver::beginScene(bool backBuffer, bool zBuffer, SColor color)
 
 
 //! applications must call this method after performing any rendering. returns false if failed.
-bool CD3D9Driver::endScene( void* windowId, core::rect<s32>* sourceRect )
+bool CD3D9Driver::endScene( s32 windowId, core::rect<s32>* sourceRect )
 {
 	if (DeviceLost)
 		return false;
@@ -617,8 +592,11 @@ void CD3D9Driver::setTransform(E_TRANSFORMATION_STATE state, const core::matrix4
 	case ETS_TEXTURE_2:
 	case ETS_TEXTURE_3:
 		pID3DDevice->SetTextureStageState( state - ETS_TEXTURE_0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2 );
-		pID3DDevice->SetTransform((D3DTRANSFORMSTATETYPE)(D3DTS_TEXTURE0+ ( state - ETS_TEXTURE_0 )),
-			(D3DMATRIX*)((void*)mat.pointer()));
+		if (mat.isIdentity())
+			pID3DDevice->SetTransform( (D3DTRANSFORMSTATETYPE)(D3DTS_TEXTURE0+ ( state - ETS_TEXTURE_0 )), &UnitMatrixD3D9 );
+		else
+			pID3DDevice->SetTransform((D3DTRANSFORMSTATETYPE)(D3DTS_TEXTURE0+ ( state - ETS_TEXTURE_0 )),
+				(D3DMATRIX*)((void*)mat.pointer()));
 		break;
 	case ETS_COUNT:
 		break;
@@ -626,6 +604,7 @@ void CD3D9Driver::setTransform(E_TRANSFORMATION_STATE state, const core::matrix4
 
 	Matrices[state] = mat;
 }
+
 
 
 //! sets the current Texture
@@ -815,265 +794,16 @@ const core::rect<s32>& CD3D9Driver::getViewPort() const
 }
 
 
-bool CD3D9Driver::updateVertexHardwareBuffer(SHWBufferLink_d3d9 *HWBuffer)
-{
-	if (!HWBuffer)
-		return false;
-
-	const scene::IMeshBuffer* mb = HWBuffer->MeshBuffer;
-	const void* vertices=mb->getVertices();
-	const u32 vertexCount=mb->getVertexCount();
-	const E_VERTEX_TYPE vType=mb->getVertexType();
-	const u32 vertexSize = getVertexPitchFromType(vType);
-
-	void* pLockedBuffer = 0;
-
-	if (!HWBuffer->vertexBuffer || vertexSize * vertexCount > HWBuffer->vertexBufferSize)
-	{
-		DWORD flags = 0;
-
-		u32 vertexSize;
-		DWORD FVF;
-
-		// Get the vertex sizes and cvf
-		switch (vType)
-		{
-			case EVT_STANDARD:
-				vertexSize = sizeof(S3DVertex);
-				FVF = D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_DIFFUSE | D3DFVF_TEX1;
-				break;
-			case EVT_2TCOORDS:
-				vertexSize = sizeof(S3DVertex2TCoords);
-				FVF = D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_DIFFUSE | D3DFVF_TEX2;
-				break;
-			case EVT_TANGENTS:
-				vertexSize = sizeof(S3DVertexTangents);
-				FVF = D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_DIFFUSE | D3DFVF_TEX3;
-				break;
-			default:
-				return false;
-		}
-
-		flags = D3DUSAGE_WRITEONLY; // SIO2: Default to D3DUSAGE_WRITEONLY
-		if(HWBuffer->Mapped_Vertex != scene::EHM_STATIC)
-			flags |= D3DUSAGE_DYNAMIC;
-
-		pID3DDevice->CreateVertexBuffer(vertexCount * vertexSize, flags, FVF, D3DPOOL_DEFAULT, &HWBuffer->vertexBuffer, NULL);
-
-		if(!HWBuffer->vertexBuffer)
-			return false;
-
-		flags = 0; // SIO2: Reset flags before Lock
-		if(HWBuffer->Mapped_Vertex != scene::EHM_STATIC)
-			flags = D3DLOCK_DISCARD;
-
-		HWBuffer->vertexBuffer->Lock(0, vertexCount * vertexSize, (void**)&pLockedBuffer, flags);
-		memcpy(pLockedBuffer, vertices, vertexCount * vertexSize);
-		HWBuffer->vertexBuffer->Unlock();
-
-		HWBuffer->vertexBufferSize = vertexCount * vertexSize;
-	}
-	else
-	{
-		HWBuffer->vertexBuffer->Lock(0, vertexCount * vertexSize, (void**)&pLockedBuffer, D3DLOCK_DISCARD);
-		memcpy(pLockedBuffer, vertices, vertexCount * vertexSize);
-		HWBuffer->vertexBuffer->Unlock();
-	}
-
-	return true;
-}
-
-
-bool CD3D9Driver::updateIndexHardwareBuffer(SHWBufferLink_d3d9 *HWBuffer)
-{
-	if (!HWBuffer)
-		return false;
-
-	const scene::IMeshBuffer* mb = HWBuffer->MeshBuffer;
-	const u16* indices=mb->getIndices();
-	const u32 indexCount=mb->getIndexCount();
-	u32 indexSize = 2;
-	D3DFORMAT indexType=D3DFMT_UNKNOWN;
-	switch (mb->getIndexType())
-	{
-		case (EIT_16BIT):
-		{
-			indexType=D3DFMT_INDEX16;
-			indexSize = 2;
-			break;
-		}
-		case (EIT_32BIT):
-		{
-			indexType=D3DFMT_INDEX32;
-			indexSize = 4;
-			break;
-		}
-	}
-
-	if (!HWBuffer->indexBuffer || indexSize * indexCount > HWBuffer->indexBufferSize)
-	{
-
-
-
-		DWORD flags = 0;
-
-		flags = D3DUSAGE_WRITEONLY; // SIO2: Default to D3DUSAGE_WRITEONLY
-		if(HWBuffer->Mapped_Index != scene::EHM_STATIC)
-			flags |= D3DUSAGE_DYNAMIC; // SIO2: Add DYNAMIC flag for dynamic buffer data
-
-		if(FAILED(pID3DDevice->CreateIndexBuffer( indexCount * indexSize, flags, indexType, D3DPOOL_DEFAULT, &HWBuffer->indexBuffer, NULL)))
-			return false;
-
-		void* pIndices = 0;
-
-		flags = 0; // SIO2: Reset flags before Lock
-		if(HWBuffer->Mapped_Index != scene::EHM_STATIC)
-			flags = D3DLOCK_DISCARD;
-
-		if(FAILED(HWBuffer->indexBuffer->Lock( 0, 0, (void**)&pIndices, flags)))
-			return false;
-
-		memcpy(pIndices, indices, indexCount * indexSize);
-		HWBuffer->indexBuffer->Unlock();
-
-		HWBuffer->indexBufferSize = indexCount * indexSize;
-	}
-	else
-	{
-		void* pIndices = 0;
-		if( SUCCEEDED(HWBuffer->indexBuffer->Lock( 0, 0, (void**)&pIndices, D3DLOCK_DISCARD)))
-		{
-			memcpy(pIndices, indices, indexCount * indexSize);
-			HWBuffer->indexBuffer->Unlock();
-		}
-	}
-
-	return true;
-}
-
-
-//! updates hardware buffer if needed
-bool CD3D9Driver::updateHardwareBuffer(SHWBufferLink *HWBuffer)
-{
-	if (!HWBuffer)
-		return false;
-
-	if (HWBuffer->Mapped_Vertex!=scene::EHM_NEVER)
-	{
-		if (HWBuffer->ChangedID_Vertex != HWBuffer->MeshBuffer->getChangedID_Vertex()
-			|| !((SHWBufferLink_d3d9*)HWBuffer)->vertexBuffer)
-		{
-
-			HWBuffer->ChangedID_Vertex = HWBuffer->MeshBuffer->getChangedID_Vertex();
-
-			if (!updateVertexHardwareBuffer((SHWBufferLink_d3d9*)HWBuffer))
-				return false;
-		}
-	}
-
-	if (HWBuffer->Mapped_Index!=scene::EHM_NEVER)
-	{
-		if (HWBuffer->ChangedID_Index != HWBuffer->MeshBuffer->getChangedID_Index()
-			|| !((SHWBufferLink_d3d9*)HWBuffer)->indexBuffer)
-		{
-
-			HWBuffer->ChangedID_Index = HWBuffer->MeshBuffer->getChangedID_Index();
-
-			if (!updateIndexHardwareBuffer((SHWBufferLink_d3d9*)HWBuffer))
-				return false;
-		}
-	}
-
-
-	return true;
-}
-
-
-//! Create hardware buffer from meshbuffer
-CD3D9Driver::SHWBufferLink *CD3D9Driver::createHardwareBuffer(const scene::IMeshBuffer* mb)
-{
-	if (!mb || (mb->getHardwareMappingHint_Index()==scene::EHM_NEVER && mb->getHardwareMappingHint_Vertex()==scene::EHM_NEVER))
-		return 0;
-
-	SHWBufferLink_d3d9 *HWBuffer=new SHWBufferLink_d3d9(mb);
-
-	//add to map
-	HWBufferMap.insert(HWBuffer->MeshBuffer, HWBuffer);
-
-	HWBuffer->ChangedID_Vertex=HWBuffer->MeshBuffer->getChangedID_Vertex();
-	HWBuffer->ChangedID_Index=HWBuffer->MeshBuffer->getChangedID_Index();
-	HWBuffer->Mapped_Vertex=mb->getHardwareMappingHint_Vertex();
-	HWBuffer->Mapped_Index=mb->getHardwareMappingHint_Index();
-	HWBuffer->LastUsed=0;
-	HWBuffer->vertexBuffer=0;
-	HWBuffer->indexBuffer=0;
-	HWBuffer->vertexBufferSize=0;
-	HWBuffer->indexBufferSize=0;
-
-	if (!updateHardwareBuffer(HWBuffer))
-	{
-		deleteHardwareBuffer(HWBuffer);
-		return 0;
-	}
-
-	return HWBuffer;
-}
-
-
-void CD3D9Driver::deleteHardwareBuffer(SHWBufferLink *_HWBuffer)
-{
-	if (!_HWBuffer) return;
-
-	SHWBufferLink_d3d9 *HWBuffer=(SHWBufferLink_d3d9*)_HWBuffer;
-    if (HWBuffer->indexBuffer)
-	{
-   	    HWBuffer->indexBuffer->Release();
-		HWBuffer->indexBuffer = 0;
-	}
-
-	if (HWBuffer->vertexBuffer)
-	{
-   	    HWBuffer->vertexBuffer->Release();
-		HWBuffer->vertexBuffer = 0;
-	}
-
-	CNullDriver::deleteHardwareBuffer(_HWBuffer);
-}
-
-
-//! Draw hardware buffer
-void CD3D9Driver::drawHardwareBuffer(SHWBufferLink *_HWBuffer)
-{
-	if (!_HWBuffer)
-		return;
-
-	SHWBufferLink_d3d9 *HWBuffer=(SHWBufferLink_d3d9*)_HWBuffer;
-
-	updateHardwareBuffer(HWBuffer); //check if update is needed
-
-	HWBuffer->LastUsed=0;//reset count
-
-	const scene::IMeshBuffer* mb = HWBuffer->MeshBuffer;
-	const E_VERTEX_TYPE vType = mb->getVertexType();
-	const u32 stride = getVertexPitchFromType(vType);
-	if (HWBuffer->vertexBuffer) pID3DDevice->SetStreamSource(0, HWBuffer->vertexBuffer, 0, stride);
-	if (HWBuffer->indexBuffer) pID3DDevice->SetIndices(HWBuffer->indexBuffer);
-
-	drawVertexPrimitiveList(0, mb->getVertexCount(), 0, mb->getIndexCount()/3, mb->getVertexType(), scene::EPT_TRIANGLES, mb->getIndexType());
-
-	if (HWBuffer->vertexBuffer) pID3DDevice->SetStreamSource(0, 0, 0, 0);
-	if (HWBuffer->indexBuffer) pID3DDevice->SetIndices(0);
-}
 
 //! draws a vertex primitive list
 void CD3D9Driver::drawVertexPrimitiveList(const void* vertices, u32 vertexCount,
-		const void* indexList, u32 primitiveCount,
-		E_VERTEX_TYPE vType, scene::E_PRIMITIVE_TYPE pType, E_INDEX_TYPE iType)
+		const u16* indexList, u32 primitiveCount,
+		E_VERTEX_TYPE vType, scene::E_PRIMITIVE_TYPE pType)
 {
 	if (!checkPrimitiveCount(primitiveCount))
 		return;
 
-	CNullDriver::drawVertexPrimitiveList(vertices, vertexCount, indexList, primitiveCount, vType, pType,iType);
+	CNullDriver::drawVertexPrimitiveList(vertices, vertexCount, indexList, primitiveCount, vType, pType);
 
 	if (!vertexCount || !primitiveCount)
 		return;
@@ -1081,25 +811,6 @@ void CD3D9Driver::drawVertexPrimitiveList(const void* vertices, u32 vertexCount,
 	setVertexShader(vType);
 
 	const u32 stride = getVertexPitchFromType(vType);
-
-
-	D3DFORMAT indexType=D3DFMT_UNKNOWN;
-
-
-
-	switch (iType)
-	{
-		case (EIT_16BIT):
-		{
-			indexType=D3DFMT_INDEX16;
-			break;
-		}
-		case (EIT_32BIT):
-		{
-			indexType=D3DFMT_INDEX32;
-			break;
-		}
-	}
 
 	if (setRenderStates3DMode())
 	{
@@ -1118,97 +829,41 @@ void CD3D9Driver::drawVertexPrimitiveList(const void* vertices, u32 vertexCount,
 				pID3DDevice->SetRenderState(D3DRS_POINTSIZE_MIN, *(DWORD*)(&tmp));
 				pID3DDevice->SetRenderState(D3DRS_POINTSCALE_A, *(DWORD*)(&tmp));
 				pID3DDevice->SetRenderState(D3DRS_POINTSCALE_B, *(DWORD*)(&tmp));
-
-				if (!vertices)
-                {
-                    pID3DDevice->DrawIndexedPrimitive(D3DPT_POINTLIST, 0, 0, vertexCount, 0, primitiveCount);
-                }
-                else
-                {
-				    pID3DDevice->DrawIndexedPrimitiveUP(D3DPT_POINTLIST, 0, vertexCount,
-					    primitiveCount, indexList, indexType, vertices, stride);
-                }
-
+				pID3DDevice->DrawIndexedPrimitiveUP(D3DPT_POINTLIST, 0, vertexCount,
+					primitiveCount, indexList, D3DFMT_INDEX16, vertices, stride);
 				pID3DDevice->SetRenderState(D3DRS_POINTSCALEENABLE, FALSE);
 				if (pType==scene::EPT_POINT_SPRITES)
 					pID3DDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, FALSE);
 			}
 				break;
 			case scene::EPT_LINE_STRIP:
-                if(!vertices)
-                {
-                    pID3DDevice->DrawIndexedPrimitive(D3DPT_LINESTRIP, 0, 0, vertexCount, 0, primitiveCount);
-                }
-                else
-                {
-				    pID3DDevice->DrawIndexedPrimitiveUP(D3DPT_LINESTRIP, 0, vertexCount,
-					    primitiveCount, indexList, indexType, vertices, stride);
-                }
+				pID3DDevice->DrawIndexedPrimitiveUP(D3DPT_LINESTRIP, 0, vertexCount,
+					primitiveCount, indexList, D3DFMT_INDEX16, vertices, stride);
 				break;
 			case scene::EPT_LINE_LOOP:
-				if(!vertices)
-				{
-					// TODO: Implement proper hardware support for this primitive type.
-					// (No looping occurs currently because this would require a way to
-					// draw the hardware buffer with a custom set of indices. We may even
-					// need to create a new mini index buffer specifically for this
-					// primitive type.)
-					pID3DDevice->DrawIndexedPrimitive(D3DPT_LINELIST, 0, 0, vertexCount, 0, primitiveCount);
-				}
-				else
-				{
-					pID3DDevice->DrawIndexedPrimitiveUP(D3DPT_LINESTRIP, 0, vertexCount,
-					primitiveCount, indexList, indexType, vertices, stride);
-
-					u16 tmpIndices[] = {0, primitiveCount};
-
-					pID3DDevice->DrawIndexedPrimitiveUP(D3DPT_LINELIST, 0, vertexCount,
-						1, tmpIndices, indexType, vertices, stride);
-				}
+			{
+				pID3DDevice->DrawIndexedPrimitiveUP(D3DPT_LINESTRIP, 0, vertexCount,
+					primitiveCount, indexList, D3DFMT_INDEX16, vertices, stride);
+				u16 tmpIndices[] = {0, primitiveCount};
+				pID3DDevice->DrawIndexedPrimitiveUP(D3DPT_LINELIST, 0, vertexCount,
+					1, tmpIndices, D3DFMT_INDEX16, vertices, stride);
+			}
 				break;
 			case scene::EPT_LINES:
-				if(!vertices)
-                {
-                    pID3DDevice->DrawIndexedPrimitive(D3DPT_LINELIST, 0, 0, vertexCount, 0, primitiveCount);
-                }
-                else
-                {
-                    pID3DDevice->DrawIndexedPrimitiveUP(D3DPT_LINELIST, 0, vertexCount,
-					    primitiveCount, indexList, indexType, vertices, stride);
-                }
+				pID3DDevice->DrawIndexedPrimitiveUP(D3DPT_LINELIST, 0, vertexCount,
+					primitiveCount, indexList, D3DFMT_INDEX16, vertices, stride);
 				break;
 			case scene::EPT_TRIANGLE_STRIP:
-				if(!vertices)
-                {
-                    pID3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLESTRIP, 0, 0, vertexCount, 0, primitiveCount);
-                }
-                else
-                {
-                    pID3DDevice->DrawIndexedPrimitiveUP(D3DPT_TRIANGLESTRIP, 0, vertexCount,
-					    primitiveCount, indexList, indexType, vertices, stride);
-                }
+				pID3DDevice->DrawIndexedPrimitiveUP(D3DPT_TRIANGLESTRIP, 0, vertexCount,
+					primitiveCount, indexList, D3DFMT_INDEX16, vertices, stride);
 				break;
 			case scene::EPT_TRIANGLE_FAN:
-                if(!vertices)
-                {
-                    pID3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLEFAN, 0, 0, vertexCount, 0, primitiveCount);
-                }
-                else
-                {
-				    pID3DDevice->DrawIndexedPrimitiveUP(D3DPT_TRIANGLEFAN, 0, vertexCount,
-					    primitiveCount, indexList, indexType, vertices, stride);
-                }
+				pID3DDevice->DrawIndexedPrimitiveUP(D3DPT_TRIANGLEFAN, 0, vertexCount,
+					primitiveCount, indexList, D3DFMT_INDEX16, vertices, stride);
 				break;
 			case scene::EPT_TRIANGLES:
-				if(!vertices)
-				{
-					pID3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, vertexCount, 0, primitiveCount);
-				}
-				else
-				{
-					pID3DDevice->DrawIndexedPrimitiveUP(D3DPT_TRIANGLELIST, 0, vertexCount,
-						primitiveCount, indexList, indexType, vertices, stride);
-				}
+				pID3DDevice->DrawIndexedPrimitiveUP(D3DPT_TRIANGLELIST, 0, vertexCount,
+					primitiveCount, indexList, D3DFMT_INDEX16, vertices, stride);
 				break;
 		}
 	}
@@ -1217,7 +872,7 @@ void CD3D9Driver::drawVertexPrimitiveList(const void* vertices, u32 vertexCount,
 
 void CD3D9Driver::draw2DImage(const video::ITexture* texture, const core::rect<s32>& destRect,
 		const core::rect<s32>& sourceRect, const core::rect<s32>* clipRect,
-		const video::SColor* const colors, bool useAlphaChannelOfTexture)
+		video::SColor* colors, bool useAlphaChannelOfTexture)
 {
 	if(!texture)
 		return;
@@ -1238,7 +893,7 @@ void CD3D9Driver::draw2DImage(const video::ITexture* texture, const core::rect<s
 	npos.LowerRightCorner.X = ( destRect.LowerRightCorner.X * xFact ) - 1.0f;
 	npos.LowerRightCorner.Y = 1.0f - ( destRect.LowerRightCorner.Y * yFact );
 
-	const video::SColor temp[4] =
+	video::SColor temp[4] =
 	{
 		0xFFFFFFFF,
 		0xFFFFFFFF,
@@ -1246,7 +901,7 @@ void CD3D9Driver::draw2DImage(const video::ITexture* texture, const core::rect<s
 		0xFFFFFFFF
 	};
 
-	const video::SColor* const useColor = colors ? colors : temp;
+	video::SColor* useColor = colors ? colors : temp;
 
 	S3DVertex vtx[4]; // clock wise
 	vtx[0] = S3DVertex(npos.UpperLeftCorner.X, npos.UpperLeftCorner.Y, 0.0f,
@@ -1686,18 +1341,12 @@ void CD3D9Driver::setBasicRenderStates(const SMaterial& material, const SMateria
 
 	// back face culling
 
-	if (resetAllRenderstates || (lastmaterial.FrontfaceCulling != material.FrontfaceCulling) || (lastmaterial.BackfaceCulling != material.BackfaceCulling))
+	if (resetAllRenderstates || lastmaterial.BackfaceCulling != material.BackfaceCulling)
 	{
-		if (material.FrontfaceCulling && material.BackfaceCulling)
-			pID3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW|D3DCULL_CCW);
-		else
-		if (material.FrontfaceCulling)
-			pID3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
-		else
 		if (material.BackfaceCulling)
-			pID3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
+			pID3DDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CCW);
 		else
-			pID3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+			pID3DDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_NONE);
 	}
 
 	// fog
@@ -1871,9 +1520,9 @@ void CD3D9Driver::setRenderStatesStencilFillMode(bool alpha)
 	if (CurrentRenderMode != ERM_STENCIL_FILL || Transformation3DChanged)
 	{
 		core::matrix4 mat;
-		pID3DDevice->SetTransform(D3DTS_VIEW, &UnitMatrixD3D9);
-		pID3DDevice->SetTransform(D3DTS_WORLD, &UnitMatrixD3D9);
-		pID3DDevice->SetTransform(D3DTS_PROJECTION, &UnitMatrixD3D9);
+		pID3DDevice->SetTransform(D3DTS_VIEW, (D3DMATRIX*)((void*)mat.pointer()));
+		pID3DDevice->SetTransform(D3DTS_WORLD, (D3DMATRIX*)((void*)mat.pointer()));
+		pID3DDevice->SetTransform(D3DTS_PROJECTION, (D3DMATRIX*)((void*)mat.pointer()));
 
 		pID3DDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
 		pID3DDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
@@ -1934,8 +1583,8 @@ void CD3D9Driver::setRenderStates2DMode(bool alpha, bool texture, bool alphaChan
 		// unset last 3d material
 		if (CurrentRenderMode != ERM_2D)
 		{
-			if (static_cast<u32>(LastMaterial.MaterialType) < MaterialRenderers.size())
-				MaterialRenderers[LastMaterial.MaterialType].Renderer->OnUnsetMaterial();
+			if (static_cast<u32>(Material.MaterialType) < MaterialRenderers.size())
+				MaterialRenderers[Material.MaterialType].Renderer->OnUnsetMaterial();
 			setBasicRenderStates(SMaterial(), SMaterial(), true);
 			// everything that is wrongly set by SMaterial default
 			pID3DDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
@@ -1960,9 +1609,10 @@ void CD3D9Driver::setRenderStates2DMode(bool alpha, bool texture, bool alphaChan
 			pID3DDevice->SetTransform( D3DTS_TEXTURE0, &UnitMatrixD3D9 );
 		}
 
-		pID3DDevice->SetTransform(D3DTS_VIEW, &UnitMatrixD3D9);
-		pID3DDevice->SetTransform(D3DTS_WORLD, &UnitMatrixD3D9);
-		pID3DDevice->SetTransform(D3DTS_PROJECTION, &UnitMatrixD3D9);
+		core::matrix4 mat;
+		pID3DDevice->SetTransform(D3DTS_VIEW, (D3DMATRIX*)((void*)mat.pointer()));
+		pID3DDevice->SetTransform(D3DTS_WORLD, (D3DMATRIX*)((void*)mat.pointer()));
+		pID3DDevice->SetTransform(D3DTS_PROJECTION, (D3DMATRIX*)((void*)mat.pointer()));
 
 		Transformation3DChanged = false;
 	}
@@ -2587,4 +2237,5 @@ IVideoDriver* createDirectX9Driver(const core::dimension2d<s32>& screenSize, HWN
 
 } // end namespace video
 } // end namespace irr
+
 

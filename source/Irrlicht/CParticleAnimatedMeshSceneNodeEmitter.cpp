@@ -28,11 +28,6 @@ CParticleAnimatedMeshSceneNodeEmitter::CParticleAnimatedMeshSceneNodeEmitter(
 	MinLifeTime(lifeTimeMin), MaxLifeTime(lifeTimeMax),
 	Time(0), Emitted(0), MaxAngleDegrees(maxAngleDegrees)
 {
-
-	#ifdef _DEBUG
-	setDebugName("CParticleAnimatedMeshSceneNodeEmitter");
-	#endif
-
 	AnimatedMesh = node->getMesh();
 	BaseMesh = AnimatedMesh->getMesh(0);
 
@@ -77,21 +72,33 @@ s32 CParticleAnimatedMeshSceneNodeEmitter::emitt(u32 now, u32 timeSinceLastCall,
 				{
 					for( u32 k=0; k<frameMesh->getMeshBuffer(j)->getVertexCount(); ++k )
 					{
-						p.pos = frameMesh->getMeshBuffer(j)->getPosition(k);
-						if( UseNormalDirection )
-							p.vector = frameMesh->getMeshBuffer(j)->getNormal(k) /
-								NormalDirectionModifier;
-						else
-							p.vector = Direction;
+						switch( frameMesh->getMeshBuffer(j)->getVertexType() )
+						{
+						case video::EVT_STANDARD:
+							p.pos = ((video::S3DVertex*)frameMesh->getMeshBuffer(j)->getVertices())[k].Pos;
+							if( UseNormalDirection )
+								p.vector = ((video::S3DVertex*)frameMesh->getMeshBuffer(j)->getVertices())[k].Normal / NormalDirectionModifier;
+							else
+								p.vector = Direction;
+							break;
+						case video::EVT_TANGENTS:
+							p.pos = ((video::S3DVertexTangents*)frameMesh->getMeshBuffer(j)->getVertices())[k].Pos;
+							if( UseNormalDirection )
+								p.vector = ((video::S3DVertexTangents*)frameMesh->getMeshBuffer(j)->getVertices())[k].Normal /
+									NormalDirectionModifier;
+							else
+								p.vector = Direction;
+							break;
+						}
 
 						p.startTime = now;
 
 						if( MaxAngleDegrees )
 						{
 							core::vector3df tgt = p.vector;
-							tgt.rotateXYBy((os::Randomizer::rand()%(MaxAngleDegrees*2)) - MaxAngleDegrees);
-							tgt.rotateYZBy((os::Randomizer::rand()%(MaxAngleDegrees*2)) - MaxAngleDegrees);
-							tgt.rotateXZBy((os::Randomizer::rand()%(MaxAngleDegrees*2)) - MaxAngleDegrees);
+							tgt.rotateXYBy((os::Randomizer::rand()%(MaxAngleDegrees*2)) - MaxAngleDegrees, core::vector3df());
+							tgt.rotateYZBy((os::Randomizer::rand()%(MaxAngleDegrees*2)) - MaxAngleDegrees, core::vector3df());
+							tgt.rotateXZBy((os::Randomizer::rand()%(MaxAngleDegrees*2)) - MaxAngleDegrees, core::vector3df());
 							p.vector = tgt;
 						}
 
@@ -128,21 +135,34 @@ s32 CParticleAnimatedMeshSceneNodeEmitter::emitt(u32 now, u32 timeSinceLastCall,
 					continue;
 				vertexNumber = os::Randomizer::rand() % vertexNumber;
 
-				p.pos = frameMesh->getMeshBuffer(randomMB)->getPosition(vertexNumber);
-				if( UseNormalDirection )
-					p.vector = frameMesh->getMeshBuffer(randomMB)->getNormal(vertexNumber) /
-						NormalDirectionModifier;
-				else
-					p.vector = Direction;
+				switch( frameMesh->getMeshBuffer(randomMB)->getVertexType() )
+				{
+				case video::EVT_STANDARD:
+					p.pos = ((video::S3DVertex*)frameMesh->getMeshBuffer(randomMB)->getVertices())[vertexNumber].Pos;
+					if( UseNormalDirection )
+						p.vector = ((video::S3DVertex*)frameMesh->getMeshBuffer(randomMB)->getVertices())[vertexNumber].Normal /
+							NormalDirectionModifier;
+					else
+						p.vector = Direction;
+					break;
+				case video::EVT_TANGENTS:
+					p.pos = ((video::S3DVertexTangents*)frameMesh->getMeshBuffer(randomMB)->getVertices())[vertexNumber].Pos;
+					if( UseNormalDirection )
+						p.vector = ((video::S3DVertexTangents*)frameMesh->getMeshBuffer(randomMB)->getVertices())[vertexNumber].Normal /
+							NormalDirectionModifier;
+					else
+						p.vector = Direction;
+					break;
+				}
 
 				p.startTime = now;
 
 				if( MaxAngleDegrees )
 				{
 					core::vector3df tgt = Direction;
-					tgt.rotateXYBy((os::Randomizer::rand()%(MaxAngleDegrees*2)) - MaxAngleDegrees);
-					tgt.rotateYZBy((os::Randomizer::rand()%(MaxAngleDegrees*2)) - MaxAngleDegrees);
-					tgt.rotateXZBy((os::Randomizer::rand()%(MaxAngleDegrees*2)) - MaxAngleDegrees);
+					tgt.rotateXYBy((os::Randomizer::rand()%(MaxAngleDegrees*2)) - MaxAngleDegrees, core::vector3df(0,0,0));
+					tgt.rotateYZBy((os::Randomizer::rand()%(MaxAngleDegrees*2)) - MaxAngleDegrees, core::vector3df(0,0,0));
+					tgt.rotateXZBy((os::Randomizer::rand()%(MaxAngleDegrees*2)) - MaxAngleDegrees, core::vector3df(0,0,0));
 					p.vector = tgt;
 				}
 

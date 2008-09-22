@@ -67,17 +67,14 @@ CGUIToolBar::CGUIToolBar(IGUIEnvironment* environment, IGUIElement* parent, s32 
 //! called if an event happened.
 bool CGUIToolBar::OnEvent(const SEvent& event)
 {
-	if (IsEnabled)
+	if (event.EventType == EET_MOUSE_INPUT_EVENT && 
+		event.MouseInput.Event == EMIE_LMOUSE_PRESSED_DOWN)
 	{
-		if (event.EventType == EET_MOUSE_INPUT_EVENT && 
-			event.MouseInput.Event == EMIE_LMOUSE_PRESSED_DOWN)
-		{
-			if (AbsoluteClippingRect.isPointInside(core::position2di(event.MouseInput.X, event.MouseInput.Y)))
-				return true;
-		}
+		if (AbsoluteClippingRect.isPointInside(core::position2di(event.MouseInput.X, event.MouseInput.Y)))
+			return true;
 	}
 
-	return IGUIElement::OnEvent(event);
+	return Parent ? Parent->OnEvent(event) : false;
 }
 
 

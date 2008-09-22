@@ -169,18 +169,25 @@ namespace scene
 			: Name ( name ) {}
 
 		// construct from a matrix
-		SMD3QuaterionTag ( const core::stringc& name, const core::matrix4 &m ) : Name(name), position(m.getTranslation()), rotation(m)
-		{ }
-
-		// construct from a position and euler angles in degrees
-		SMD3QuaterionTag ( const core::vector3df &pos, const core::vector3df &angle ) : position(pos), rotation(angle * core::DEGTORAD)
-		{ }
+		SMD3QuaterionTag ( const core::stringc& name, const core::matrix4 &m )
+		{
+			Name = name;
+			position = m.getTranslation ();
+			rotation = m;
+		}
 
 		// set to matrix
 		void setto ( core::matrix4 &m )
 		{
 			rotation.getMatrix ( m );
 			m.setTranslation ( position );
+		}
+
+		// construct from a position and euler angles in degrees
+		SMD3QuaterionTag ( const core::vector3df &pos, const core::vector3df &angle )
+		{
+			position = pos;
+			rotation.set ( angle * core::DEGTORAD );
 		}
 
 		bool operator == ( const SMD3QuaterionTag &other ) const
@@ -210,12 +217,7 @@ namespace scene
 			return Container.size();
 		}
 
-		const SMD3QuaterionTag& operator[](u32 index) const
-		{
-			return Container[index];
-		}
-
-		SMD3QuaterionTag& operator[](u32 index)
+		SMD3QuaterionTag& operator[] (u32 index )
 		{
 			return Container[index];
 		}

@@ -72,8 +72,8 @@ namespace scene
 
 		//! Creates shadow volume scene node as child of this node
 		//! and returns a pointer to it.
-		virtual IShadowVolumeSceneNode* addShadowVolumeSceneNode(const IMesh* shadowMesh,
-			s32 id, bool zfailmethod=true, f32 infinity=10000.0f);
+		virtual IShadowVolumeSceneNode* addShadowVolumeSceneNode(s32 id,
+			bool zfailmethod=true, f32 infinity=10000.0f);
 
 		//! Returns a pointer to a child node, which has the same transformation as
 		//! the corrsesponding joint, if the mesh in this scene node is a skinned mesh.
@@ -81,9 +81,6 @@ namespace scene
 
 		//! same as getJointNode(const c8* jointName), but based on id
 		virtual IBoneSceneNode* getJointNode(u32 jointID);
-
-		//! Gets joint count.
-		virtual u32 getJointCount() const;
 
 		//! Redundant command, please use getJointNode.
 		virtual ISceneNode* getMS3DJointNode(const c8* jointName);

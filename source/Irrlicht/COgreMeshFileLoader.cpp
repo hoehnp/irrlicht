@@ -49,11 +49,6 @@ const u16 COGRE_SUBMESH_TEXTURE_ALIAS= 0x4200;
 COgreMeshFileLoader::COgreMeshFileLoader(io::IFileSystem* fs, video::IVideoDriver* driver)
 : FileSystem(fs), Driver(driver), SwapEndian(false), Mesh(0), NumUV(0)
 {
-
-	#ifdef _DEBUG
-	setDebugName("COgreMeshFileLoader");
-	#endif
-
 	if (FileSystem)
 		FileSystem->grab();
 

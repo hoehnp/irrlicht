@@ -78,6 +78,9 @@ namespace video
 	{
 	public:
 
+		//! Destructor
+		virtual ~IVideoDriver() {}
+
 		//! Applications must call this method before performing any rendering.
 		/** This method can clear the back- and the z-buffer.
 		\param backBuffer Specifies if the back buffer should be
@@ -104,7 +107,7 @@ namespace video
 		rectangle of the area to be presented. Set to null to present
 		everything. Note: not implemented in all devices.
 		\return False if failed and true if succeeded. */
-		virtual bool endScene( void* windowId=0, core::rect<s32>* sourceRect=0 ) = 0;
+		virtual bool endScene( s32 windowId = 0, core::rect<s32>* sourceRect=0 ) = 0;
 
 		//! Queries the features of the driver.
 		/** Returns true if a feature is available
@@ -139,18 +142,6 @@ namespace video
 		could not be loaded. This pointer should not be dropped. See
 		IReferenceCounted::drop() for more information. */
 		virtual ITexture* getTexture(const c8* filename) = 0;
-
-		//! Get access to a named texture.
-		/** Loads the texture from disk if it is not
-		already loaded and generates mipmap levels if desired.
-		Texture loading can be influenced using the
-		setTextureCreationFlag() method. The texture can be in several
-		imageformats, such as BMP, JPG, TGA, PCX, PNG, and PSD.
-		\param filename Filename of the texture to be loaded.
-		\return Pointer to the texture, or 0 if the texture
-		could not be loaded. This pointer should not be dropped. See
-		IReferenceCounted::drop() for more information. */
-		virtual ITexture* getTexture(const core::stringc& filename) = 0;
 
 		//! Get access to a named texture.
 		/** Loads the texture from disk if it is not
@@ -234,12 +225,6 @@ namespace video
 		good idea to set all materials which are using this texture to
 		0 or another texture first. */
 		virtual void removeAllTextures() = 0;
-
-		//! Remove hardware buffer
-		virtual void removeHardwareBuffer(const scene::IMeshBuffer* mb) = 0;
-
-		//! Remove all hardware buffers
-		virtual void removeAllHardwareBuffers() = 0;
 
 		//! Creates a 1bit alpha channel of the texture based of an color key.
 		/** This makes the texture transparent at the regions where
@@ -338,8 +323,8 @@ namespace video
 		\param vType Vertex type, e.g. EVT_STANDARD for S3DVertex.
 		\param pType Primitive type, e.g. EPT_TRIANGLE_FAN for a triangle fan. */
 		virtual void drawVertexPrimitiveList(const void* vertices, u32 vertexCount,
-				const void* indexList, u32 primCount,
-				E_VERTEX_TYPE vType, scene::E_PRIMITIVE_TYPE pType, E_INDEX_TYPE iType) = 0;
+				const u16* indexList, u32 primCount,
+				E_VERTEX_TYPE vType, scene::E_PRIMITIVE_TYPE pType) = 0;
 
 		//! Draws an indexed triangle list.
 		/** Note that there may be at maximum 65536 vertices, because
@@ -519,7 +504,7 @@ namespace video
 		blended. */
 		virtual void draw2DImage(const video::ITexture* texture, const core::rect<s32>& destRect,
 			const core::rect<s32>& sourceRect, const core::rect<s32>* clipRect = 0,
-			const video::SColor * const colors=0, bool useAlphaChannelOfTexture=false) = 0;
+			video::SColor* colors=0, bool useAlphaChannelOfTexture=false) = 0;
 
 		//! Draws a 2d rectangle.
 		/** \param color Color of the rectangle to draw. The alpha
@@ -646,18 +631,14 @@ namespace video
 		available with D3D and vertex fog. */
 		virtual void setFog(SColor color=SColor(0,255,255,255),
 				bool linearFog=true, f32 start=50.0f, f32 end=100.0f,
-				f32 density=0.01f,
+				f32 density=0.01f, 
 				bool pixelFog=false, bool rangeFog=false) = 0;
 
-		//! Get the current color format of the color buffer
-		/** \return Color format of the color buffer. */
-		virtual ECOLOR_FORMAT getColorFormat() const = 0;
-
-		//! Get the size of the screen or render window.
+		//! Returns the size of the screen or render window.
 		/** \return Size of screen or render window. */
 		virtual const core::dimension2d<s32>& getScreenSize() const = 0;
 
-		//! Get the size of the current render target
+		//! Returns the size of the current render target
 		/** This method will return the screen size if the driver
 		doesn't support render to texture, or if the current render
 		target is the screen.
@@ -960,9 +941,6 @@ namespace video
 		it. */
 		virtual void enableClipPlane(u32 index, bool enable) = 0;
 
-		//! Returns the graphics card vendor name.
-		virtual core::stringc getVendorInfo() = 0;
-
 		//! Only used by the engine internally.
 		/** The ambient color is set in the scene manager, see
 		scene::ISceneManager::setAmbientLight().
@@ -981,6 +959,4 @@ namespace video
 
 
 #endif
-
-
 

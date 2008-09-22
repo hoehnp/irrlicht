@@ -17,7 +17,7 @@ namespace scene
 //! constructor
 CSphereSceneNode::CSphereSceneNode(f32 radius, u32 polyCountX, u32 polyCountY, ISceneNode* parent, ISceneManager* mgr, s32 id,
 			const core::vector3df& position, const core::vector3df& rotation, const core::vector3df& scale)
-: IMeshSceneNode(parent, mgr, id, position, rotation, scale), Mesh(0),
+: ISceneNode(parent, mgr, id, position, rotation, scale), Mesh(0),
 	Radius(radius), PolyCountX(polyCountX), PolyCountY(polyCountY)
 {
 	#ifdef _DEBUG

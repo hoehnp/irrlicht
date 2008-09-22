@@ -38,9 +38,6 @@ IImageLoader* createImageLoaderPCX();
 //! creates a loader which is able to load png images
 IImageLoader* createImageLoaderPNG();
 
-//! creates a loader which is able to load WAL images
-IImageLoader* createImageLoaderWAL();
-
 //! creates a loader which is able to load ppm/pgm/pbm images
 IImageLoader* createImageLoaderPPM();
 
@@ -109,9 +106,6 @@ CNullDriver::CNullDriver(io::IFileSystem* io, const core::dimension2d<s32>& scre
 #ifdef _IRR_COMPILE_WITH_PNG_LOADER_
 	SurfaceLoader.push_back(video::createImageLoaderPNG());
 #endif
-#ifdef _IRR_COMPILE_WITH_WAL_LOADER_
-	SurfaceLoader.push_back(video::createImageLoaderWAL());
-#endif
 #ifdef _IRR_COMPILE_WITH_PPM_LOADER_
 	SurfaceLoader.push_back(video::createImageLoaderPPM());
 #endif
@@ -151,6 +145,7 @@ CNullDriver::~CNullDriver()
 
 	if (MeshManipulator)
 		MeshManipulator->drop();
+
 	deleteAllTextures();
 
 	u32 i;
@@ -160,11 +155,7 @@ CNullDriver::~CNullDriver()
 	for (i=0; i<SurfaceWriter.size(); ++i)
 		SurfaceWriter[i]->drop();
 
-	// delete material renderers
 	deleteMaterialRenders();
-
-	// delete hardware mesh buffers
-	removeAllHardwareBuffers();
 }
 
 
@@ -212,10 +203,9 @@ bool CNullDriver::beginScene(bool backBuffer, bool zBuffer, SColor color)
 
 
 //! applications must call this method after performing any rendering. returns false if failed.
-bool CNullDriver::endScene( void* windowId, core::rect<s32>* sourceRect )
+bool CNullDriver::endScene( s32 windowId, core::rect<s32>* sourceRect )
 {
 	FPSCounter.registerFrame(os::Timer::getRealTime(), PrimitivesDrawn);
-	updateAllHardwareBuffers();
 	return true;
 }
 
@@ -258,13 +248,11 @@ void CNullDriver::removeTexture(ITexture* texture)
 		return;
 
 	for (u32 i=0; i<Textures.size(); ++i)
-	{
 		if (Textures[i].Surface == texture)
 		{
 			texture->drop();
 			Textures.erase(i);
 		}
-	}
 }
 
 
@@ -333,7 +321,7 @@ ITexture* CNullDriver::getTexture(const c8* filename)
 	}
 	else
 	{
-		os::Printer::log("Could not open file of texture", filename, ELL_WARNING);
+		os::Printer::log("Could not open file of texture", filename, ELL_ERROR);
 		return 0;
 	}
 }
@@ -361,7 +349,7 @@ ITexture* CNullDriver::getTexture(io::IReadFile* file)
 	}
 
 	if (!texture)
-		os::Printer::log("Could not load texture", file->getFileName(), ELL_WARNING);
+		os::Printer::log("Could not load texture", file->getFileName(), ELL_ERROR);
 
 	return texture;
 }
@@ -502,7 +490,7 @@ const core::rect<s32>& CNullDriver::getViewPort() const
 
 
 //! draws a vertex primitive list
-void CNullDriver::drawVertexPrimitiveList(const void* vertices, u32 vertexCount, const void* indexList, u32 primitiveCount, E_VERTEX_TYPE vType, scene::E_PRIMITIVE_TYPE pType, E_INDEX_TYPE iType)
+void CNullDriver::drawVertexPrimitiveList(const void* vertices, u32 vertexCount, const u16* indexList, u32 primitiveCount, E_VERTEX_TYPE vType, scene::E_PRIMITIVE_TYPE pType)
 {
 	PrimitivesDrawn += primitiveCount;
 }
@@ -512,7 +500,7 @@ void CNullDriver::drawVertexPrimitiveList(const void* vertices, u32 vertexCount,
 //! draws an indexed triangle list
 inline void CNullDriver::drawIndexedTriangleList(const S3DVertex* vertices, u32 vertexCount, const u16* indexList, u32 triangleCount)
 {
-	drawVertexPrimitiveList(vertices, vertexCount, indexList, triangleCount, EVT_STANDARD, scene::EPT_TRIANGLES, EIT_16BIT);
+	drawVertexPrimitiveList(vertices, vertexCount, indexList, triangleCount, EVT_STANDARD, scene::EPT_TRIANGLES);
 }
 
 
@@ -520,7 +508,7 @@ inline void CNullDriver::drawIndexedTriangleList(const S3DVertex* vertices, u32 
 //! draws an indexed triangle list
 inline void CNullDriver::drawIndexedTriangleList(const S3DVertex2TCoords* vertices, u32 vertexCount, const u16* indexList, u32 triangleCount)
 {
-	drawVertexPrimitiveList(vertices, vertexCount, indexList, triangleCount, EVT_2TCOORDS, scene::EPT_TRIANGLES, EIT_16BIT);
+	drawVertexPrimitiveList(vertices, vertexCount, indexList, triangleCount, EVT_2TCOORDS, scene::EPT_TRIANGLES);
 }
 
 
@@ -528,7 +516,7 @@ inline void CNullDriver::drawIndexedTriangleList(const S3DVertex2TCoords* vertic
 inline void CNullDriver::drawIndexedTriangleList(const S3DVertexTangents* vertices,
 	u32 vertexCount, const u16* indexList, u32 triangleCount)
 {
-	drawVertexPrimitiveList(vertices, vertexCount, indexList, triangleCount, EVT_TANGENTS, scene::EPT_TRIANGLES, EIT_16BIT);
+	drawVertexPrimitiveList(vertices, vertexCount, indexList, triangleCount, EVT_TANGENTS, scene::EPT_TRIANGLES);
 }
 
 
@@ -537,7 +525,7 @@ inline void CNullDriver::drawIndexedTriangleList(const S3DVertexTangents* vertic
 inline void CNullDriver::drawIndexedTriangleFan(const S3DVertex* vertices,
 	u32 vertexCount, const u16* indexList, u32 triangleCount)
 {
-	drawVertexPrimitiveList(vertices, vertexCount, indexList, triangleCount, EVT_STANDARD, scene::EPT_TRIANGLE_FAN, EIT_16BIT);
+	drawVertexPrimitiveList(vertices, vertexCount, indexList, triangleCount, EVT_STANDARD, scene::EPT_TRIANGLE_FAN);
 }
 
 
@@ -546,7 +534,7 @@ inline void CNullDriver::drawIndexedTriangleFan(const S3DVertex* vertices,
 inline void CNullDriver::drawIndexedTriangleFan(const S3DVertex2TCoords* vertices,
 	u32 vertexCount, const u16* indexList, u32 triangleCount)
 {
-	drawVertexPrimitiveList(vertices, vertexCount, indexList, triangleCount, EVT_2TCOORDS, scene::EPT_TRIANGLE_FAN, EIT_16BIT);
+	drawVertexPrimitiveList(vertices, vertexCount, indexList, triangleCount, EVT_2TCOORDS, scene::EPT_TRIANGLE_FAN);
 }
 
 
@@ -555,7 +543,7 @@ inline void CNullDriver::drawIndexedTriangleFan(const S3DVertex2TCoords* vertice
 inline void CNullDriver::drawIndexedTriangleFan(const S3DVertexTangents* vertices,
 	u32 vertexCount, const u16* indexList, u32 triangleCount)
 {
-	drawVertexPrimitiveList(vertices, vertexCount, indexList, triangleCount, EVT_TANGENTS, scene::EPT_TRIANGLE_FAN, EIT_16BIT);
+	drawVertexPrimitiveList(vertices, vertexCount, indexList, triangleCount, EVT_TANGENTS, scene::EPT_TRIANGLE_FAN);
 }
 
 
@@ -642,9 +630,10 @@ void CNullDriver::draw2DImage(const video::ITexture* texture,
 //! Draws a part of the texture into the rectangle.
 void CNullDriver::draw2DImage(const video::ITexture* texture, const core::rect<s32>& destRect,
 	const core::rect<s32>& sourceRect, const core::rect<s32>* clipRect,
-	const video::SColor* const colors, bool useAlphaChannelOfTexture)
+	video::SColor* colors, bool useAlphaChannelOfTexture)
 {
 }
+
 
 
 //! draws an 2d image, using a color (if color is other then Color(255,255,255,255)) and the alpha channel of the texture if wanted.
@@ -709,11 +698,6 @@ void CNullDriver::draw2DPolygon(core::position2d<s32> center,
 }
 
 
-//! returns color format
-ECOLOR_FORMAT CNullDriver::getColorFormat() const
-{
-	return ECF_R5G6B5;
-}
 
 
 //! returns screen size
@@ -721,7 +705,6 @@ const core::dimension2d<s32>& CNullDriver::getScreenSize() const
 {
 	return ScreenSize;
 }
-
 
 //! returns the current render target size,
 //! or the screen size if render targets are not implemented
@@ -1151,7 +1134,7 @@ IImage* CNullDriver::createImageFromFile(const char* filename)
 		file->drop();
 	}
 	else
-		os::Printer::log("Could not open file of image", filename, ELL_WARNING);
+		os::Printer::log("Could not open file of image", filename, ELL_ERROR);
 
 	return image;
 }
@@ -1272,79 +1255,10 @@ void CNullDriver::drawMeshBuffer(const scene::IMeshBuffer* mb)
 	if (!mb)
 		return;
 
-	//IVertexBuffer and IIndexBuffer later
-	SHWBufferLink *HWBuffer=getBufferLink(mb);
-
-	if (HWBuffer)
-		drawHardwareBuffer(HWBuffer);
-	else
-		drawVertexPrimitiveList(mb->getVertices(), mb->getVertexCount(), mb->getIndices(), mb->getIndexCount()/3, mb->getVertexType(), scene::EPT_TRIANGLES, mb->getIndexType());
-}
-
-CNullDriver::SHWBufferLink *CNullDriver::getBufferLink(const scene::IMeshBuffer* mb)
-{
-	if (!mb || !isHardwareBufferRecommend(mb))
-		return 0;
-
-	//search for hardware links
-	core::map< const scene::IMeshBuffer*,SHWBufferLink* >::Node* node = HWBufferMap.find(mb);
-	if (node) return node->getValue();
-
-	return createHardwareBuffer(mb); //no hardware links, and mesh wants one, create it
-}
-
-//! Update all hardware buffers, remove unused ones
-void CNullDriver::updateAllHardwareBuffers()
-{
-	core::map<const scene::IMeshBuffer*,SHWBufferLink*>::ParentFirstIterator Iterator=HWBufferMap.getParentFirstIterator();
-
-	for (;!Iterator.atEnd();Iterator++)
-	{
-		SHWBufferLink *Link=Iterator.getNode()->getValue();
-
-		Link->LastUsed++;
-		if (Link->LastUsed>20000)
-		{
-			deleteHardwareBuffer(Link);
-
-			// todo: needs better fix
-			Iterator = HWBufferMap.getParentFirstIterator();
-		}
-	}
+	drawVertexPrimitiveList(mb->getVertices(), mb->getVertexCount(), mb->getIndices(), mb->getIndexCount()/3, mb->getVertexType(), scene::EPT_TRIANGLES);
 }
 
 
-void CNullDriver::deleteHardwareBuffer(SHWBufferLink *HWBuffer)
-{
-	if (!HWBuffer) return;
-	HWBufferMap.remove( HWBuffer->MeshBuffer );
-	delete HWBuffer;
-}
-
-//! Remove hardware buffer
-void CNullDriver::removeHardwareBuffer(const scene::IMeshBuffer* mb)
-{
-	core::map<const scene::IMeshBuffer*,SHWBufferLink*>::Node* node = HWBufferMap.find(mb);
-	if (node) deleteHardwareBuffer( node->getValue() );
-}
-
-//! Remove all hardware buffers
-void CNullDriver::removeAllHardwareBuffers()
-{
-	while (HWBufferMap.size())
-		deleteHardwareBuffer(HWBufferMap.getRoot()->getValue());
-}
-
-bool CNullDriver::isHardwareBufferRecommend(const scene::IMeshBuffer* mb)
-{
-	if (!mb || (mb->getHardwareMappingHint_Index()==scene::EHM_NEVER && mb->getHardwareMappingHint_Vertex()==scene::EHM_NEVER))
-		return false;
-
-	if (mb->getVertexCount()<500) //todo: tweak and make user definable
-		return false;
-
-	return true;
-}
 
 //! Only used by the internal engine. Used to notify the driver that
 //! the window was resized.
@@ -1423,7 +1337,7 @@ io::IAttributes* CNullDriver::createAttributesFromMaterial(const video::SMateria
 	core::stringc prefix="Texture";
 	u32 i;
 	for (i=0; i<MATERIAL_MAX_TEXTURES; ++i)
-		attr->addTexture((prefix+core::stringc(i+1)).c_str(), material.getTexture(i));
+		attr->addTexture((prefix+(i+1)).c_str(), material.getTexture(i));
 
 	attr->addBool("Wireframe", material.Wireframe);
 	attr->addBool("GouraudShading", material.GouraudShading);
@@ -1431,22 +1345,21 @@ io::IAttributes* CNullDriver::createAttributesFromMaterial(const video::SMateria
 	attr->addBool("ZWriteEnable", material.ZWriteEnable);
 	attr->addInt("ZBuffer", material.ZBuffer);
 	attr->addBool("BackfaceCulling", material.BackfaceCulling);
-	attr->addBool("FrontfaceCulling", material.FrontfaceCulling);
 	attr->addBool("FogEnable", material.FogEnable);
 	attr->addBool("NormalizeNormals", material.NormalizeNormals);
 
 	prefix = "BilinearFilter";
 	for (i=0; i<MATERIAL_MAX_TEXTURES; ++i)
-		attr->addBool((prefix+core::stringc(i+1)).c_str(), material.TextureLayer[i].BilinearFilter);
+		attr->addBool((prefix+(i+1)).c_str(), material.TextureLayer[i].BilinearFilter);
 	prefix = "TrilinearFilter";
 	for (i=0; i<MATERIAL_MAX_TEXTURES; ++i)
-		attr->addBool((prefix+core::stringc(i+1)).c_str(), material.TextureLayer[i].TrilinearFilter);
+		attr->addBool((prefix+(i+1)).c_str(), material.TextureLayer[i].TrilinearFilter);
 	prefix = "AnisotropicFilter";
 	for (i=0; i<MATERIAL_MAX_TEXTURES; ++i)
-		attr->addBool((prefix+core::stringc(i+1)).c_str(), material.TextureLayer[i].AnisotropicFilter);
+		attr->addBool((prefix+(i+1)).c_str(), material.TextureLayer[i].AnisotropicFilter);
 	prefix="TextureWrap";
 	for (i=0; i<MATERIAL_MAX_TEXTURES; ++i)
-		attr->addEnum((prefix+core::stringc(i+1)).c_str(), material.TextureLayer[i].TextureWrap, aTextureClampNames);
+		attr->addEnum((prefix+(i+1)).c_str(), material.TextureLayer[i].TextureWrap, aTextureClampNames);
 
 	return attr;
 }
@@ -1479,7 +1392,7 @@ void CNullDriver::fillMaterialStructureFromAttributes(video::SMaterial& outMater
 
 	core::stringc prefix="Texture";
 	for (i=0; i<MATERIAL_MAX_TEXTURES; ++i)
-		outMaterial.setTexture(i, attr->getAttributeAsTexture((prefix+core::stringc(i+1)).c_str()));
+		outMaterial.setTexture(i, attr->getAttributeAsTexture((prefix+(i+1)).c_str()));
 
 	outMaterial.Wireframe = attr->getAttributeAsBool("Wireframe");
 	outMaterial.GouraudShading = attr->getAttributeAsBool("GouraudShading");
@@ -1487,7 +1400,6 @@ void CNullDriver::fillMaterialStructureFromAttributes(video::SMaterial& outMater
 	outMaterial.ZWriteEnable = attr->getAttributeAsBool("ZWriteEnable");
 	outMaterial.ZBuffer = attr->getAttributeAsInt("ZBuffer");
 	outMaterial.BackfaceCulling = attr->getAttributeAsBool("BackfaceCulling");
-	outMaterial.FrontfaceCulling = attr->getAttributeAsBool("FrontfaceCulling");
 	outMaterial.FogEnable = attr->getAttributeAsBool("FogEnable");
 	outMaterial.NormalizeNormals = attr->getAttributeAsBool("NormalizeNormals");
 	prefix = "BilinearFilter";
@@ -1495,25 +1407,25 @@ void CNullDriver::fillMaterialStructureFromAttributes(video::SMaterial& outMater
 		outMaterial.setFlag(EMF_BILINEAR_FILTER, attr->getAttributeAsBool(prefix.c_str()));
 	else
 		for (i=0; i<MATERIAL_MAX_TEXTURES; ++i)
-			outMaterial.TextureLayer[i].BilinearFilter = attr->getAttributeAsBool((prefix+core::stringc(i+1)).c_str());
+			outMaterial.TextureLayer[i].BilinearFilter = attr->getAttributeAsBool((prefix+(i+1)).c_str());
 
 	prefix = "TrilinearFilter";
 	if (attr->existsAttribute(prefix.c_str())) // legacy
 		outMaterial.setFlag(EMF_TRILINEAR_FILTER, attr->getAttributeAsBool(prefix.c_str()));
 	else
 		for (i=0; i<MATERIAL_MAX_TEXTURES; ++i)
-			outMaterial.TextureLayer[i].TrilinearFilter = attr->getAttributeAsBool((prefix+core::stringc(i+1)).c_str());
+			outMaterial.TextureLayer[i].TrilinearFilter = attr->getAttributeAsBool((prefix+(i+1)).c_str());
 
 	prefix = "AnisotropicFilter";
 	if (attr->existsAttribute(prefix.c_str())) // legacy
 		outMaterial.setFlag(EMF_ANISOTROPIC_FILTER, attr->getAttributeAsBool(prefix.c_str()));
 	else
 		for (i=0; i<MATERIAL_MAX_TEXTURES; ++i)
-			outMaterial.TextureLayer[i].AnisotropicFilter = attr->getAttributeAsBool((prefix+core::stringc(i+1)).c_str());
+			outMaterial.TextureLayer[i].AnisotropicFilter = attr->getAttributeAsBool((prefix+(i+1)).c_str());
 
 	prefix = "TextureWrap";
 	for (i=0; i<MATERIAL_MAX_TEXTURES; ++i)
-		outMaterial.TextureLayer[i].TextureWrap = (E_TEXTURE_CLAMP)attr->getAttributeAsEnumeration((prefix+core::stringc(i+1)).c_str(), aTextureClampNames);
+		outMaterial.TextureLayer[i].TextureWrap = (E_TEXTURE_CLAMP)attr->getAttributeAsEnumeration((prefix+(i+1)).c_str(), aTextureClampNames);
 }
 
 
@@ -1534,13 +1446,12 @@ E_DRIVER_TYPE CNullDriver::getDriverType() const
 void CNullDriver::deleteMaterialRenders()
 {
 	// delete material renderers
-	for (u32 i=0; i<MaterialRenderers.size(); ++i)
+	for (int i=0; i<(int)MaterialRenderers.size(); ++i)
 		if (MaterialRenderers[i].Renderer)
 			MaterialRenderers[i].Renderer->drop();
 
 	MaterialRenderers.clear();
 }
-
 
 //! Returns pointer to material renderer or null
 IMaterialRenderer* CNullDriver::getMaterialRenderer(u32 idx)
@@ -1550,6 +1461,7 @@ IMaterialRenderer* CNullDriver::getMaterialRenderer(u32 idx)
 	else
 		return 0;
 }
+
 
 
 //! Returns amount of currently available material renderers.
@@ -1678,9 +1590,6 @@ s32 CNullDriver::addHighLevelShaderMaterialFromFiles(
 		const long size = pixelShaderProgram->getSize();
 		if (size)
 		{
-			// if both handles are the same we must reset the file
-			if (pixelShaderProgram==vertexShaderProgram)
-				pixelShaderProgram->seek(0);
 			ps = new c8[size+1];
 			pixelShaderProgram->read(ps, size);
 			ps[size] = 0;
@@ -1837,17 +1746,7 @@ void CNullDriver::printVersion()
 //! creates a video driver
 IVideoDriver* createNullDriver(io::IFileSystem* io, const core::dimension2d<s32>& screenSize)
 {
-	CNullDriver* nullDriver = new CNullDriver(io, screenSize);
-
-	// create empty material renderers
-	for(u32 i=0; sBuiltInMaterialTypeNames[i]; ++i)
-	{
-		IMaterialRenderer* imr = new IMaterialRenderer();
-		nullDriver->addMaterialRenderer(imr);
-		imr->drop();
-	}
-
-	return nullDriver;
+	return new CNullDriver(io, screenSize);
 }
 
 
@@ -1873,5 +1772,4 @@ void CNullDriver::enableClipPlane(u32 index, bool enable)
 
 } // end namespace
 } // end namespace
-
 

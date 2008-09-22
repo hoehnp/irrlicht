@@ -25,11 +25,7 @@ namespace irr
 
 // constructor
 COSOperator::COSOperator(const c8* osVersion) : OperatingSystem(osVersion)
-{
-	#ifdef _DEBUG
-	setDebugName("COSOperator");
-	#endif
-}
+{ }
 
 
 //! returns the current operating system version as string.
@@ -104,7 +100,7 @@ c8* COSOperator::getTextFromClipboard() const
 
 bool COSOperator::getProcessorSpeedMHz(u32* MHz) const
 {
-#if defined(_IRR_WINDOWS_API_) && !defined(_WIN32_WCE )
+#if defined(_IRR_WINDOWS_API_)
 	LONG Error;
 	
 	HKEY Key;

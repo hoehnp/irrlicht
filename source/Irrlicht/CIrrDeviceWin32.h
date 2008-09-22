@@ -22,7 +22,13 @@ namespace irr
 	public:
 
 		//! constructor
-		CIrrDeviceWin32(const SIrrlichtCreationParameters& params);
+		CIrrDeviceWin32(video::E_DRIVER_TYPE deviceType, 
+			core::dimension2d<s32> windowSize, u32 bits,
+			bool fullscreen, bool stencilbuffer, bool vsync, 
+			bool antiAlias, bool highPrecisionFPU,
+			IEventReceiver* receiver,
+			HWND window,
+			const char* version);
 
 		//! destructor
 		virtual ~CIrrDeviceWin32();
@@ -43,14 +49,8 @@ namespace irr
 		//! returns if window is active. if not, nothing need to be drawn
 		virtual bool isWindowActive() const;
 
-		//! returns if window has focus
-		virtual bool isWindowFocused() const;
-
-		//! returns if window is minimized
-		virtual bool isWindowMinimized() const;
-
 		//! presents a surface in the client area
-		virtual void present(video::IImage* surface, void* windowId=0, core::rect<s32>* src=0);
+		virtual void present(video::IImage* surface, s32 windowId = 0, core::rect<s32>* src=0 );
 
 		//! notifies the device that it should close itself
 		virtual void closeDevice();
@@ -91,8 +91,6 @@ namespace irr
 			virtual void setVisible(bool visible)
 			{
 				IsVisible = visible;
-				updateInternalCursorPosition();
-				setPosition(CursorPos.X, CursorPos.Y);
 			}
 
 			//! Returns if the cursor is currently visible.
@@ -234,7 +232,9 @@ namespace irr
 	private:
 
 		//! create the driver
-		void createDriver();
+		void createDriver(video::E_DRIVER_TYPE driverType,
+			const core::dimension2d<s32>& windowSize, u32 bits, bool fullscreen,
+			bool stencilbuffer, bool vsync, bool antiAlias, bool highPrecisionFPU);
 
 		//! switchs to fullscreen
 		bool switchToFullScreen(s32 width, s32 height, s32 bits);
@@ -246,6 +246,7 @@ namespace irr
 		HWND HWnd;
 
 		bool ChangedToFullScreen;
+		bool FullScreen;
 		bool IsNonNTWindows;
 		bool Resized;
 		bool ExternalWindow;

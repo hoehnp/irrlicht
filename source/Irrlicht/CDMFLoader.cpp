@@ -24,7 +24,6 @@
 #include "irrString.h"
 #include "irrMath.h"
 #include "dmfsupport.h"
-#include "CImage.h"
 
 namespace irr
 {
@@ -32,13 +31,25 @@ namespace scene
 {
 
 /** Constructor*/
-CDMFLoader::CDMFLoader(ISceneManager* smgr, io::IFileSystem* filesys)
-: SceneMgr(smgr), FileSystem(filesys)
+CDMFLoader::CDMFLoader(video::IVideoDriver* driver, ISceneManager* smgr)
+: Driver(driver) , SceneMgr(smgr)
 {
 	#ifdef _DEBUG
 	IReferenceCounted::setDebugName("CDMFLoader");
 	#endif
+
+	if (Driver)
+		Driver->grab();
 }
+
+
+/** Destructor*/
+CDMFLoader::~CDMFLoader()
+{
+	if (Driver)
+		Driver->drop();
+}
+
 
 
 /** Given first three points of a face, returns a face normal*/
@@ -80,7 +91,6 @@ IAnimatedMesh* CDMFLoader::createMesh(io::IReadFile* file)
 {
 	if (!file)
 		return 0;
-	video::IVideoDriver* driver = SceneMgr->getVideoDriver();
 
 	//Load stringlist
 	StringList dmfRawFile(file);
@@ -88,7 +98,7 @@ IAnimatedMesh* CDMFLoader::createMesh(io::IReadFile* file)
 	if (dmfRawFile.size()==0)
 		return 0;
 
-	SMesh * mesh = new SMesh();
+	SMesh * Mesh = new SMesh();
 
 	u32 i;
 
@@ -98,7 +108,7 @@ IAnimatedMesh* CDMFLoader::createMesh(io::IReadFile* file)
 	if (GetDMFHeader(dmfRawFile, header))
 	{
 		//let's set ambient light
-		SceneMgr->setAmbientLight(header.dmfAmbient);
+		SceneMgr->setAmbientLight( header.dmfAmbient);
 
 		//let's create the correct number of materials, vertices and faces
 		dmfMaterial *materiali=new dmfMaterial[header.numMaterials];
@@ -122,7 +132,7 @@ IAnimatedMesh* CDMFLoader::createMesh(io::IReadFile* file)
 			buffer->Material.MaterialType = video::EMT_LIGHTMAP_LIGHTING;
 			buffer->Material.Wireframe = false;
 			buffer->Material.Lighting = true;
-			mesh->addMeshBuffer(buffer);
+			Mesh->addMeshBuffer(buffer);
 			buffer->drop();
 		}
 
@@ -137,7 +147,7 @@ IAnimatedMesh* CDMFLoader::createMesh(io::IReadFile* file)
 			GetFaceNormal(verts[faces[i].firstVert].pos,
 					verts[faces[i].firstVert+1].pos, verts[faces[i].firstVert+2].pos, normal);
 
-			SMeshBufferLightMap * meshBuffer = (SMeshBufferLightMap*)mesh->getMeshBuffer(
+			SMeshBufferLightMap * meshBuffer = (SMeshBufferLightMap*)Mesh->getMeshBuffer(
 					faces[i].materialID);
 
 			u32 base = meshBuffer->Vertices.size();
@@ -191,24 +201,36 @@ IAnimatedMesh* CDMFLoader::createMesh(io::IReadFile* file)
 		//a particular material in your scene it will be loaded and then destroyed.
 		for (i=0; i<header.numMaterials; i++)
 		{
-			core::stringc path;
-			if ( SceneMgr->getParameters()->existsAttribute(DMF_TEXTURE_PATH) )
-				path = SceneMgr->getParameters()->getAttributeAsString(DMF_TEXTURE_PATH);
+			String path = "";
+			if ( !SceneMgr->getParameters()->existsAttribute(DMF_TEXTURE_PATH) )
+			{
+				//get the right path for textures
+				StringList filepath = SubdivideString(String(file->getFileName()),"\\");
+				StringList filepath1 = SubdivideString(String(file->getFileName()),"/");
+				if(filepath1.size()>filepath.size())
+				{
+					filepath.clear();
+					filepath=filepath1;
+				}
+
+				for (u32 j=0; j<filepath.size()-1; ++j)
+					path = path + filepath[j] + String("/");
+			}
 			else
-				path = FileSystem->getFileDir(file->getFileName());
-			path += ('/');
+				path = path +
+						String( SceneMgr->getParameters()->getAttributeAsString(DMF_TEXTURE_PATH)) + String("/");
 
 			//texture and lightmap
 			ITexture *tex = 0;
 			ITexture *lig = 0;
 
 			//current buffer to apply material
-			SMeshBufferLightMap* buffer = (SMeshBufferLightMap*)mesh->getMeshBuffer(i);
+			SMeshBufferLightMap* buffer = (SMeshBufferLightMap*)Mesh->getMeshBuffer(i);
 
 			//Primary texture is normal
 			if ((materiali[i].textureFlag==0) || (materiali[i].textureBlend==4))
-				driver->setTextureCreationFlag(ETCF_ALWAYS_32_BIT,true);
-			tex = driver->getTexture((path+materiali[i].textureName).c_str());
+				Driver->setTextureCreationFlag(ETCF_ALWAYS_32_BIT,true);
+			tex = Driver->getTexture((path+String(materiali[i].textureName)).c_str());
 
 			//Primary texture is just a colour
 			if(materiali[i].textureFlag==1)
@@ -229,16 +251,21 @@ IAnimatedMesh* CDMFLoader::createMesh(io::IReadFile* file)
 					axtoi(red.c_str()),axtoi(green.c_str()),
 					axtoi(blue.c_str()));
 
+				s32 col = color.color;
+				s32 buf[64];
+
+				for (int k=0; k<64; k++)
+					buf[k]=col;
+
 				//just for compatibility with older Irrlicht versions
 				//to support transparent materials
 				if (color.getAlpha()!=255 && materiali[i].textureBlend==4)
-					driver->setTextureCreationFlag(ETCF_ALWAYS_32_BIT,true);
+					Driver->setTextureCreationFlag(ETCF_ALWAYS_32_BIT,true);
 
-				CImage *immagine= new CImage(ECF_A8R8G8B8,
-					core::dimension2d<s32>(8,8));
-				immagine->fill(color);
-				tex = driver->addTexture("", immagine);
-				immagine->drop();
+				IImage *immagine=Driver->createImageFromData(ECF_A8R8G8B8,
+					core::dimension2d<s32>(8,8),buf);
+
+				tex = Driver->addTexture("", immagine);
 
 				//to support transparent materials
 				if(color.getAlpha()!=255 && materiali[i].textureBlend==4)
@@ -251,7 +278,7 @@ IAnimatedMesh* CDMFLoader::createMesh(io::IReadFile* file)
 
 			//Lightmap is present
 			if (materiali[i].lightmapFlag == 0)
-				lig = driver->getTexture((path+materiali[i].lightmapName).c_str());
+				lig = Driver->getTexture((path+String(materiali[i].lightmapName)).c_str());
 			else //no lightmap
 			{
 				lig = 0;
@@ -371,15 +398,15 @@ IAnimatedMesh* CDMFLoader::createMesh(io::IReadFile* file)
 
 	// delete all buffers without geometry in it.
 	i = 0;
-	while(i < mesh->MeshBuffers.size())
+	while(i < Mesh->MeshBuffers.size())
 	{
-		if (mesh->MeshBuffers[i]->getVertexCount() == 0 ||
-			mesh->MeshBuffers[i]->getIndexCount() == 0 ||
-			mesh->MeshBuffers[i]->getMaterial().getTexture(0) == 0)
+		if (Mesh->MeshBuffers[i]->getVertexCount() == 0 ||
+			Mesh->MeshBuffers[i]->getIndexCount() == 0 ||
+			Mesh->MeshBuffers[i]->getMaterial().getTexture(0) == 0)
 		{
 			// Meshbuffer is empty -- drop it
-			mesh->MeshBuffers[i]->drop();
-			mesh->MeshBuffers.erase(i);
+			Mesh->MeshBuffers[i]->drop();
+			Mesh->MeshBuffers.erase(i);
 		}
 		else
 		{
@@ -388,18 +415,18 @@ IAnimatedMesh* CDMFLoader::createMesh(io::IReadFile* file)
 	}
 
 	// create bounding box
-	for (i = 0; i < mesh->MeshBuffers.size(); ++i)
+	for (i = 0; i < Mesh->MeshBuffers.size(); i++)
 	{
-		mesh->MeshBuffers[i]->recalculateBoundingBox();
+		((SMeshBufferLightMap*)Mesh->MeshBuffers[i])->recalculateBoundingBox();
 	}
-	mesh->recalculateBoundingBox();
+	Mesh->recalculateBoundingBox();
 
 	// Set up an animated mesh to hold the mesh
 	SAnimatedMesh* AMesh = new SAnimatedMesh();
 	AMesh->Type = EAMT_UNKNOWN;
-	AMesh->addMesh(mesh);
+	AMesh->addMesh(Mesh);
 	AMesh->recalculateBoundingBox();
-	mesh->drop();
+	Mesh->drop();
 
 	return AMesh;
 }

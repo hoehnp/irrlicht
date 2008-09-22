@@ -12,15 +12,11 @@
 
 #include "ETerrainElements.h"
 #include "ISceneNode.h"
-#include "IDynamicMeshBuffer.h"
+#include "SMeshBufferLightMap.h"
 #include "irrArray.h"
 
 namespace irr
 {
-namespace io
-{
-	class IReadFile;
-} // end namespace io
 namespace scene
 {
 	class IMesh;
@@ -76,15 +72,10 @@ namespace scene
 		/** \return Pointer to the mesh. */
 		virtual IMesh* getMesh() = 0;
 
-
-		//! Returns a pointer to the buffer used by the terrain (most users will not need this)
-		virtual IMeshBuffer* getRenderBuffer() = 0;
-
-
 		//! Gets the meshbuffer data based on a specified level of detail.
 		/** \param mb A reference to an SMeshBuffer object
 		\param LOD The level of detail you want the indices from. */
-		virtual void getMeshBufferForLOD(IDynamicMeshBuffer& mb, s32 LOD) const = 0;
+		virtual void getMeshBufferForLOD(SMeshBufferLightMap& mb, s32 LOD) const = 0;
 
 		//! Gets the indices for a specified patch at a specified Level of Detail.
 		/** \param indices A reference to an array of u32 indices.
@@ -94,7 +85,7 @@ namespace scene
 		then get the CurrentLOD. If the CurrentLOD is set to -1,
 		meaning it's not shown, then it will retrieve the triangles at
 		the highest LOD ( 0 ).
-		\return Number of indices put into the buffer. */
+		\return Number if indices put into the buffer. */
 		virtual s32 getIndicesForPatch(core::array<u32>& indices,
 			s32 patchX, s32 patchZ, s32 LOD = 0 ) = 0;
 
@@ -150,15 +141,6 @@ namespace scene
 		first set. If this is another value than zero, it will scale
 		the second texture coordinate set by this value. */
 		virtual void scaleTexture(f32 scale = 1.0f, f32 scale2 = 0.0f) = 0;
-
-		//! Initializes the terrain data.  Loads the vertices from the heightMapFile.
-		virtual bool loadHeightMap(io::IReadFile* file, 
-			video::SColor vertexColor = video::SColor ( 255, 255, 255, 255 ), s32 smoothFactor = 0 ) =0;
-
-		//! Initializes the terrain data.  Loads the vertices from the heightMapFile.
-		virtual bool loadHeightMapRAW(io::IReadFile* file, s32 bitsPerPixel = 16,
-			video::SColor vertexColor = video::SColor ( 255, 255, 255, 255 ), s32 smoothFactor = 0 ) =0;
-
 	};
 
 } // end namespace scene

@@ -7,9 +7,10 @@
 
 #include "IMeshLoader.h"
 #include "IFileSystem.h"
-#include "ISceneManager.h"
+#include "IVideoDriver.h"
 #include "irrString.h"
 #include "SMesh.h"
+#include "IMeshManipulator.h"
 #include "matrix4.h"
 
 namespace irr
@@ -23,7 +24,7 @@ class C3DSMeshFileLoader : public IMeshLoader
 public:
 
 	//! Constructor
-	C3DSMeshFileLoader(ISceneManager* smgr, io::IFileSystem* fs);
+	C3DSMeshFileLoader(io::IFileSystem* fs, video::IVideoDriver* driver);
 
 	//! destructor
 	virtual ~C3DSMeshFileLoader();
@@ -83,17 +84,11 @@ private:
 			Filename[2]="";
 			Filename[3]="";
 			Filename[4]="";
-			Strength[0]=0.f;
-			Strength[1]=0.f;
-			Strength[2]=0.f;
-			Strength[3]=0.f;
-			Strength[4]=0.f;
 		}
 
 		video::SMaterial Material;
 		core::stringc Name;
 		core::stringc Filename[5];
-		f32 Strength[5];
 	};
 
 	struct SMaterialGroup
@@ -150,9 +145,10 @@ private:
 	void composeObject(io::IReadFile* file, const core::stringc& name);
 	void loadMaterials(io::IReadFile* file);
 	void cleanUp();
+	core::stringc getTextureFileName(const core::stringc& texture, core::stringc& model);
 
-	scene::ISceneManager* SceneManager;
 	io::IFileSystem* FileSystem;
+	video::IVideoDriver* Driver;
 
 	f32* Vertices;
 	u16* Indices;

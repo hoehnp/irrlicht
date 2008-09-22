@@ -79,9 +79,6 @@ namespace video
 		//! Are framebuffer objects supported?
 		EVDF_FRAMEBUFFER_OBJECT,
 
-		//! Are vertex buffer objects supported?
-		EVDF_VERTEX_BUFFER_OBJECT,
-
 		//! Only used for counting the elements of this enum
 		EVDF_COUNT
 	};

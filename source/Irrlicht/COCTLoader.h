@@ -46,24 +46,26 @@
 #include "IMeshLoader.h"
 #include "IReadFile.h"
 #include "SMesh.h"
+#include "IVideoDriver.h"
 #include "irrString.h"
+
+#include "ISceneManager.h"
 
 namespace irr
 {
-namespace io
-{
-	class IFileSystem;
-} // end namespace io
 namespace scene
 {
-	class ISceneManager;
-	class ISceneNode;
 
 	class COCTLoader : public IMeshLoader
 	{
 	public:
+		void OCTLoadLights(io::IReadFile* file, ISceneManager * scene,
+				ISceneNode * parent = 0, f32 radius = 500.0f,
+				f32 intensityScale = 0.0000001f*2.5,
+				bool rewind = true);
+
 		//! constructor
-		COCTLoader(ISceneManager* smgr, io::IFileSystem* fs);
+		COCTLoader(video::IVideoDriver* driver);
 
 		//! destructor
 		virtual ~COCTLoader();
@@ -78,12 +80,9 @@ namespace scene
 		//! See IReferenceCounted::drop() for more information.
 		virtual IAnimatedMesh* createMesh(io::IReadFile* file);
 
-		void OCTLoadLights(io::IReadFile* file,
-				ISceneNode * parent = 0, f32 radius = 500.0f,
-				f32 intensityScale = 0.0000001f*2.5,
-				bool rewind = true);
-
 	private:
+		core::vector3df GetFaceNormal(f32 a[3], f32 b[3], f32 c[3]);
+
 		struct octHeader {
 			u32 numVerts;
 			u32 numFaces;
@@ -130,8 +129,7 @@ namespace scene
 			u32 intensity;
 		};
 
-		ISceneManager* SceneManager;
-		io::IFileSystem* FileSystem;
+		video::IVideoDriver* Driver;
 	};
 
 } // end namespace scene

@@ -41,6 +41,9 @@ namespace irr
 	{
 	public:
 
+		//! Destructor
+		virtual ~IrrlichtDevice() {}
+
 		//! Runs the device.
 		/** Also increments the virtual timer by calling
 		ITimer::tick();. You can prevent this
@@ -151,22 +154,6 @@ namespace irr
 		\return True if window is active. */
 		virtual bool isWindowActive() const = 0;
 
-		//! Checks if the Irrlicht window has focus
-		/** \return True if window has focus. */
-		virtual bool isWindowFocused() const = 0;
-
-		//! Checks if the Irrlicht window is minimized
-		/** \return True if window is minimized. */
-		virtual bool isWindowMinimized() const = 0;
-
-		//! Checks if the Irrlicht window is running in fullscreen mode
-		/** \return True if window is fullscreen. */
-		virtual bool isFullscreen() const = 0;
-
-		//! Get the current color format of the window
-		/** \return Color format of the window. */
-		virtual video::ECOLOR_FORMAT getColorFormat() const = 0;
-
 		//! Notifies the device that it should close itself.
 		/** IrrlichtDevice::run() will always return false after closeDevice() was called. */
 		virtual void closeDevice() = 0;
@@ -177,11 +164,8 @@ namespace irr
 		\return String which contains the version. */
 		virtual const c8* getVersion() const = 0;
 
-		//! Sets a new user event receiver which will receive events from the engine. 
-		/** Return true in IEventReceiver::OnEvent to prevent the event from continuing along 
-		the chain of event receivers. The path that an event takes through the system depends
-		on its type. See irr::EEVENT_TYPE for details.
-		\param receiver New receiver to be used. */
+		//! Sets a new event receiver to receive events.
+		/** \param receiver New receiver to be used. */
 		virtual void setEventReceiver(IEventReceiver* receiver) = 0;
 
 		//! Provides access to the current event receiver.

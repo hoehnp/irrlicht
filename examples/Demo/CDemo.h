@@ -4,7 +4,7 @@
 #ifndef __C_DEMO_H_INCLUDED__
 #define __C_DEMO_H_INCLUDED__
 
-//#define USE_IRRKLANG
+#define USE_IRRKLANG
 //#define USE_SDL_MIXER
 
 #include <irrlicht.h>
@@ -62,9 +62,9 @@ private:
 
 #ifdef USE_IRRKLANG
 	void startIrrKlang();
-	audio::ISoundEngine* irrKlang;	
-	audio::ISoundSource* ballSound;
-	audio::ISoundSource* impactSound;
+	irrklang::ISoundEngine* irrKlang;	
+	irrklang::ISoundSource* ballSound;
+	irrklang::ISoundSource* impactSound;
 #endif
 
 #ifdef USE_SDL_MIXER

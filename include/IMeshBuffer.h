@@ -9,8 +9,6 @@
 #include "SMaterial.h"
 #include "aabbox3d.h"
 #include "S3DVertex.h"
-#include "SVertexIndex.h"
-#include "EHardwareBufferFlags.h"
 
 namespace irr
 {
@@ -56,26 +54,16 @@ namespace scene
 		EPT_POINT_SPRITES
 	};
 
-	enum E_BUFFER_TYPE
-	{
-		EBT_NONE=0,
-		EBT_VERTEX,
-		EBT_INDEX,
-		EBT_VERTEX_AND_INDEX
-	};
+
 
 	//! Struct for holding a mesh with a single material
-	/** SMeshBuffer is a simple implementation of a MeshBuffer.
-
-	Since meshbuffers are used for drawing, and hence will be exposed
-	to the driver, chances are high that they are grab()'ed from somewhere.
-	It's therefore required to dynamically allocate meshbuffers which are
-	passed to a video driver and only drop hte buffer once it's not used in
-	the current code block anymore.
-	*/
+	/** SMeshBuffer is a simple implementation of a MeshBuffer. */
 	class IMeshBuffer : public virtual IReferenceCounted
 	{
 	public:
+
+		//! Destructor
+		virtual ~IMeshBuffer() { }
 
 		//! Get the material of this meshbuffer
 		/** \return Material of this buffer. */
@@ -103,10 +91,6 @@ namespace scene
 		/** \return Number of vertices in this buffer. */
 		virtual u32 getVertexCount() const = 0;
 
-		//! Get type of index data which is stored in this meshbuffer.
-		/** \return Index type of this buffer. */
-		virtual video::E_INDEX_TYPE getIndexType() const =0;
-
 		//! Get access to Indices.
 		/** \return Pointer to indices array. */
 		virtual const u16* getIndices() const = 0;
@@ -131,24 +115,6 @@ namespace scene
 		//! Recalculates the bounding box. Should be called if the mesh changed.
 		virtual void recalculateBoundingBox() = 0;
 
-		//! returns position of vertex i
-		virtual const core::vector3df& getPosition(u32 i) const = 0;
-
-		//! returns position of vertex i
-		virtual core::vector3df& getPosition(u32 i) = 0;
-
-		//! returns normal of vertex i
-		virtual const core::vector3df& getNormal(u32 i) const = 0;
-
-		//! returns normal of vertex i
-		virtual core::vector3df& getNormal(u32 i) = 0;
-
-		//! returns texture coord of vertex i
-		virtual const core::vector2df& getTCoords(u32 i) const = 0;
-
-		//! returns texture coord of vertex i
-		virtual core::vector2df& getTCoords(u32 i) = 0;
-
 		//! Append the vertices and indices to the current buffer
 		/** Only works for compatible vertex types.
 		\param vertices Pointer to a vertex array.
@@ -161,32 +127,10 @@ namespace scene
 		/** Only works for compatible vertex types
 		\param other Buffer to append to this one. */
 		virtual void append(const IMeshBuffer* const other) = 0;
-
-		//! get the current hardware mapping hint
-		virtual E_HARDWARE_MAPPING getHardwareMappingHint_Vertex() const = 0;
-
-		//! get the current hardware mapping hint
-		virtual E_HARDWARE_MAPPING getHardwareMappingHint_Index() const = 0;
-
-		//! set the hardware mapping hint, for driver
-		virtual void setHardwareMappingHint( E_HARDWARE_MAPPING NewMappingHint, E_BUFFER_TYPE Buffer=EBT_VERTEX_AND_INDEX ) = 0;
-
-		//! flags the meshbuffer as changed, reloads hardware buffers
-		virtual void setDirty(E_BUFFER_TYPE Buffer=EBT_VERTEX_AND_INDEX) = 0;
-
-		//to be spit into vertex and index buffers:
-		//! Get the currently used ID for identification of changes.
-		/** This shouldn't be used for anything outside the VideoDriver. */
-		virtual u32 getChangedID_Vertex() const = 0;
-
-		//! Get the currently used ID for identification of changes.
-		/** This shouldn't be used for anything outside the VideoDriver. */
-		virtual u32 getChangedID_Index() const = 0;
 	};
 
 } // end namespace scene
 } // end namespace irr
 
 #endif
-
 
