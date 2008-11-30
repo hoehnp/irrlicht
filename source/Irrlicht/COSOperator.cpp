@@ -11,7 +11,7 @@
 #include <string.h>
 #include <unistd.h>
 #ifdef _IRR_USE_OSX_DEVICE_
-#include "MacOSX/OSXClipboard.h"
+#include "OSXClipboard.h"
 #endif
 #ifdef _IRR_OSX_PLATFORM_
 #include <sys/types.h>

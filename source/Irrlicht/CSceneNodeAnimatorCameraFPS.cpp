@@ -272,7 +272,6 @@ void CSceneNodeAnimatorCameraFPS::setKeyMap(SKeyMap *map, u32 count)
 {
 	// clear the keymap
 	KeyMap.clear();
-	KeyMapArray=map;
 
 	// add actions
 	for (u32 i=0; i<count; ++i)

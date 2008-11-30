@@ -19,9 +19,7 @@ toggles between solid and detail mapped material.
 
 using namespace irr;
 
-#ifdef _MSC_VER
 #pragma comment(lib, "Irrlicht.lib")
-#endif
 
 
 class MyEventReceiver : public IEventReceiver
@@ -56,8 +54,6 @@ public:
 					Terrain->getMaterial(0).MaterialType == video::EMT_SOLID ?
 					video::EMT_DETAIL_MAP : video::EMT_SOLID);
 				return true;
-			default:
-				break;
 			}
 		}
 
@@ -127,7 +123,7 @@ int main()
 	env->getSkin()->setFont(env->getFont("../../media/fontlucida.png"));
 
 	// add some help text
-	env->addStaticText(
+	gui::IGUIStaticText* text = env->addStaticText(
 		L"Press 'W' to change wireframe mode\nPress 'D' to toggle detail map",
 		core::rect<s32>(10,440,250,475), true, true, 0, -1, true);
 
@@ -135,7 +131,7 @@ int main()
 	scene::ICameraSceneNode* camera =
 		smgr->addCameraSceneNodeFPS(0,100.0f,1200.f);
 
-	camera->setPosition(core::vector3df(2700*2,255*2,2600*2));
+	camera->setPosition(core::vector3df(1900*2,255*2,3700*2));
 	camera->setTarget(core::vector3df(2397*2,343*2,2700*2));
 	camera->setFarValue(12000.0f);
 

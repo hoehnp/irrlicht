@@ -13,9 +13,7 @@ nearly all other tutorials.
 
 using namespace irr;
 
-#ifdef _MSC_VER
 #pragma comment(lib, "Irrlicht.lib")
-#endif
 
 /*
 For this example, we need an event receiver, to make it possible for the user

@@ -20,9 +20,7 @@ tutorial, we use a lot stuff from the gui namespace.
 using namespace irr;
 using namespace gui;
 
-#ifdef _MSC_VER
 #pragma comment(lib, "Irrlicht.lib")
-#endif
 
 
 /*
@@ -32,24 +30,23 @@ IrrlichtDevice *Device = 0;
 core::stringc StartUpModelFile;
 core::stringw MessageText;
 core::stringw Caption;
-scene::ISceneNode* Model = 0;
+scene::IAnimatedMeshSceneNode* Model = 0;
 scene::ISceneNode* SkyBox = 0;
-bool Octree=false;
 
 scene::ICameraSceneNode* Camera[2] = { 0, 0};
 
 /*
 Toggle between various cameras
 */
-void setActiveCamera(scene::ICameraSceneNode* newActive)
+void setActiveCamera ( scene::ICameraSceneNode* newActive )
 {
-	if (0 == Device)
+	if ( 0 == Device )
 		return;
 
-	Device->getSceneManager()->getActiveCamera();
+	scene::ICameraSceneNode* active = Device->getSceneManager()->getActiveCamera ();
 
-	newActive->setInputReceiverEnabled(true);
-	Device->getSceneManager()->setActiveCamera(newActive);
+	newActive->setInputReceiverEnabled ( true );
+	Device->getSceneManager()->setActiveCamera ( newActive );
 }
 
 /*
@@ -76,41 +73,43 @@ void loadModel(const c8* fn)
 {
 	// modify the name if it a .pk3 file
 
-	core::stringc filename(fn);
+	core::stringc filename ( fn );
 
 	core::stringc extension;
-	core::getFileNameExtension(extension, filename);
+	core::getFileNameExtension ( extension, filename );
 	extension.make_lower();
 
 	// if a texture is loaded apply it to the current model..
-	if (extension == ".jpg" ||
-		extension == ".pcx" ||
-		extension == ".png" ||
-		extension == ".ppm" ||
-		extension == ".pgm" ||
-		extension == ".pbm" ||
-		extension == ".psd" ||
-		extension == ".tga" ||
-		extension == ".bmp")
+	if (	extension == ".jpg" ||
+			extension == ".pcx" ||
+			extension == ".png" ||
+			extension == ".ppm" ||
+			extension == ".pgm" ||
+			extension == ".pbm" ||
+			extension == ".psd" ||
+			extension == ".tga" ||
+			extension == ".bmp"
+		)
 	{
 		video::ITexture * texture =
 			Device->getVideoDriver()->getTexture( filename.c_str() );
 		if ( texture && Model )
 		{
 			// always reload texture
-			Device->getVideoDriver()->removeTexture(texture);
+			Device->getVideoDriver()->removeTexture ( texture );
 			texture = Device->getVideoDriver()->getTexture( filename.c_str() );
 
-			Model->setMaterialTexture(0, texture);
+			Model->setMaterialTexture ( 0, texture );
 		}
 		return;
 	}
 
 	// if a archive is loaded add it to the FileSystems..
-	if (extension == ".pk3" ||
-		extension == ".zip")
+	if (	extension == ".pk3" ||
+			extension == ".zip"
+		)
 	{
-		Device->getFileSystem()->addZipFileArchive( filename.c_str() );
+		Device->getFileSystem()->addZipFileArchive( filename.c_str () );
 		return;
 	}
 
@@ -136,30 +135,11 @@ void loadModel(const c8* fn)
 
 	// set default material properties
 
-	if (Octree)
-		Model = Device->getSceneManager()->addOctTreeSceneNode(m->getMesh(0));
-	else
-	{
-		scene::IAnimatedMeshSceneNode* animModel = Device->getSceneManager()->addAnimatedMeshSceneNode(m);
-		animModel->setAnimationSpeed(30);
-		Model = animModel;
-	}
+	Model = Device->getSceneManager()->addAnimatedMeshSceneNode(m);
 	Model->setMaterialFlag(video::EMF_LIGHTING, false);
 //	Model->setMaterialFlag(video::EMF_BACK_FACE_CULLING, false);
 	Model->setDebugDataVisible(scene::EDS_OFF);
-
-	// we need to uncheck the menu entries. would be cool to fake a menu event, but
-	// that's not so simple. so we do it brute force
-	gui::IGUIContextMenu* menu = (gui::IGUIContextMenu*)Device->getGUIEnvironment()->getRootGUIElement()->getElementFromId(400, true);
-	if (menu)
-	{
-		menu->setItemChecked(1, false);
-		menu->setItemChecked(2, false);
-		menu->setItemChecked(3, false);
-		menu->setItemChecked(4, false);
-		menu->setItemChecked(5, false);
-		menu->setItemChecked(6, false);
-	}
+	Model->setAnimationSpeed(30);
 }
 
 
@@ -174,8 +154,7 @@ void createToolBox()
 	IGUIEnvironment* env = Device->getGUIEnvironment();
 	IGUIElement* root = env->getRootGUIElement();
 	IGUIElement* e = root->getElementFromId(5000, true);
-	if (e)
-		e->remove();
+	if (e) e->remove();
 
 	// create the toolbox window
 	IGUIWindow* wnd = env->addWindow(core::rect<s32>(600,25,800,480),
@@ -228,13 +207,13 @@ public:
 			event.KeyInput.Key == irr::KEY_ESCAPE &&
 			event.KeyInput.PressedDown == false)
 		{
-			if (Device)
+			if ( Device )
 			{
 				scene::ICameraSceneNode * camera =
 					Device->getSceneManager()->getActiveCamera();
-				if (camera)
+				if ( camera )
 				{
-					camera->setInputReceiverEnabled( !camera->isInputReceiverEnabled() );
+					camera->setInputReceiverEnabled ( !camera->isInputReceiverEnabled() );
 				}
 				return true;
 			}
@@ -262,64 +241,41 @@ public:
 					case 101: // File -> Set Model Archive
 						env->addFileOpenDialog(L"Please select your game archive/directory");
 						break;
-					case 102: // File -> LoadAsOctree
-						Octree = !Octree;
-						menu->setItemChecked(menu->getSelectedItem(), Octree);
-						break;
 					case 200: // File -> Quit
 						Device->closeDevice();
 						break;
 					case 300: // View -> Skybox
-						menu->setItemChecked(menu->getSelectedItem(), !menu->isItemChecked(menu->getSelectedItem()));
 						SkyBox->setVisible(!SkyBox->isVisible());
 						break;
-					case 401: // View -> Debug Information
-						menu->setItemChecked(menu->getSelectedItem()+1, false);
-						menu->setItemChecked(menu->getSelectedItem()+2, false);
-						menu->setItemChecked(menu->getSelectedItem()+3, false);
-						menu->setItemChecked(menu->getSelectedItem()+4, false);
-						menu->setItemChecked(menu->getSelectedItem()+5, false);
-						menu->setItemChecked(menu->getSelectedItem()+6, false);
+					case 400: // View -> Debug Information
 						if (Model)
 							Model->setDebugDataVisible(scene::EDS_OFF);
 						break;
 					case 410: // View -> Debug Information
-						menu->setItemChecked(menu->getSelectedItem(), !menu->isItemChecked(menu->getSelectedItem()));
 						if (Model)
 							Model->setDebugDataVisible((scene::E_DEBUG_SCENE_TYPE)(Model->isDebugDataVisible()^scene::EDS_BBOX));
 						break;
 					case 420: // View -> Debug Information
-						menu->setItemChecked(menu->getSelectedItem(), !menu->isItemChecked(menu->getSelectedItem()));
 						if (Model)
 							Model->setDebugDataVisible((scene::E_DEBUG_SCENE_TYPE)(Model->isDebugDataVisible()^scene::EDS_NORMALS));
 						break;
 					case 430: // View -> Debug Information
-						menu->setItemChecked(menu->getSelectedItem(), !menu->isItemChecked(menu->getSelectedItem()));
 						if (Model)
 							Model->setDebugDataVisible((scene::E_DEBUG_SCENE_TYPE)(Model->isDebugDataVisible()^scene::EDS_SKELETON));
 						break;
 					case 440: // View -> Debug Information
-						menu->setItemChecked(menu->getSelectedItem(), !menu->isItemChecked(menu->getSelectedItem()));
 						if (Model)
 							Model->setDebugDataVisible((scene::E_DEBUG_SCENE_TYPE)(Model->isDebugDataVisible()^scene::EDS_MESH_WIRE_OVERLAY));
 						break;
 					case 450: // View -> Debug Information
-						menu->setItemChecked(menu->getSelectedItem(), !menu->isItemChecked(menu->getSelectedItem()));
 						if (Model)
 							Model->setDebugDataVisible((scene::E_DEBUG_SCENE_TYPE)(Model->isDebugDataVisible()^scene::EDS_HALF_TRANSPARENCY));
 						break;
 					case 460: // View -> Debug Information
-						menu->setItemChecked(menu->getSelectedItem(), !menu->isItemChecked(menu->getSelectedItem()));
 						if (Model)
 							Model->setDebugDataVisible((scene::E_DEBUG_SCENE_TYPE)(Model->isDebugDataVisible()^scene::EDS_BBOX_BUFFERS));
 						break;
 					case 499: // View -> Debug Information
-						menu->setItemChecked(menu->getSelectedItem()-1, true);
-						menu->setItemChecked(menu->getSelectedItem()-2, true);
-						menu->setItemChecked(menu->getSelectedItem()-3, true);
-						menu->setItemChecked(menu->getSelectedItem()-4, true);
-						menu->setItemChecked(menu->getSelectedItem()-5, true);
-						menu->setItemChecked(menu->getSelectedItem()-6, true);
 						if (Model)
 							Model->setDebugDataVisible(scene::EDS_FULL);
 						break;
@@ -340,10 +296,10 @@ public:
 						break;
 
 					case 1000:
-						setActiveCamera(Camera[0]);
+						setActiveCamera ( Camera[0] );
 						break;
 					case 1100:
-						setActiveCamera(Camera[1]);
+						setActiveCamera ( Camera[1] );
 						break;
 
 					}
@@ -457,8 +413,6 @@ public:
 				}
 
 				break;
-			default:
-				break;
 			}
 		}
 
@@ -526,7 +480,7 @@ int main(int argc, char* argv[])
 	smgr->addLightSceneNode(0, core::vector3df(50,-50,100),
 			video::SColorf(1.0f,1.0f,1.0f),20000);
 	// add our media directory as "search path"
-	Device->getFileSystem()->addFolderFileArchive("../../media/");
+	Device->getFileSystem()->addFolderFileArchive ( "../../media/" );
 
 	/*
 	The next step is to read the configuration file. It is stored in the xml
@@ -569,8 +523,6 @@ int main(int argc, char* argv[])
 					Caption = xml->getAttributeValue(L"caption");
 			}
 			break;
-		default:
-			break;
 		}
 	}
 
@@ -609,17 +561,16 @@ int main(int argc, char* argv[])
 	submenu = menu->getSubMenu(0);
 	submenu->addItem(L"Open Model File & Texture...", 100);
 	submenu->addItem(L"Set Model Archive...", 101);
-	submenu->addItem(L"Load as Octree", 102);
 	submenu->addSeparator();
 	submenu->addItem(L"Quit", 200);
 
 	submenu = menu->getSubMenu(1);
-	submenu->addItem(L"sky box visible", 300, true, false, true);
-	submenu->addItem(L"toggle model debug information", 400, true, true);
+	submenu->addItem(L"toggle sky box visibility", 300);
+	submenu->addItem(L"toggle model debug information", -1, true, true);
 	submenu->addItem(L"model material", -1, true, true );
 
 	submenu = submenu->getSubMenu(1);
-	submenu->addItem(L"Off", 401);
+	submenu->addItem(L"Off", 400);
 	submenu->addItem(L"Bounding Box", 410);
 	submenu->addItem(L"Normals", 420);
 	submenu->addItem(L"Skeleton", 430);
@@ -731,7 +682,7 @@ int main(int argc, char* argv[])
 	Camera[1] = smgr->addCameraSceneNodeFPS();
 	Camera[1]->setFarValue(20000.f);
 
-	setActiveCamera(Camera[0]);
+	setActiveCamera ( Camera[0] );
 
 	// load the irrlicht engine logo
 	IGUIImage *img =

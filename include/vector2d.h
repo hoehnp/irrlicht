@@ -59,8 +59,8 @@ public:
 	bool operator<(const vector2d<T>&other) const { return X<other.X && Y<other.Y; }
 	bool operator>(const vector2d<T>&other) const { return X>other.X && Y>other.Y; }
 
-	bool operator==(const vector2d<T>& other) const { return equals(other); }
-	bool operator!=(const vector2d<T>& other) const { return !equals(other); }
+	bool operator==(const vector2d<T>& other) const { return other.X==X && other.Y==Y; }
+	bool operator!=(const vector2d<T>& other) const { return other.X!=X || other.Y!=Y; }
 
 	// functions
 
@@ -111,20 +111,20 @@ public:
 		return vector2d<T>(X - other.X, Y - other.Y).getLengthSQ();
 	}
 
-	//! rotates the point anticlockwise around a center by an amount of degrees.
-	/** \param degrees Amount of degrees to rotate by, anticlockwise.
+	//! rotates the point around a center by an amount of degrees.
+	/** \param degrees Amount of degrees to rotate by.
 	\param center Rotation center.
 	\return This vector after transformation. */
 	vector2d<T>& rotateBy(f64 degrees, const vector2d<T>& center)
 	{
 		degrees *= DEGTORAD64;
-		const f64 cs = cos(degrees);
-		const f64 sn = sin(degrees);
+		const T cs = (T)cos(degrees);
+		const T sn = (T)sin(degrees);
 
 		X -= center.X;
 		Y -= center.Y;
 
-		set((T)(X*cs - Y*sn), (T)(X*sn + Y*cs));
+		set(X*cs - Y*sn, X*sn + Y*cs);
 
 		X += center.X;
 		Y += center.Y;
@@ -136,12 +136,12 @@ public:
 	\return Reference to this vector, after normalization. */
 	vector2d<T>& normalize()
 	{
-		f32 length = (f32)(X*X + Y*Y);
-		if (core::equals(length, 0.f))
+		T l = X*X + Y*Y;
+		if (l == 0)
 			return *this;
-		length = core::reciprocal_squareroot ( length );
-		X = (T)(X * length);
-		Y = (T)(Y * length);
+		l = core::reciprocal_squareroot ( (f32)l );
+		X *= l;
+		Y *= l;
 		return *this;
 	}
 
@@ -233,45 +233,41 @@ public:
 		}
 	}
 
-	//! Creates an interpolated vector between this vector and another vector.
-	/** \param other The other vector to interpolate with.
-	\param d Interpolation value between 0.0f (all the other vector) and 1.0f (all this vector).
-	Note that this is the opposite direction of interpolation to getInterpolated_quadratic()
-	\return An interpolated vector.  This vector is not modified. */
-	vector2d<T> getInterpolated(const vector2d<T>& other, f64 d) const
+	//! Get the interpolated vector
+	/** \param other Other vector to interpolate with.
+	\param d Value between 0.0f and 1.0f.
+	\return Interpolated vector. */
+	vector2d<T> getInterpolated(const vector2d<T>& other, f32 d) const
 	{
-		f64 inv = 1.0f - d;
-		return vector2d<T>((T)(other.X*inv + X*d), (T)(other.Y*inv + Y*d));
+		T inv = (T) 1.0 - d;
+		return vector2d<T>(other.X*inv + X*d, other.Y*inv + Y*d);
 	}
 
-	//! Creates a quadratically interpolated vector between this and two other vectors.
-	/** \param v2 Second vector to interpolate with.
-	\param v3 Third vector to interpolate with (maximum at 1.0f)
-	\param d Interpolation value between 0.0f (all this vector) and 1.0f (all the 3rd vector).
-	Note that this is the opposite direction of interpolation to getInterpolated() and interpolate()
-	\return An interpolated vector. This vector is not modified. */
-	vector2d<T> getInterpolated_quadratic(const vector2d<T>& v2, const vector2d<T>& v3, f64 d) const
+	//! Returns (quadratically) interpolated vector between this and the two given ones.
+	/** \param v2 Second vector to interpolate with
+	\param v3 Third vector to interpolate with
+	\param d Value between 0.0f and 1.0f.
+	\return Interpolated vector. */
+	vector2d<T> getInterpolated_quadratic(const vector2d<T>& v2, const vector2d<T>& v3, const T d) const
 	{
 		// this*(1-d)*(1-d) + 2 * v2 * (1-d) + v3 * d * d;
-		const f64 inv = 1.0f - d;
-		const f64 mul0 = inv * inv;
-		const f64 mul1 = 2.0f * d * inv;
-		const f64 mul2 = d * d;
+		const T inv = (T) 1.0 - d;
+		const T mul0 = inv * inv;
+		const T mul1 = (T) 2.0 * d * inv;
+		const T mul2 = d * d;
 
-		return vector2d<T> ( (T)(X * mul0 + v2.X * mul1 + v3.X * mul2),
-					(T)(Y * mul0 + v2.Y * mul1 + v3.Y * mul2));
+		return vector2d<T> ( X * mul0 + v2.X * mul1 + v3.X * mul2,
+					Y * mul0 + v2.Y * mul1 + v3.Y * mul2);
 	}
 
 	//! Sets this vector to the linearly interpolated vector between a and b.
-	/** \param a first vector to interpolate with, maximum at 1.0f
-	\param b second vector to interpolate with, maximum at 0.0f
-	\param d Interpolation value between 0.0f (all vector b) and 1.0f (all vector a)
-	Note that this is the opposite direction of interpolation to getInterpolated_quadratic()
-	*/
-	vector2d<T>& interpolate(const vector2d<T>& a, const vector2d<T>& b, f64 d)
+	/** \param a first vector to interpolate with
+	\param b second vector to interpolate with
+	\param t value between 0.0f and 1.0f. */
+	vector2d<T>& interpolate(const vector2d<T>& a, const vector2d<T>& b, const f32 t)
 	{
-		X = (T)((f64)b.X + ( ( a.X - b.X ) * d ));
-		Y = (T)((f64)b.Y + ( ( a.Y - b.Y ) * d ));
+		X = b.X + ( ( a.X - b.X ) * t );
+		Y = b.Y + ( ( a.Y - b.Y ) * t );
 		return *this;
 	}
 

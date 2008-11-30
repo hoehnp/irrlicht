@@ -86,7 +86,7 @@ class quaternion
 		void getMatrix( matrix4 &dest ) const;
 
 		//! Creates a matrix from this quaternion
-		inline void getMatrix_transposed( matrix4 &dest ) const;
+		void getMatrix_transposed( matrix4 &dest ) const;
 
 		//! Inverts this quaternion
 		quaternion& makeInverse();

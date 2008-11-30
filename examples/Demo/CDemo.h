@@ -63,9 +63,9 @@ private:
 
 #ifdef USE_IRRKLANG
 	void startIrrKlang();
-	irrklang::ISoundEngine* irrKlang;	
-	irrklang::ISoundSource* ballSound;
-	irrklang::ISoundSource* impactSound;
+	audio::ISoundEngine* irrKlang;	
+	audio::ISoundSource* ballSound;
+	audio::ISoundSource* impactSound;
 #endif
 
 #ifdef USE_SDL_MIXER

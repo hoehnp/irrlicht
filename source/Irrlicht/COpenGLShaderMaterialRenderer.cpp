@@ -78,13 +78,13 @@ void COpenGLShaderMaterialRenderer::init(s32& outMaterialTypeNr, const c8* verte
 {
 	outMaterialTypeNr = -1;
 
-	bool success;
+	bool failure;
 
 	// create vertex shader
-	success=createVertexShader(vertexShaderProgram);
+	failure=createVertexShader(vertexShaderProgram);
 
 	// create pixel shader
-	if (!createPixelShader(pixelShaderProgram) || !success)
+	if (!createPixelShader(pixelShaderProgram) || failure)
 		return;
 
 	// register as a new material
@@ -208,7 +208,7 @@ bool COpenGLShaderMaterialRenderer::createPixelShader(const c8* pxsh)
 }
 
 
-bool COpenGLShaderMaterialRenderer::createVertexShader(const c8* vtxsh)
+bool COpenGLShaderMaterialRenderer::createVertexShader(const char* vtxsh)
 {
 	if (!vtxsh)
 		return true;

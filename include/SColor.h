@@ -106,8 +106,6 @@ namespace video
 
 
 	//! Returns the alpha component from A1R5G5B5 color
-	/** In Irrlicht, alpha refers to opacity. 
-	\return The alpha value of the color. 0 is transparent, 1 is opaque. */
 	inline u32 getAlpha(u16 color)
 	{
 		return ((color >> 15)&0x1);
@@ -148,7 +146,6 @@ namespace video
 	//! Class representing a 32 bit ARGB color.
 	/** The color values for alpha, red, green, and blue are
 	stored in a single u32. So all four values may be between 0 and 255.
-	Alpha in Irrlicht is opacity, so 0 is fully transparent, 255 is fully opaque (solid).
 	This class is used by most parts of the Irrlicht Engine
 	to specify a color. Another way is using the class SColorf, which
 	stores the color values in 4 floats.
@@ -171,8 +168,9 @@ namespace video
 			: color(clr) {}
 
 		//! Returns the alpha component of the color.
-		/** The alpha component defines how opaque a color is. 
-		\return The alpha value of the color. 0 is fully transparent, 255 is fully opaque. */
+		/** The alpha component defines how transparent a color should
+		be. 255 means not transparent (opaque), 0 means fully
+		transparent. */
 		u32 getAlpha() const { return color>>24; }
 
 		//! Returns the red component of the color.
@@ -203,8 +201,10 @@ namespace video
 		}
 
 		//! Sets the alpha component of the Color.
-		/** The alpha component defines how transparent a color should be.
-		\param a The alpha value of the color. 0 is fully transparent, 255 is fully opaque. */
+		/** The alpha component defines how transparent a color should
+		be.
+		\param a: Has to be a value between 0 and 255.
+		255 means not transparent (opaque), 0 means fully transparent. */
 		void setAlpha(u32 a) { color = ((a & 0xff)<<24) | (color & 0x00ffffff); }
 
 		//! Sets the red component of the Color.
@@ -431,7 +431,7 @@ namespace video
 			}
 		}
 
-		//! Returns the alpha component of the color in the range 0.0 (transparent) to 1.0 (opaque)
+		//! Returns the alpha component of the color in the range 0.0 to 1.0
 		f32 getAlpha() const { return a; }
 
 		//! Returns the red component of the color in the range 0.0 to 1.0
