@@ -1931,7 +1931,9 @@ void COpenGLDriver::setBasicRenderStates(const SMaterial& material, const SMater
 	if (resetAllRenderStates ||
 		lastmaterial.AmbientColor != material.AmbientColor ||
 		lastmaterial.DiffuseColor != material.DiffuseColor ||
-		lastmaterial.EmissiveColor != material.EmissiveColor)
+		lastmaterial.SpecularColor != material.SpecularColor ||
+		lastmaterial.EmissiveColor != material.EmissiveColor ||
+		lastmaterial.Shininess != material.Shininess)
 	{
 		GLfloat color[4];
 
@@ -1949,21 +1951,6 @@ void COpenGLDriver::setBasicRenderStates(const SMaterial& material, const SMater
 		color[3] = material.DiffuseColor.getAlpha() * inv;
 		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, color);
 
-		color[0] = material.EmissiveColor.getRed() * inv;
-		color[1] = material.EmissiveColor.getGreen() * inv;
-		color[2] = material.EmissiveColor.getBlue() * inv;
-		color[3] = material.EmissiveColor.getAlpha() * inv;
-		glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, color);
-	}
-
-	if (resetAllRenderStates ||
-		lastmaterial.SpecularColor != material.SpecularColor ||
-		lastmaterial.Shininess != material.Shininess)
-	{
-		GLfloat color[4]={0.f,0.f,0.f,1.f};
-		const f32 inv = 1.0f / 255.0f;
-
-		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, material.Shininess);
 		// disable Specular colors if no shininess is set
 		if (material.Shininess != 0.0f)
 		{
@@ -1971,16 +1958,24 @@ void COpenGLDriver::setBasicRenderStates(const SMaterial& material, const SMater
 			if (FeatureAvailable[IRR_EXT_separate_specular_color])
 				glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
 #endif
+			glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, material.Shininess);
 			color[0] = material.SpecularColor.getRed() * inv;
 			color[1] = material.SpecularColor.getGreen() * inv;
 			color[2] = material.SpecularColor.getBlue() * inv;
 			color[3] = material.SpecularColor.getAlpha() * inv;
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, color);
 		}
 #ifdef GL_EXT_separate_specular_color
-		else if (FeatureAvailable[IRR_EXT_separate_specular_color])
-			glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SINGLE_COLOR);
+		else
+			if (FeatureAvailable[IRR_EXT_separate_specular_color])
+				glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SINGLE_COLOR);
 #endif
-		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, color);
+
+		color[0] = material.EmissiveColor.getRed() * inv;
+		color[1] = material.EmissiveColor.getGreen() * inv;
+		color[2] = material.EmissiveColor.getBlue() * inv;
+		color[3] = material.EmissiveColor.getAlpha() * inv;
+		glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, color);
 	}
 
 	// Texture filter

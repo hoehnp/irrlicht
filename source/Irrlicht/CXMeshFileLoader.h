@@ -67,7 +67,6 @@ public:
 		core::array<scene::SSkinMeshBuffer*> Buffers;
 
 		core::array<video::S3DVertex> Vertices;
-		core::array<core::vector2df> TCoords2;
 
 		core::array<u32> Indices;
 

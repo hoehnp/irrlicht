@@ -54,14 +54,15 @@ namespace gui
 	private:
 
 		void updateImageList();
-
 		core::array<IGUIImage*> Images;
+
+		bool Dragging;
 		core::position2d<s32> DragStart;
 
 		IGUIButton* CloseButton;
 		CGUIPanel*	Panel;
 		s32 SelectedTexture;
-		bool Dragging;
+
 	};
 
 
@@ -69,4 +70,5 @@ namespace gui
 } // end namespace irr
 
 #endif
+
 
