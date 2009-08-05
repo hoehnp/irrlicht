@@ -10,7 +10,7 @@ namespace io
 {
 
 
-CReadFile::CReadFile(const core::string<c16>& fileName)
+CReadFile::CReadFile(const c8* fileName)
 : File(0), FileSize(0), Filename(fileName)
 {
 	#ifdef _DEBUG
@@ -73,11 +73,7 @@ void CReadFile::openFile()
 		return;
 	}
 
-#if defined ( _IRR_WCHAR_FILESYSTEM )
-	File = _wfopen(Filename.c_str(), L"rb");
-#else
 	File = fopen(Filename.c_str(), "rb");
-#endif
 
 	if (File)
 	{
@@ -91,14 +87,14 @@ void CReadFile::openFile()
 
 
 //! returns name of file
-const core::string<c16>& CReadFile::getFileName() const
+const c8* CReadFile::getFileName() const
 {
-	return Filename;
+	return Filename.c_str();
 }
 
 
 
-IReadFile* createReadFile(const core::string<c16>& fileName)
+IReadFile* createReadFile(const c8* fileName)
 {
 	CReadFile* file = new CReadFile(fileName);
 	if (file->isOpen())

@@ -41,12 +41,11 @@ void CMetaTriangleSelector::getTriangles(core::triangle3df* triangles, s32 array
 		s32& outTriangleCount, const core::matrix4* transform) const
 {
 	s32 outWritten = 0;
+
 	for (u32 i=0; i<TriangleSelectors.size(); ++i)
 	{
 		s32 t = 0;
-		TriangleSelectors[i]->getTriangles(triangles + outWritten,
-											arraySize - outWritten, t,
-											transform);
+		TriangleSelectors[i]->getTriangles(triangles + outWritten, arraySize - outWritten, t, transform);
 		outWritten += t;
 	}
 
@@ -60,12 +59,12 @@ void CMetaTriangleSelector::getTriangles(core::triangle3df* triangles, s32 array
 		const core::matrix4* transform) const
 {
 	s32 outWritten = 0;
+
 	for (u32 i=0; i<TriangleSelectors.size(); ++i)
 	{
 		s32 t = 0;
-		TriangleSelectors[i]->getTriangles(triangles + outWritten,
-											arraySize - outWritten, t, 
-											box, transform);
+		TriangleSelectors[i]->getTriangles(triangles + outWritten, arraySize - outWritten, t,
+			box, transform);
 		outWritten += t;
 	}
 
@@ -79,12 +78,12 @@ void CMetaTriangleSelector::getTriangles(core::triangle3df* triangles, s32 array
 		const core::matrix4* transform) const
 {
 	s32 outWritten = 0;
+
 	for (u32 i=0; i<TriangleSelectors.size(); ++i)
 	{
 		s32 t = 0;
-		TriangleSelectors[i]->getTriangles(triangles + outWritten, 
-											arraySize - outWritten, t,
-											line, transform);
+		TriangleSelectors[i]->getTriangles(triangles + outWritten, arraySize - outWritten, t,
+			line, transform);
 		outWritten += t;
 	}
 
@@ -129,24 +128,6 @@ void CMetaTriangleSelector::removeAllTriangleSelectors()
 
 	TriangleSelectors.clear();
 }
-
-//! Return the scene node associated with a given triangle.
-const ISceneNode* CMetaTriangleSelector::getSceneNodeForTriangle(u32 triangleIndex) const
-{
-	u32 totalTriangles = 0;
-
-	for (u32 i=0; i<TriangleSelectors.size(); ++i)
-	{
-		totalTriangles += TriangleSelectors[i]->getTriangleCount();
-
-		if(totalTriangles > triangleIndex)
-			return TriangleSelectors[i]->getSceneNodeForTriangle(0);
-	}
-	
-	// For lack of anything more sensible, return the first selector.
-	return TriangleSelectors[0]->getSceneNodeForTriangle(0);
-}
-
 
 
 } // end namespace scene

@@ -9,14 +9,6 @@
 #include "S3DVertex.h"
 #include "aabbox3d.h"
 #include "irrArray.h"
-#include "CMeshBuffer.h"
-
-/*!
-	Flags for Octtree
-*/
-#define OCTTREE_USE_HARDWARE	// use meshbuffer for drawing, enables hardware acceleration
-#define OCTTREE_PARENTTEST	// bypass full invisible/visible test
-#define OCTTREE_BOX_BASED	// use bounding box or frustum for calculate polys
 
 namespace irr
 {
@@ -29,30 +21,12 @@ class OctTree
 {
 public:
 
-#if defined (OCTTREE_USE_HARDWARE)
-	struct SMeshChunk : public scene::CMeshBuffer<T>
-	{
-		SMeshChunk ()
-			: scene::CMeshBuffer<T>(), MaterialId(0)
-		{
-			scene::CMeshBuffer<T>::grab();
-		}
-
-		virtual ~SMeshChunk ()
-		{
-			//removeAllHardwareBuffers
-		}
-
-		s32 MaterialId;
-	};
-#else
 	struct SMeshChunk
 	{
 		core::array<T> Vertices;
 		core::array<u16> Indices;
 		s32 MaterialId;
 	};
-#endif
 
 	struct SIndexChunk
 	{
@@ -276,7 +250,6 @@ private:
 		// by this bounding box.
 		void getPolys(const core::aabbox3d<f32>& box, SIndexData* idxdata, u32 parentTest ) const
 		{
-#if defined (OCTTREE_PARENTTEST )
 			// if not full inside
 			if ( parentTest != 2 )
 			{
@@ -287,9 +260,8 @@ private:
 				// fully inside ?
 				parentTest = Box.isFullInside(box)?2:1;
 			}
-#else
-			if (Box.intersectsWithBox(box))
-#endif
+
+			//if (Box.intersectsWithBox(box))
 			{
 				const u32 cnt = IndexData->size();
 				u32 i; // new ISO for scoping problem in some compilers
@@ -318,36 +290,27 @@ private:
 		{
 			u32 i; // new ISO for scoping problem in some compilers
 			
-			// if parent is fully inside, no further check for the children is needed
-#if defined (OCTTREE_PARENTTEST )
-			if ( parentTest != 2 )
-#endif
+			// not fully inside
+			//if ( parentTest != 2 )
 			{
 				core::vector3df edges[8];
 				Box.getEdges(edges);
 
 				for (i=0; i!=scene::SViewFrustum::VF_PLANE_COUNT; ++i)
 				{
-					u32 boxInFrustum=0;
+					bool boxInFrustum=false;
 
 					for (u32 j=0; j!=8; ++j)
 					{
 						if (frustum.planes[i].classifyPointRelation(edges[j]) != core::ISREL3D_FRONT)
 						{
-							boxInFrustum += 1;
-#if !defined (OCTTREE_PARENTTEST )
+							boxInFrustum=true;
 							break;
-#endif
 						}
 					}
 
-					if ( 0  == boxInFrustum) // all edges outside
+					if (!boxInFrustum) // all edges outside
 						return;
-
-#if defined (OCTTREE_PARENTTEST )
-					if ( 8  == boxInFrustum) // all edges in, all children in
-						parentTest = 2;
-#endif
 				}
 			}
 

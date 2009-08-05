@@ -5,7 +5,8 @@
 #ifndef __C_OCT_TREE_SCENE_NODE_H_INCLUDED__
 #define __C_OCT_TREE_SCENE_NODE_H_INCLUDED__
 
-#include "IMeshSceneNode.h"
+#include "ISceneNode.h"
+#include "IMesh.h"
 #include "OctTree.h"
 
 namespace irr
@@ -13,7 +14,7 @@ namespace irr
 namespace scene
 {
 	//! implementation of the IBspTreeSceneNode
-	class COctTreeSceneNode : public IMeshSceneNode
+	class COctTreeSceneNode : public ISceneNode
 	{
 	public:
 
@@ -54,18 +55,6 @@ namespace scene
 		//! Returns type of the scene node
 		virtual ESCENE_NODE_TYPE getType() const { return ESNT_OCT_TREE; }
 
-		//! Sets a new mesh to display
-		virtual void setMesh(IMesh* mesh);
-
-		//! Get the currently defined mesh for display.
-		virtual IMesh* getMesh(void);
-
-		//! Sets if the scene node should not copy the materials of the mesh but use them in a read only style.
-		virtual void setReadOnlyMaterials(bool readonly);
-
-		//! Check if the scene node should not copy the materials of the mesh but use them in a read only style
-		virtual bool isReadOnlyMaterials() const;
-
 	private:
 
 		void deleteTree();
@@ -87,8 +76,6 @@ namespace scene
 		core::stringc MeshName;
 		s32 MinimalPolysPerNode;
 		s32 PassCount;
-
-		IMesh * Mesh;
 	};
 
 } // end namespace scene

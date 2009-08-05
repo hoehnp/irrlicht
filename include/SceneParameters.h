@@ -67,9 +67,7 @@ namespace scene
 	const c8* const COLLADA_CREATE_SCENE_INSTANCES = "COLLADA_CreateSceneInstances";
 
 	//! Name of the parameter for changing the texture path of the built-in DMF loader.
-	/** This path is prefixed to the file names defined in the Deled file when loading
-	textures. This allows to alter the paths for a specific project setting.
-	Use it like this:
+	/** Use it like this:
 	\code
 	SceneManager->getStringParameters()->setAttribute(scene::DMF_TEXTURE_PATH, "path/to/your/textures");
 	\endcode
@@ -77,20 +75,17 @@ namespace scene
 	const c8* const DMF_TEXTURE_PATH = "DMF_TexturePath";
 
 	//! Name of the parameter for preserving DMF textures dir structure with built-in DMF loader.
-	/** If this parameter is set to true, the texture directory defined in the Deled file
-	is ignored, and only the texture name is used to find the proper file. Otherwise, the
-	texture path is also used, which allows to use a nicer media layout.
-	Use it like this:
+	/** Use it like this:
 	\code
-	//this way you won't use this setting (default)
-	SceneManager->getParameters()->setAttribute(scene::DMF_IGNORE_MATERIALS_DIRS, false);
+	//this way you won't use this setting
+	SceneManager->getParameters()->setAttribute(scene::DMF_USE_MATERIALS_DIRS, false);
 	\endcode
 	\code
 	//this way you'll use this setting
-	SceneManager->getParameters()->setAttribute(scene::DMF_IGNORE_MATERIALS_DIRS, true);
+	SceneManager->getParameters()->setAttribute(scene::DMF_USE_MATERIALS_DIRS, true);
 	\endcode
 	**/
-	const c8* const DMF_IGNORE_MATERIALS_DIRS = "DMF_IgnoreMaterialsDir";
+	const c8* const DMF_USE_MATERIALS_DIRS = "DMF_MaterialsDir";
 
 	//! Name of the parameter for setting reference value of alpha in transparent materials.
 	/** Use it like this:
@@ -113,20 +108,11 @@ namespace scene
 
 	//! Flag to avoid loading group structures in .obj files
 	/** Use it like this:
-	\code
-	SceneManager->getParameters()->setAttribute(scene::OBJ_LOADER_IGNORE_GROUPS, true);
+	 \code
+     SceneManager->getParameters()->setAttribute(scene::OBJ_LOADER_IGNORE_GROUPS, true); 
 	\endcode
-	**/
+	**/ 
 	const c8* const OBJ_LOADER_IGNORE_GROUPS = "OBJ_IgnoreGroups";
-
-
-	//! Flag to ignore the b3d file's mipmapping flag
-	/** Instead Irrlicht's texture creation flag is used. Use it like this:
-	\code
-	SceneManager->getParameters()->setAttribute(scene::B3D_LOADER_IGNORE_MIPMAP_FLAG, true);
-	\endcode
-	**/
-	const c8* const B3D_LOADER_IGNORE_MIPMAP_FLAG = "B3D_IgnoreMipmapFlag";
 
 
 	//! Flag set as parameter when the scene manager is used as editor

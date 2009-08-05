@@ -56,10 +56,11 @@ namespace scene
 	public:
 
 		CCSMLoader(ISceneManager* manager, io::IFileSystem* fs);
+		virtual ~CCSMLoader();
 
 		//! returns true if the file maybe is able to be loaded by this class
 		//! based on the file extension (e.g. ".bsp")
-		virtual bool isALoadableFileExtension(const core::string<c16>& filename) const;
+		virtual bool isALoadableFileExtension(const c8* fileName) const;
 
 		//! creates/loads an animated mesh from the file.
 		virtual IAnimatedMesh* createMesh(io::IReadFile* file);
@@ -69,7 +70,7 @@ namespace scene
 		scene::IMesh* createCSMMesh(io::IReadFile* file);
 
 		scene::IMesh* createIrrlichtMesh(const CSMFile* csmFile,
-			const core::stringc& textureRoot, const core::string<c16>& lmprefix);
+			core::stringc textureRoot, const c8* lmprefix);
 
 		io::IFileSystem* FileSystem;
 		scene::ISceneManager* SceneManager;

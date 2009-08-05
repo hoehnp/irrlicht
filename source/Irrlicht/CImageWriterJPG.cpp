@@ -127,8 +127,8 @@ static bool writeJPEGFile(io::IWriteFile* file, IImage* image, u32 quality)
 	if ( 0 == format )
 		return false;
 
-	const core::dimension2du dim = image->getDimension();
-
+	const core::dimension2di dim = image->getDimension();
+	
 	struct jpeg_compress_struct cinfo;
 	struct jpeg_error_mgr jerr;
 	cinfo.err = jpeg_std_error(&jerr);
@@ -203,9 +203,10 @@ CImageWriterJPG::CImageWriterJPG()
 }
 
 
-bool CImageWriterJPG::isAWriteableFileExtension(const core::string<c16>& filename) const
+bool CImageWriterJPG::isAWriteableFileExtension(const c8* fileName) const
 {
-	return core::hasFileExtension ( filename, "jpg", "jpeg" );
+	const char* dot = strrchr (fileName, '.');
+	return dot && (!strcmp (dot, ".jpg") || !strcmp (dot, ".jpeg"));
 }
 
 

@@ -61,10 +61,6 @@ enum E_TEXTURE_CREATION_FLAG
 	/** Discard any alpha layer and use non-alpha color format. */
 	ETCF_NO_ALPHA_CHANNEL = 0x00000020,
 
-	//! Allow the Driver to use Non-Power-2-Textures
-	/** BurningVideo can handle Non-Power-2 Textures in 2D (GUI), but not it 3D. */
-	ETCF_ALLOW_NON_POWER_2 = 0x00000040,
-
 	/** This flag is never used, it only forces the compiler to compile
 	these enumeration values to 32 bit. */
 	ETCF_FORCE_32_BIT_DO_NOT_USE = 0x7fffffff
@@ -102,7 +98,7 @@ class ITexture : public virtual IReferenceCounted
 public:
 
 	//! constructor
-	ITexture(const core::string<c16>& name) : Name(name)
+	ITexture(const c8* name) : Name(name)
 	{
 		Name.make_lower();
 	}
@@ -133,11 +129,11 @@ public:
 	ITexture::getSize() if you want to know the real size it has now stored
 	in the system.
 	\return The original size of the texture. */
-	virtual const core::dimension2d<u32>& getOriginalSize() const = 0;
+	virtual const core::dimension2d<s32>& getOriginalSize() const = 0;
 
 	//! Get dimension (=size) of the texture.
 	/** \return The size of the texture. */
-	virtual const core::dimension2d<u32>& getSize() const = 0;
+	virtual const core::dimension2d<s32>& getSize() const = 0;
 
 	//! Get driver type of texture.
 	/** This is the driver, which created the texture. This method is used
@@ -160,11 +156,6 @@ public:
 	/** \return True if texture has MipMaps, else false. */
 	virtual bool hasMipMaps() const { return false; }
 
-	//! Returns if the texture has an alpha channel
-	virtual bool hasAlpha() const { 
-		return getColorFormat () == video::ECF_A8R8G8B8 || getColorFormat () == video::ECF_A1R5G5B5;
-	}
-
 	//! Regenerates the mip map levels of the texture.
 	/** Required after modifying the texture, usually after calling unlock(). */
 	virtual void regenerateMipMapLevels() = 0;
@@ -174,11 +165,11 @@ public:
 	virtual bool isRenderTarget() const { return false; }
 
 	//! Get name of texture (in most cases this is the filename)
-	const core::string<c16>& getName() const { return Name; }
+	const core::stringc& getName() const { return Name; }
 
 protected:
 
-	core::string<c16> Name;
+	core::stringc Name;
 };
 
 

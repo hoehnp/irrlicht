@@ -58,10 +58,24 @@ void CParticleFadeOutAffector::serializeAttributes(io::IAttributes* out, io::SAt
 //! scripting languages, editors, debuggers or xml deserialization purposes.
 //! \param startIndex: start index where to start reading attributes.
 //! \return: returns last index of an attribute read by this affector
-void CParticleFadeOutAffector::deserializeAttributes(io::IAttributes* in, io::SAttributeReadWriteOptions* options)
+s32 CParticleFadeOutAffector::deserializeAttributes(s32 startIndex, io::IAttributes* in, io::SAttributeReadWriteOptions* options)
 {
-	TargetColor = in->getAttributeAsColor("TargetColor");
-	FadeOutTime = in->getAttributeAsFloat("FadeOutTime");
+	const char* name = in->getAttributeName(startIndex);
+
+	if (!name || strcmp(name, "TargetColor"))
+		return startIndex; // attribute not valid
+
+	TargetColor = in->getAttributeAsColor(startIndex);
+	++startIndex;
+
+	name = in->getAttributeName(startIndex);
+	if (!name || strcmp(name, "FadeOutTime"))
+		return startIndex; // attribute not valid
+
+	FadeOutTime = in->getAttributeAsFloat(startIndex);
+
+	++startIndex;
+	return startIndex;
 }
 
 

@@ -44,6 +44,14 @@ public:
 		if (parent)
 			parent->addChild(this);
 
+		// if we succeeded in becoming a child
+		if (Parent)
+		{
+			LastParentRect = Parent->getAbsolutePosition();
+			AbsoluteRect += LastParentRect.UpperLeftCorner;
+			AbsoluteClippingRect = AbsoluteRect;
+			AbsoluteClippingRect.clipAgainst(Parent->AbsoluteClippingRect);
+		}
 	}
 
 
@@ -152,7 +160,6 @@ public:
 	void setNotClipped(bool noClip)
 	{
 		NoClip = noClip;
-		updateAbsolutePosition();
 	}
 
 
@@ -166,7 +173,7 @@ public:
 
 	//! Sets the maximum size allowed for this element
 	/** If set to 0,0, there is no maximum size */
-	void setMaxSize(core::dimension2du size)
+	void setMaxSize(core::dimension2di size)
 	{
 		MaxSize = size;
 		updateAbsolutePosition();
@@ -174,7 +181,7 @@ public:
 
 
 	//! Sets the minimum size allowed for this element
-	void setMinSize(core::dimension2du size)
+	void setMinSize(core::dimension2di size)
 	{
 		MinSize = size;
 		if (MinSize.Width < 1)
@@ -307,13 +314,13 @@ public:
 		const s32 h = RelativeRect.getHeight();
 
 		// make sure the desired rectangle is allowed
-		if (w < (s32)MinSize.Width)
+		if (w < MinSize.Width)
 			RelativeRect.LowerRightCorner.X = RelativeRect.UpperLeftCorner.X + MinSize.Width;
-		if (h < (s32)MinSize.Height)
+		if (h < MinSize.Height)
 			RelativeRect.LowerRightCorner.Y = RelativeRect.UpperLeftCorner.Y + MinSize.Height;
-		if (MaxSize.Width && w > (s32)MaxSize.Width)
+		if (MaxSize.Width && w > MaxSize.Width)
 			RelativeRect.LowerRightCorner.X = RelativeRect.UpperLeftCorner.X + MaxSize.Width;
-		if (MaxSize.Height && h > (s32)MaxSize.Height)
+		if (MaxSize.Height && h > MaxSize.Height)
 			RelativeRect.LowerRightCorner.Y = RelativeRect.UpperLeftCorner.Y + MaxSize.Height;
 
 		RelativeRect.repair();
@@ -358,7 +365,7 @@ public:
 
 		core::list<IGUIElement*>::Iterator it = Children.getLast();
 
-		if (isVisible())
+		if (IsVisible)
 		{
 			while(it != Children.end())
 			{
@@ -370,7 +377,7 @@ public:
 			}
 		}
 
-		if (isVisible() && isPointInside(point))
+		if (IsVisible && isPointInside(point))
 			target = this;
 
 		return target;
@@ -390,14 +397,14 @@ public:
 	{
 		if (child)
 		{
-			child->grab(); // prevent destruction when removed
+			child->grab();
 			child->remove(); // remove from old parent
 			child->LastParentRect = getAbsolutePosition();
 			child->Parent = this;
 			Children.push_back(child);
-			child->updateAbsolutePosition();
 		}
 	}
+
 
 	//! Removes a child.
 	virtual void removeChild(IGUIElement* child)
@@ -425,24 +432,24 @@ public:
 	//! Draws the element and its children.
 	virtual void draw()
 	{
-		if ( isVisible() )
-		{
-			core::list<IGUIElement*>::Iterator it = Children.begin();
-			for (; it != Children.end(); ++it)
-				(*it)->draw();
-		}
+		if (!IsVisible)
+			return;
+
+		core::list<IGUIElement*>::Iterator it = Children.begin();
+		for (; it != Children.end(); ++it)
+			(*it)->draw();
 	}
 
 
 	//! animate the element and its children.
 	virtual void OnPostRender(u32 timeMs)
 	{
-		if ( isVisible() )
-		{
-			core::list<IGUIElement*>::Iterator it = Children.begin();
-			for (; it != Children.end(); ++it)
-				(*it)->OnPostRender( timeMs );
-		}
+		if (!IsVisible)
+			return;
+
+		core::list<IGUIElement*>::Iterator it = Children.begin();
+		for (; it != Children.end(); ++it)
+			(*it)->OnPostRender( timeMs );
 	}
 
 
@@ -818,6 +825,7 @@ public:
 		out->addRect("Rect", DesiredRect);
 		out->addPosition2d("MinSize", core::position2di(MinSize.Width, MinSize.Height));
 		out->addPosition2d("MaxSize", core::position2di(MaxSize.Width, MaxSize.Height));
+		out->addBool("NoClip", NoClip);
 		out->addEnum("LeftAlign", AlignLeft, GUIAlignmentNames);
 		out->addEnum("RightAlign", AlignRight, GUIAlignmentNames);
 		out->addEnum("TopAlign", AlignTop, GUIAlignmentNames);
@@ -827,7 +835,6 @@ public:
 		out->addBool("TabStop", IsTabStop);
 		out->addBool("TabGroup", IsTabGroup);
 		out->addInt("TabOrder", TabOrder);
-		out->addBool("NoClip", NoClip);
 	}
 
 
@@ -845,19 +852,18 @@ public:
 		TabOrder = in->getAttributeAsInt("TabOrder");
 
 		core::position2di p = in->getAttributeAsPosition2d("MaxSize");
-		setMaxSize(core::dimension2du(p.X,p.Y));
+		setMaxSize(core::dimension2di(p.X,p.Y));
 
 		p = in->getAttributeAsPosition2d("MinSize");
-		setMinSize(core::dimension2du(p.X,p.Y));
+		setMinSize(core::dimension2di(p.X,p.Y));
 
+		setNotClipped(in->getAttributeAsBool("NoClip"));
 		setAlignment((EGUI_ALIGNMENT) in->getAttributeAsEnumeration("LeftAlign", GUIAlignmentNames),
 			(EGUI_ALIGNMENT)in->getAttributeAsEnumeration("RightAlign", GUIAlignmentNames),
 			(EGUI_ALIGNMENT)in->getAttributeAsEnumeration("TopAlign", GUIAlignmentNames),
 			(EGUI_ALIGNMENT)in->getAttributeAsEnumeration("BottomAlign", GUIAlignmentNames));
 
 		setRelativePosition(in->getAttributeAsRect("Rect"));
-
-		setNotClipped(in->getAttributeAsBool("NoClip"));
 	}
 
 protected:
@@ -888,7 +894,7 @@ protected:
 	core::rect<f32> ScaleRect;
 
 	//! maximum and minimum size of the element
-	core::dimension2du MaxSize, MinSize;
+	core::dimension2di MaxSize, MinSize;
 
 	//! is visible?
 	bool IsVisible;

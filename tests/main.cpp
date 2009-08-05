@@ -1,13 +1,10 @@
-// Copyright (C) 2008-2009 Colin MacDonald and Christian Stehno
-// No rights reserved: this software is in the public domain.
-
 // This is the entry point for the Irrlicht test suite.
 
 // This is an MSVC pragma to link against the Irrlicht library.
 // Other builds must link against it in the project files.
 #if defined(_MSC_VER)
 #pragma comment(lib, "Irrlicht.lib")
-#define _CRT_SECURE_NO_WARNINGS 1
+#define _CRT_SECURE_NO_WARNINGS
 #endif // _MSC_VER
 
 #include "testUtils.h"
@@ -18,10 +15,7 @@
 
 typedef struct _STestDefinition
 {
-	//! The test entry point function
 	bool(*testSignature)(void);
-
-	//! A descriptive name for the test
 	const char * testName;
 } STestDefinition;
 
@@ -49,16 +43,13 @@ int main(int argumentCount, char * arguments[])
 		tests.push_back(newTest);\
 	}
 
-	// Use an STL vector so that we don't rely on Irrlicht.
 	std::vector<STestDefinition> tests;
 
 	// Note that to interactively debug a test, you will generally want to move it
 	// (temporarily) to the beginning of the list, since each test runs in its own
 	// process.
-
 	TEST(disambiguateTextures); // Normally you should run this first, since it validates the working directory.
 	TEST(filesystem);
-	TEST(zipReader);
 	TEST(exports);
 	TEST(sceneCollisionManager);
 	TEST(testVector3d);
@@ -79,19 +70,6 @@ int main(int argumentCount, char * arguments[])
 	TEST(transparentAlphaChannelRef);
 	TEST(drawRectOutline);
 	TEST(removeCustomAnimator);
-
-	// Tests available on 1.6+
-	TEST(collisionResponseAnimator);
-	TEST(irrCoreEquals);
-	TEST(makeColorKeyTexture);
-	TEST(matrixOps);
-	TEST(sceneNodeAnimator);
-	TEST(vectorPositionDimension2d);
-	TEST(writeImageToFile);
-	TEST(flyCircleAnimator);
-	TEST(enumerateImageManipulators);
-	TEST(testGeometryCreator);
-	TEST(makeColorKeyTexture);
 
 	const unsigned int numberOfTests = tests.size();
 
@@ -120,7 +98,7 @@ int main(int argumentCount, char * arguments[])
 
 	if(!success)
 	{
-		logTestString("\n******** Test failure ********\nTest %d '%s' failed\n"\
+		logTestString("\n\n\n******** Test failure ********\nTest %d '%s' failed\n"\
 		"******** Test failure ********\n",
 						testToRun + 1, tests[testToRun].testName);
 		fails++;
@@ -132,7 +110,7 @@ int main(int argumentCount, char * arguments[])
 		closeTestLog();
 		char runNextTest[256];
 		(void)sprintf(runNextTest, "\"%s\" %d %d", arguments[0], testToRun, fails);
-		fails = system(runNextTest); // Spawn the next test in a new process.
+		fails = system(runNextTest);
 	}
 	else
 	{
@@ -157,7 +135,7 @@ int main(int argumentCount, char * arguments[])
 			}
 		}
 		closeTestLog();
-#ifdef _IRR_WINDOWS_
+#ifdef WIN32
 		(void)system("tests.log");
 #else
 		(void)system("$PAGER tests.log");

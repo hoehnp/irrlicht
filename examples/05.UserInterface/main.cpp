@@ -183,7 +183,7 @@ int main()
 
 	// create device and exit if creation failed
 
-	IrrlichtDevice * device = createDevice(driverType, core::dimension2d<u32>(640, 480));
+	IrrlichtDevice * device = createDevice(driverType, core::dimension2d<s32>(640, 480));
 
 	if (device == 0)
 		return 1; // could not create selected driver.
@@ -192,7 +192,6 @@ int main()
 		store pointers to the driver and to the gui environment. */
 
 	device->setWindowCaption(L"Irrlicht Engine - User Interface Demo");
-	device->setResizable(true);
 
 	video::IVideoDriver* driver = device->getVideoDriver();
 	IGUIEnvironment* env = device->getGUIEnvironment();

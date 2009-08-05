@@ -13,7 +13,7 @@ namespace scene
 
 //! constructor
 CSceneNodeAnimatorDelete::CSceneNodeAnimatorDelete(ISceneManager* manager, u32 time)
-: ISceneNodeAnimatorFinishing(time), SceneManager(manager)
+: DeleteTime(time), SceneManager(manager)
 {
 	#ifdef _DEBUG
 	setDebugName("CSceneNodeAnimatorDelete");
@@ -21,30 +21,32 @@ CSceneNodeAnimatorDelete::CSceneNodeAnimatorDelete(ISceneManager* manager, u32 t
 }
 
 
+
+//! destructor
+CSceneNodeAnimatorDelete::~CSceneNodeAnimatorDelete()
+{
+}
+
+
+
 //! animates a scene node
 void CSceneNodeAnimatorDelete::animateNode(ISceneNode* node, u32 timeMs)
 {
-	if (timeMs > FinishTime)
+	if (timeMs > DeleteTime && node && SceneManager)
 	{
-		HasFinished = true;
-		if(node && SceneManager)
-		{
-			// don't delete if scene manager is attached to an editor
-			if (!SceneManager->getParameters()->getAttributeAsBool(IRR_SCENE_MANAGER_IS_EDITOR))
-				SceneManager->addToDeletionQueue(node);
-		}
+		// don't delete if scene manager is attached to an editor
+		if (!SceneManager->getParameters()->getAttributeAsBool(IRR_SCENE_MANAGER_IS_EDITOR))
+			SceneManager->addToDeletionQueue(node);
 	}
 }
-
 
 ISceneNodeAnimator* CSceneNodeAnimatorDelete::createClone(ISceneNode* node, ISceneManager* newManager)
 {
 	CSceneNodeAnimatorDelete * newAnimator = 
-		new CSceneNodeAnimatorDelete(SceneManager, FinishTime);
+		new CSceneNodeAnimatorDelete(SceneManager, DeleteTime);
 
 	return newAnimator;
 }
-
 
 } // end namespace scene
 } // end namespace irr

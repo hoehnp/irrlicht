@@ -58,10 +58,10 @@ CImageWriterPNG::CImageWriterPNG()
 #endif
 }
 
-bool CImageWriterPNG::isAWriteableFileExtension(const core::string<c16>& filename) const
+bool CImageWriterPNG::isAWriteableFileExtension(const c8* fileName) const
 {
 #ifdef _IRR_COMPILE_WITH_LIBPNG_
-	return core::hasFileExtension ( filename, "png" );
+	return strstr(fileName, ".png") != 0;
 #else
 	return false;
 #endif
@@ -169,7 +169,7 @@ bool CImageWriterPNG::writeImage(io::IWriteFile* file, IImage* image,u32 param) 
 
 	data=tmpImage;
 	// Fill array of pointers to rows in image data
-	for (u32 i=0; i<image->getDimension().Height; ++i)
+	for (s32 i=0; i<image->getDimension().Height; ++i)
 	{
 		RowPointers[i]=data;
 		data += lineWidth;

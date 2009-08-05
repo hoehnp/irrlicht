@@ -51,9 +51,9 @@ COBJMeshFileLoader::~COBJMeshFileLoader()
 
 //! returns true if the file maybe is able to be loaded by this class
 //! based on the file extension (e.g. ".bsp")
-bool COBJMeshFileLoader::isALoadableFileExtension(const core::string<c16>& filename) const
+bool COBJMeshFileLoader::isALoadableFileExtension(const c8* filename) const
 {
-	return core::hasFileExtension ( filename, "obj" );
+	return strstr(filename, ".obj")!=0;
 }
 
 
@@ -77,8 +77,8 @@ IAnimatedMesh* COBJMeshFileLoader::createMesh(io::IReadFile* file)
 	Materials.push_back(currMtl);
 	u32 smoothingGroup=0;
 
-	const core::string<c16> fullName = file->getFileName();
-	const core::string<c16> relPath = FileSystem->getFileDir(fullName)+"/";
+	const core::stringc fullName = file->getFileName();
+	const core::stringc relPath = FileSystem->getFileDir(fullName)+"/";
 
 	c8* buf = new c8[filesize];
 	memset(buf, 0, filesize);
@@ -87,8 +87,7 @@ IAnimatedMesh* COBJMeshFileLoader::createMesh(io::IReadFile* file)
 
 	// Process obj information
 	const c8* bufPtr = buf;
-	core::stringc grpName, mtlName;
-	bool mtlChanged=false;
+	core::stringc grpName;
 	bool useGroups = !SceneManager->getParameters()->getAttributeAsBool(OBJ_LOADER_IGNORE_GROUPS);
 	while(bufPtr != bufEnd)
 	{
@@ -148,7 +147,6 @@ IAnimatedMesh* COBJMeshFileLoader::createMesh(io::IReadFile* file)
 					else
 						grpName = "default";
 				}
-				mtlChanged=true;
 			}
 			break;
 
@@ -174,8 +172,11 @@ IAnimatedMesh* COBJMeshFileLoader::createMesh(io::IReadFile* file)
 #ifdef _IRR_DEBUG_OBJ_LOADER_
 	os::Printer::log("Loaded material start",matName);
 #endif
-				mtlName=matName;
-				mtlChanged=true;
+				// retrieve the material
+				SObjMtl *useMtl = findMtl(matName, grpName);
+				// only change material if we found it
+				if (useMtl)
+					currMtl = useMtl;
 			}
 			break;
 
@@ -184,15 +185,6 @@ IAnimatedMesh* COBJMeshFileLoader::createMesh(io::IReadFile* file)
 			c8 vertexWord[WORD_BUFFER_LENGTH]; // for retrieving vertex data
 			video::S3DVertex v;
 			// Assign vertex color from currently active material's diffuse colour
-			if (mtlChanged)
-			{
-				// retrieve the material
-				SObjMtl *useMtl = findMtl(mtlName, grpName);
-				// only change material if we found it
-				if (useMtl)
-					currMtl = useMtl;
-				mtlChanged=false;
-			}
 			if (currMtl)
 				v.Color = currMtl->Meshbuffer->Material.DiffuseColor;
 
@@ -315,7 +307,7 @@ IAnimatedMesh* COBJMeshFileLoader::createMesh(io::IReadFile* file)
 }
 
 
-const c8* COBJMeshFileLoader::readTextures(const c8* bufPtr, const c8* const bufEnd, SObjMtl* currMaterial, const core::string<c16>& relPath)
+const c8* COBJMeshFileLoader::readTextures(const c8* bufPtr, const c8* const bufEnd, SObjMtl* currMaterial, const core::stringc& relPath)
 {
 	u8 type=0; // map_Kd - diffuse color texture map
 	// map_Ks - specular color texture map
@@ -414,15 +406,15 @@ const c8* COBJMeshFileLoader::readTextures(const c8* bufPtr, const c8* const buf
 	if (clamp)
 		currMaterial->Meshbuffer->Material.setFlag(video::EMF_TEXTURE_WRAP, video::ETC_CLAMP);
 
-	core::string<c16> texname(textureNameBuf);
+	core::stringc texname(textureNameBuf);
 	texname.replace('\\', '/');
 
 	video::ITexture * texture = 0;
-	if (FileSystem->existFile(texname))
-		texture = SceneManager->getVideoDriver()->getTexture(texname);
+	if (FileSystem->existFile(texname.c_str()))
+		texture = SceneManager->getVideoDriver()->getTexture(texname.c_str());
 	else
 		// try to read in the relative path, the .obj is loaded from
-		texture = SceneManager->getVideoDriver()->getTexture( relPath + texname );
+		texture = SceneManager->getVideoDriver()->getTexture( (relPath + texname).c_str() );
 	if ( texture )
 	{
 		if (type==0)
@@ -454,20 +446,14 @@ const c8* COBJMeshFileLoader::readTextures(const c8* bufPtr, const c8* const buf
 }
 
 
-void COBJMeshFileLoader::readMTL(const c8* fileName, const core::string<c16>& relPath)
+void COBJMeshFileLoader::readMTL(const c8* fileName, const core::stringc& relPath)
 {
 	io::IReadFile * mtlReader;
-
-	core::string<c16> realFile ( fileName );
-
-	if (FileSystem->existFile(realFile))
-		mtlReader = FileSystem->createAndOpenFile(realFile.c_str() );
+	if (FileSystem->existFile(fileName))
+		mtlReader = FileSystem->createAndOpenFile(fileName);
 	else
-	{
 		// try to read in the relative path, the .obj is loaded from
-		core::string<c16> r2 = relPath + realFile;
-		mtlReader = FileSystem->createAndOpenFile(r2.c_str());
-	}
+		mtlReader = FileSystem->createAndOpenFile((relPath + fileName).c_str());
 	if (!mtlReader)	// fail to open and read file
 		return;
 
@@ -690,8 +676,6 @@ const c8* COBJMeshFileLoader::readBool(const c8* bufPtr, bool& tf, const c8* con
 COBJMeshFileLoader::SObjMtl* COBJMeshFileLoader::findMtl(const core::stringc& mtlName, const core::stringc& grpName)
 {
 	COBJMeshFileLoader::SObjMtl* defMaterial = 0;
-	// search existing Materials for best match
-	// exact match does return immediately, only name match means a new group
 	for (u32 i = 0; i < Materials.size(); ++i)
 	{
 		if ( Materials[i]->Name == mtlName )
@@ -699,20 +683,13 @@ COBJMeshFileLoader::SObjMtl* COBJMeshFileLoader::findMtl(const core::stringc& mt
 			if ( Materials[i]->Group == grpName )
 				return Materials[i];
 			else
+			if ( Materials[i]->Group == "" )
 				defMaterial = Materials[i];
 		}
 	}
-	// we found a partial match
 	if (defMaterial)
 	{
 		Materials.push_back(new SObjMtl(*defMaterial));
-		Materials.getLast()->Group = grpName;
-		return Materials.getLast();
-	}
-	// we found a new group for a non-existant material
-	else if (grpName.size())
-	{
-		Materials.push_back(new SObjMtl(*Materials[0]));
 		Materials.getLast()->Group = grpName;
 		return Materials.getLast();
 	}

@@ -8,22 +8,13 @@
 using namespace irr;
 using namespace core;
 
-// check if the vector contains a NAN (a==b is guaranteed to return false in this case)
-template<class T>
-static bool is_nan(const core::vector3d<T> &vec )
-{
-	return ( !(vec.X == vec.X) 
-			|| !(vec.Y == vec.Y) 
-			|| !(vec.Z == vec.Z) );
-}
-
 template<class T>
 static bool compareVectors(const core::vector3d<T> & compare,
 						   const core::vector3d<T> & with)
 {
 	if(compare != with)
 	{
-		logTestString("\nERROR: vector3dOr  %.16f, %.16f, %.16f != vector3d %.16f, %.16f, %.16f\n",
+		logTestString("\nERROR: vector3d %.16f, %.16f, %.16f != vector3d %.16f, %.16f, %.16f\n",
 			(f64)compare.X, (f64)compare.Y, (f64)compare.Z,
 			(f64)with.X, (f64)with.Y, (f64)with.Z);
 		assert(compare == with);
@@ -122,11 +113,6 @@ static bool doTests()
 
 	interpolated = vec.getInterpolated_quadratic(otherVec, thirdVec, 1.f);
 	COMPARE_VECTORS(interpolated, thirdVec); // 1.f means all the 3rd vector
-	
-	vec.set(0,0,0);
-	vec.setLength(99);
-	if ( is_nan(vec) )
-		return false;
 
 	return true;
 }
@@ -150,7 +136,7 @@ bool testVector3d(void)
 	else
 		logTestString("\n*** vector3d<f64> tests failed ***\n\n");
 
-	bool s32Success = true; // doTests<s32>(); Currently broken: see vector3d<T>& normalize() and const T length = core::reciprocal_squareroot ( (T) (X*X + Y*Y + Z*Z) );
+	bool s32Success = doTests<s32>();
 	if(s32Success)
 		logTestString("vector3di tests passed\n\n");
 	else

@@ -17,11 +17,12 @@ namespace video
 {
 
 COpenGLExtensionHandler::COpenGLExtensionHandler() :
-		StencilBuffer(false), MultiTextureExtension(false),
+		StencilBuffer(false),
+		MultiTextureExtension(false), MultiSamplingExtension(false), AnisotropyExtension(false),
 		TextureCompressionExtension(false),
-		MaxTextureUnits(1), MaxLights(1), MaxAnisotropy(1), MaxUserClipPlanes(0),
-		MaxAuxBuffers(0), MaxIndices(65535), MaxTextureSize(1), MaxTextureLODBias(0.f),
-		MaxMultipleRenderTargets(1), Version(0), ShaderLanguageVersion(0)
+		MaxTextureUnits(1), MaxLights(1), MaxIndices(65535),
+		MaxAnisotropy(1.0f), MaxUserClipPlanes(0), MaxMultipleRenderTargets(1),
+		Version(0), ShaderLanguageVersion(0)
 #ifdef _IRR_OPENGL_USE_EXTPOINTER_
 	,pGlActiveTextureARB(0), pGlClientActiveTextureARB(0),
 	pGlGenProgramsARB(0), pGlBindProgramARB(0), pGlProgramStringARB(0),
@@ -35,7 +36,7 @@ COpenGLExtensionHandler::COpenGLExtensionHandler() :
 	pGlStencilFuncSeparate(0), pGlStencilOpSeparate(0),
 	pGlStencilFuncSeparateATI(0), pGlStencilOpSeparateATI(0),
 	pGlCompressedTexImage2D(0),
-#ifdef _IRR_COMPILE_WITH_WINDOWS_DEVICE_
+#ifdef _IRR_USE_WINDOWS_DEVICE_
 	wglSwapIntervalEXT(0),
 #elif defined(GLX_SGI_swap_control)
 	glxSwapIntervalSGI(0),
@@ -54,6 +55,14 @@ COpenGLExtensionHandler::COpenGLExtensionHandler() :
 {
 	for (u32 i=0; i<IRR_OpenGL_Feature_Count; ++i)
 		FeatureAvailable[i]=false;
+	DimAliasedLine[0]=1.f;
+	DimAliasedLine[1]=1.f;
+	DimAliasedPoint[0]=1.f;
+	DimAliasedPoint[1]=1.f;
+	DimSmoothedLine[0]=1.f;
+	DimSmoothedLine[1]=1.f;
+	DimSmoothedPoint[0]=1.f;
+	DimSmoothedPoint[1]=1.f;
 }
 
 
@@ -66,7 +75,7 @@ void COpenGLExtensionHandler::dump() const
 void COpenGLExtensionHandler::initExtensions(bool stencilBuffer)
 {
 	const f32 ogl_ver = core::fast_atof(reinterpret_cast<const c8*>(glGetString(GL_VERSION)));
-	Version = static_cast<u16>(core::floor32(ogl_ver)*100+core::round32(core::fract(ogl_ver)*10.0f));
+	Version = core::floor32(ogl_ver)*100+core::round32(core::fract(ogl_ver)*10.0f);
 	if ( Version >= 102)
 		os::Printer::log("OpenGL driver version is 1.2 or better.", ELL_INFORMATION);
 	else
@@ -74,13 +83,8 @@ void COpenGLExtensionHandler::initExtensions(bool stencilBuffer)
 
 	{
 		const char* t = reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS));
-		size_t len = 0;
-		c8 *str = 0;
-		if (t)
-		{
-			len = strlen(t);
-			str = new c8[len+1];
-		}
+		const size_t len = strlen(t);
+		c8 *str = new c8[len+1];
 		c8* p = str;
 
 		for (size_t i=0; i<len; ++i)
@@ -107,6 +111,8 @@ void COpenGLExtensionHandler::initExtensions(bool stencilBuffer)
 	}
 
 	MultiTextureExtension = FeatureAvailable[IRR_ARB_multitexture];
+	MultiSamplingExtension = FeatureAvailable[IRR_ARB_multisample];
+	AnisotropyExtension = FeatureAvailable[IRR_EXT_texture_filter_anisotropic];
 	TextureCompressionExtension = FeatureAvailable[IRR_ARB_texture_compression];
 	StencilBuffer=stencilBuffer;
 
@@ -186,10 +192,10 @@ void COpenGLExtensionHandler::initExtensions(bool stencilBuffer)
 	// vsync extension
 	wglSwapIntervalEXT = (PFNWGLSWAPINTERVALFARPROC) wglGetProcAddress("wglSwapIntervalEXT");
 
-#elif defined(_IRR_COMPILE_WITH_X11_DEVICE_) || defined (_IRR_COMPILE_WITH_SDL_DEVICE_)
+#elif defined(_IRR_USE_LINUX_DEVICE_) || defined (_IRR_USE_SDL_DEVICE_)
 	#ifdef _IRR_OPENGL_USE_EXTPOINTER_
 
-	#if defined(_IRR_COMPILE_WITH_SDL_DEVICE_) && !defined(_IRR_COMPILE_WITH_X11_DEVICE_)
+	#ifdef _IRR_USE_SDL_DEVICE_
 		#define IRR_OGL_LOAD_EXTENSION(x) SDL_GL_GetProcAddress(reinterpret_cast<const char*>(x))
 	#else
 	// Accessing the correct function is quite complex
@@ -204,9 +210,8 @@ void COpenGLExtensionHandler::initExtensions(bool stencilBuffer)
 	#ifndef _IRR_GETPROCADDRESS_WORKAROUND_
 	__GLXextFuncPtr (*IRR_OGL_LOAD_EXTENSION)(const GLubyte*)=0;
 	#ifdef GLX_VERSION_1_4
-		int major=0,minor=0;
-		if (glXGetCurrentDisplay())
-			glXQueryVersion(glXGetCurrentDisplay(), &major, &minor);
+		int major,minor;
+		glXQueryVersion(glXGetCurrentDisplay(), &major, &minor);
 		if ((major>1) || (minor>3))
 			IRR_OGL_LOAD_EXTENSION=glXGetProcAddress;
 		else
@@ -322,7 +327,7 @@ void COpenGLExtensionHandler::initExtensions(bool stencilBuffer)
 	pGlCompressedTexImage2D = (PFNGLCOMPRESSEDTEXIMAGE2DPROC)
 		IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glCompressedTexImage2D"));
 
-	#if defined(GLX_SGI_swap_control) && !defined(_IRR_COMPILE_WITH_SDL_DEVICE_)
+	#if defined(GLX_SGI_swap_control) && !defined(_IRR_USE_SDL_DEVICE_)
 		// get vsync extension
 		glxSwapIntervalSGI = (PFNGLXSWAPINTERVALSGIPROC)IRR_OGL_LOAD_EXTENSION(reinterpret_cast<const GLubyte*>("glXSwapIntervalSGI"));
 	#endif
@@ -401,39 +406,24 @@ void COpenGLExtensionHandler::initExtensions(bool stencilBuffer)
 	#endif // _IRR_OPENGL_USE_EXTPOINTER_
 #endif // _IRR_WINDOWS_API_
 
-	GLint num;
 	// set some properties
 #if defined(GL_ARB_multitexture) || defined(GL_VERSION_1_3)
 	if (Version>102 || FeatureAvailable[IRR_ARB_multitexture])
 	{
+		GLint num;
 		glGetIntegerv(GL_MAX_TEXTURE_UNITS, &num);
-		MaxTextureUnits=static_cast<u8>(num);
+		MaxTextureUnits=num;
 	}
 #endif
-	glGetIntegerv(GL_MAX_LIGHTS, &num);
-	MaxLights=static_cast<u8>(num);
+	glGetIntegerv(GL_MAX_LIGHTS, &MaxLights);
 #ifdef GL_EXT_texture_filter_anisotropic
 	if (FeatureAvailable[IRR_EXT_texture_filter_anisotropic])
-		glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &num);
-	MaxAnisotropy=static_cast<u8>(num);
+		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &MaxAnisotropy);
 #endif
 #ifdef GL_VERSION_1_2
 	if (Version>101)
-	{
-		glGetIntegerv(GL_MAX_ELEMENTS_INDICES, &num);
-		MaxIndices=num;
-	}
+		glGetIntegerv(GL_MAX_ELEMENTS_INDICES, &MaxIndices);
 #endif
-	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &num);
-	MaxTextureSize=static_cast<u32>(num);
-#ifdef EXT_texture_lod_bias
-	if (FeatureAvailable[IRR_EXT_texture_lod_bias])
-		glGetFloatv(GL_MAX_TEXTURE_LOD_BIAS_EXT, &MaxTextureLODBias);
-#endif
-	glGetIntegerv(GL_MAX_CLIP_PLANES, &num);
-	MaxUserClipPlanes=static_cast<u8>(num);
-	glGetIntegerv(GL_AUX_BUFFERS, &num);
-	MaxAuxBuffers=static_cast<u8>(num);
 #ifdef ARB_draw_buffers
 	if (FeatureAvailable[IRR_ARB_draw_buffers])
 	{
@@ -447,6 +437,11 @@ void COpenGLExtensionHandler::initExtensions(bool stencilBuffer)
 		MaxMultipleRenderTargets = static_cast<u8>(MaxUserClipPlanes);
 	}
 #endif
+	glGetIntegerv(GL_MAX_CLIP_PLANES, reinterpret_cast<GLint*>(&MaxUserClipPlanes));
+	glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE, DimAliasedLine);
+	glGetFloatv(GL_ALIASED_POINT_SIZE_RANGE, DimAliasedPoint);
+	glGetFloatv(GL_SMOOTH_LINE_WIDTH_RANGE, DimSmoothedLine);
+	glGetFloatv(GL_SMOOTH_POINT_SIZE_RANGE, DimSmoothedPoint);
 #if defined(GL_ARB_shading_language_100) || defined (GL_VERSION_2_0)
 	if (FeatureAvailable[IRR_ARB_shading_language_100] || Version>=200)
 	{
@@ -461,7 +456,7 @@ void COpenGLExtensionHandler::initExtensions(bool stencilBuffer)
 		else
 		{
 			const f32 sl_ver = core::fast_atof(reinterpret_cast<const c8*>(shaderVersion));
-			ShaderLanguageVersion = static_cast<u16>(core::floor32(sl_ver)*100+core::round32(core::fract(sl_ver)*10.0f));
+			ShaderLanguageVersion = core::floor32(sl_ver)*100+core::round32(core::fract(sl_ver)*10.0f);
 		}
 	}
 #endif
@@ -479,7 +474,7 @@ void COpenGLExtensionHandler::initExtensions(bool stencilBuffer)
 		MultiTextureExtension = false;
 		os::Printer::log("Warning: OpenGL device only has one texture unit. Disabling multitexturing.", ELL_WARNING);
 	}
-	MaxTextureUnits = core::min_(MaxTextureUnits,static_cast<u8>(MATERIAL_MAX_TEXTURES));
+	MaxTextureUnits = core::min_(MaxTextureUnits,MATERIAL_MAX_TEXTURES);
 
 }
 
@@ -517,10 +512,6 @@ bool COpenGLExtensionHandler::queryFeature(E_VIDEO_DRIVER_FEATURE feature) const
 		return FeatureAvailable[IRR_EXT_framebuffer_object];
 	case EVDF_VERTEX_BUFFER_OBJECT:
 		return FeatureAvailable[IRR_ARB_vertex_buffer_object];
-	case EVDF_COLOR_MASK:
-		return true;
-	case EVDF_ALPHA_TO_COVERAGE:
-		return FeatureAvailable[IRR_ARB_multisample];
 	default:
 		return false;
 	};
@@ -531,3 +522,5 @@ bool COpenGLExtensionHandler::queryFeature(E_VIDEO_DRIVER_FEATURE feature) const
 }
 
 #endif
+
+

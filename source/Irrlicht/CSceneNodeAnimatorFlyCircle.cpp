@@ -9,13 +9,9 @@ namespace irr
 namespace scene
 {
 
-
 //! constructor
-CSceneNodeAnimatorFlyCircle::CSceneNodeAnimatorFlyCircle(u32 time,
-		const core::vector3df& center, f32 radius, f32 speed,
-		const core::vector3df& direction, f32 radiusEllipsoid)
-	: Center(center), Direction(direction), Radius(radius),
-	RadiusEllipsoid(radiusEllipsoid), Speed(speed), StartTime(time)
+CSceneNodeAnimatorFlyCircle::CSceneNodeAnimatorFlyCircle(u32 time, const core::vector3df& center, f32 radius, f32 speed, const core::vector3df& direction)
+: Center(center), Direction(direction), Radius(radius), Speed(speed), StartTime(time)
 {
 	#ifdef _DEBUG
 	setDebugName("CSceneNodeAnimatorFlyCircle");
@@ -42,17 +38,9 @@ void CSceneNodeAnimatorFlyCircle::animateNode(ISceneNode* node, u32 timeMs)
 	if ( 0 == node )
 		return;
 
-	f32 time;
+	const f32 t = (timeMs-StartTime) * Speed;
 
-	// Check for the condition where the StartTime is in the future.
-	if(StartTime > timeMs)
-		time = ((s32)timeMs - (s32)StartTime) * Speed;
-	else
-		time = (timeMs-StartTime) * Speed;
-
-//	node->setPosition(Center + Radius * ((VecU*cosf(time)) + (VecV*sinf(time))));
-	f32 r2 = RadiusEllipsoid == 0.f ? Radius : RadiusEllipsoid;
-	node->setPosition(Center + (Radius*cosf(time)*VecU) + (r2*sinf(time)*VecV ) );
+	node->setPosition(Center + Radius * ((VecU*cosf(t)) + (VecV*sinf(t))));
 }
 
 
@@ -63,7 +51,6 @@ void CSceneNodeAnimatorFlyCircle::serializeAttributes(io::IAttributes* out, io::
 	out->addFloat("Radius", Radius);
 	out->addFloat("Speed", Speed);
 	out->addVector3d("Direction", Direction);
-	out->addFloat("RadiusEllipsoid", Radius);
 }
 
 
@@ -80,20 +67,16 @@ void CSceneNodeAnimatorFlyCircle::deserializeAttributes(io::IAttributes* in, io:
 		Direction.set(0,1,0); // irrlicht 1.1 backwards compatibility
 	else
 		Direction.normalize();
-
-	RadiusEllipsoid = in->getAttributeAsFloat("RadiusEllipsoid");
 	init();
 }
-
 
 ISceneNodeAnimator* CSceneNodeAnimatorFlyCircle::createClone(ISceneNode* node, ISceneManager* newManager)
 {
 	CSceneNodeAnimatorFlyCircle * newAnimator = 
-		new CSceneNodeAnimatorFlyCircle(StartTime, Center, Radius, Speed, Direction, RadiusEllipsoid);
+		new CSceneNodeAnimatorFlyCircle(StartTime, Center, Radius, Speed, Direction);
 
 	return newAnimator;
 }
-
 
 } // end namespace scene
 } // end namespace irr

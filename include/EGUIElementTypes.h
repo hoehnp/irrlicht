@@ -82,9 +82,6 @@ enum EGUI_ELEMENT_TYPE
 	//! A window
 	EGUIET_WINDOW,
 
-	//! A Tree View
-	EGUIET_TREE_VIEW,
-
 	//! Not an element, amount of elements in there
 	EGUIET_COUNT,
 

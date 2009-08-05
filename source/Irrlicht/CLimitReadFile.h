@@ -19,13 +19,13 @@ namespace io
 		so that it may only start from a certain file position
 		and may only read until a certain file position.
 		This can be useful, for example for reading uncompressed files
-		in an archive (zip, tar).
+		in an archive (zip).
 	!*/
 	class CLimitReadFile : public IReadFile
 	{
 	public:
 
-		CLimitReadFile(IReadFile* alreadyOpenedFile, long pos, long areaSize, const core::string<c16>& name);
+		CLimitReadFile(IReadFile* alreadyOpenedFile, long areaSize, const c8* name);
 
 		virtual ~CLimitReadFile();
 
@@ -44,14 +44,16 @@ namespace io
 		virtual long getPos() const;
 
 		//! returns name of file
-		virtual const core::string<c16>& getFileName() const;
+		virtual const c8* getFileName() const;
 
 	private:
 
-		core::string<c16> Filename;
+		void init();
+
+		core::stringc Filename;
+		long AreaSize;
 		long AreaStart;
 		long AreaEnd;
-		long Pos;
 		IReadFile* File;
 	};
 

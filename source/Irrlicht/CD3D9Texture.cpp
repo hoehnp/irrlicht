@@ -30,11 +30,10 @@ namespace video
 {
 
 //! rendertarget constructor
-CD3D9Texture::CD3D9Texture(CD3D9Driver* driver, const core::dimension2d<u32>& size,
-						   const core::string<c16>& name, const ECOLOR_FORMAT format)
+CD3D9Texture::CD3D9Texture(CD3D9Driver* driver, const core::dimension2d<s32>& size, const char* name)
 : ITexture(name), Texture(0), RTTSurface(0), Driver(driver), DepthSurface(0),
 	TextureSize(size), ImageSize(size), Pitch(0),
-	HasMipMaps(false), HardwareMipMaps(false), IsRenderTarget(true), ColorFormat(ECF_UNKNOWN)
+	HasMipMaps(false), HardwareMipMaps(false), IsRenderTarget(true)
 {
 	#ifdef _DEBUG
 	setDebugName("CD3D9Texture");
@@ -44,13 +43,13 @@ CD3D9Texture::CD3D9Texture(CD3D9Driver* driver, const core::dimension2d<u32>& si
 	if (Device)
 		Device->AddRef();
 
-	createRenderTarget(format);
+	createRenderTarget();
 }
 
 
 //! constructor
 CD3D9Texture::CD3D9Texture(IImage* image, CD3D9Driver* driver,
-					   u32 flags, const core::string<c16>& name)
+					   u32 flags, const char* name)
 : ITexture(name), Texture(0), RTTSurface(0), Driver(driver), DepthSurface(0),
 TextureSize(0,0), ImageSize(0,0), Pitch(0),
 HasMipMaps(false), HardwareMipMaps(false), IsRenderTarget(false)
@@ -106,17 +105,15 @@ CD3D9Texture::~CD3D9Texture()
 	// we can release the surface. We only use the value of the pointer
 	// hence it is safe to use the dropped pointer...
 	if (DepthSurface)
-	{
 		if (DepthSurface->drop())
 			Driver->removeDepthSurface(DepthSurface);
-	}
 
 	if (Device)
 		Device->Release();
 }
 
 
-void CD3D9Texture::createRenderTarget(const ECOLOR_FORMAT format)
+void CD3D9Texture::createRenderTarget()
 {
 	// are texture size restrictions there ?
 	if(!Driver->queryFeature(EVDF_TEXTURE_NPOT))
@@ -127,27 +124,10 @@ void CD3D9Texture::createRenderTarget(const ECOLOR_FORMAT format)
 			os::Printer::log("RenderTarget size has to be a power of two", ELL_INFORMATION);
 	}
 
+	// get irrlicht format from backbuffer
+	ColorFormat = Driver->getColorFormat();
 	D3DFORMAT d3dformat = Driver->getD3DColorFormat();
-
-	if(ColorFormat == ECF_UNKNOWN)
-	{
-		// get irrlicht format from backbuffer
-		// (This will get overwritten by the custom format if it is provided, else kept.)
-		ColorFormat = Driver->getColorFormat();
-		setPitch(d3dformat);
-
-		// Use color format if provided.
-		if(format != ECF_UNKNOWN)
-		{
-			ColorFormat = format;
-			d3dformat = Driver->getD3DFormatFromColorFormat(format);
-			setPitch(d3dformat); // This will likely set pitch to 0 for now.
-		}
-	}
-	else
-	{
-		d3dformat = Driver->getD3DFormatFromColorFormat(ColorFormat);
-	}
+	setPitch(d3dformat);
 
 	// create texture
 	HRESULT hr;
@@ -278,7 +258,7 @@ bool CD3D9Texture::createMipMaps(u32 level)
 //! creates the hardware texture
 bool CD3D9Texture::createTexture(u32 flags, IImage * image)
 {
-	core::dimension2d<u32> optSize;
+	core::dimension2d<s32> optSize;
 	ImageSize = image->getDimension();
 
 	if (Driver->queryFeature(EVDF_TEXTURE_NPOT))
@@ -476,14 +456,14 @@ void CD3D9Texture::unlock()
 
 
 //! Returns original size of the texture.
-const core::dimension2d<u32>& CD3D9Texture::getOriginalSize() const
+const core::dimension2d<s32>& CD3D9Texture::getOriginalSize() const
 {
 	return ImageSize;
 }
 
 
 //! Returns (=size) of the texture.
-const core::dimension2d<u32>& CD3D9Texture::getSize() const
+const core::dimension2d<s32>& CD3D9Texture::getSize() const
 {
 	return TextureSize;
 }

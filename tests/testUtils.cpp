@@ -1,19 +1,16 @@
 // Copyright (C) 2008-2009 Colin MacDonald
 // No rights reserved: this software is in the public domain.
 
-#if defined(_MSC_VER)
-#define _CRT_SECURE_NO_WARNINGS 1
-#endif // _MSC_VER
-
+#define _CRT_SECURE_NO_WARNINGS
 #include "testUtils.h"
 #include <memory.h>
 #include <stdio.h>
 #include <assert.h>
 #include <stdarg.h>
 
-#if defined(TESTING_ON_WINDOWS)
-#include <windows.h> // For OutputDebugString()
-#endif // #if defined(TESTING_ON_WINDOWS)
+#if defined(_MSC_VER) && !defined(NDEBUG)
+#include <windows.h>
+#endif // #if defined(_MSC_VER) && !defined(NDEBUG)
 
 using namespace irr;
 
@@ -44,12 +41,9 @@ bool binaryCompareFiles(const char * fileName1, const char * fileName2)
 
 	(void)fseek(file1, 0, SEEK_END);
 	(void)fseek(file2, 0, SEEK_END);
-	const size_t file1Size = ftell(file1);
-	const size_t file2Size = ftell(file2);
-	if(file1Size != file2Size)
+	if(ftell(file1) != ftell(file2))
 	{
-		logTestString("binaryCompareFiles: Files are different sizes: %d vs %d\n", 
-			file1Size, file2Size);
+		logTestString("binaryCompareFiles: Files are different sizes\n");
 		(void)fclose(file1);
 		(void)fclose(file2);
 		return false;
@@ -176,14 +170,9 @@ bool takeScreenshotAndCompareAgainstReference(irr::video::IVideoDriver * driver,
 	}
 
 	irr::core::stringc driverName = driver->getName();
-	
-	// For OpenGL and Burning, chop the version number out. Other drivers have more stable version numbers.
-	// TA: Sorry Rogerborg. burnings video also has the version number inside;-)
-	//     maybe you sould take the getDriverType Info for this
+	// For OpenGL (only), chop the version number out. Other drivers have more stable version numbers.
 	if(driverName.find("OpenGL") > -1)
 		driverName = "OpenGL";
-	else if(driverName.find("Burning's Video") > -1)
-		driverName = "Burning's Video";
 
 	irr::core::stringc referenceFilename = "media/";
 	referenceFilename += driverName;
@@ -261,7 +250,7 @@ void logTestString(const char * format, ...)
 		(void)fflush(logFile);
 	}
 
-#if defined(TESTING_ON_WINDOWS)
+#if defined(_MSC_VER) && !defined(NDEBUG)
 	OutputDebugStringA(logString);
-#endif // #if defined(TESTING_ON_WINDOWS)
+#endif // #if defined(_MSC_VER) && !defined(NDEBUG)
 }

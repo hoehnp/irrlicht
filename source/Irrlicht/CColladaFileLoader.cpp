@@ -329,9 +329,9 @@ CColladaFileLoader::~CColladaFileLoader()
 
 //! Returns true if the file maybe is able to be loaded by this class.
 /** This decision should be based only on the file extension (e.g. ".cob") */
-bool CColladaFileLoader::isALoadableFileExtension(const core::string<c16>& filename) const
+bool CColladaFileLoader::isALoadableFileExtension(const c8* fileName) const
 {
-	return core::hasFileExtension ( filename, "xml", "dae" );
+	return strstr(fileName, ".xml") || strstr(fileName, ".dae");
 }
 
 
@@ -444,7 +444,7 @@ void CColladaFileLoader::readColladaSection(io::IXMLReaderUTF8* reader)
 		return;
 
 	const f32 version = core::fast_atof(core::stringc(reader->getAttributeValue("version")).c_str());
-	Version = core::floor32(version)*10000+core::round32(core::fract(version)*1000.0f);
+	Version = core::floor32(version)*10000+core::floor32(core::fract(version)*1000.0f);
 	// Version 1.4 can be checked for by if (Version >= 10400)
 
 	while(reader->read())
@@ -1487,10 +1487,6 @@ void CColladaFileLoader::readEffect(io::IXMLReaderUTF8* reader, SColladaEffect *
 				readIntsInsideElement(reader,&doubleSided,1);
 				if (doubleSided)
 				{
-					#ifdef COLLADA_READER_DEBUG
-					os::Printer::log("Setting double sided flag for effect.");
-					#endif
-
 					effect->Mat.setFlag(irr::video::EMF_BACK_FACE_CULLING,false);
 				}
 			}
@@ -1741,24 +1737,13 @@ void CColladaFileLoader::readGeometry(io::IXMLReaderUTF8* reader)
 			}
 			else
 			// trifans, and tristrips missing
-			if (doubleSidedNodeName == reader->getNodeName())
-			{
-				// read the extra flag for double sided polys
-				s32 doubleSided = 0;
-				readIntsInsideElement(reader,&doubleSided,1);
-				if (doubleSided)
-				{
-					#ifdef COLLADA_READER_DEBUG
-					os::Printer::log("Setting double sided flag for mesh.");
-					#endif
-					amesh->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING,false);
-				}
-			}
+			if (extraNodeName == nodeName)
+				skipSection(reader, false);
 			else
 			 // techniqueCommon or 'technique profile=common' must not be skipped
-			if ((techniqueCommonSectionName != nodeName) // Collada 1.2/1.3
-				&& (techniqueNodeName != nodeName) // Collada 1.4+
-				&& (extraNodeName != nodeName))
+			if ((techniqueCommonSectionName != nodeName) // Collada 1.4+
+				&& ((techniqueNodeName != nodeName) ||
+					(profileCOMMONAttributeName != reader->getAttributeValue("profile")))) // Collada 1.2/1.3
 			{
 				os::Printer::log("COLLADA loader warning: Wrong tag usage found in geometry", reader->getNodeName(), ELL_WARNING);
 				skipSection(reader, true); // ignore all other sections
@@ -1805,7 +1790,7 @@ void CColladaFileLoader::readGeometry(io::IXMLReaderUTF8* reader)
 	amesh->recalculateBoundingBox();
 
 	// create virtual file name
-	core::string<c16> filename = CurrentlyLoadingMesh;
+	core::stringc filename = CurrentlyLoadingMesh;
 	filename += '#';
 	filename += id;
 
@@ -2729,9 +2714,9 @@ video::ITexture* CColladaFileLoader::getTextureFromImage(core::stringc uri)
 			{
 				if (Images[i].Source.size() && Images[i].SourceIsFilename)
 				{
-					if (FileSystem->existFile(Images[i].Source))
-						return driver->getTexture(Images[i].Source);
-					return driver->getTexture((FileSystem->getFileDir(CurrentlyLoadingMesh)+"/"+Images[i].Source));
+					if (FileSystem->existFile(Images[i].Source.c_str()))
+						return driver->getTexture(Images[i].Source.c_str());
+					return driver->getTexture((FileSystem->getFileDir(CurrentlyLoadingMesh)+"/"+Images[i].Source).c_str());
 				}
 				else
 				if (Images[i].Source.size())

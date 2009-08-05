@@ -6,7 +6,7 @@
 #define __C_IRR_DEVICE_WINCE_H_INCLUDED__
 
 #include "IrrCompileConfig.h"
-#ifdef _IRR_COMPILE_WITH_WINDOWS_CE_DEVICE_
+#ifdef _IRR_USE_WINDOWS_CE_DEVICE_
 
 #include "CIrrDeviceStub.h"
 #include "IrrlichtDevice.h"
@@ -66,24 +66,15 @@ namespace irr
 		//! Notifies the device, that it has been resized
 		void OnResized();
 
-		//! Sets if the window should be resizable in windowed mode.
-		virtual void setResizable(bool resize=false);
-
-		//! Minimizes the window.
-		virtual void minimizeWindow();
-
-		//! Get the device type
-		virtual E_DEVICE_TYPE getType() const
-		{
-				return EIDT_WINCE;
-		}
+		//! Sets if the window should be resizeable in windowed mode.
+		virtual void setResizeAble(bool resize=false);
 
 		//! Implementation of the win32 cursor control
 		class CCursorControl : public gui::ICursorControl
 		{
 		public:
 
-			CCursorControl(const core::dimension2d<u32>& wsize, HWND hwnd, bool fullscreen)
+			CCursorControl(const core::dimension2d<s32>& wsize, HWND hwnd, bool fullscreen)
 				: WindowSize(wsize), InvWindowSize(0.0f, 0.0f), IsVisible(true),
 					HWnd(hwnd), BorderX(0), BorderY(0), UseReferenceRect(false)
 			{
@@ -141,7 +132,7 @@ namespace irr
 
 				if (UseReferenceRect)
 				{
-					SetCursorPos(ReferenceRect.UpperLeftCorner.X + x,
+					SetCursorPos(ReferenceRect.UpperLeftCorner.X + x, 
 								 ReferenceRect.UpperLeftCorner.Y + y);
 				}
 				else
@@ -265,5 +256,6 @@ namespace irr
 
 } // end namespace irr
 
-#endif // _IRR_COMPILE_WITH_WINDOWS_CE_DEVICE_
-#endif // __C_IRR_DEVICE_WINCE_H_INCLUDED__
+#endif
+#endif
+

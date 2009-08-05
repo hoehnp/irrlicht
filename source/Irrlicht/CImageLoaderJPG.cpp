@@ -35,9 +35,9 @@ CImageLoaderJPG::~CImageLoaderJPG()
 
 //! returns true if the file maybe is able to be loaded by this class
 //! based on the file extension (e.g. ".tga")
-bool CImageLoaderJPG::isALoadableFileExtension(const core::string<c16>& filename) const
+bool CImageLoaderJPG::isALoadableFileExtension(const c8* fileName) const
 {
-	return core::hasFileExtension ( filename, "jpg", "jpeg" );
+	return strstr(fileName, ".jpg") != 0;
 }
 
 
@@ -236,7 +236,7 @@ IImage* CImageLoaderJPG::loadImage(io::IReadFile* file) const
 
 	// convert image
 	IImage* image = new CImage(ECF_R8G8B8,
-		core::dimension2d<u32>(width, height), output);
+		core::dimension2d<s32>(width, height), output);
 
 	delete [] input;
 

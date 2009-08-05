@@ -120,7 +120,7 @@ void CParticleBoxEmitter::serializeAttributes(io::IAttributes* out, io::SAttribu
 
 
 //! Reads attributes of the object.
-void CParticleBoxEmitter::deserializeAttributes(io::IAttributes* in, io::SAttributeReadWriteOptions* options)
+s32 CParticleBoxEmitter::deserializeAttributes(s32 startIndex, io::IAttributes* in, io::SAttributeReadWriteOptions* options)
 {
 	// read data and correct input values here
 
@@ -162,6 +162,7 @@ void CParticleBoxEmitter::deserializeAttributes(io::IAttributes* in, io::SAttrib
 	MaxLifeTime = core::max_(MaxLifeTime, MinLifeTime);
 	MinLifeTime = core::min_(MinLifeTime, MaxLifeTime);
 
+	return in->findAttribute("MaxAngleDegrees");
 }
 
 

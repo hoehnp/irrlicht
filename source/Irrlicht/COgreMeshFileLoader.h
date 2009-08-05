@@ -34,7 +34,7 @@ public:
 
 	//! returns true if the file maybe is able to be loaded by this class
 	//! based on the file extension (e.g. ".cob")
-	virtual bool isALoadableFileExtension(const core::string<c16>& filename) const;
+	virtual bool isALoadableFileExtension(const c8* fileName) const;
 
 	//! creates/loads an animated mesh from the file.
 	//! \return Pointer to the created mesh. Returns 0 if loading failed.
@@ -92,7 +92,7 @@ private:
 	{
 		OgrePass() : AmbientTokenColor(false),
 			DiffuseTokenColor(false), SpecularTokenColor(false),
-			EmissiveTokenColor(false),
+			EmissiveTokenColor(false), ColorWrite(true),
 			MaxLights(8), PointSize(1.0f), PointSprites(false),
 			PointSizeMin(0), PointSizeMax(0) {}
 
@@ -102,6 +102,7 @@ private:
 		bool DiffuseTokenColor;
 		bool SpecularTokenColor;
 		bool EmissiveTokenColor;
+		bool ColorWrite;
 		u32 MaxLights;
 		f32 PointSize;
 		bool PointSprites;
@@ -134,10 +135,11 @@ private:
 	struct OgreVertexBuffer
 	{
 		OgreVertexBuffer() : BindIndex(0), VertexSize(0), Data(0) {}
+		void destroy() { delete [] Data; Data = 0; }
 
-		u16 BindIndex;
-		u16 VertexSize;
-		core::array<f32> Data;
+		u16 BindIndex,
+		VertexSize;
+		f32 *Data;
 	};
 
 	struct OgreVertexElement
@@ -199,9 +201,9 @@ private:
 	void readChunkData(io::IReadFile* file, ChunkData& data);
 	void readString(io::IReadFile* file, ChunkData& data, core::stringc& out);
 	void readBool(io::IReadFile* file, ChunkData& data, bool& out);
-	void readInt(io::IReadFile* file, ChunkData& data, s32* out, u32 num=1);
-	void readShort(io::IReadFile* file, ChunkData& data, u16* out, u32 num=1);
-	void readFloat(io::IReadFile* file, ChunkData& data, f32* out, u32 num=1);
+	void readInt(io::IReadFile* file, ChunkData& data, s32& out);
+	void readShort(io::IReadFile* file, ChunkData& data, u16& out);
+	void readFloat(io::IReadFile* file, ChunkData& data, f32& out);
 	void readVector(io::IReadFile* file, ChunkData& data, core::vector3df& out);
 
 	void composeMeshBufferMaterial(scene::IMeshBuffer* mb, const core::stringc& materialName);
@@ -214,6 +216,7 @@ private:
 	void readPass(io::IReadFile* file, OgreTechnique& technique);
 	void loadMaterials(io::IReadFile* file);
 	core::stringc getTextureFileName(const core::stringc& texture, core::stringc& model);
+	void setCurrentlyLoadingPath(io::IReadFile* file);
 	void clearMeshes();
 
 	io::IFileSystem* FileSystem;
@@ -222,7 +225,7 @@ private:
 	core::stringc Version;
 	bool SwapEndian;
 	core::array<OgreMesh> Meshes;
-	core::string<c16> CurrentlyLoadingFromPath;
+	core::stringc CurrentlyLoadingFromPath;
 
 	core::array<OgreMaterial> Materials;
 

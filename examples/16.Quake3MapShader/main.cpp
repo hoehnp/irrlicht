@@ -149,7 +149,7 @@ int IRRCALLCONV main(int argc, char* argv[])
 	}	
 
 	// create device and exit if creation failed
-	const core::dimension2du videoDim ( 800,600 );
+	const core::dimension2di videoDim ( 800,600 );
 
 	IrrlichtDevice *device = createDevice(driverType, videoDim, 32, false );
 
@@ -190,9 +190,6 @@ int IRRCALLCONV main(int argc, char* argv[])
 #endif
 
 
-
-	// Quake3 Shader controls Z-Writing
-	smgr->getParameters()->setAttribute(scene::ALLOW_ZWRITE_ON_TRANSPARENT, true);
 
 	/*
 	Now we can load the mesh by calling getMesh(). We get a pointer returned
@@ -254,7 +251,7 @@ int IRRCALLCONV main(int argc, char* argv[])
 			s32 shaderIndex = (s32) material.MaterialTypeParam2;
 
 			// the meshbuffer can be rendered without additional support, or it has no shader
-			const quake3::IShader *shader = mesh->getShader ( shaderIndex );
+			const quake3::SShader *shader = mesh->getShader ( shaderIndex );
 			if ( 0 == shader )
 			{
 				continue;
@@ -269,6 +266,18 @@ int IRRCALLCONV main(int argc, char* argv[])
 #ifndef SHOW_SHADER_NAME
 			smgr->addQuake3SceneNode ( meshBuffer, shader );
 #else
+			// Now add the MeshBuffer(s) with the current Shader to the Manager
+#if 0
+			if (	shader->name != "textures/cf/window-decal"
+				)
+				continue;
+#endif
+			if ( 0 == count )
+			{
+				core::stringc s;
+				//quake3::dumpShader ( s, shader );
+				printf ( s.c_str () );
+			}
 			count += 1;
 
 			node = smgr->addQuake3SceneNode ( meshBuffer, shader );
@@ -285,6 +294,8 @@ int IRRCALLCONV main(int argc, char* argv[])
 		}
 
 
+		// original mesh is not needed anymore
+		mesh->releaseMesh ( quake3::E_Q3_MESH_ITEMS );
 	}
 
 	/*
@@ -309,12 +320,12 @@ int IRRCALLCONV main(int argc, char* argv[])
 	*/
 	if ( mesh )
 	{
-		quake3::tQ3EntityList &entityList = mesh->getEntityList ();
+		const quake3::tQ3EntityList &entityList = mesh->getEntityList ();
 
-		quake3::IEntity search;
+		quake3::SEntity search;
 		search.name = "info_player_deathmatch";
 
-		s32 index = entityList.binary_search ( search );
+		s32 index = entityList.binary_search_const ( search );
 		if ( index >= 0 )
 		{
 			const quake3::SVarGroup *group;
@@ -411,12 +422,6 @@ int IRRCALLCONV main(int argc, char* argv[])
 			str += calls;
 			str += "/";
 			str += culled;
-			str += " Draw: ";
-			str += attr->getAttributeAsInt ( "drawn_solid" );
-			str += "/";
-			str += attr->getAttributeAsInt ( "drawn_transparent" );
-			str += "/";
-			str += attr->getAttributeAsInt ( "drawn_transparent_effect" );
 
 			device->setWindowCaption(str.c_str());
 			lastFPS = fps;

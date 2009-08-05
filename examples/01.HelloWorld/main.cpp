@@ -122,9 +122,13 @@ int main()
 	dimensions, etc.
 	*/
 	IrrlichtDevice *device =
-		createDevice( video::EDT_SOFTWARE, dimension2d<u32>(640, 480), 16,
+#ifdef _IRR_OSX_PLATFORM_
+		createDevice( video::EDT_OPENGL, dimension2d<s32>(640, 480), 16,
 			false, false, false, 0);
-
+#else
+		createDevice( video::EDT_SOFTWARE, dimension2d<s32>(640, 480), 16,
+			false, false, false, 0);
+#endif
 	if (!device)
 		return 1;
 
@@ -167,10 +171,7 @@ int main()
 	*/
 	IAnimatedMesh* mesh = smgr->getMesh("../../media/sydney.md2");
 	if (!mesh)
-	{
-		device->drop();
 		return 1;
-	}
 	IAnimatedMeshSceneNode* node = smgr->addAnimatedMeshSceneNode( mesh );
 
 	/*

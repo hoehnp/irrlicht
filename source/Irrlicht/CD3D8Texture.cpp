@@ -31,7 +31,7 @@ namespace video
 {
 
 //! rendertarget constructor
-CD3D8Texture::CD3D8Texture(CD3D8Driver* driver, const core::dimension2d<u32>& size, const core::string<c16>& name)
+CD3D8Texture::CD3D8Texture(CD3D8Driver* driver, core::dimension2d<s32> size, const char* name)
 : ITexture(name), Texture(0), RTTSurface(0), Driver(driver),
 	TextureSize(size), ImageSize(size), Pitch(0),
 	HasMipMaps(false), IsRenderTarget(true)
@@ -50,7 +50,7 @@ CD3D8Texture::CD3D8Texture(CD3D8Driver* driver, const core::dimension2d<u32>& si
 
 //! constructor
 CD3D8Texture::CD3D8Texture(IImage* image, CD3D8Driver* driver,
-				u32 flags, const core::string<c16>& name)
+				u32 flags, const char* name)
 : ITexture(name), Texture(0), RTTSurface(0), Driver(driver),
 TextureSize(0,0), ImageSize(0,0), Pitch(0),
 HasMipMaps(false), IsRenderTarget(false)
@@ -112,7 +112,7 @@ CD3D8Texture::~CD3D8Texture()
 //! creates the hardware texture
 bool CD3D8Texture::createTexture(video::IImage* image, u32 flags)
 {
-	core::dimension2d<u32> optSize;
+	core::dimension2d<s32> optSize;
 	ImageSize = image->getDimension();
 
 	if (Driver->queryFeature(EVDF_TEXTURE_NPOT))
@@ -148,17 +148,10 @@ bool CD3D8Texture::createTexture(video::IImage* image, u32 flags)
 	case ETCF_OPTIMIZED_FOR_SPEED:
 		format = D3DFMT_A1R5G5B5; break;
 	}
-
 	if (Driver->getTextureCreationFlag(video::ETCF_NO_ALPHA_CHANNEL))
 	{
 		if (format == D3DFMT_A8R8G8B8)
-
-#ifdef _IRR_XBOX_PLATFORM_
-			format = D3DFMT_X8R8G8B8;
-#else
 			format = D3DFMT_R8G8B8;
-#endif
-			
 		else if (format == D3DFMT_A1R5G5B5)
 			format = D3DFMT_R5G6B5;
 	}
@@ -174,13 +167,8 @@ bool CD3D8Texture::createTexture(video::IImage* image, u32 flags)
 		// try brute force 16 bit
 		if (format == D3DFMT_A8R8G8B8)
 			format = D3DFMT_A1R5G5B5;
-#ifdef _IRR_XBOX_PLATFORM_
-		else if (format == D3DFMT_X8R8G8B8)
-			format = D3DFMT_R5G6B5;
-#else
 		else if (format == D3DFMT_R8G8B8)
 			format = D3DFMT_R5G6B5;
-#endif
 		else
 			return false;
 
@@ -300,14 +288,14 @@ void CD3D8Texture::unlock()
 
 
 //! Returns original size of the texture.
-const core::dimension2d<u32>& CD3D8Texture::getOriginalSize() const
+const core::dimension2d<s32>& CD3D8Texture::getOriginalSize() const
 {
 	return ImageSize;
 }
 
 
 //! Returns (=size) of the texture.
-const core::dimension2d<u32>& CD3D8Texture::getSize() const
+const core::dimension2d<s32>& CD3D8Texture::getSize() const
 {
 	return TextureSize;
 }

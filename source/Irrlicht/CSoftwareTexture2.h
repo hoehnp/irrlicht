@@ -23,14 +23,7 @@ class CSoftwareTexture2 : public ITexture
 public:
 
 	//! constructor
-	enum eTex2Flags
-	{
-		GEN_MIPMAP		= 1,
-		IS_RENDERTARGET	= 2,
-		NP2_SIZE		= 4,
-		HAS_ALPHA		= 8
-	};
-	CSoftwareTexture2( IImage* surface, const core::string<c16>& name, u32 flags );
+	CSoftwareTexture2(IImage* surface, const char* name, bool generateMipLevels, bool isRenderTarget=false);
 
 	//! destructor
 	virtual ~CSoftwareTexture2();
@@ -48,7 +41,7 @@ public:
 	}
 
 	//! Returns original size of the texture.
-	virtual const core::dimension2d<u32>& getOriginalSize() const
+	virtual const core::dimension2d<s32>& getOriginalSize() const
 	{
 		//return MipMap[0]->getDimension();
 		return OrigSize;
@@ -61,7 +54,7 @@ public:
 	}
 
 	//! Returns (=size) of the texture.
-	virtual const core::dimension2d<u32>& getSize() const
+	virtual const core::dimension2d<s32>& getSize() const
 	{
 		return MipMap[MipMapLOD]->getDimension();
 	}
@@ -97,42 +90,36 @@ public:
 		return MipMap[MipMapLOD]->getPitch();
 	}
 
-	//! Regenerates the mip map levels of the texture. Useful after locking and
+	//! Regenerates the mip map levels of the texture. Useful after locking and 
 	//! modifying the texture
 	virtual void regenerateMipMapLevels();
 
 	//! Select a Mipmap Level
 	virtual void setCurrentMipMapLOD ( s32 lod )
 	{
-		if ( Flags & GEN_MIPMAP )
+		if ( HasMipMaps )
 			MipMapLOD = lod;
 	}
-
+	
 	//! support mipmaps
 	virtual bool hasMipMaps() const
 	{
-		return (Flags & GEN_MIPMAP ) != 0;
-	}
-
-	//! Returns if the texture has an alpha channel
-	virtual bool hasAlpha() const
-	{ 
-		return (Flags & HAS_ALPHA ) != 0;
+		return HasMipMaps;
 	}
 
 	//! is a render target
 	virtual bool isRenderTarget() const
 	{
-		return (Flags & IS_RENDERTARGET) != 0;
+		return IsRenderTarget;
 	}
 
 private:
-	core::dimension2d<u32> OrigSize;
+	core::dimension2d<s32> OrigSize;
 
 	CImage * MipMap[SOFTWARE_DRIVER_2_MIPMAPPING_MAX];
 
 	s32 MipMapLOD;
-	u32 Flags;
+	bool HasMipMaps, IsRenderTarget;
 };
 
 

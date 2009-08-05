@@ -49,13 +49,14 @@ namespace scene
 		struct SShadowVolume
 		{
 			core::vector3df* vertices;
-			u32 count;
-			u32 size;
+			s32 count;
+			s32 size;
 		};
 
 		void createShadowVolume(const core::vector3df& pos);
-		void createZPassVolume(s32 faceCount, u32& numEdges, core::vector3df light, SShadowVolume* svp, bool caps);
-		void createZFailVolume(s32 faceCount, u32& numEdges, const core::vector3df& light, SShadowVolume* svp);
+		void createZPassVolume(s32 faceCount, s32& numEdges, core::vector3df light, SShadowVolume* svp, bool caps);
+		void createZFailVolume(s32 faceCount, s32& numEdges, const core::vector3df& light, SShadowVolume* svp);
+		void addEdge(s32& numEdges, u16 v0, u16 v1);
 
 		//! Generates adjacency information based on mesh indices.
 		void calculateAdjacency(f32 epsilon=0.0001f);
@@ -65,19 +66,23 @@ namespace scene
 		// a shadow volume for every light
 		core::array<SShadowVolume> ShadowVolumes;
 
-		core::array<core::vector3df> Vertices;
-		core::array<u16> Indices;
-		core::array<u16> Adjacency;
-		core::array<u16> Edges;
+		core::vector3df* Vertices;
+		u16* Indices;
+		u16* Adjacency;
+		u16* Edges;
 		// used for zfail method, if face is front facing
-		core::array<bool> FaceData;
+		bool* FaceData;
 
 		const scene::IMesh* ShadowMesh;
 
-		u32 IndexCount;
-		u32 VertexCount;
+		s32 IndexCountAllocated;
+		s32 VertexCountAllocated;
+		s32 IndexCount;
+		s32 VertexCount;
 
-		u32 ShadowVolumesUsed;
+		s32 EdgeCount;
+
+		s32 ShadowVolumesUsed;
 
 		f32 Infinity;
 

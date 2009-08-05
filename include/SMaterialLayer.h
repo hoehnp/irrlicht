@@ -45,9 +45,7 @@ namespace video
 				TextureWrap(ETC_REPEAT),
 				BilinearFilter(true),
 				TrilinearFilter(false),
-				AnisotropicFilter(0),
-				LODBias(0),
-				TextureMatrix(0)
+				AnisotropicFilter(false), TextureMatrix(0)
 			{}
 
 		//! Copy constructor
@@ -101,7 +99,6 @@ namespace video
 			BilinearFilter = other.BilinearFilter;
 			TrilinearFilter = other.TrilinearFilter;
 			AnisotropicFilter = other.AnisotropicFilter;
-			LODBias = other.LODBias;
 
 			return *this;
 		}
@@ -110,31 +107,22 @@ namespace video
 		ITexture* Texture;
 
 		//! Texture Clamp Mode
-		u8 TextureWrap;
+		E_TEXTURE_CLAMP TextureWrap;
 
 		//! Is bilinear filtering enabled? Default: true
-		bool BilinearFilter:1;
+		bool BilinearFilter;
 
 		//! Is trilinear filtering enabled? Default: false
 		/** If the trilinear filter flag is enabled,
 		the bilinear filtering flag is ignored. */
-		bool TrilinearFilter:1;
+		bool TrilinearFilter;
 
-		//! Is anisotropic filtering enabled? Default: 0, disabled
+		//! Is anisotropic filtering enabled? Default: false
 		/** In Irrlicht you can use anisotropic texture filtering
 		in conjunction with bilinear or trilinear texture
 		filtering to improve rendering results. Primitives
-		will look less blurry with this flag switched on. The number gives 
-		the maximal anisotropy degree, and is often in the range 2-16. 
-		Value 1 is equivalent to 0, but should be avoided. */
-		u8 AnisotropicFilter;
-
-		//! Bias for the mipmap choosing decision.
-		/** This value can make the textures more or less blurry than with the
-		default value of 0. The value (divided by 8.f) is added to the mipmap level
-		chosen initially, and thus takes a smaller mipmap for a region
-		if the value is positive. */
-		s8 LODBias;
+		will look less blurry with this flag switched on. */
+		bool AnisotropicFilter;
 
 		//! Gets the texture transformation matrix
 		/** \return Texture matrix of this layer. */
@@ -181,8 +169,7 @@ namespace video
 				TextureWrap != b.TextureWrap ||
 				BilinearFilter != b.BilinearFilter ||
 				TrilinearFilter != b.TrilinearFilter ||
-				AnisotropicFilter != b.AnisotropicFilter ||
-				LODBias != b.LODBias;
+				AnisotropicFilter != b.AnisotropicFilter;
 			if (different)
 				return true;
 			else

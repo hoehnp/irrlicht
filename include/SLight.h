@@ -85,7 +85,7 @@ struct SLight
 	E_LIGHT_TYPE Type;
 
 	//! Read-ONLY! Does the light cast shadows?
-	bool CastShadows:1;
+	bool CastShadows;
 };
 
 } // end namespace video

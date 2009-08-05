@@ -6,13 +6,13 @@
 #define __C_SCENE_NODE_ANIMATOR_TEXTURE_H_INCLUDED__
 
 #include "irrArray.h"
-#include "ISceneNodeAnimatorFinishing.h"
+#include "ISceneNode.h"
 
 namespace irr
 {
 namespace scene
 {
-	class CSceneNodeAnimatorTexture : public ISceneNodeAnimatorFinishing
+	class CSceneNodeAnimatorTexture : public ISceneNodeAnimator
 	{
 	public:
 
@@ -48,6 +48,7 @@ namespace scene
 		core::array<video::ITexture*> Textures;
 		u32 TimePerFrame;
 		u32 StartTime;
+		u32 EndTime;
 		bool Loop;
 	};
 

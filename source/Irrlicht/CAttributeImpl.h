@@ -186,7 +186,7 @@ public:
 		Value = core::fast_atof(text);
 	}
 
-	virtual E_ATTRIBUTE_TYPE getType() const
+	virtual E_ATTRIBUTE_TYPE getType() const 
 	{
 		return EAT_FLOAT;
 	}
@@ -212,7 +212,7 @@ class CNumbersAttribute : public IAttribute
 {
 public:
 
-	CNumbersAttribute(const char* name, video::SColorf value) :
+	CNumbersAttribute(const char* name, video::SColorf value) : 
 		ValueI(), ValueF(), Count(4), IsFloat(true)
 	{
 		Name = name;
@@ -233,7 +233,7 @@ public:
 	}
 
 
-	CNumbersAttribute(const char* name, core::vector3df value) :
+	CNumbersAttribute(const char* name, core::vector3df value) : 
 		ValueI(), ValueF(), Count(3), IsFloat(true)
 	{
 		Name = name;
@@ -242,7 +242,23 @@ public:
 		ValueF.push_back(value.Z);
 	}
 
-	CNumbersAttribute(const char* name, core::rect<s32> value) :
+	CNumbersAttribute(const char* name, core::position2df value) : 
+		ValueI(), ValueF(), Count(2), IsFloat(true)
+	{
+		Name = name;
+		ValueF.push_back(value.X);
+		ValueF.push_back(value.Y);
+	}
+
+	CNumbersAttribute(const char* name, core::position2di value) : 
+		ValueI(), ValueF(), Count(2), IsFloat(false)
+	{
+		Name = name;
+		ValueI.push_back(value.X);
+		ValueI.push_back(value.Y);
+	}
+
+	CNumbersAttribute(const char* name, core::rect<s32> value) : 
 		ValueI(), ValueF(), Count(4), IsFloat(false)
 	{
 		Name = name;
@@ -252,7 +268,7 @@ public:
 		ValueI.push_back(value.LowerRightCorner.Y);
 	}
 
-	CNumbersAttribute(const char* name, core::rect<f32> value) :
+	CNumbersAttribute(const char* name, core::rect<f32> value) : 
 		ValueI(), ValueF(), Count(4), IsFloat(true)
 	{
 		Name = name;
@@ -262,7 +278,7 @@ public:
 		ValueF.push_back(value.LowerRightCorner.Y);
 	}
 
-	CNumbersAttribute(const char* name, core::matrix4 value) :
+	CNumbersAttribute(const char* name, core::matrix4 value) : 
 		ValueI(), ValueF(), Count(16), IsFloat(true)
 	{
 		Name = name;
@@ -271,7 +287,7 @@ public:
 				ValueF.push_back(value(r,c));
 	}
 
-	CNumbersAttribute(const char* name, core::quaternion value) :
+	CNumbersAttribute(const char* name, core::quaternion value) : 
 		ValueI(), ValueF(), Count(4), IsFloat(true)
 	{
 		Name = name;
@@ -281,7 +297,7 @@ public:
 		ValueF.push_back(value.W);
 	}
 
-	CNumbersAttribute(const char* name, core::aabbox3d<f32> value) :
+	CNumbersAttribute(const char* name, core::aabbox3d<f32> value) : 
 		ValueI(), ValueF(), Count(6), IsFloat(true)
 	{
 		Name = name;
@@ -293,7 +309,7 @@ public:
 		ValueF.push_back(value.MaxEdge.Z);
 	}
 
-	CNumbersAttribute(const char* name, core::plane3df value) :
+	CNumbersAttribute(const char* name, core::plane3df value) : 
 		ValueI(), ValueF(), Count(4), IsFloat(true)
 	{
 		Name = name;
@@ -303,7 +319,7 @@ public:
 		ValueF.push_back(value.D);
 	}
 
-	CNumbersAttribute(const char* name, core::triangle3df value) :
+	CNumbersAttribute(const char* name, core::triangle3df value) : 
 		ValueI(), ValueF(), Count(9), IsFloat(true)
 	{
 		Name = name;
@@ -318,7 +334,7 @@ public:
 		ValueF.push_back(value.pointC.Z);
 	}
 
-	CNumbersAttribute(const char* name, core::vector2df value) :
+	CNumbersAttribute(const char* name, core::vector2df value) : 
 		ValueI(), ValueF(), Count(2), IsFloat(true)
 	{
 		Name = name;
@@ -326,7 +342,7 @@ public:
 		ValueF.push_back(value.Y);
 	}
 
-	CNumbersAttribute(const char* name, core::vector2di value) :
+	CNumbersAttribute(const char* name, core::vector2di value) : 
 		ValueI(), ValueF(), Count(2), IsFloat(false)
 	{
 		Name = name;
@@ -334,7 +350,7 @@ public:
 		ValueI.push_back(value.Y);
 	}
 
-	CNumbersAttribute(const char* name, core::line2di value) :
+	CNumbersAttribute(const char* name, core::line2di value) : 
 		ValueI(), ValueF(), Count(4), IsFloat(false)
 	{
 		Name = name;
@@ -344,7 +360,7 @@ public:
 		ValueI.push_back(value.end.Y);
 	}
 
-	CNumbersAttribute(const char* name, core::line2df value) :
+	CNumbersAttribute(const char* name, core::line2df value) : 
 		ValueI(), ValueF(), Count(4), IsFloat(true)
 	{
 		Name = name;
@@ -354,7 +370,7 @@ public:
 		ValueF.push_back(value.end.Y);
 	}
 
-	CNumbersAttribute(const char* name, core::line3df value) :
+	CNumbersAttribute(const char* name, core::line3df value) : 
 		ValueI(), ValueF(), Count(6), IsFloat(true)
 	{
 		Name = name;
@@ -366,7 +382,7 @@ public:
 		ValueF.push_back(value.end.Z);
 	}
 
-	CNumbersAttribute(const char* name, core::dimension2du value) :
+	CNumbersAttribute(const char* name, core::dimension2di value) : 
 		ValueI(), ValueF(), Count(2), IsFloat(false)
 	{
 		Name = name;
@@ -375,7 +391,7 @@ public:
 	}
 
 
-	CNumbersAttribute(const char* name, core::dimension2df value) :
+	CNumbersAttribute(const char* name, core::dimension2df value) : 
 		ValueI(), ValueF(), Count(2), IsFloat(true)
 	{
 		Name = name;
@@ -384,7 +400,7 @@ public:
 	}
 
 
-
+	
 	// getting values
 	virtual s32 getInt()
 	{
@@ -399,20 +415,20 @@ public:
 
 	virtual f32 getFloat()
 	{
-		if (Count==0)
+		if (Count==0) 
 			return 0.0f;
 
 		if (IsFloat)
 			return ValueF[0];
 		else
-			return (f32)ValueI[0];
+			return (f32)ValueI[0];	
 	}
 
 	virtual bool getBool()
 	{
 		// return true if any number is nonzero
 		bool ret=false;
-
+		
 		for (u32 i=0; i < Count; ++i)
 			if ( IsFloat ? (ValueF[i] != 0) : (ValueI[i] != 0) )
 			{
@@ -421,14 +437,14 @@ public:
 			}
 
 		return ret;
-
+		
 	}
 
 
 	virtual core::stringc getString()
 	{
 		core::stringc outstr;
-
+		
 		for (u32 i=0; i <Count; ++i)
 		{
 			if (IsFloat)
@@ -444,7 +460,7 @@ public:
 	virtual core::stringw getStringW()
 	{
 		core::stringw outstr;
-
+		
 		for (u32 i=0; i <Count; ++i)
 		{
 			if (IsFloat)
@@ -551,14 +567,14 @@ public:
 		{
 			for (u32 r=0; r<4; ++r)
 				for (u32 c=0; c<4; ++c)
-					if (Count > c+r*4)
+					if (Count > c+r*4) 
 						ret(r,c) = ValueF[c+r*4];
 		}
 		else
 		{
 			for (u32 r=0; r<4; ++r)
 				for (u32 c=0; c<4; ++c)
-					if (Count > c+r*4)
+					if (Count > c+r*4) 
 						ret(r,c) = (f32)ValueI[c+r*4];
 		}
 		return ret;
@@ -731,7 +747,7 @@ public:
 		return ValueI;
 	}
 
-
+	
 	// setting values
 	virtual void setInt(s32 intValue)
 	{
@@ -788,14 +804,14 @@ public:
 					f32 c = 0;
 					P = core::fast_atof_move(P, c);
 					ValueI[i] = (s32)c;
-
+					
 				}
 			}
 		}
 		// todo: warning message
 		//if (i < Count-1)
 		//{
-		//
+		//	
 		//}
 	}
 
@@ -896,14 +912,14 @@ public:
 		{
 			for (u32 r=0; r<4; ++r)
 				for (u32 c=0; c<4; ++c)
-					if (Count > c+r*4)
+					if (Count > c+r*4) 
 						ValueF[c+r*4] = value(r,c);
 		}
 		else
 		{
 			for (u32 r=0; r<4; ++r)
 				for (u32 c=0; c<4; ++c)
-					if (Count > c+r*4)
+					if (Count > c+r*4) 
 						ValueI[c+r*4] = (s32)value(r,c);
 		}
 	}
@@ -1066,7 +1082,7 @@ public:
 		}
 	}
 
-	virtual void setDimension2d(core::dimension2du v)
+	virtual void setDimension2d(core::dimension2di v)
 	{
 		reset();
 		if (IsFloat)
@@ -1189,7 +1205,7 @@ public:
 		setInt((s32)floatValue);
 	}
 
-	virtual E_ATTRIBUTE_TYPE getType() const
+	virtual E_ATTRIBUTE_TYPE getType() const 
 	{
 		return EAT_COLORF;
 	}
@@ -1237,15 +1253,15 @@ public:
 	virtual core::stringw getStringW()
 	{
 		char tmp[10];
-		const video::SColor c = getColor();
-		sprintf(tmp, "%02x%02x%02x%02x", c.getAlpha(), c.getRed(), c.getBlue(), c.getGreen());
+		video::SColor c = getColor();
+		sprintf(tmp, "%08x", c.color);
 		return core::stringw(tmp);
 	}
 
 	virtual void setString(const char* text)
 	{
-		u32 c;
-		sscanf(text, "%08x", &c);
+		video::SColor c;
+		sscanf(text, "%08x", &c.color);
 		setColor(c);
 	}
 
@@ -1472,9 +1488,9 @@ public:
 
 
 // vector2df
-// dimension2du
+// dimension2di
 
-/*
+/* 
 	Special attributes
 */
 
@@ -1591,7 +1607,7 @@ public:
 		Name = name;
 		setString(value);
 	}
-
+	
 	CStringAttribute(const char* name, const wchar_t* value)
 	{
 		IsStringW = true;
@@ -1610,7 +1626,7 @@ public:
 	{
 		if (IsStringW)
 			return atoi(core::stringc(ValueW.c_str()).c_str());
-		else
+		else 
 			return atoi(Value.c_str());
 	}
 
@@ -1831,6 +1847,14 @@ public:
 		return Value ? Value->getName() : core::stringc();
 	}
 
+	virtual void getString(char* target)
+	{
+		if (Value)
+			strcpy(target, Value->getName().c_str());
+		else
+			target[0] = 0x0;
+	}
+
 	virtual void setString(const char* text)
 	{
 		if (Driver)
@@ -1916,25 +1940,22 @@ public:
 		Value = value;
 	}
 
-	virtual s32 getInt()
-	{
+	virtual s32 getInt() 
+	{ 
 		return *(s32*)(&Value);
 	}
 
 	virtual bool getBool()
-	{
+	{ 
 		return (Value != 0);
 	}
 
-	virtual core::stringw getStringW()
+	virtual void getString(char* target) 
 	{
-		wchar_t buf[32];
-		swprintf(buf, 32, L"0x%x", *(int*)(&Value));
-
-		return core::stringw(buf);
+		sprintf(target, "0x%x", *(int*)(&Value));
 	}
 
-	virtual void setString(const char* text)
+	virtual void setString(const char* text) 
 	{
 		sscanf(text, "0x%x", (unsigned int*)(&Value));
 	}
@@ -1954,7 +1975,7 @@ public:
 		return Value;
 	}
 
-
+	
 	virtual const wchar_t* getTypeString() const
 	{
 		return L"userPointer";

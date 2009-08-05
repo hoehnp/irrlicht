@@ -123,9 +123,9 @@ void CLMTSMeshFileLoader::cleanup()
 }
 
 
-bool CLMTSMeshFileLoader::isALoadableFileExtension(const core::string<c16>& filename) const
+bool CLMTSMeshFileLoader::isALoadableFileExtension(const c8* filename) const
 {
-	return core::hasFileExtension ( filename, "lmts" );
+	return strstr(filename, ".lmts") != 0;
 }
 
 

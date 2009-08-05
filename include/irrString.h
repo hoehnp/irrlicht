@@ -27,48 +27,11 @@ This means that c8 strings are treated as ASCII/Latin-1, not UTF-8, and
 are simply expanded to the equivalent wchar_t, while Unicode/wchar_t 
 characters are truncated to 8-bit ASCII/Latin-1 characters, discarding all
 other information in the wchar_t.
+
+Known bugs:
+Special characters like umlauts are ignored in the
+methods make_upper, make_lower and equals_ignore_case.
 */
-
-enum eLocaleID
-{
-	IRR_LOCALE_ANSI = 0,
-	IRR_LOCALE_GERMAN = 1
-};
-
-static eLocaleID locale_current = IRR_LOCALE_ANSI;
-static inline void locale_set ( eLocaleID id )
-{
-	locale_current = id;
-}
-
-//! Returns a character converted to lower case
-static inline u32 locale_lower ( u32 x )
-{
-	switch ( locale_current )
-	{
-		case IRR_LOCALE_GERMAN:
-		case IRR_LOCALE_ANSI:
-			break;
-	}
-	// ansi
-	return x >= 'A' && x <= 'Z' ? x + 0x20 : x;
-}
-
-//! Returns a character converted to upper case
-static inline u32 locale_upper ( u32 x )
-{
-	switch ( locale_current )
-	{
-		case IRR_LOCALE_GERMAN:
-		case IRR_LOCALE_ANSI:
-			break;
-	}
-
-	// ansi
-	return x >= 'a' && x <= 'z' ? x + ( 'A' - 'a' ) : x;
-}
-
-
 template <typename T, typename TAlloc = irrAllocator<T> >
 class string
 {
@@ -222,7 +185,7 @@ public:
 
 
 	//! Destructor
-	virtual ~string()
+	~string()
 	{
 		allocator.deallocate(array); // delete [] array;
 	}
@@ -412,15 +375,22 @@ public:
 	void make_lower()
 	{
 		for (u32 i=0; i<used; ++i)
-			array[i] = locale_lower ( array[i] );
+			array[i] = ansi_lower ( array[i] );
 	}
 
 
 	//! Makes the string upper case.
 	void make_upper()
 	{
+		const T a = (T)'a';
+		const T z = (T)'z';
+		const T diff = (T)'A' - a;
+
 		for (u32 i=0; i<used; ++i)
-			array[i] = locale_upper ( array[i] );
+		{
+			if (array[i]>=a && array[i]<=z)
+				array[i] += diff;
+		}
 	}
 
 
@@ -430,27 +400,10 @@ public:
 	bool equals_ignore_case(const string<T>& other) const
 	{
 		for(u32 i=0; array[i] && other[i]; ++i)
-			if (locale_lower( array[i]) != locale_lower(other[i]))
+			if (ansi_lower(array[i]) != ansi_lower(other[i]))
 				return false;
 
 		return used == other.used;
-	}
-
-	//! Compares the strings ignoring case.
-	/** \param other: Other string to compare.
-		\param sourcePos: where to start to compare in the string
-	\return True if the strings are equal ignoring case. */
-	bool equals_substring_ignore_case(const string<T>&other, const s32 sourcePos = 0 ) const
-	{
-		if ( (u32) sourcePos > used )
-			return false;
-			
-		u32 i;
-		for( i=0; array[sourcePos + i] && other[i]; ++i)
-			if (locale_lower( array[sourcePos + i]) != locale_lower(other[i]))
-				return false;
-
-		return array[sourcePos + i] == 0 && other[i] == 0;
 	}
 
 
@@ -461,7 +414,7 @@ public:
 	{
 		for(u32 i=0; array[i] && other.array[i]; ++i)
 		{
-			s32 diff = (s32) locale_lower ( array[i] ) - (s32) locale_lower ( other.array[i] );
+			s32 diff = (s32) ansi_lower ( array[i] ) - (s32) ansi_lower ( other.array[i] );
 			if ( diff )
 				return diff < 0;
 		}
@@ -473,7 +426,7 @@ public:
 	//! compares the first n characters of the strings
 	/** \param other Other string to compare.
 	\param n Number of characters to compare
-	\return True if the n first characters of both strings are equal. */
+	\return True if the n first characters of this string are smaller. */
 	bool equalsn(const string<T>& other, u32 n) const
 	{
 		u32 i;
@@ -490,7 +443,7 @@ public:
 	//! compares the first n characters of the strings
 	/** \param str Other string to compare.
 	\param n Number of characters to compare
-	\return True if the n first characters of both strings are equal. */
+	\return True if the n first characters of this string are smaller. */
 	bool equalsn(const T* const str, u32 n) const
 	{
 		if (!str)
@@ -916,32 +869,22 @@ public:
 		--used;
 	}
 
-	//! verify the existing string.
-	void validate()
+private:
+/*
+	T toLower(const T& t) const
 	{
-		// terminate on existing null
-		for (u32 i=0; i<allocated; ++i)
-		{
-			if (array[i] == 0)
-			{
-				used = i + 1;
-				return;
-			}
-		}
-
-		// terminate
-		if ( allocated > 0 )
-		{
-			used = allocated - 1;
-			array[used] = 0;
-		}
+		if (t>=(T)'A' && t<=(T)'Z')
+			return t + ((T)'a' - (T)'A');
 		else
-		{
-			used = 0;
-		}
+			return t;
+	}
+*/
+	//! Returns a character converted to lower case
+	inline T ansi_lower ( u32 x ) const
+	{
+		return x >= 'A' && x <= 'Z' ? (T) x + 0x20 : (T) x;
 	}
 
-private:
 
 	//! Reallocate the array, make it bigger or smaller
 	void reallocate(u32 new_size)
@@ -961,12 +904,13 @@ private:
 		allocator.deallocate(old_array); // delete [] old_array;
 	}
 
+
 	//--- member variables
 
 	T* array;
-	TAlloc allocator;
 	u32 allocated;
 	u32 used;
+	TAlloc allocator;
 };
 
 
@@ -975,7 +919,6 @@ typedef string<c8> stringc;
 
 //! Typedef for wide character strings
 typedef string<wchar_t> stringw;
-
 
 } // end namespace core
 } // end namespace irr

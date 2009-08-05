@@ -16,10 +16,8 @@
 #else
 #if defined(_IRR_OPENGL_USE_EXTPOINTER_)
 	#define GL_GLEXT_LEGACY 1
-#else
-	#define GL_GLEXT_PROTOTYPES 1
 #endif
-#if defined(_IRR_OSX_PLATFORM_)
+#if defined(_IRR_USE_OSX_DEVICE_)
 	#include <OpenGL/gl.h>
 #else
 	#include <GL/gl.h>

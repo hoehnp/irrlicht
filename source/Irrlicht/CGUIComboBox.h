@@ -35,14 +35,8 @@ namespace gui
 		//! returns string of an item. the idx may be a value from 0 to itemCount-1
 		virtual const wchar_t* getItem(u32 idx) const;
 
-		//! Returns item data of an item. the idx may be a value from 0 to itemCount-1
-		virtual u32 getItemData(u32 idx) const;
-
-		//! Returns index based on item data
-		virtual s32 getIndexForItemData( u32 data ) const;
-
 		//! adds an item and returns the index of it
-		virtual u32 addItem(const wchar_t* text, u32 data);
+		virtual u32 addItem(const wchar_t* text);
 
 		//! Removes an item from the combo box.
 		virtual void removeItem(u32 id);
@@ -83,18 +77,7 @@ namespace gui
 		IGUIStaticText* SelectedText;
 		IGUIListBox* ListBox;
 		IGUIElement *LastFocus;
-
-
-		struct SComboData
-		{
-			SComboData ( const wchar_t * text, u32 data )
-				: Name (text), Data ( data ) {}
-
-			core::stringw Name;
-			u32 Data;
-		};
-		core::array< SComboData > Items;
-
+		core::array< core::stringw > Items;
 		s32 Selected;
 		EGUI_ALIGNMENT HAlign, VAlign;
 		bool HasFocus;

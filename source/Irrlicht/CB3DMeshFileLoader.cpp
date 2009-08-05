@@ -12,7 +12,6 @@
 #include "CB3DMeshFileLoader.h"
 
 #include "IVideoDriver.h"
-#include "IFileSystem.h"
 #include "os.h"
 
 #ifdef _DEBUG
@@ -37,9 +36,9 @@ CB3DMeshFileLoader::CB3DMeshFileLoader(scene::ISceneManager* smgr)
 
 //! returns true if the file maybe is able to be loaded by this class
 //! based on the file extension (e.g. ".bsp")
-bool CB3DMeshFileLoader::isALoadableFileExtension(const core::string<c16>& filename) const
+bool CB3DMeshFileLoader::isALoadableFileExtension(const c8* fileName) const
 {
-	return core::hasFileExtension ( filename, "b3d" );
+	return strstr(fileName, ".b3d") != 0;
 }
 
 
@@ -154,11 +153,10 @@ bool CB3DMeshFileLoader::load()
 
 bool CB3DMeshFileLoader::readChunkNODE(CSkinnedMesh::SJoint *InJoint)
 {
-	CSkinnedMesh::SJoint *Joint = AnimatedMesh->createJoint(InJoint);
-	readString(Joint->Name);
+	const core::stringc JointName = readString();
 
 #ifdef _B3D_READER_DEBUG
-	os::Printer::log("read ChunkNODE", Joint->Name.c_str());
+	os::Printer::log("read ChunkNODE", JointName.c_str());
 #endif
 
 	f32 position[3], scale[3], rotation[4];
@@ -167,6 +165,9 @@ bool CB3DMeshFileLoader::readChunkNODE(CSkinnedMesh::SJoint *InJoint)
 	readFloats(scale, 3);
 	readFloats(rotation, 4);
 
+	CSkinnedMesh::SJoint *Joint = AnimatedMesh->createJoint(InJoint);
+
+	Joint->Name = JointName;
 	Joint->Animatedposition = core::vector3df(position[0],position[1],position[2]) ;
 	Joint->Animatedscale = core::vector3df(scale[0],scale[1],scale[2]);
 	Joint->Animatedrotation = core::quaternion(rotation[1], rotation[2], rotation[3], rotation[0]);
@@ -507,7 +508,7 @@ bool CB3DMeshFileLoader::readChunkTRIS(scene::SSkinMeshBuffer *MeshBuffer, u32 M
 
 				if (B3dMaterial)
 				{
-					// Apply Material/Color/etc...
+					// Apply Material/Colour/etc...
 					video::S3DVertex *Vertex=MeshBuffer->getVertex(MeshBuffer->getVertexCount()-1);
 
 					if (Vertex->Color.getAlpha() == 255)
@@ -605,27 +606,27 @@ bool CB3DMeshFileLoader::readChunkKEYS(CSkinnedMesh::SJoint *InJoint)
 		frame = os::Byteswap::byteswap(frame);
 		#endif
 
-		// Add key frames, frames in Irrlicht are zero-based
+		// Add key frames
 		f32 data[4];
 		if (flags & 1)
 		{
 			readFloats(data, 3);
 			CSkinnedMesh::SPositionKey *Key=AnimatedMesh->createPositionKey(InJoint);
-			Key->frame = (f32)frame-1;
+			Key->frame = (f32)frame;
 			Key->position.set(data[0], data[1], data[2]);
 		}
 		if (flags & 2)
 		{
 			readFloats(data, 3);
 			CSkinnedMesh::SScaleKey *Key=AnimatedMesh->createScaleKey(InJoint);
-			Key->frame = (f32)frame-1;
+			Key->frame = (f32)frame;
 			Key->scale.set(data[0], data[1], data[2]);
 		}
 		if (flags & 4)
 		{
 			readFloats(data, 4);
 			CSkinnedMesh::SRotationKey *Key=AnimatedMesh->createRotationKey(InJoint);
-			Key->frame = (f32)frame-1;
+			Key->frame = (f32)frame;
 			// meant to be in this order since b3d stores W first
 			Key->rotation.set(data[1], data[2], data[3], data[0]);
 		}
@@ -671,8 +672,8 @@ bool CB3DMeshFileLoader::readChunkTEXS()
 		Textures.push_back(SB3dTexture());
 		SB3dTexture& B3dTexture = Textures.getLast();
 
-		readString(B3dTexture.TextureName);
-		B3dTexture.TextureName.replace('\\','/');
+		B3dTexture.TextureName=readString();
+		B3dTexture.TextureName=stripPathFromString(B3DFile->getFileName(),true) + stripPathFromString(B3dTexture.TextureName,false);
 #ifdef _B3D_READER_DEBUG
 		os::Printer::log("read Texture", B3dTexture.TextureName.c_str());
 #endif
@@ -721,10 +722,9 @@ bool CB3DMeshFileLoader::readChunkBRUS()
 	{
 		// This is what blitz basic calls a brush, like a Irrlicht Material
 
-		core::stringc name;
-		readString(name);
+		const core::stringc name = readString();
 #ifdef _B3D_READER_DEBUG
-		os::Printer::log("read Material");
+	os::Printer::log("read Material", name.c_str());
 #endif
 		Materials.push_back(SB3dMaterial());
 		SB3dMaterial& B3dMaterial=Materials.getLast();
@@ -878,11 +878,11 @@ bool CB3DMeshFileLoader::readChunkBRUS()
 		if (B3dMaterial.fx & 16) //disable backface culling
 			B3dMaterial.Material.BackfaceCulling = false;
 
-		if (B3dMaterial.fx & 32) //force vertex alpha-blending
-		{
-			B3dMaterial.Material.MaterialType = video::EMT_TRANSPARENT_VERTEX_ALPHA;
-			B3dMaterial.Material.ZWriteEnable = false;
-		}
+//		if (B3dMaterial.fx & 32) //force vertex alpha-blending
+//		{
+//			B3dMaterial.Material.MaterialType = video::EMT_TRANSPARENT_VERTEX_ALPHA;
+//			B3dMaterial.Material.ZWriteEnable = false;
+//		}
 
 		B3dMaterial.Material.Shininess = B3dMaterial.shininess;
 	}
@@ -907,20 +907,8 @@ void CB3DMeshFileLoader::loadTextures(SB3dMaterial& material) const
 		SB3dTexture* B3dTexture = material.Textures[i];
 		if (B3dTexture && B3dTexture->TextureName.size() && !material.Material.getTexture(i))
 		{
-			if (!SceneManager->getParameters()->getAttributeAsBool(B3D_LOADER_IGNORE_MIPMAP_FLAG))
-				SceneManager->getVideoDriver()->setTextureCreationFlag(video::ETCF_CREATE_MIP_MAPS, (B3dTexture->Flags & 0x8) ? true:false);
-			{
-				video::ITexture* tex = 0;
-				io::IFileSystem* fs = SceneManager->getFileSystem();
-				if (fs->existFile(B3dTexture->TextureName))
-					tex = SceneManager->getVideoDriver()->getTexture(B3dTexture->TextureName);
-				else if (fs->existFile(fs->getFileDir(B3DFile->getFileName()) +"/"+ fs->getFileBasename(B3dTexture->TextureName)))
-					tex = SceneManager->getVideoDriver()->getTexture(fs->getFileDir(B3DFile->getFileName()) +"/"+ fs->getFileBasename(B3dTexture->TextureName));
-				else
-					tex = SceneManager->getVideoDriver()->getTexture(fs->getFileBasename(B3dTexture->TextureName));
-
-				material.Material.setTexture(i, tex);
-			}
+			SceneManager->getVideoDriver()->setTextureCreationFlag(video::ETCF_CREATE_MIP_MAPS, (B3dTexture->Flags & 0x8) ? true:false);
+			material.Material.setTexture(i, SceneManager->getVideoDriver()->getTexture( B3dTexture->TextureName.c_str() ));
 			if (material.Textures[i]->Flags & 0x10) // Clamp U
 				material.Material.TextureLayer[i].TextureWrap=video::ETC_CLAMP;
 			if (material.Textures[i]->Flags & 0x20) // Clamp V
@@ -933,19 +921,41 @@ void CB3DMeshFileLoader::loadTextures(SB3dMaterial& material) const
 }
 
 
-void CB3DMeshFileLoader::readString(core::stringc& newstring)
+core::stringc CB3DMeshFileLoader::readString()
 {
-	newstring="";
+	core::stringc newstring;
 	while (B3DFile->getPos() <= B3DFile->getSize())
 	{
 		c8 character;
 		B3DFile->read(&character, sizeof(character));
 		if (character==0)
-			return;
+			break;
 		newstring.append(character);
 	}
+	return newstring;
 }
 
+
+core::stringc CB3DMeshFileLoader::stripPathFromString(const core::stringc& string, bool returnPath) const
+{
+	s32 slashIndex=string.findLast('/'); // forward slash
+	s32 backSlash=string.findLast('\\'); // back slash
+
+	if (backSlash>slashIndex) slashIndex=backSlash;
+
+	if (slashIndex==-1)//no slashes found
+	{
+		if (returnPath)
+			return core::stringc(); //no path to return
+		else
+			return string;
+	}
+
+	if (returnPath)
+		return string.subString(0, slashIndex + 1);
+	else
+		return string.subString(slashIndex+1, string.size() - (slashIndex+1));
+}
 
 void CB3DMeshFileLoader::readFloats(f32* vec, u32 count)
 {

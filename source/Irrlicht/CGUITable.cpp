@@ -24,7 +24,7 @@ namespace gui
 
 //! constructor
 CGUITable::CGUITable(IGUIEnvironment* environment, IGUIElement* parent,
-						s32 id, const core::rect<s32>& rectangle, bool clip,
+						s32 id, core::rect<s32> rectangle, bool clip,
 						bool drawBack, bool moveOverSelect)
 : IGUITable(environment, parent, id, rectangle), Font(0),
 	VerticalScrollBar(0), HorizontalScrollBar(0),
@@ -246,12 +246,10 @@ bool CGUITable::hasResizableColumns() const
 }
 
 
-u32 CGUITable::addRow(u32 rowIndex)
+void CGUITable::addRow(u32 rowIndex)
 {
 	if ( rowIndex > Rows.size() )
-	{
-		rowIndex = Rows.size();
-	}
+		return;
 
 	Row row;
 
@@ -260,14 +258,13 @@ u32 CGUITable::addRow(u32 rowIndex)
 	else
 		Rows.insert(row, rowIndex);
 
-	Rows[rowIndex].Items.reallocate(Columns.size());
 	for ( u32 i = 0 ; i < Columns.size() ; ++i )
 	{
-		Rows[rowIndex].Items.push_back(Cell());
+		Cell cell;
+		Rows[rowIndex].Items.push_back(cell);
 	}
 
 	recalculateHeights();
-	return rowIndex;
 }
 
 
@@ -286,7 +283,7 @@ void CGUITable::removeRow(u32 rowIndex)
 
 
 //! adds an list item, returns id of item
-void CGUITable::setCellText(u32 rowIndex, u32 columnIndex, const core::stringw& text)
+void CGUITable::setCellText(u32 rowIndex, u32 columnIndex, const wchar_t* text)
 {
 	if ( rowIndex < Rows.size() && columnIndex < Columns.size() )
 	{
@@ -299,7 +296,8 @@ void CGUITable::setCellText(u32 rowIndex, u32 columnIndex, const core::stringw& 
 	}
 }
 
-void CGUITable::setCellText(u32 rowIndex, u32 columnIndex, const core::stringw& text, video::SColor color)
+
+void CGUITable::setCellText(u32 rowIndex, u32 columnIndex, const wchar_t* text, video::SColor color)
 {
 	if ( rowIndex < Rows.size() && columnIndex < Columns.size() )
 	{
@@ -353,7 +351,6 @@ void* CGUITable::getCellData(u32 rowIndex, u32 columnIndex ) const
 //! clears the list
 void CGUITable::clear()
 {
-    Selected = -1;
 	Rows.clear();
 	Columns.clear();
 
@@ -369,7 +366,6 @@ void CGUITable::clear()
 
 void CGUITable::clearRows()
 {
-    Selected = -1;
 	Rows.clear();
 
 	if (VerticalScrollBar)
@@ -379,19 +375,9 @@ void CGUITable::clearRows()
 }
 
 
-/*!
-*/
 s32 CGUITable::getSelected() const
 {
 	return Selected;
-}
-
-//! set wich row is currently selected
-void CGUITable::setSelected( s32 index )
-{
-	Selected = -1;
-	if ( index >= 0 && index < (s32) Rows.size() )
-		Selected = index;
 }
 
 
@@ -701,7 +687,7 @@ bool CGUITable::dragColumnStart(s32 xpos, s32 ypos)
 	if ( ypos > ( AbsoluteRect.UpperLeftCorner.Y + ItemHeight ) )
 		return false;
 
-	const s32 CLICK_AREA = 12;	// to left and right of line which can be dragged
+	const s32 CLICK_AREA = 3;	// to left and right of line which can be dragged
 	s32 pos = AbsoluteRect.UpperLeftCorner.X+1;
 
 	if ( HorizontalScrollBar && HorizontalScrollBar->isVisible() )
@@ -1035,7 +1021,7 @@ void CGUITable::breakText(const core::stringw& text, core::stringw& brokenText, 
 	c[1] = L'\0';
 
 	const u32 maxLength = cellWidth - (CellWidthPadding * 2);
-	const u32 maxLengthDots = cellWidth - (CellWidthPadding * 2) - font->getDimension(L"...").Width;
+	const s32 maxLengthDots = cellWidth - (CellWidthPadding * 2) - font->getDimension(L"...").Width;
 	const u32 size = text.size();
 	u32 pos = 0;
 

@@ -18,10 +18,9 @@ namespace scene
 //! constructor
 CSceneNodeAnimatorCameraFPS::CSceneNodeAnimatorCameraFPS(gui::ICursorControl* cursorControl,
 		f32 rotateSpeed, f32 moveSpeed, f32 jumpSpeed,
-		SKeyMap* keyMapArray, u32 keyMapSize, bool noVerticalMovement, bool invertY)
+		SKeyMap* keyMapArray, u32 keyMapSize, bool noVerticalMovement)
 : CursorControl(cursorControl), MaxVerticalAngle(88.0f),
-	MoveSpeed(moveSpeed), RotateSpeed(rotateSpeed), JumpSpeed(jumpSpeed), 
-	MouseYDirection(invertY ? -1.0f : 1.0f),
+	MoveSpeed(moveSpeed), RotateSpeed(rotateSpeed), JumpSpeed(jumpSpeed),
 	LastAnimationTime(0), firstUpdate(true), NoVerticalMovement(noVerticalMovement)
 {
 	#ifdef _DEBUG
@@ -140,7 +139,7 @@ void CSceneNodeAnimatorCameraFPS::animateNode(ISceneNode* node, u32 timeMs)
 		if (CursorPos != CenterCursor)
 		{
 			relativeRotation.Y -= (0.5f - CursorPos.X) * RotateSpeed;
-			relativeRotation.X -= (0.5f - CursorPos.Y) * RotateSpeed * MouseYDirection;
+			relativeRotation.X -= (0.5f - CursorPos.Y) * RotateSpeed;
 
 			// X < MaxVerticalAngle or X > 360-MaxVerticalAngle
 
@@ -234,6 +233,8 @@ void CSceneNodeAnimatorCameraFPS::animateNode(ISceneNode* node, u32 timeMs)
 	camera->setPosition(pos);
 
 	// write right target
+
+	TargetVector = target;
 	target += pos;
 	camera->setTarget(target);
 }
@@ -306,16 +307,6 @@ void CSceneNodeAnimatorCameraFPS::setKeyMap(SKeyMap *map, u32 count)
 void CSceneNodeAnimatorCameraFPS::setVerticalMovement(bool allow)
 {
 	NoVerticalMovement = !allow;
-}
-
-
-//! Sets whether the Y axis of the mouse should be inverted.
-void CSceneNodeAnimatorCameraFPS::setInvertMouse(bool invert)
-{
-	if (invert)
-		MouseYDirection = -1.0f;
-	else
-		MouseYDirection = 1.0f;
 }
 
 

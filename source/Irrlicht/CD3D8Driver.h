@@ -14,6 +14,10 @@
 	#include <windows.h>
 #endif
 
+#ifdef _IRR_XBOX_PLATFORM_
+	#include <xtl.h>
+#endif
+
 // always included for static createDriver function
 #include "CNullDriver.h"
 #include "IMaterialRendererServices.h"
@@ -29,7 +33,7 @@ namespace video
 	public:
 
 		//! constructor
-		CD3D8Driver(const core::dimension2d<u32>& screenSize, HWND window, bool fullscreen,
+		CD3D8Driver(const core::dimension2d<s32>& screenSize, HWND window, bool fullscreen,
 			bool stencibuffer, io::IFileSystem* io, bool pureSoftware=false, bool vsync=false);
 
 		//! destructor
@@ -97,9 +101,9 @@ namespace video
 			const core::vector3df& end, SColor color = SColor(255,255,255,255));
 
 		//! initialises the Direct3D API
-		bool initDriver(const core::dimension2d<u32>& screenSize, HWND hwnd,
+		bool initDriver(const core::dimension2d<s32>& screenSize, HWND hwnd,
 				u32 bits, bool fullScreen, bool pureSoftware,
-				bool highPrecisionFPU, bool vsync, u8 antiAlias);
+				bool highPrecisionFPU, bool vsync, bool antiAlias);
 
 		//! \return Returns the name of the video driver. Example: In case of the DIRECT3D8
 		//! driver, it would return "Direct3D8.1".
@@ -108,15 +112,8 @@ namespace video
 		//! deletes all dynamic lights there are
 		virtual void deleteAllDynamicLights();
 
-		//! adds a dynamic light, returning an index to the light
-		//! \param light: the light data to use to create the light
-		//! \return An index to the light, or -1 if an error occurs
-		virtual s32 addDynamicLight(const SLight& light);
-
-		//! Turns a dynamic light on or off
-		//! \param lightIndex: the index returned by addDynamicLight
-		//! \param turnOn: true to turn the light on, false to turn it off
-		virtual void turnLightOn(s32 lightIndex, bool turnOn);
+		//! adds a dynamic light
+		virtual void addDynamicLight(const SLight& light);
 
 		//! returns the maximal amount of dynamic lights the device can handle
 		virtual u32 getMaximalDynamicLightAmount() const;
@@ -149,12 +146,12 @@ namespace video
 		virtual void setTextureCreationFlag(E_TEXTURE_CREATION_FLAG flag, bool enabled);
 
 		//! Sets the fog mode.
-		virtual void setFog(SColor color, E_FOG_TYPE fogType, f32 start,
+		virtual void setFog(SColor color, bool linearFog, f32 start,
 			f32 end, f32 density, bool pixelFog, bool rangeFog);
 
 		//! Only used by the internal engine. Used to notify the driver that
 		//! the window was resized.
-		virtual void OnResize(const core::dimension2d<u32>& size);
+		virtual void OnResize(const core::dimension2d<s32>& size);
 
 		//! Returns type of video driver
 		virtual E_DRIVER_TYPE getDriverType() const;
@@ -186,8 +183,8 @@ namespace video
 		virtual IVideoDriver* getVideoDriver();
 
 		//! Creates a render target texture.
-		virtual ITexture* addRenderTargetTexture(const core::dimension2d<u32>& size,
-				const core::string<c16>& name, const ECOLOR_FORMAT format = ECF_UNKNOWN);
+		virtual ITexture* addRenderTargetTexture(const core::dimension2d<s32>& size,
+				const c8* name);
 
 		//! Clears the ZBuffer.
 		virtual void clearZBuffer();
@@ -238,17 +235,17 @@ namespace video
 		void setRenderStatesStencilShadowMode(bool zfail);
 
 		//! sets the current Texture
-		bool setActiveTexture(u32 stage, const video::ITexture* texture);
+		bool setTexture(s32 stage, const video::ITexture* texture);
 
 		//! resets the device
 		bool reset();
 
 		//! returns a device dependent texture from a software surface (IImage)
 		//! THIS METHOD HAS TO BE OVERRIDDEN BY DERIVED DRIVERS WITH OWN TEXTURES
-		virtual video::ITexture* createDeviceDependentTexture(IImage* surface, const core::string<c16>& name);
+		virtual video::ITexture* createDeviceDependentTexture(IImage* surface, const char* name);
 
 		// returns the current size of the screen or rendertarget
-		virtual const core::dimension2d<u32>& getCurrentRenderTargetSize() const;
+		virtual const core::dimension2d<s32>& getCurrentRenderTargetSize() const;
 
 		//! Adds a new material renderer to the VideoDriver, using pixel and/or
 		//! vertex shaders to render geometry.
@@ -284,7 +281,7 @@ namespace video
 		IDirect3DDevice8* pID3DDevice;
 
 		IDirect3DSurface8* PrevRenderTarget;
-		core::dimension2d<u32> CurrentRendertargetSize;
+		core::dimension2d<s32> CurrentRendertargetSize;
 
 		void* WindowId;
 		core::rect<s32>* SceneSourceRect;

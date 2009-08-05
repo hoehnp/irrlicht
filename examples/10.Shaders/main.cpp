@@ -149,7 +149,7 @@ int main()
 
 	// create device
 
-	device = createDevice(driverType, core::dimension2d<u32>(640, 480));
+	device = createDevice(driverType, core::dimension2d<s32>(640, 480));
 
 	if (device == 0)
 		return 1; // could not create selected driver.
@@ -171,8 +171,8 @@ int main()
 	addShaderMaterial() instead of addShaderMaterialFromFiles().
 	*/
 	
-	core::string<c16> vsFileName; // filename for the vertex shader
-	core::string<c16> psFileName; // filename for the pixel shader
+	const c8* vsFileName = 0; // filename for the vertex shader
+	const c8* psFileName = 0; // filename for the pixel shader
 
 	switch(driverType)
 	{
@@ -225,7 +225,7 @@ int main()
 	{
 		device->getLogger()->log("WARNING: Pixel shaders disabled "\
 			"because of missing driver/hardware support.");
-		psFileName = "";
+		psFileName = 0;
 	}
 	
 	if (!driver->queryFeature(video::EVDF_VERTEX_SHADER_1_1) &&
@@ -233,7 +233,7 @@ int main()
 	{
 		device->getLogger()->log("WARNING: Vertex shaders disabled "\
 			"because of missing driver/hardware support.");
-		vsFileName = "";
+		vsFileName = 0;
 	}
 
 	/*
@@ -380,7 +380,7 @@ int main()
 
 	// add a camera and disable the mouse cursor
 
-	scene::ICameraSceneNode* cam = smgr->addCameraSceneNodeFPS();
+	scene::ICameraSceneNode* cam = smgr->addCameraSceneNodeFPS(0, 100.0f, .1f);
 	cam->setPosition(core::vector3df(-100,50,100));
 	cam->setTarget(core::vector3df(0,0,0));
 	device->getCursorControl()->setVisible(false);

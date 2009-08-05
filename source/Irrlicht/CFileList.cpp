@@ -5,7 +5,6 @@
 #include "CFileList.h"
 #include "IrrCompileConfig.h"
 #include "irrArray.h"
-#include "coreutil.h"
 #include <stdlib.h>
 
 #if (defined(_IRR_POSIX_API_) || defined(_IRR_OSX_PLATFORM_))
@@ -30,25 +29,13 @@ namespace irr
 namespace io
 {
 
-CFileList::CFileList(const c8 * param)
+
+CFileList::CFileList()
 {
 	#ifdef _DEBUG
 	setDebugName("CFileList");
 	#endif
 
-
-	if ( 0 == param )
-		constructNative ();
-}
-
-CFileList::~CFileList()
-{
-	Files.clear();
-}
-
-
-void CFileList::constructNative()
-{
 	// --------------------------------------------
 	// Windows version
 	#ifdef _IRR_WINDOWS_API_
@@ -142,8 +129,8 @@ void CFileList::constructNative()
 	#endif
 	// sort the list on all platforms
 	Files.sort();
-
 }
+
 
 u32 CFileList::getFileCount() const
 {
@@ -151,35 +138,33 @@ u32 CFileList::getFileCount() const
 }
 
 
-static const core::string<c16> emptyFileListEntry;
-
-const core::string<c16>& CFileList::getFileName(u32 index) const
+const c8* CFileList::getFileName(u32 index) const
 {
-	if (index >= Files.size())
-		return emptyFileListEntry;
-
-	return Files[index].Name;
+	if (index < Files.size())
+		return Files[index].Name.c_str();
+	else
+		return 0;
 }
 
 
 //! Gets the full name of a file in the list, path included, based on an index.
-const core::string<c16>& CFileList::getFullFileName(u32 index)
+const c8* CFileList::getFullFileName(u32 index)
 {
 	if (index >= Files.size())
-		return emptyFileListEntry;
+		return 0;
 
 	if (Files[index].FullName.size() < Files[index].Name.size())
 	{
 		// create full name
 		Files[index].FullName = Path;
-		c16 last = lastChar ( Files[index].FullName );
-		if ( last != '/' && last != '\\' )
+
+		if (Path.size() > 3)
 			Files[index].FullName.append('/');
 
 		Files[index].FullName.append(Files[index].Name);
 	}
 
-	return Files[index].FullName;
+	return Files[index].FullName.c_str();
 }
 
 

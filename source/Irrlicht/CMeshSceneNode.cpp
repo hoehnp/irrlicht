@@ -221,8 +221,9 @@ void CMeshSceneNode::render()
 					// align to v->Normal
 					core::quaternion quatRot(v->Normal.X, 0.f, -v->Normal.X, 1+v->Normal.Y);
 					quatRot.normalize();
-					quatRot.getMatrix(m2, v->Pos);
+					quatRot.getMatrix(m2);
 
+					m2.setTranslation(v->Pos);
 					m2*=AbsoluteTransformation;
 
 					driver->setTransform(video::ETS_WORLD, m2);
@@ -336,8 +337,8 @@ void CMeshSceneNode::serializeAttributes(io::IAttributes* out, io::SAttributeRea
 //! Reads attributes of the scene node.
 void CMeshSceneNode::deserializeAttributes(io::IAttributes* in, io::SAttributeReadWriteOptions* options)
 {
-	core::string<c16> oldMeshStr = SceneManager->getMeshCache()->getMeshFilename(Mesh);
-	core::string<c16> newMeshStr = in->getAttributeAsString("Mesh");
+	core::stringc oldMeshStr = SceneManager->getMeshCache()->getMeshFilename(Mesh);
+	core::stringc newMeshStr = in->getAttributeAsString("Mesh");
 	ReadOnlyMaterials = in->getAttributeAsBool("ReadOnlyMaterials");
 
 	if (newMeshStr != "" && oldMeshStr != newMeshStr)

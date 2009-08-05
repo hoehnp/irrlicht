@@ -7,7 +7,7 @@
 
 #include "IrrCompileConfig.h"
 
-#ifdef _IRR_COMPILE_WITH_X11_DEVICE_
+#ifdef _IRR_USE_LINUX_DEVICE_
 
 #include "CIrrDeviceStub.h"
 #include "IrrlichtDevice.h"
@@ -87,28 +87,11 @@ namespace irr
 		//! supported by the gfx adapter.
 		video::IVideoModeList* getVideoModeList();
 
-		//! Sets if the window should be resizable in windowed mode.
-		virtual void setResizable(bool resize=false);
-
-		//! Minimizes the window.
-		virtual void minimizeWindow();
+		//! Sets if the window should be resizeable in windowed mode.
+		virtual void setResizeAble(bool resize=false);
 
 		//! Activate any joysticks, and generate events for them.
 		virtual bool activateJoysticks(core::array<SJoystickInfo> & joystickInfo);
-
-        //! gets text from the clipboard
-        //! \return Returns 0 if no string is in there.
-		virtual const c8* getTextFromClipboard() const;
-
-        //! copies text to the clipboard
-        //! This sets the clipboard selection and _not_ the primary selection which you have on X on the middle mouse button.
-        virtual void copyToClipboard(const c8* text) const;
-
-        //! Get the device type
-		virtual E_DEVICE_TYPE getType() const
-		{
-				return EIDT_X11;
-		}
 
 	private:
 
@@ -119,9 +102,7 @@ namespace irr
 
 		void createKeyMap();
 
-		void pollJoysticks();
-
-        void initXAtoms();
+		void pollJoysticks(); 
 
 		//! Implementation of the linux cursor control
 		class CCursorControl : public gui::ICursorControl
@@ -166,8 +147,6 @@ namespace irr
 			//! Changes the visible state of the mouse cursor.
 			virtual void setVisible(bool visible)
 			{
-				if (visible==IsVisible)
-					return;
 				IsVisible = visible;
 #ifdef _IRR_COMPILE_WITH_X11_
 				if (!Null)
@@ -326,7 +305,6 @@ namespace irr
 		XSetWindowAttributes attributes;
 		XSizeHints* StdHints;
 		XImage* SoftwareImage;
-		mutable core::stringc Clipboard;
 		#ifdef _IRR_LINUX_X11_VIDMODE_
 		XF86VidModeModeInfo oldVideoMode;
 		#endif
@@ -346,7 +324,6 @@ namespace irr
 		bool UseXVidMode;
 		bool UseXRandR;
 		bool UseGLXWindow;
-		bool ExternalWindow;
 		int AutorepeatSupport;
 
 		struct SKeyMap
@@ -386,6 +363,6 @@ namespace irr
 
 } // end namespace irr
 
-#endif // _IRR_COMPILE_WITH_X11_DEVICE_
+#endif // _IRR_USE_LINUX_DEVICE_
 #endif // __C_IRR_DEVICE_LINUX_H_INCLUDED__
 

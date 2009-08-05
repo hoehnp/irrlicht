@@ -4,7 +4,7 @@
 
 #include "CIrrDeviceLinux.h"
 
-#ifdef _IRR_COMPILE_WITH_X11_DEVICE_
+#ifdef _IRR_USE_LINUX_DEVICE_
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,7 +19,6 @@
 #include "CColorConverter.h"
 #include "SIrrCreationParameters.h"
 #include <X11/XKBlib.h>
-#include <X11/Xatom.h>
 
 #if defined _IRR_COMPILE_WITH_JOYSTICK_EVENTS_
 #include <fcntl.h>
@@ -40,17 +39,11 @@ namespace irr
 	namespace video
 	{
 		IVideoDriver* createOpenGLDriver(const SIrrlichtCreationParameters& params,
-				io::IFileSystem* io, CIrrDeviceLinux* device);
+				io::IFileSystem* io);
 	}
 } // end namespace irr
 
-namespace
-{
-	Atom X_ATOM_CLIPBOARD;
-	Atom X_ATOM_TARGETS;
-	Atom X_ATOM_UTF8_STRING;
-	Atom X_ATOM_TEXT;
-};
+
 
 namespace irr
 {
@@ -63,14 +56,13 @@ CIrrDeviceLinux::CIrrDeviceLinux(const SIrrlichtCreationParameters& param)
 #ifdef _IRR_COMPILE_WITH_X11_
 	display(0), visual(0), screennr(0), window(0), StdHints(0), SoftwareImage(0),
 #ifdef _IRR_COMPILE_WITH_OPENGL_
-	glxWin(0),
 	Context(0),
 #endif
 #endif
 	Width(param.WindowSize.Width), Height(param.WindowSize.Height),
 	Close(false), WindowHasFocus(false), WindowMinimized(false),
 	UseXVidMode(false), UseXRandR(false), UseGLXWindow(false),
-	ExternalWindow(false), AutorepeatSupport(0)
+	AutorepeatSupport(0)
 {
 	#ifdef _DEBUG
 	setDebugName("CIrrDeviceLinux");
@@ -90,7 +82,7 @@ CIrrDeviceLinux::CIrrDeviceLinux(const SIrrlichtCreationParameters& param)
 	linuxversion += " ";
 	linuxversion += LinuxInfo.machine;
 
-	Operator = new COSOperator(linuxversion.c_str(), this);
+	Operator = new COSOperator(linuxversion.c_str());
 	os::Printer::log(linuxversion.c_str(), ELL_INFORMATION);
 
 	// create keymap
@@ -162,12 +154,8 @@ CIrrDeviceLinux::~CIrrDeviceLinux()
 
 		if (SoftwareImage)
 			XDestroyImage(SoftwareImage);
-
-		if (!ExternalWindow)
-		{
-			XDestroyWindow(display,window);
-			XCloseDisplay(display);
-		}
+		XDestroyWindow(display,window);
+		XCloseDisplay(display);
 	}
 	if (visual)
 		XFree(visual);
@@ -214,10 +202,7 @@ bool CIrrDeviceLinux::createWindow()
 	if (!display)
 	{
 		os::Printer::log("Error: Need running XServer to start Irrlicht Engine.", ELL_ERROR);
-		if (XDisplayName(0)[0])
-			os::Printer::log("Could not open display", XDisplayName(0), ELL_ERROR);
-		else
-			os::Printer::log("Could not open display, set DISPLAY variable", ELL_ERROR);
+		os::Printer::log("Could not open display", XDisplayName(0), ELL_ERROR);
 		return false;
 	}
 
@@ -316,6 +301,7 @@ bool CIrrDeviceLinux::createWindow()
 		{
 			if (major==1 && minor>2)
 			{
+				const int MAX_SAMPLES = 16;
 				// attribute array for the draw buffer
 				int visualAttrBuffer[] =
 				{
@@ -325,34 +311,28 @@ bool CIrrDeviceLinux::createWindow()
 					GLX_BLUE_SIZE, 4,
 					GLX_ALPHA_SIZE, CreationParams.WithAlphaChannel?1:0,
 					GLX_DEPTH_SIZE, CreationParams.ZBufferBits,
-					GLX_DOUBLEBUFFER, CreationParams.Doublebuffer?True:False,
-					GLX_STENCIL_SIZE, CreationParams.Stencilbuffer?1:0,
-#ifdef GLX_ARB_multisample
+					GLX_DOUBLEBUFFER, GL_TRUE,
+					GLX_STENCIL_SIZE, 1,
 					GLX_SAMPLE_BUFFERS_ARB, 1,
-					GLX_SAMPLES_ARB, CreationParams.AntiAlias,
-#elif defined(GLX_SAMPLE_BUFFERS)
-					GLX_SAMPLE_BUFFERS, 1,
-					GLX_SAMPLES, CreationParams.AntiAlias,
-#endif
-					GLX_STEREO, CreationParams.Stereobuffer?True:False,
+					GLX_SAMPLES_ARB, MAX_SAMPLES,
 					None
 				};
 
 				GLXFBConfig *configList=0;
 				int nitems=0;
-				if (CreationParams.AntiAlias<2)
+				if (!CreationParams.AntiAlias)
 				{
 					visualAttrBuffer[17] = 0;
 					visualAttrBuffer[19] = 0;
 				}
-				// first round with unchanged values
+				if (CreationParams.Stencilbuffer)
 				{
 					configList=glXChooseFBConfig(display, screennr, visualAttrBuffer,&nitems);
 					if (!configList && CreationParams.AntiAlias)
 					{
 						while (!configList && (visualAttrBuffer[19]>1))
 						{
-							visualAttrBuffer[19] -= 1;
+							visualAttrBuffer[19] >>= 1;
 							configList=glXChooseFBConfig(display, screennr, visualAttrBuffer,&nitems);
 						}
 						if (!configList)
@@ -363,34 +343,31 @@ bool CIrrDeviceLinux::createWindow()
 							if (configList)
 							{
 								os::Printer::log("No FSAA available.", ELL_WARNING);
-								CreationParams.AntiAlias=0;
+								CreationParams.AntiAlias=false;
 							}
 							else
 							{
 								//reenable multisampling
 								visualAttrBuffer[17] = 1;
-								visualAttrBuffer[19] = CreationParams.AntiAlias;
+								visualAttrBuffer[19] = MAX_SAMPLES;
 							}
 						}
 					}
 				}
-				// Next try with flipped stencil buffer value
-				// If the first round was with stencil flag it's now without
-				// Other way round also makes sense because some configs
-				// only have depth buffer combined with stencil buffer
+				// Next try without stencil buffer
 				if (!configList)
 				{
 					if (CreationParams.Stencilbuffer)
 						os::Printer::log("No stencilbuffer available, disabling stencil shadows.", ELL_WARNING);
-					CreationParams.Stencilbuffer = !CreationParams.Stencilbuffer;
-					visualAttrBuffer[15]=CreationParams.Stencilbuffer?1:0;
+					CreationParams.Stencilbuffer = false;
+					visualAttrBuffer[15]=0;
 
 					configList=glXChooseFBConfig(display, screennr, visualAttrBuffer,&nitems);
 					if (!configList && CreationParams.AntiAlias)
 					{
 						while (!configList && (visualAttrBuffer[19]>1))
 						{
-							visualAttrBuffer[19] -= 1;
+							visualAttrBuffer[19] >>= 1;
 							configList=glXChooseFBConfig(display, screennr, visualAttrBuffer,&nitems);
 						}
 						if (!configList)
@@ -401,31 +378,28 @@ bool CIrrDeviceLinux::createWindow()
 							if (configList)
 							{
 								os::Printer::log("No FSAA available.", ELL_WARNING);
-								CreationParams.AntiAlias=0;
+								CreationParams.AntiAlias=false;
 							}
 							else
 							{
 								//reenable multisampling
 								visualAttrBuffer[17] = 1;
-								visualAttrBuffer[19] = CreationParams.AntiAlias;
+								visualAttrBuffer[19] = MAX_SAMPLES;
 							}
 						}
 					}
 				}
 				// Next try without double buffer
-				if (!configList && CreationParams.Doublebuffer)
+				if (!configList)
 				{
 					os::Printer::log("No doublebuffering available.", ELL_WARNING);
-					CreationParams.Doublebuffer=false;
-					visualAttrBuffer[13] = GLX_DONT_CARE;
-					CreationParams.Stencilbuffer = false;
-					visualAttrBuffer[15]=0;
+					visualAttrBuffer[13] = GL_FALSE;
 					configList=glXChooseFBConfig(display, screennr, visualAttrBuffer,&nitems);
 					if (!configList && CreationParams.AntiAlias)
 					{
 						while (!configList && (visualAttrBuffer[19]>1))
 						{
-							visualAttrBuffer[19] -= 1;
+							visualAttrBuffer[19] >>= 1;
 							configList=glXChooseFBConfig(display, screennr, visualAttrBuffer,&nitems);
 						}
 						if (!configList)
@@ -436,13 +410,13 @@ bool CIrrDeviceLinux::createWindow()
 							if (configList)
 							{
 								os::Printer::log("No FSAA available.", ELL_WARNING);
-								CreationParams.AntiAlias=0;
+								CreationParams.AntiAlias=false;
 							}
 							else
 							{
 								//reenable multisampling
 								visualAttrBuffer[17] = 1;
-								visualAttrBuffer[19] = CreationParams.AntiAlias;
+								visualAttrBuffer[19] = MAX_SAMPLES;
 							}
 						}
 					}
@@ -466,29 +440,27 @@ bool CIrrDeviceLinux::createWindow()
 					GLX_BLUE_SIZE, 4,
 					GLX_ALPHA_SIZE, CreationParams.WithAlphaChannel?1:0,
 					GLX_DEPTH_SIZE, CreationParams.ZBufferBits,
-					GLX_STENCIL_SIZE, CreationParams.Stencilbuffer?1:0,
-					// The following attributes have no flags, but are
-					// either present or not. As a no-op we use
-					// GLX_USE_GL, which is silently ignored by glXChooseVisual
-					CreationParams.Doublebuffer?GLX_DOUBLEBUFFER:GLX_USE_GL,
-					CreationParams.Stereobuffer?GLX_STEREO:GLX_USE_GL,
+					GLX_DOUBLEBUFFER, GL_TRUE,
+					GLX_STENCIL_SIZE, 1,
 					None
 				};
 
-				visual=glXChooseVisual(display, screennr, visualAttrBuffer);
+				if (CreationParams.Stencilbuffer)
+					visual=glXChooseVisual(display, screennr, visualAttrBuffer);
 				if (!visual)
 				{
 					if (CreationParams.Stencilbuffer)
+					{
 						os::Printer::log("No stencilbuffer available, disabling.", ELL_WARNING);
-					CreationParams.Stencilbuffer = !CreationParams.Stencilbuffer;
-					visualAttrBuffer[13]=CreationParams.Stencilbuffer?1:0;
+						CreationParams.Stencilbuffer = false;
+					}
+					visualAttrBuffer[15]=0;
 
 					visual=glXChooseVisual(display, screennr, visualAttrBuffer);
-					if (!visual && CreationParams.Doublebuffer)
+					if (!visual)
 					{
 						os::Printer::log("No doublebuffering available.", ELL_WARNING);
-						CreationParams.Doublebuffer=false;
-						visualAttrBuffer[14] = GLX_USE_GL;
+						visualAttrBuffer[13] = GL_FALSE;
 						visual=glXChooseVisual(display, screennr, visualAttrBuffer);
 					}
 				}
@@ -497,14 +469,12 @@ bool CIrrDeviceLinux::createWindow()
 		else
 			os::Printer::log("No GLX support available. OpenGL driver will not work.", ELL_WARNING);
 	}
-	// don't use the XVisual with OpenGL, because it ignores all requested
-	// properties of the CreationParams
-	else if (!visual)
+
 #endif // _IRR_COMPILE_WITH_OPENGL_
 
 	// create visual with standard X methods
+	if (!visual)
 	{
-		os::Printer::log("Using plain X visual");
 		XVisualInfo visTempl; //Template to hold requested values
 		int visNumber; // Return value of available visuals
 
@@ -545,69 +515,56 @@ bool CIrrDeviceLinux::createWindow()
 				ButtonPressMask | KeyPressMask |
 				ButtonReleaseMask | KeyReleaseMask;
 
-	if (!CreationParams.WindowId)
+	// create Window, either for Fullscreen or windowed mode
+	if (CreationParams.Fullscreen)
 	{
-		// create Window, either for Fullscreen or windowed mode
-		if (CreationParams.Fullscreen)
-		{
-			attributes.override_redirect = True;
+		attributes.override_redirect = True;
 
-			window = XCreateWindow(display,
-					RootWindow(display, visual->screen),
-					0, 0, Width, Height, 0, visual->depth,
-					InputOutput, visual->visual,
-					CWBorderPixel | CWColormap | CWEventMask | CWOverrideRedirect,
-					&attributes);
-			CreationParams.WindowId = (void*)window;
+		window = XCreateWindow(display,
+				RootWindow(display, visual->screen),
+				0, 0, Width, Height, 0, visual->depth,
+				InputOutput, visual->visual,
+				CWBorderPixel | CWColormap | CWEventMask | CWOverrideRedirect,
+				&attributes);
+		CreationParams.WindowId = (void*)window;
 
-			XWarpPointer(display, None, window, 0, 0, 0, 0, 0, 0);
-			XMapRaised(display, window);
-			XGrabKeyboard(display, window, True, GrabModeAsync,
-				GrabModeAsync, CurrentTime);
-			XGrabPointer(display, window, True, ButtonPressMask,
-				GrabModeAsync, GrabModeAsync, window, None, CurrentTime);
-		}
-		else
-		{ // we want windowed mode
-			attributes.event_mask |= ExposureMask;
-			attributes.event_mask |= FocusChangeMask;
-
-			window = XCreateWindow(display,
-					RootWindow(display, visual->screen),
-					0, 0, Width, Height, 0, visual->depth,
-					InputOutput, visual->visual,
-					CWBorderPixel | CWColormap | CWEventMask,
-					&attributes);
-
-			CreationParams.WindowId = (void*)window;
-
-			Atom wmDelete;
-			wmDelete = XInternAtom(display, wmDeleteWindow, True);
-			XSetWMProtocols(display, window, &wmDelete, 1);
-			XMapRaised(display, window);
-		}
+		XWarpPointer(display, None, window, 0, 0, 0, 0, 0, 0);
+		XMapRaised(display, window);
+		XGrabKeyboard(display, window, True, GrabModeAsync,
+			GrabModeAsync, CurrentTime);
+		XGrabPointer(display, window, True, ButtonPressMask,
+			GrabModeAsync, GrabModeAsync, window, None, CurrentTime);
 	}
 	else
-	{
-		// attach external window
-		window = (Window)CreationParams.WindowId;
-		if (!CreationParams.IgnoreInput)
+	{ // we want windowed mode
+		attributes.event_mask |= ExposureMask;
+		attributes.event_mask |= FocusChangeMask;
+
+		if(!CreationParams.WindowId)
 		{
-			XCreateWindow(display,
-					window,
+			window = XCreateWindow(display,
+					RootWindow(display, visual->screen),
 					0, 0, Width, Height, 0, visual->depth,
 					InputOutput, visual->visual,
 					CWBorderPixel | CWColormap | CWEventMask,
 					&attributes);
 		}
-		XWindowAttributes wa;
-		XGetWindowAttributes(display, window, &wa);
-		CreationParams.WindowSize.Width = wa.width;
-		CreationParams.WindowSize.Height = wa.height;
-		CreationParams.Fullscreen = false;
-		ExternalWindow = true;
-	}
+		else
+		{
+			window = XCreateWindow(display,
+					(Window)CreationParams.WindowId,
+					0, 0, Width, Height, 0, visual->depth,
+					InputOutput, visual->visual,
+					CWBorderPixel | CWColormap | CWEventMask,
+					&attributes);
+		}
+		CreationParams.WindowId = (void*)window;
 
+		Atom wmDelete;
+		wmDelete = XInternAtom(display, wmDeleteWindow, True);
+		XSetWMProtocols(display, window, &wmDelete, 1);
+		XMapRaised(display, window);
+	}
 	WindowMinimized=false;
  	// Currently broken in X, see Bug ID 2795321
  	// XkbSetDetectableAutoRepeat(display, True, &AutorepeatSupport);
@@ -688,8 +645,6 @@ bool CIrrDeviceLinux::createWindow()
 			SoftwareImage->data = (char*) malloc(SoftwareImage->bytes_per_line * SoftwareImage->height * sizeof(char));
 	}
 
-	initXAtoms();
-
 #endif // #ifdef _IRR_COMPILE_WITH_X11_
 	return true;
 }
@@ -719,12 +674,12 @@ void CIrrDeviceLinux::createDriver()
 		break;
 
 	case video::EDT_OPENGL:
-		#ifdef _IRR_COMPILE_WITH_OPENGL_
+	#ifdef _IRR_COMPILE_WITH_OPENGL_
 		if (Context)
-			VideoDriver = video::createOpenGLDriver(CreationParams, FileSystem, this);
-		#else
+			VideoDriver = video::createOpenGLDriver(CreationParams, FileSystem);
+	#else
 		os::Printer::log("No OpenGL support compiled in.", ELL_ERROR);
-		#endif
+	#endif
 		break;
 
 	case video::EDT_DIRECT3D8:
@@ -761,7 +716,6 @@ bool CIrrDeviceLinux::run()
 	if ((CreationParams.DriverType != video::EDT_NULL) && display)
 	{
 		SEvent irrevent;
-		irrevent.MouseInput.ButtonStates = 0xffffffff;
 
 		while (XPending(display) > 0 && !Close)
 		{
@@ -794,7 +748,7 @@ bool CIrrDeviceLinux::run()
 					}
 
 					if (VideoDriver)
-						VideoDriver->OnResize(core::dimension2d<u32>(Width, Height));
+						VideoDriver->OnResize(core::dimension2d<s32>(Width, Height));
 				}
 				break;
 
@@ -819,13 +773,6 @@ bool CIrrDeviceLinux::run()
 				irrevent.MouseInput.Event = irr::EMIE_MOUSE_MOVED;
 				irrevent.MouseInput.X = event.xbutton.x;
 				irrevent.MouseInput.Y = event.xbutton.y;
-				irrevent.MouseInput.Control = (event.xkey.state & ControlMask) != 0;
-				irrevent.MouseInput.Shift = (event.xkey.state & ShiftMask) != 0;
-
-				// mouse button states
-				irrevent.MouseInput.ButtonStates = (event.xbutton.state & Button1Mask) ? irr::EMBSM_LEFT : 0;
-				irrevent.MouseInput.ButtonStates |= (event.xbutton.state & Button3Mask) ? irr::EMBSM_RIGHT : 0;
-				irrevent.MouseInput.ButtonStates |= (event.xbutton.state & Button2Mask) ? irr::EMBSM_MIDDLE : 0;
 
 				postEventFromUser(irrevent);
 				break;
@@ -836,16 +783,6 @@ bool CIrrDeviceLinux::run()
 				irrevent.EventType = irr::EET_MOUSE_INPUT_EVENT;
 				irrevent.MouseInput.X = event.xbutton.x;
 				irrevent.MouseInput.Y = event.xbutton.y;
-				irrevent.MouseInput.Control = (event.xkey.state & ControlMask) != 0;
-				irrevent.MouseInput.Shift = (event.xkey.state & ShiftMask) != 0;
-
-				// mouse button states
-				// This sets the state which the buttons had _prior_ to the event.
-				// So unlike on Windows the button which just got changed has still the old state here.
-				// We handle that below by flipping the corresponding bit later.
-				irrevent.MouseInput.ButtonStates = (event.xbutton.state & Button1Mask) ? irr::EMBSM_LEFT : 0;
-				irrevent.MouseInput.ButtonStates |= (event.xbutton.state & Button3Mask) ? irr::EMBSM_RIGHT : 0;
-				irrevent.MouseInput.ButtonStates |= (event.xbutton.state & Button2Mask) ? irr::EMBSM_MIDDLE : 0;
 
 				irrevent.MouseInput.Event = irr::EMIE_COUNT;
 
@@ -854,19 +791,16 @@ bool CIrrDeviceLinux::run()
 				case  Button1:
 					irrevent.MouseInput.Event =
 						(event.type == ButtonPress) ? irr::EMIE_LMOUSE_PRESSED_DOWN : irr::EMIE_LMOUSE_LEFT_UP;
-					irrevent.MouseInput.ButtonStates ^= irr::EMBSM_LEFT;
 					break;
 
 				case  Button3:
 					irrevent.MouseInput.Event =
 						(event.type == ButtonPress) ? irr::EMIE_RMOUSE_PRESSED_DOWN : irr::EMIE_RMOUSE_LEFT_UP;
-					irrevent.MouseInput.ButtonStates ^= irr::EMBSM_RIGHT;
 					break;
 
 				case  Button2:
 					irrevent.MouseInput.Event =
 						(event.type == ButtonPress) ? irr::EMIE_MMOUSE_PRESSED_DOWN : irr::EMIE_MMOUSE_LEFT_UP;
-					irrevent.MouseInput.ButtonStates ^= irr::EMBSM_MIDDLE;
 					break;
 
 				case  Button4:
@@ -881,24 +815,7 @@ bool CIrrDeviceLinux::run()
 				}
 
 				if (irrevent.MouseInput.Event != irr::EMIE_COUNT)
-				{
 					postEventFromUser(irrevent);
-
-					if ( irrevent.MouseInput.Event == EMIE_LMOUSE_PRESSED_DOWN )
-					{
-						u32 clicks = checkSuccessiveClicks(irrevent.MouseInput.X, irrevent.MouseInput.Y);
-						if ( clicks == 2 )
-						{
-							irrevent.MouseInput.Event = EMIE_MOUSE_DOUBLE_CLICK;
-							postEventFromUser(irrevent);
-						}
-						else if ( clicks == 3 )
-						{
-							irrevent.MouseInput.Event = EMIE_MOUSE_TRIPLE_CLICK;
-							postEventFromUser(irrevent);
-						}
-					}
-				}
 				break;
 
 			case MappingNotify:
@@ -964,50 +881,6 @@ bool CIrrDeviceLinux::run()
 						postEventFromUser(irrevent);
 					}
 					XFree(atom);
-				}
-				break;
-
-			case SelectionRequest:
-				{
-					XEvent respond;
-					XSelectionRequestEvent *req = &(event.xselectionrequest);
-					if (  req->target == XA_STRING)
-					{
-						XChangeProperty (display,
-								req->requestor,
-								req->property, req->target,
-								8,	  // format
-								PropModeReplace,
-								(unsigned char*) Clipboard.c_str(),
-								Clipboard.size());
-						respond.xselection.property = req->property;
-					}
-					else if ( req->target == X_ATOM_TARGETS )
-					{
-						long data[2];
-
-						data[0] = X_ATOM_TEXT;
-						data[1] = XA_STRING;
-
-						XChangeProperty (display, req->requestor,
-								req->property, req->target,
-								8, PropModeReplace,
-								(unsigned char *) &data,
-								sizeof (data));
-						respond.xselection.property = req->property;
-					}
-					else
-					{
-						respond.xselection.property= None;
-					}
-					respond.xselection.type= SelectionNotify;
-					respond.xselection.display= req->display;
-					respond.xselection.requestor= req->requestor;
-					respond.xselection.selection=req->selection;
-					respond.xselection.target= req->target;
-					respond.xselection.time = req->time;
-					XSendEvent (display, req->requestor,0,0,&respond);
-					XFlush (display);
 				}
 				break;
 
@@ -1080,9 +953,9 @@ bool CIrrDeviceLinux::present(video::IImage* image, void* windowId, core::rect<s
 	// thx to Nadav, who send me some clues of how to display the image
 	// to the X Server.
 
-	const u32 destwidth = SoftwareImage->width;
-	const u32 minWidth = core::min_(image->getDimension().Width, destwidth);
-	const u32 destPitch = SoftwareImage->bytes_per_line;
+	const int destwidth = SoftwareImage->width;
+	const int minWidth = core::min_(image->getDimension().Width, destwidth);
+	const int destPitch = SoftwareImage->bytes_per_line;
 
 	video::ECOLOR_FORMAT destColor;
 	switch (SoftwareImage->bits_per_pixel)
@@ -1103,10 +976,10 @@ bool CIrrDeviceLinux::present(video::IImage* image, void* windowId, core::rect<s
 	u8* srcdata = reinterpret_cast<u8*>(image->lock());
 	u8* destData = reinterpret_cast<u8*>(SoftwareImage->data);
 
-	const u32 destheight = SoftwareImage->height;
-	const u32 srcheight = core::min_(image->getDimension().Height, destheight);
-	const u32 srcPitch = image->getPitch();
-	for (u32 y=0; y!=srcheight; ++y)
+	const int destheight = SoftwareImage->height;
+	const int srcheight = core::min_(image->getDimension().Height, destheight);
+	const int srcPitch = image->getPitch();
+	for (int y=0; y!=srcheight; ++y)
 	{
 		video::CColorConverter::convert_viaFormat(srcdata,image->getColorFormat(), minWidth, destData, destColor);
 		srcdata+=srcPitch;
@@ -1164,8 +1037,8 @@ video::ECOLOR_FORMAT CIrrDeviceLinux::getColorFormat() const
 }
 
 
-//! Sets if the window should be resizable in windowed mode.
-void CIrrDeviceLinux::setResizable(bool resize)
+//! Sets if the window should be resizeable in windowed mode.
+void CIrrDeviceLinux::setResizeAble(bool resize)
 {
 #ifdef _IRR_COMPILE_WITH_X11_
 	if (CreationParams.DriverType == video::EDT_NULL)
@@ -1226,11 +1099,11 @@ video::IVideoModeList* CIrrDeviceLinux::getVideoModeList()
 
 				// find fitting mode
 
-				VideoModeList.setDesktop(defaultDepth, core::dimension2d<u32>(
+				VideoModeList.setDesktop(defaultDepth, core::dimension2d<s32>(
 					modes[0]->hdisplay, modes[0]->vdisplay));
 				for (int i = 0; i<modeCount; ++i)
 				{
-					VideoModeList.addMode(core::dimension2d<u32>(
+					VideoModeList.addMode(core::dimension2d<s32>(
 						modes[i]->hdisplay, modes[i]->vdisplay), defaultDepth);
 				}
 				XFree(modes);
@@ -1244,11 +1117,11 @@ video::IVideoModeList* CIrrDeviceLinux::getVideoModeList()
 				XRRScreenConfiguration *config=XRRGetScreenInfo(display,DefaultRootWindow(display));
 				oldRandrMode=XRRConfigCurrentConfiguration(config,&oldRandrRotation);
 				XRRScreenSize *modes=XRRConfigSizes(config,&modeCount);
-				VideoModeList.setDesktop(defaultDepth, core::dimension2d<u32>(
+				VideoModeList.setDesktop(defaultDepth, core::dimension2d<s32>(
 					modes[oldRandrMode].width, modes[oldRandrMode].height));
 				for (int i = 0; i<modeCount; ++i)
 				{
-					VideoModeList.addMode(core::dimension2d<u32>(
+					VideoModeList.addMode(core::dimension2d<s32>(
 						modes[i].width, modes[i].height), defaultDepth);
 				}
 				XRRFreeScreenConfigInfo(config);
@@ -1268,15 +1141,6 @@ video::IVideoModeList* CIrrDeviceLinux::getVideoModeList()
 #endif
 
 	return &VideoModeList;
-}
-
-
-//! Return pointer to a list with all video modes supported by the gfx adapter.
-void CIrrDeviceLinux::minimizeWindow()
-{
-#ifdef _IRR_COMPILE_WITH_X11_
-	XIconifyWindow(display, window, screennr);
-#endif
 }
 
 
@@ -1569,9 +1433,9 @@ void CIrrDeviceLinux::pollJoysticks()
 			{
 			case JS_EVENT_BUTTON:
 				if (event.value)
-						info.persistentData.JoystickEvent.ButtonStates |= (1 << event.number);
+	        			info.persistentData.JoystickEvent.ButtonStates |= (1 << event.number);
 	   			else
-		  				info.persistentData.JoystickEvent.ButtonStates &= ~(1 << event.number);
+	      				info.persistentData.JoystickEvent.ButtonStates &= ~(1 << event.number);
 				break;
 
 			case JS_EVENT_AXIS:
@@ -1589,80 +1453,22 @@ void CIrrDeviceLinux::pollJoysticks()
 #endif // _IRR_COMPILE_WITH_JOYSTICK_EVENTS_
 }
 
-//! gets text from the clipboard
-//! \return Returns 0 if no string is in there.
-const c8* CIrrDeviceLinux::getTextFromClipboard() const
-{
-#if defined(_IRR_COMPILE_WITH_X11_)
-	Window ownerWindow = XGetSelectionOwner (display, X_ATOM_CLIPBOARD);
-	if ( ownerWindow ==  window )
-	{
-		return Clipboard.c_str();
-	}
-	Clipboard = "";
-	if (ownerWindow != None )
-	{
-		XConvertSelection (display, X_ATOM_CLIPBOARD, XA_STRING, None, ownerWindow, CurrentTime);
-		XFlush (display);
 
-		// check for data
-		Atom type;
-		int format;
-		unsigned long numItems, bytesLeft, dummy;
-		unsigned char *data;
-		XGetWindowProperty (display, ownerWindow,
-				XA_STRING, 	  // property name
-				0,		 // offset
-				0,	  	  // length (we only check for data, so 0)
-				0, 	 	  // Delete 0==false
-				AnyPropertyType,  // AnyPropertyType or property identifier
-				&type,		  // return type
-				&format,	  // return format
-				&numItems,   // number items
-				&bytesLeft,  // remaining bytes for partial reads
-				&data);		// data
-		if ( bytesLeft > 0 )
-		{
-			// there is some data to get
-			int result = XGetWindowProperty (display, ownerWindow, XA_STRING, 0,
-										bytesLeft, 0, AnyPropertyType, &type, &format,
-										&numItems, &dummy, &data);
-			if (result == Success)
-				Clipboard = (irr::c8*)data;
-			XFree (data);
-		}
+IRRLICHT_API IrrlichtDevice* IRRCALLCONV createDeviceEx(const SIrrlichtCreationParameters& param)
+{
+	CIrrDeviceLinux* dev = new CIrrDeviceLinux(param);
+
+	if (dev && !dev->getVideoDriver() && param.DriverType != video::EDT_NULL)
+	{
+		dev->drop();
+		dev = 0;
 	}
 
-	return Clipboard.c_str();
-
-#else
-	return 0;
-#endif
+	return dev;
 }
 
-//! copies text to the clipboard
-void CIrrDeviceLinux::copyToClipboard(const c8* text) const
-{
-#if defined(_IRR_COMPILE_WITH_X11_)
-	// Actually there is no clipboard on X but applications just say they own the clipboard and return text when asked.
-	// Which btw. also means that on X you lose clipboard content when closing applications.
-	Clipboard = text;
-	XSetSelectionOwner (display, X_ATOM_CLIPBOARD, window, CurrentTime);
-	XFlush (display);
-#endif
-}
-
-void CIrrDeviceLinux::initXAtoms()
-{
-#ifdef _IRR_COMPILE_WITH_X11_
-	X_ATOM_CLIPBOARD = XInternAtom(display, "CLIPBOARD", False);
-	X_ATOM_TARGETS = XInternAtom(display, "TARGETS", False);
-	X_ATOM_UTF8_STRING = XInternAtom (display, "UTF8_STRING", False);
-	X_ATOM_TEXT = XInternAtom (display, "TEXT", False);
-#endif
-}
 
 } // end namespace
 
-#endif // _IRR_COMPILE_WITH_X11_DEVICE_
+#endif // _IRR_USE_LINUX_DEVICE_
 

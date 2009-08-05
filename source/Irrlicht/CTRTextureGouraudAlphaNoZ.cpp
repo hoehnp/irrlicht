@@ -33,7 +33,7 @@
 #define CMP_W
 //#define WRITE_W
 
-#define IPOL_C0
+//#define IPOL_C0
 #define IPOL_T0
 //#define IPOL_T1
 
@@ -147,7 +147,7 @@ void CTRTextureGouraudAlphaNoZ::scanline_bilinear ()
 	fp24 slopeW;
 #endif
 #ifdef IPOL_C0
-	sVec4 slopeC[MATERIAL_MAX_COLORS];
+	sVec4 slopeC;
 #endif
 #ifdef IPOL_T0
 	sVec2 slopeT[BURNING_MATERIAL_MAX_TEXTURES];
@@ -172,7 +172,7 @@ void CTRTextureGouraudAlphaNoZ::scanline_bilinear ()
 	slopeW = (line.w[1] - line.w[0]) * invDeltaX;
 #endif
 #ifdef IPOL_C0
-	slopeC[0] = (line.c[0][1] - line.c[0][0]) * invDeltaX;
+	slopeC = (line.c[1] - line.c[0]) * invDeltaX;
 #endif
 #ifdef IPOL_T0
 	slopeT[0] = (line.t[0][1] - line.t[0][0]) * invDeltaX;
@@ -190,7 +190,7 @@ void CTRTextureGouraudAlphaNoZ::scanline_bilinear ()
 	line.w[0] += slopeW * subPixel;
 #endif
 #ifdef IPOL_C0
-	line.c[0][0] += slopeC[0] * subPixel;
+	line.c[0] += slopeC * subPixel;
 #endif
 #ifdef IPOL_T0
 	line.t[0][0] += slopeT[0] * subPixel;
@@ -200,10 +200,10 @@ void CTRTextureGouraudAlphaNoZ::scanline_bilinear ()
 #endif
 #endif
 
-	dst = (tVideoSample*)RenderTarget->lock() + ( line.y * RenderTarget->getDimension().Width ) + xStart;
+	dst = lockedSurface + ( line.y * RenderTarget->getDimension().Width ) + xStart;
 
 #ifdef USE_ZBUFFER
-	z = (fp24*) DepthBuffer->lock() + ( line.y * RenderTarget->getDimension().Width ) + xStart;
+	z = lockedDepthBuffer + ( line.y * RenderTarget->getDimension().Width ) + xStart;
 #endif
 
 
@@ -215,14 +215,10 @@ void CTRTextureGouraudAlphaNoZ::scanline_bilinear ()
 	u32 dIndex = ( line.y & 3 ) << 2;
 
 #else
-	tFixPoint a0;
-	tFixPoint r0, g0, b0;
+	tFixPointu a0;
+	tFixPointu r0, g0, b0;
 #endif
 
-#ifdef IPOL_C0
-	tFixPoint r1, g1, b1;
-	tFixPoint r2, g2, b2;
-#endif
 
 	for ( s32 i = 0; i <= dx; ++i )
 	{
@@ -243,20 +239,20 @@ void CTRTextureGouraudAlphaNoZ::scanline_bilinear ()
 
 		inversew = fix_inverse32 ( line.w[0] );
 
-		u32 argb = getTexel_plain ( &IT[0],	d + tofix ( line.t[0][0].x,inversew), 
-											d + tofix ( line.t[0][0].y,inversew)
+		u32 argb = getTexel_plain ( &IT[0],	d + f32_to_fixPoint ( line.t[0][0].x,inversew), 
+											d + f32_to_fixPoint ( line.t[0][0].y,inversew)
 											);
 
 #else
 
-		u32 argb = getTexel_plain ( &IT[0],	d + tofix ( line.t[0][0].x), 
-											d + tofix ( line.t[0][0].y)
+		u32 argb = getTexel_plain ( &IT[0],	d + f32_to_fixPoint ( line.t[0][0].x), 
+											d + f32_to_fixPoint ( line.t[0][0].y)
 											);
 
 #endif
 
 		const u32 alpha = ( argb >> 24 );
-		if ( alpha > AlphaRef )
+		if ( alpha >= AlphaRef )
 		{
 #ifdef WRITE_Z
 			z[i] = line.z[0];
@@ -271,21 +267,15 @@ void CTRTextureGouraudAlphaNoZ::scanline_bilinear ()
 
 #else
 
-#ifdef INVERSE_W
 		inversew = fix_inverse32 ( line.w[0] );
-		getSample_texture ( (tFixPointu&) a0, (tFixPointu&) r0, (tFixPointu&)g0, (tFixPointu&)b0, 
+
+		getSample_texture ( a0, r0, g0, b0, 
 							&IT[0],
-							tofix ( line.t[0][0].x,inversew),
-							tofix ( line.t[0][0].y,inversew)
+							f32_to_fixPoint ( line.t[0][0].x,inversew),
+							f32_to_fixPoint ( line.t[0][0].y,inversew)
 						);
-#else
-		getSample_texture ( (tFixPointu&) a0, (tFixPointu&) r0, (tFixPointu&)g0, (tFixPointu&)b0, 
-							&IT[0],
-							tofix ( line.t[0][0].x),
-							tofix ( line.t[0][0].y)
-						);
-#endif
-		if ( (tFixPointu) a0 > AlphaRef )
+
+		if ( a0 >= AlphaRef )
 		{
 #ifdef WRITE_Z
 			z[i] = line.z[0];
@@ -294,40 +284,10 @@ void CTRTextureGouraudAlphaNoZ::scanline_bilinear ()
 			z[i] = line.w[0];
 #endif
 
-#ifdef INVERSE_W
-			getSample_color ( r2, g2, b2, line.c[0][0], inversew );
-#else
-			getSample_color ( r2, g2, b2, line.c[0][0] );
-#endif
-			r0 = imulFix ( r0, r2 );
-			g0 = imulFix ( g0, g2 );
-			b0 = imulFix ( b0, b2 );
-
-			color_to_fix ( r1, g1, b1, dst[i] );
-
-			a0 >>= 8;
-
-			r2 = r1 + imulFix ( a0, r0 - r1 );
-			g2 = g1 + imulFix ( a0, g0 - g1 );
-			b2 = b1 + imulFix ( a0, b0 - b1 );
-			dst[i] = fix4_to_color ( a0, r2, g2, b2 );
-
-/*
 			dst[i] = PixelBlend32 ( dst[i], 
 									fix_to_color ( r0,g0, b0 ),
 									fixPointu_to_u32 ( a0 )
 								);
-*/
-/*
-			getSample_color ( r2, g2, b2, line.c[0][0], inversew * COLOR_MAX );
-			color_to_fix ( r1, g1, b1, dst[i] );
-
-			r2 = r0 + imulFix ( a0, r1 - r0 );
-			g2 = g0 + imulFix ( a0, g1 - g0 );
-			b2 = b0 + imulFix ( a0, b1 - b0 );
-			dst[i] = fix_to_color ( r2, g2, b2 );
-*/
-
 		}
 #endif
 
@@ -340,7 +300,7 @@ void CTRTextureGouraudAlphaNoZ::scanline_bilinear ()
 		line.w[0] += slopeW;
 #endif
 #ifdef IPOL_C0
-		line.c[0][0] += slopeC[0];
+		line.c[0] += slopeC;
 #endif
 #ifdef IPOL_T0
 		line.t[0][0] += slopeT[0];
@@ -356,8 +316,8 @@ void CTRTextureGouraudAlphaNoZ::drawTriangle ( const s4DVertex *a,const s4DVerte
 {
 	// sort on height, y
 	if ( F32_A_GREATER_B ( a->Pos.y , b->Pos.y ) ) swapVertexPointer(&a, &b);
+	if ( F32_A_GREATER_B ( a->Pos.y , c->Pos.y ) ) swapVertexPointer(&a, &c);
 	if ( F32_A_GREATER_B ( b->Pos.y , c->Pos.y ) ) swapVertexPointer(&b, &c);
-	if ( F32_A_GREATER_B ( a->Pos.y , b->Pos.y ) ) swapVertexPointer(&a, &b);
 
 
 	// calculate delta y of the edges
@@ -395,8 +355,8 @@ void CTRTextureGouraudAlphaNoZ::drawTriangle ( const s4DVertex *a,const s4DVerte
 #endif
 
 #ifdef IPOL_C0
-	scan.slopeC[0][0] = (c->Color[0] - a->Color[0]) * scan.invDeltaY[0];
-	scan.c[0][0] = a->Color[0];
+	scan.slopeC[0] = (c->Color[0] - a->Color[0]) * scan.invDeltaY[0];
+	scan.c[0] = a->Color[0];
 #endif
 
 #ifdef IPOL_T0
@@ -417,6 +377,20 @@ void CTRTextureGouraudAlphaNoZ::drawTriangle ( const s4DVertex *a,const s4DVerte
 	f32 subPixel;
 #endif
 
+	lockedSurface = (tVideoSample*)RenderTarget->lock();
+
+#ifdef USE_ZBUFFER
+	lockedDepthBuffer = (fp24*) DepthBuffer->lock();
+#endif
+
+#ifdef IPOL_T0
+	IT[0].data = (tVideoSample*)IT[0].Texture->lock();
+#endif
+
+#ifdef IPOL_T1
+	IT[1].data = (tVideoSample*)IT[1].Texture->lock();
+#endif
+
 	// rasterize upper sub-triangle
 	if ( (f32) 0.0 != scan.invDeltaY[1]  )
 	{
@@ -435,8 +409,8 @@ void CTRTextureGouraudAlphaNoZ::drawTriangle ( const s4DVertex *a,const s4DVerte
 #endif
 
 #ifdef IPOL_C0
-		scan.slopeC[0][1] = (b->Color[0] - a->Color[0]) * scan.invDeltaY[1];
-		scan.c[0][1] = a->Color[0];
+		scan.slopeC[1] = (b->Color[0] - a->Color[0]) * scan.invDeltaY[1];
+		scan.c[1] = a->Color[0];
 #endif
 
 #ifdef IPOL_T0
@@ -471,8 +445,8 @@ void CTRTextureGouraudAlphaNoZ::drawTriangle ( const s4DVertex *a,const s4DVerte
 #endif
 
 #ifdef IPOL_C0
-		scan.c[0][0] += scan.slopeC[0][0] * subPixel;
-		scan.c[0][1] += scan.slopeC[0][1] * subPixel;		
+		scan.c[0] += scan.slopeC[0] * subPixel;
+		scan.c[1] += scan.slopeC[1] * subPixel;		
 #endif
 
 #ifdef IPOL_T0
@@ -504,8 +478,8 @@ void CTRTextureGouraudAlphaNoZ::drawTriangle ( const s4DVertex *a,const s4DVerte
 #endif
 
 #ifdef IPOL_C0
-			line.c[0][scan.left] = scan.c[0][0];
-			line.c[0][scan.right] = scan.c[0][1];
+			line.c[scan.left] = scan.c[0];
+			line.c[scan.right] = scan.c[1];
 #endif
 
 #ifdef IPOL_T0
@@ -535,8 +509,8 @@ void CTRTextureGouraudAlphaNoZ::drawTriangle ( const s4DVertex *a,const s4DVerte
 #endif
 
 #ifdef IPOL_C0
-			scan.c[0][0] += scan.slopeC[0][0];
-			scan.c[0][1] += scan.slopeC[0][1];
+			scan.c[0] += scan.slopeC[0];
+			scan.c[1] += scan.slopeC[1];
 #endif
 
 #ifdef IPOL_T0
@@ -568,7 +542,7 @@ void CTRTextureGouraudAlphaNoZ::drawTriangle ( const s4DVertex *a,const s4DVerte
 			scan.w[0] = a->Pos.w + scan.slopeW[0] * temp[0];
 #endif
 #ifdef IPOL_C0
-			scan.c[0][0] = a->Color[0] + scan.slopeC[0][0] * temp[0];
+			scan.c[0] = a->Color[0] + scan.slopeC[0] * temp[0];
 #endif
 #ifdef IPOL_T0
 			scan.t[0][0] = a->Tex[0] + scan.slopeT[0][0] * temp[0];
@@ -594,8 +568,8 @@ void CTRTextureGouraudAlphaNoZ::drawTriangle ( const s4DVertex *a,const s4DVerte
 #endif
 
 #ifdef IPOL_C0
-		scan.slopeC[0][1] = (c->Color[0] - b->Color[0]) * scan.invDeltaY[2];
-		scan.c[0][1] = b->Color[0];
+		scan.slopeC[1] = (c->Color[0] - b->Color[0]) * scan.invDeltaY[2];
+		scan.c[1] = b->Color[0];
 #endif
 
 #ifdef IPOL_T0
@@ -631,8 +605,8 @@ void CTRTextureGouraudAlphaNoZ::drawTriangle ( const s4DVertex *a,const s4DVerte
 #endif
 
 #ifdef IPOL_C0
-		scan.c[0][0] += scan.slopeC[0][0] * subPixel;
-		scan.c[0][1] += scan.slopeC[0][1] * subPixel;		
+		scan.c[0] += scan.slopeC[0] * subPixel;
+		scan.c[1] += scan.slopeC[1] * subPixel;		
 #endif
 
 #ifdef IPOL_T0
@@ -664,8 +638,8 @@ void CTRTextureGouraudAlphaNoZ::drawTriangle ( const s4DVertex *a,const s4DVerte
 #endif
 
 #ifdef IPOL_C0
-			line.c[0][scan.left] = scan.c[0][0];
-			line.c[0][scan.right] = scan.c[0][1];
+			line.c[scan.left] = scan.c[0];
+			line.c[scan.right] = scan.c[1];
 #endif
 
 #ifdef IPOL_T0
@@ -695,8 +669,8 @@ void CTRTextureGouraudAlphaNoZ::drawTriangle ( const s4DVertex *a,const s4DVerte
 #endif
 
 #ifdef IPOL_C0
-			scan.c[0][0] += scan.slopeC[0][0];
-			scan.c[0][1] += scan.slopeC[0][1];
+			scan.c[0] += scan.slopeC[0];
+			scan.c[1] += scan.slopeC[1];
 #endif
 
 #ifdef IPOL_T0
@@ -712,9 +686,21 @@ void CTRTextureGouraudAlphaNoZ::drawTriangle ( const s4DVertex *a,const s4DVerte
 		}
 	}
 
+	RenderTarget->unlock();
+
+#ifdef USE_ZBUFFER
+	DepthBuffer->unlock();
+#endif
+
+#ifdef IPOL_T0
+	IT[0].Texture->unlock();
+#endif
+
+#ifdef IPOL_T1
+	IT[1].Texture->unlock();
+#endif
 
 }
-
 
 } // end namespace video
 } // end namespace irr
@@ -725,7 +711,6 @@ namespace irr
 {
 namespace video
 {
-
 
 //! creates a flat triangle renderer
 IBurningShader* createTRTextureGouraudAlphaNoZ(IDepthBuffer* zbuffer)
