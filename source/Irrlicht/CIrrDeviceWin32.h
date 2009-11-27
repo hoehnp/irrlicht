@@ -95,14 +95,11 @@ namespace irr
 
 		//! Compares to the last call of this function to return double and triple clicks.
 		//! \return Returns only 1,2 or 3. A 4th click will start with 1 again.
-		virtual u32 checkSuccessiveClicks(s32 mouseX, s32 mouseY, EMOUSE_INPUT_EVENT inputEvent )
+		virtual u32 checkSuccessiveClicks(s32 mouseX, s32 mouseY)
 		{
 			// we just have to make it public
-			return CIrrDeviceStub::checkSuccessiveClicks(mouseX, mouseY, inputEvent );
+			return CIrrDeviceStub::checkSuccessiveClicks(mouseX, mouseY);
 		}
-
-		//! switchs to fullscreen
-		bool switchToFullScreen(bool reset=false);
 
 		//! Implementation of the win32 cursor control
 		class CCursorControl : public gui::ICursorControl
@@ -110,9 +107,8 @@ namespace irr
 		public:
 
 			CCursorControl(const core::dimension2d<u32>& wsize, HWND hwnd, bool fullscreen)
-				: WindowSize(wsize), InvWindowSize(0.0f, 0.0f),
-					HWnd(hwnd), BorderX(0), BorderY(0),
-					UseReferenceRect(false), IsVisible(true)
+				: WindowSize(wsize), InvWindowSize(0.0f, 0.0f), IsVisible(true),
+					HWnd(hwnd), BorderX(0), BorderY(0), UseReferenceRect(false)
 			{
 				if (WindowSize.Width!=0)
 					InvWindowSize.Width = 1.0f / WindowSize.Width;
@@ -207,7 +203,7 @@ namespace irr
 			}
 
 			//! Returns the current position of the mouse cursor.
-			virtual const core::position2d<s32>& getPosition()
+			virtual core::position2d<s32> getPosition()
 			{
 				updateInternalCursorPosition();
 				return CursorPos;
@@ -247,7 +243,7 @@ namespace irr
 				else
 					UseReferenceRect = false;
 			}
-
+			
 			/** Used to notify the cursor that the window was resized. */
 			virtual void OnResize(const core::dimension2d<u32>& size)
 			{
@@ -256,7 +252,7 @@ namespace irr
 					InvWindowSize.Width = 1.0f / size.Width;
 				else 
 					InvWindowSize.Width = 0.f;
-
+ 
 				if (size.Height!=0)
 					InvWindowSize.Height = 1.0f / size.Height;
 				else
@@ -302,12 +298,12 @@ namespace irr
 			core::position2d<s32> CursorPos;
 			core::dimension2d<u32> WindowSize;
 			core::dimension2d<f32> InvWindowSize;
+			bool IsVisible;
 			HWND HWnd;
 
 			s32 BorderX, BorderY;
-			core::rect<s32> ReferenceRect;
 			bool UseReferenceRect;
-			bool IsVisible;
+			core::rect<s32> ReferenceRect;
 		};
 
 		//! returns the win32 cursor control
@@ -317,6 +313,9 @@ namespace irr
 
 		//! create the driver
 		void createDriver();
+
+		//! switchs to fullscreen
+		bool switchToFullScreen(s32 width, s32 height, s32 bits);
 
 		void getWindowsVersion(core::stringc& version);
 
@@ -346,3 +345,4 @@ namespace irr
 
 #endif // _IRR_COMPILE_WITH_WINDOWS_DEVICE_
 #endif // __C_IRR_DEVICE_WIN32_H_INCLUDED__
+

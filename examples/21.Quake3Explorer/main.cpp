@@ -23,17 +23,12 @@ Copyright 2006-2009 Burningwater, Thomas Alten
 #include "sound.h"
 #include <iostream>
 
-/*
+/*!
 	Game Data is used to hold Data which is needed to drive the game
 */
 struct GameData
 {
-	GameData ( const path &startupDir) :
-		retVal(0), StartupDir(startupDir), createExDevice(0), Device(0)
-	{
-		setDefault ();
-	}
-
+	GameData ( const path &startupDir);
 	void setDefault ();
 	s32 save ( const path &filename );
 	s32 load ( const path &filename );
@@ -63,7 +58,18 @@ struct GameData
 	IrrlichtDevice *Device;
 };
 
-/*
+/*!
+*/
+GameData::GameData ( const path &startupDir)
+{
+	retVal = 0;
+	createExDevice = 0;
+	Device = 0;
+	StartupDir = startupDir;
+	setDefault ();
+}
+
+/*!
 	set default settings
 */
 void GameData::setDefault ()
@@ -106,17 +112,19 @@ void GameData::setDefault ()
 	CurrentMapName = "";
 	CurrentArchiveList.clear ();
 
-	// Explorer Media directory
+	//! Explorer Media directory
 	CurrentArchiveList.push_back ( StartupDir + "../../media/" );
 
-	// Add the original quake3 files before you load your custom map
-	// Most mods are using the original shaders, models&items&weapons
-	CurrentArchiveList.push_back("/q/baseq3/");
+	//! Add the original quake3 files before you load your custom map
+	//! Most mods are using the original shaders, models&items&weapons
+	CurrentArchiveList.push_back ( "/q/baseq3/" );
 
-	CurrentArchiveList.push_back(StartupDir + "../../media/map-20kdm2.pk3");
+
+	CurrentArchiveList.push_back ( StartupDir + "../../media/map-20kdm2.pk3" );
+
 }
 
-/*
+/*!
 	Load the current game State from a typical quake3 cfg file
 */
 s32 GameData::load ( const path &filename )
@@ -124,7 +132,7 @@ s32 GameData::load ( const path &filename )
 	if (!Device)
 		return 0;
 
-	// the quake3 mesh loader can also handle *.shader and *.cfg file
+	//! the quake3 mesh loader can also handle *.shader and *.cfg file
 	IQ3LevelMesh* mesh = (IQ3LevelMesh*) Device->getSceneManager()->getMesh ( filename );
 	if (!mesh)
 		return 0;
@@ -163,7 +171,7 @@ s32 GameData::load ( const path &filename )
 	return 1;
 }
 
-/*
+/*!
 	Store the current game State in a quake3 configuration file
 */
 s32 GameData::save ( const path &filename )
@@ -209,7 +217,7 @@ s32 GameData::save ( const path &filename )
 	return 1;
 }
 
-/*
+/*!
 	Representing a player
 */
 struct Q3Player : public IAnimationEndCallBack
@@ -246,7 +254,7 @@ struct Q3Player : public IAnimationEndCallBack
 };
 
 
-/* End player
+/*!
 */
 void Q3Player::shutdown ()
 {
@@ -266,15 +274,13 @@ void Q3Player::shutdown ()
 }
 
 
-/* create a new player
+/*!
 */
 void Q3Player::create ( IrrlichtDevice *device, IQ3LevelMesh* mesh, ISceneNode *mapNode, IMetaTriangleSelector *meta )
 {
 	setTimeFire ( Anim + 0, 200, FIRED );
 	setTimeFire ( Anim + 1, 5000 );
 
-	if (!device)
-		return;
 	// load FPS weapon to Camera
 	Device = device;
 	Mesh = mesh;
@@ -365,14 +371,12 @@ void Q3Player::create ( IrrlichtDevice *device, IQ3LevelMesh* mesh, ISceneNode *
 }
 
 
-/*
+/*!
 	so we need a good starting Position in the level.
 	we can ask the Quake3 Loader for all entities with class_name "info_player_deathmatch"
 */
 void Q3Player::respawn ()
 {
-	if (!Device)
-		return;
 	ICameraSceneNode* camera = Device->getSceneManager()->getActiveCamera();
 
 	Device->getLogger()->log( "respawn" );
@@ -391,8 +395,6 @@ void Q3Player::respawn ()
 */
 void Q3Player::setpos ( const vector3df &pos, const vector3df &rotation )
 {
-	if (!Device)
-		return;
 	Device->getLogger()->log( "setpos" );
 
 	ICameraSceneNode* camera = Device->getSceneManager()->getActiveCamera();
@@ -405,7 +407,7 @@ void Q3Player::setpos ( const vector3df &pos, const vector3df &rotation )
 	}
 }
 
-/* set the Animation of the player and weapon
+/*!
 */
 void Q3Player::setAnim ( const c8 *name )
 {
@@ -429,7 +431,8 @@ void Q3Player::setAnim ( const c8 *name )
 }
 
 
-// Callback
+/*!
+*/
 void Q3Player::OnAnimationEnd(IAnimatedMeshSceneNode* node)
 {
 	setAnim ( 0 );
@@ -437,8 +440,7 @@ void Q3Player::OnAnimationEnd(IAnimatedMeshSceneNode* node)
 
 
 
-/* GUI Elements
-*/
+//! GUIElements
 struct GUI
 {
 	GUI ()
@@ -481,10 +483,11 @@ struct GUI
 	IGUIStaticText* StatusLine;
 	IGUIImage* Logo;
 	IGUIWindow* Window;
+
 };
 
 
-/*
+/*!
 	CQuake3EventHandler controls the game
 */
 class CQuake3EventHandler : public IEventReceiver
@@ -544,14 +547,14 @@ private:
 	void dropMap ();
 };
 
-/* Constructor
+/*!
 */
 CQuake3EventHandler::CQuake3EventHandler( GameData *game )
 : Game(game), Mesh(0), MapParent(0), ShaderParent(0), ItemParent(0), UnresolvedParent(0),
 	BulletParent(0), FogParent(0), SkyNode(0), Meta(0)
 {
 	buf[0]=0;
-	// Also use 16 Bit Textures for 16 Bit RenderDevice
+	//! Also use 16 Bit Textures for 16 Bit RenderDevice
 	if ( Game->deviceParam.Bits == 16 )
 	{
 		game->Device->getVideoDriver()->setTextureCreationFlag(ETCF_ALWAYS_16_BIT, true);
@@ -569,7 +572,6 @@ CQuake3EventHandler::CQuake3EventHandler( GameData *game )
 }
 
 
-// destructor
 CQuake3EventHandler::~CQuake3EventHandler ()
 {
 	Player[0].shutdown ();
@@ -581,7 +583,7 @@ CQuake3EventHandler::~CQuake3EventHandler ()
 }
 
 
-// create runtime textures smog, fog
+//! create runtime textures smog, fog
 void CQuake3EventHandler::createTextures ()
 {
 	IVideoDriver * driver = Game->Device->getVideoDriver();
@@ -634,7 +636,7 @@ void CQuake3EventHandler::createTextures ()
 }
 
 
-/*
+/*!
 	create the GUI
 */
 void CQuake3EventHandler::CreateGUI()
@@ -827,7 +829,8 @@ void CQuake3EventHandler::CreateGUI()
 }
 
 
-/*
+
+/*!
 	Add an Archive to the FileSystems und updates the GUI
 */
 void CQuake3EventHandler::AddArchive ( const path& archiveName )
@@ -913,7 +916,7 @@ void CQuake3EventHandler::AddArchive ( const path& archiveName )
 		u32 g = 0;
 		core::stringw s;
 
-		// browse the attached file system
+		//! browse the attached file system
 		fs->setFileListSystem ( FILESYSTEM_VIRTUAL );
 		fs->changeWorkingDirectoryTo ( "/maps/" );
 		IFileList *fileList = fs->createFileList ();
@@ -991,7 +994,7 @@ void CQuake3EventHandler::AddArchive ( const path& archiveName )
 
 }
 
-/*
+/*!
 	clears the Map in Memory
 */
 void CQuake3EventHandler::dropMap ()
@@ -1028,7 +1031,7 @@ void CQuake3EventHandler::dropMap ()
 	Mesh = 0;
 }
 
-/* Load new map
+/*!
 */
 void CQuake3EventHandler::LoadMap ( const stringw &mapName, s32 collision )
 {
@@ -1125,6 +1128,9 @@ void CQuake3EventHandler::LoadMap ( const stringw &mapName, s32 collision )
 }
 
 /*
+**/
+
+/*!
 	Adds a SceneNode with an icon to the Scene Tree
 */
 void CQuake3EventHandler::addSceneTreeItem( ISceneNode * parent, IGUITreeViewNode* nodeParent)
@@ -1197,13 +1203,13 @@ void CQuake3EventHandler::addSceneTreeItem( ISceneNode * parent, IGUITreeViewNod
 }
 
 
-// Adds life!
+//! Adds life!
 void CQuake3EventHandler::CreatePlayers()
 {
 	Player[0].create ( Game->Device, Mesh, MapParent, Meta );
 }
 
-// Adds a skydome to the scene
+//! Adds a skydome to the scene
 void CQuake3EventHandler::AddSky( u32 dome, const c8 *texture)
 {
 	ISceneManager *smgr = Game->Device->getSceneManager ();
@@ -1223,13 +1229,10 @@ void CQuake3EventHandler::AddSky( u32 dome, const c8 *texture)
 		snprintf ( buf, 64, "%s_%s.jpg", texture, p[i] );
 		SkyNode = smgr->addSkyBoxSceneNode( driver->getTexture ( buf ), 0, 0, 0, 0, 0 );
 
-		if (SkyNode)
+		for ( i = 0; i < 6; ++i )
 		{
-			for ( i = 0; i < 6; ++i )
-			{
-				snprintf ( buf, 64, "%s_%s.jpg", texture, p[i] );
-				SkyNode->getMaterial(i).setTexture ( 0, driver->getTexture ( buf ) );
-			}
+			snprintf ( buf, 64, "%s_%s.jpg", texture, p[i] );
+			SkyNode->getMaterial(i).setTexture ( 0, driver->getTexture ( buf ) );
 		}
 	}
 	else
@@ -1261,8 +1264,7 @@ void CQuake3EventHandler::AddSky( u32 dome, const c8 *texture)
 			);
 	}
 
-	if (SkyNode)
-		SkyNode->setName("Skydome");
+	SkyNode->setName ( "Skydome" );
 	//SkyNode->getMaterial(0).ZBuffer = video::EMDF_DEPTH_LESS_EQUAL;
 
 	driver->setTextureCreationFlag(video::ETCF_CREATE_MIP_MAPS, oldMipMapState);
@@ -1270,7 +1272,8 @@ void CQuake3EventHandler::AddSky( u32 dome, const c8 *texture)
 }
 
 
-// enable GUI elements
+/*!
+*/
 void CQuake3EventHandler::SetGUIActive( s32 command)
 {
 	bool inputState = false;
@@ -1312,7 +1315,7 @@ void CQuake3EventHandler::SetGUIActive( s32 command)
 
 
 
-/*
+/*!
 	Handle game input
 */
 bool CQuake3EventHandler::OnEvent(const SEvent& eve)
@@ -1522,7 +1525,7 @@ bool CQuake3EventHandler::OnEvent(const SEvent& eve)
 		else
 		if (eve.KeyInput.Key == KEY_F11)
 		{
-			// screenshot are taken without gamma!
+			//! screenshot are taken without gamma!
 			IImage* image = Game->Device->getVideoDriver()->createScreenShot();
 			if (image)
 			{
@@ -1821,7 +1824,8 @@ void CQuake3EventHandler::useItem( Q3Player * player)
 	// play sound
 }
 
-// rendered when bullets hit something
+/*!
+*/
 void CQuake3EventHandler::createParticleImpacts( u32 now )
 {
 	ISceneManager* sm = Game->Device->getSceneManager();
@@ -2002,7 +2006,7 @@ void CQuake3EventHandler::Animate()
 }
 
 
-/* The main game states
+/*!
 */
 void runGame ( GameData *game )
 {
@@ -2020,10 +2024,10 @@ void runGame ( GameData *game )
 	// create an event receiver based on current game data
 	CQuake3EventHandler *eventHandler = new CQuake3EventHandler( game );
 
-	// load stored config
+	//! load stored config
 	game->load ( "explorer.cfg" );
 
-	// add our media directory and archive to the file system
+	//! add our media directory and archive to the file system
 	for ( u32 i = 0; i < game->CurrentArchiveList.size(); ++i )
 	{
 		eventHandler->AddArchive ( game->CurrentArchiveList[i] );
@@ -2074,7 +2078,7 @@ void runGame ( GameData *game )
 #endif
 
 
-/* The main routine, doing all setup
+/*!
 */
 int IRRCALLCONV main(int argc, char* argv[])
 {
@@ -2125,4 +2129,5 @@ int IRRCALLCONV main(int argc, char* argv[])
 
 /*
 **/
+
 

@@ -349,7 +349,6 @@ void CAnimatedMeshSceneNode::render()
 	{
 		video::SMaterial debug_mat;
 		debug_mat.Lighting = false;
-		debug_mat.AntiAliasing=0;
 		driver->setMaterial(debug_mat);
 		// show normals
 		if (DebugDataVisible & scene::EDS_NORMALS)
@@ -521,12 +520,6 @@ bool CAnimatedMeshSceneNode::setFrameLoop(s32 begin, s32 end)
 void CAnimatedMeshSceneNode::setAnimationSpeed(f32 framesPerSecond)
 {
 	FramesPerSecond = framesPerSecond * 0.001f;
-}
-
-
-f32 CAnimatedMeshSceneNode::getAnimationSpeed() const
-{
-	return FramesPerSecond * 1000.f;
 }
 
 
@@ -774,8 +767,8 @@ void CAnimatedMeshSceneNode::serializeAttributes(io::IAttributes* out, io::SAttr
 	out->addBool("Looping", Looping);
 	out->addBool("ReadOnlyMaterials", ReadOnlyMaterials);
 	out->addFloat("FramesPerSecond", FramesPerSecond);
-	out->addInt("StartFrame", StartFrame);
-	out->addInt("EndFrame", EndFrame);
+
+	// TODO: write animation names instead of frame begin and ends
 }
 
 
@@ -790,8 +783,6 @@ void CAnimatedMeshSceneNode::deserializeAttributes(io::IAttributes* in, io::SAtt
 	Looping = in->getAttributeAsBool("Looping");
 	ReadOnlyMaterials = in->getAttributeAsBool("ReadOnlyMaterials");
 	FramesPerSecond = in->getAttributeAsFloat("FramesPerSecond");
-	StartFrame = in->getAttributeAsInt("StartFrame");
-	EndFrame = in->getAttributeAsInt("EndFrame");
 
 	if (newMeshStr != "" && oldMeshStr != newMeshStr)
 	{

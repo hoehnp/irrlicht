@@ -166,17 +166,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			dev->postEventFromUser(event);
 
-			if ( event.MouseInput.Event >= irr::EMIE_LMOUSE_PRESSED_DOWN && event.MouseInput.Event <= irr::EMIE_MMOUSE_PRESSED_DOWN )
+			if ( event.MouseInput.Event == irr::EMIE_LMOUSE_PRESSED_DOWN )
 			{
-				irr::u32 clicks = dev->checkSuccessiveClicks(event.MouseInput.X, event.MouseInput.Y, event.MouseInput.Event);
+				irr::u32 clicks = dev->checkSuccessiveClicks(event.MouseInput.X, event.MouseInput.Y);
 				if ( clicks == 2 )
 				{
-					event.MouseInput.Event = (irr::EMOUSE_INPUT_EVENT)(irr::EMIE_LMOUSE_DOUBLE_CLICK + event.MouseInput.Event-irr::EMIE_LMOUSE_PRESSED_DOWN);
+					event.MouseInput.Event = irr::EMIE_MOUSE_DOUBLE_CLICK;
 					dev->postEventFromUser(event);
 				}
 				else if ( clicks == 3 )
 				{
-					event.MouseInput.Event = (irr::EMOUSE_INPUT_EVENT)(irr::EMIE_LMOUSE_TRIPLE_CLICK + event.MouseInput.Event-irr::EMIE_LMOUSE_PRESSED_DOWN);
+					event.MouseInput.Event = irr::EMIE_MOUSE_TRIPLE_CLICK;
 					dev->postEventFromUser(event);
 				}
 			}
@@ -208,30 +208,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			event.KeyInput.Key = (irr::EKEY_CODE)wParam;
 			event.KeyInput.PressedDown = (message==WM_KEYDOWN || message == WM_SYSKEYDOWN);
 
-			const UINT MY_MAPVK_VSC_TO_VK_EX = 3; // MAPVK_VSC_TO_VK_EX should be in SDK according to MSDN, but isn't in mine.
-			if ( event.KeyInput.Key == irr::KEY_SHIFT )
-			{
-				// this will fail on systems before windows NT/2000/XP, not sure _what_ will return there instead.
-				event.KeyInput.Key = (irr::EKEY_CODE)MapVirtualKey( ((lParam>>16) & 255), MY_MAPVK_VSC_TO_VK_EX );
-			}
-			if ( event.KeyInput.Key == irr::KEY_CONTROL )
-			{
-				event.KeyInput.Key = (irr::EKEY_CODE)MapVirtualKey( ((lParam>>16) & 255), MY_MAPVK_VSC_TO_VK_EX );
-				// some keyboards will just return LEFT for both - left and right keys. So also check extend bit.
-				if (lParam & 0x1000000) 
-					event.KeyInput.Key = irr::KEY_RCONTROL;
-			}
-			if ( event.KeyInput.Key == irr::KEY_MENU )
-			{
-				event.KeyInput.Key = (irr::EKEY_CODE)MapVirtualKey( ((lParam>>16) & 255), MY_MAPVK_VSC_TO_VK_EX );
-				if (lParam & 0x1000000) 
-					event.KeyInput.Key = irr::KEY_RMENU;
-			}
-			
 			WORD KeyAsc=0;
 			GetKeyboardState(allKeys);
 			ToAscii((UINT)wParam,(UINT)lParam,allKeys,&KeyAsc,0);
 
+			if (event.KeyInput.Key==irr::KEY_SHIFT)
+			{
+				if ((allKeys[VK_LSHIFT] & 0x80)!=0)
+					event.KeyInput.Key=irr::KEY_LSHIFT;
+				else if ((allKeys[VK_RSHIFT] & 0x80)!=0)
+					event.KeyInput.Key=irr::KEY_RSHIFT;
+			}
 			event.KeyInput.Shift = ((allKeys[VK_SHIFT] & 0x80)!=0);
 			event.KeyInput.Control = ((allKeys[VK_CONTROL] & 0x80)!=0);
 			event.KeyInput.Char = (KeyAsc & 0x00ff); //KeyAsc >= 0 ? KeyAsc : 0;
@@ -264,18 +251,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		if ((wParam & 0xFFF0) == SC_SCREENSAVE ||
 			(wParam & 0xFFF0) == SC_MONITORPOWER)
 			return 0;
-		break;
-
-	case WM_ACTIVATE:
-		// we need to take care for screen changes, e.g. Alt-Tab
-		dev = getDeviceFromHWnd(hWnd);
-		if (dev)
-		{
-			if ((wParam&0xFF)==WA_INACTIVE)
-				dev->switchToFullScreen(true);
-			else
-				dev->switchToFullScreen();
-		}
 		break;
 
 	case WM_USER:
@@ -318,17 +293,17 @@ CIrrDeviceWin32::CIrrDeviceWin32(const SIrrlichtCreationParameters& params)
 	// create the window if we need to and we do not use the null device
 	if (!CreationParams.WindowId && CreationParams.DriverType != video::EDT_NULL)
 	{
-		const fschar_t* ClassName = __TEXT("CIrrDeviceWin32");
+		const c8* ClassName = "CIrrDeviceWin32";
 
 		// Register Class
 		WNDCLASSEX wcex;
-		wcex.cbSize			= sizeof(WNDCLASSEX);
-		wcex.style			= CS_HREDRAW | CS_VREDRAW;
+		wcex.cbSize		= sizeof(WNDCLASSEX);
+		wcex.style		= CS_HREDRAW | CS_VREDRAW;
 		wcex.lpfnWndProc	= WndProc;
 		wcex.cbClsExtra		= 0;
 		wcex.cbWndExtra		= 0;
 		wcex.hInstance		= hInstance;
-		wcex.hIcon			= NULL;
+		wcex.hIcon		= NULL;
 		wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
 		wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW+1);
 		wcex.lpszMenuName	= 0;
@@ -336,7 +311,7 @@ CIrrDeviceWin32::CIrrDeviceWin32(const SIrrlichtCreationParameters& params)
 		wcex.hIconSm		= 0;
 
 		// if there is an icon, load it
-		wcex.hIcon = (HICON)LoadImage(hInstance, __TEXT("irrlicht.ico"), IMAGE_ICON, 0,0, LR_LOADFROMFILE);
+		wcex.hIcon = (HICON)LoadImage(hInstance, "irrlicht.ico", IMAGE_ICON, 0,0, LR_LOADFROMFILE);
 
 		RegisterClassEx(&wcex);
 
@@ -369,7 +344,7 @@ CIrrDeviceWin32::CIrrDeviceWin32(const SIrrlichtCreationParameters& params)
 
 		// create window
 
-		HWnd = CreateWindow( ClassName, __TEXT(""), style, windowLeft, windowTop,
+		HWnd = CreateWindow( ClassName, "", style, windowLeft, windowTop,
 					realWidth, realHeight, NULL, NULL, hInstance, NULL);
 		CreationParams.WindowId = HWnd;
 
@@ -434,7 +409,8 @@ CIrrDeviceWin32::~CIrrDeviceWin32()
 		}
 	}
 
-	switchToFullScreen(true);
+	if (ChangedToFullScreen)
+		ChangeDisplaySettings(NULL,0);
 }
 
 
@@ -482,7 +458,9 @@ void CIrrDeviceWin32::createDriver()
 	case video::EDT_OPENGL:
 
 		#ifdef _IRR_COMPILE_WITH_OPENGL_
-		switchToFullScreen();
+
+		if (CreationParams.Fullscreen)
+			switchToFullScreen(CreationParams.WindowSize.Width, CreationParams.WindowSize.Height, CreationParams.Bits);
 
 		VideoDriver = video::createOpenGLDriver(CreationParams, FileSystem, this);
 		if (!VideoDriver)
@@ -497,7 +475,8 @@ void CIrrDeviceWin32::createDriver()
 	case video::EDT_SOFTWARE:
 
 		#ifdef _IRR_COMPILE_WITH_SOFTWARE_
-		switchToFullScreen();
+		if (CreationParams.Fullscreen)
+			switchToFullScreen(CreationParams.WindowSize.Width, CreationParams.WindowSize.Height, CreationParams.Bits);
 
 		VideoDriver = video::createSoftwareDriver(CreationParams.WindowSize, CreationParams.Fullscreen, FileSystem, this);
 		#else
@@ -508,7 +487,8 @@ void CIrrDeviceWin32::createDriver()
 
 	case video::EDT_BURNINGSVIDEO:
 		#ifdef _IRR_COMPILE_WITH_BURNINGSVIDEO_
-		switchToFullScreen();
+		if (CreationParams.Fullscreen)
+			switchToFullScreen(CreationParams.WindowSize.Width, CreationParams.WindowSize.Height, CreationParams.Bits);
 
 		VideoDriver = video::createSoftwareDriver2(CreationParams.WindowSize, CreationParams.Fullscreen, FileSystem, this);
 		#else
@@ -535,6 +515,8 @@ bool CIrrDeviceWin32::run()
 
 	MSG msg;
 
+	bool quit = false;
+
 	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 	{
 		TranslateMessage(&msg);
@@ -545,17 +527,17 @@ bool CIrrDeviceWin32::run()
 			DispatchMessage(&msg);
 
 		if (msg.message == WM_QUIT)
-			Close = true;
+			quit = true;
 	}
 
-	if (!Close)
+	if (!quit)
 		resizeIfNecessary();
 
-	if(!Close)
+	if(!quit)
 		pollJoysticks();
 
 	_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
-	return !Close;
+	return !quit;
 }
 
 
@@ -693,7 +675,6 @@ void CIrrDeviceWin32::closeDevice()
 	PostQuitMessage(0);
 	PeekMessage(&msg, NULL, WM_QUIT, WM_QUIT, PM_REMOVE);
 	DestroyWindow(HWnd);
-	Close=true;
 }
 
 
@@ -728,26 +709,16 @@ bool CIrrDeviceWin32::isWindowMinimized() const
 
 
 //! switches to fullscreen
-bool CIrrDeviceWin32::switchToFullScreen(bool reset)
+bool CIrrDeviceWin32::switchToFullScreen(s32 width, s32 height, s32 bits)
 {
-	if (!CreationParams.Fullscreen)
-		return true;
-	if (reset)
-	{
-		if (ChangedToFullScreen)
-			return (ChangeDisplaySettings(NULL,0)==DISP_CHANGE_SUCCESSFUL);
-		else
-			return true;
-	}
-
 	DEVMODE dm;
 	memset(&dm, 0, sizeof(dm));
 	dm.dmSize = sizeof(dm);
 	// use default values from current setting
 	EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &dm);
-	dm.dmPelsWidth = CreationParams.WindowSize.Width;
-	dm.dmPelsHeight = CreationParams.WindowSize.Height;
-	dm.dmBitsPerPel = CreationParams.Bits;
+	dm.dmPelsWidth = width;
+	dm.dmPelsHeight = height;
+	dm.dmBitsPerPel = bits;
 	dm.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFREQUENCY;
 
 	LONG res = ChangeDisplaySettings(&dm, CDS_FULLSCREEN);
@@ -884,17 +855,17 @@ void CIrrDeviceWin32::getWindowsVersion(core::stringc& out)
 			DWORD dwBufLen;
 
 			RegOpenKeyEx( HKEY_LOCAL_MACHINE,
-				__TEXT("SYSTEM\\CurrentControlSet\\Control\\ProductOptions"),
+				"SYSTEM\\CurrentControlSet\\Control\\ProductOptions",
 				0, KEY_QUERY_VALUE, &hKey );
-			RegQueryValueEx( hKey, __TEXT("ProductType"), NULL, NULL,
+			RegQueryValueEx( hKey, "ProductType", NULL, NULL,
 				(LPBYTE) szProductType, &dwBufLen);
 			RegCloseKey( hKey );
 
-			if (_strcmpi( "WINNT", szProductType) == 0 )
+			if (lstrcmpi( "WINNT", szProductType) == 0 )
 				out.append("Professional ");
-			if (_strcmpi( "LANMANNT", szProductType) == 0)
+			if (lstrcmpi( "LANMANNT", szProductType) == 0)
 				out.append("Server ");
-			if (_strcmpi( "SERVERNT", szProductType) == 0)
+			if (lstrcmpi( "SERVERNT", szProductType) == 0)
 				out.append("Advanced Server ");
 		}
 

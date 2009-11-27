@@ -241,9 +241,9 @@ bool CSoftwareDriver::endScene()
 
 //! returns a device dependent texture from a software surface (IImage)
 //! THIS METHOD HAS TO BE OVERRIDDEN BY DERIVED DRIVERS WITH OWN TEXTURES
-ITexture* CSoftwareDriver::createDeviceDependentTexture(IImage* surface, const io::path& name, void* mipmapData)
+ITexture* CSoftwareDriver::createDeviceDependentTexture(IImage* surface, const io::path& name)
 {
-	return new CSoftwareTexture(surface, name, false, mipmapData);
+	return new CSoftwareTexture(surface, name);
 }
 
 
@@ -919,11 +919,7 @@ void CSoftwareDriver::clearZBuffer()
 IImage* CSoftwareDriver::createScreenShot()
 {
 	if (BackBuffer)
-	{
-		CImage* tmp = new CImage(BackBuffer->getColorFormat(), BackBuffer->getDimension());
-		BackBuffer->copyTo(tmp);
-		return tmp;
-	}
+		return new CImage(BackBuffer->getColorFormat(), BackBuffer);
 	else
 		return 0;
 }

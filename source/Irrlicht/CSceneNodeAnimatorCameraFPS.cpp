@@ -229,8 +229,8 @@ void CSceneNodeAnimatorCameraFPS::animateNode(ISceneNode* node, u32 timeMs)
 	// and if it's not falling, we tell it to jump.
 	if (CursorKeys[EKA_JUMP_UP])
 	{
-		const ISceneNodeAnimatorList& animators = camera->getAnimators();
-		ISceneNodeAnimatorList::ConstIterator it = animators.begin();
+		const core::list<ISceneNodeAnimator*> & animators = camera->getAnimators();
+		core::list<ISceneNodeAnimator*>::ConstIterator it = animators.begin();
 		while(it != animators.end())
 		{
 			if(ESNAT_COLLISION_RESPONSE == (*it)->getType())

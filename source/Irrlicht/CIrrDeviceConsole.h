@@ -153,7 +153,7 @@ namespace irr
 			}
 
 			//! Returns the current position of the mouse cursor.
-			virtual const core::position2d<s32>& getPosition()
+			virtual core::position2d<s32> getPosition()
 			{
 				return CursorPos;
 			}
@@ -223,7 +223,8 @@ namespace irr
 			core::stringc         Text;
 		};
 
-		bool IsWindowFocused;
+		bool IsDeviceRunning,
+		     IsWindowFocused;
 
 		core::array<core::stringc> OutputBuffer;
 		gui::IGUIFont  *ConsoleFont;
@@ -327,4 +328,3 @@ namespace gui
 
 #endif // _IRR_COMPILE_WITH_CONSOLE_DEVICE_
 #endif // __C_IRR_DEVICE_CONSOLE_H_INCLUDED__
-

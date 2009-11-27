@@ -59,7 +59,8 @@ CIrrDeviceSDL::CIrrDeviceSDL(const SIrrlichtCreationParameters& param)
 	Screen((SDL_Surface*)param.WindowId), SDL_Flags(SDL_ANYFORMAT),
 	MouseX(0), MouseY(0), MouseButtonStates(0),
 	Width(param.WindowSize.Width), Height(param.WindowSize.Height),
-	Resizable(false), WindowHasFocus(false), WindowMinimized(false)
+	Close(0), Resizable(false),
+	WindowHasFocus(false), WindowMinimized(false)
 {
 	#ifdef _DEBUG
 	setDebugName("CIrrDeviceSDL");
@@ -74,7 +75,7 @@ CIrrDeviceSDL::CIrrDeviceSDL(const SIrrlichtCreationParameters& param)
 				SDL_INIT_NOPARACHUTE ) < 0)
 	{
 		os::Printer::log( "Unable to initialize SDL!", SDL_GetError());
-		Close = true;
+		Close = 1;
 	}
 
 #if defined(_IRR_WINDOWS_)
@@ -380,17 +381,17 @@ bool CIrrDeviceSDL::run()
 			{
 				postEventFromUser(irrevent);
 
-				if ( irrevent.MouseInput.Event >= EMIE_LMOUSE_PRESSED_DOWN && irrevent.MouseInput.Event <= EMIE_MMOUSE_PRESSED_DOWN )
+				if ( irrevent.MouseInput.Event == EMIE_LMOUSE_PRESSED_DOWN )
 				{
-					u32 clicks = checkSuccessiveClicks(irrevent.MouseInput.X, irrevent.MouseInput.Y, irrevent.MouseInput.Event);
+					u32 clicks = checkSuccessiveClicks(irrevent.MouseInput.X, irrevent.MouseInput.Y);
 					if ( clicks == 2 )
 					{
-						irrevent.MouseInput.Event = (EMOUSE_INPUT_EVENT)(EMIE_LMOUSE_DOUBLE_CLICK + irrevent.MouseInput.Event-EMIE_LMOUSE_PRESSED_DOWN);
+						irrevent.MouseInput.Event = EMIE_MOUSE_DOUBLE_CLICK;
 						postEventFromUser(irrevent);
 					}
 					else if ( clicks == 3 )
 					{
-						irrevent.MouseInput.Event = (EMOUSE_INPUT_EVENT)(EMIE_LMOUSE_TRIPLE_CLICK + irrevent.MouseInput.Event-EMIE_LMOUSE_PRESSED_DOWN);
+						irrevent.MouseInput.Event = EMIE_MOUSE_TRIPLE_CLICK;
 						postEventFromUser(irrevent);
 					}
 				}

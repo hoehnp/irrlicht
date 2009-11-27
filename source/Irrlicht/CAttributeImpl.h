@@ -1850,9 +1850,6 @@ public:
 
 	virtual void setTexture(video::ITexture* value)
 	{
-		if ( value == Value )
-			return;
-		
 		if (Value)
 			Value->drop();
 
@@ -1927,7 +1924,7 @@ public:
 
 	virtual s32 getInt()
 	{
-		return *static_cast<s32*>(Value);
+		return *(s32*)(&Value);
 	}
 
 	virtual bool getBool()
@@ -1938,7 +1935,7 @@ public:
 	virtual core::stringw getStringW()
 	{
 		wchar_t buf[32];
-		swprintf(buf, 32, L"%p", Value);
+		swprintf(buf, 32, L"0x%x", *(int*)(&Value));
 
 		return core::stringw(buf);
 	}

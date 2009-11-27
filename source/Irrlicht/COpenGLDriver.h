@@ -261,19 +261,13 @@ namespace video
 			IShaderConstantSetCallBack* callback, E_MATERIAL_TYPE baseMaterial, s32 userData);
 
 		//! Adds a new material renderer to the VideoDriver, using GLSL to render geometry.
-		virtual s32 addHighLevelShaderMaterial(
-				const c8* vertexShaderProgram,
-				const c8* vertexShaderEntryPointName = "main",
-				E_VERTEX_SHADER_TYPE vsCompileTarget = EVST_VS_1_1,
-				const c8* pixelShaderProgram = 0,
-				const c8* pixelShaderEntryPointName = "main",
-				E_PIXEL_SHADER_TYPE psCompileTarget = EPST_PS_1_1,
-				const c8* geometryShaderProgram = 0,
-				const c8* geometryShaderEntryPointName = "main",
-				E_GEOMETRY_SHADER_TYPE gsCompileTarget = EGST_GS_4_0,
-				IShaderConstantSetCallBack* callback = 0,
-				E_MATERIAL_TYPE baseMaterial = video::EMT_SOLID,
-				s32 userData = 0);
+		virtual s32 addHighLevelShaderMaterial(const c8* vertexShaderProgram, const c8* vertexShaderEntryPointName,
+			E_VERTEX_SHADER_TYPE vsCompileTarget, const c8* pixelShaderProgram, const c8* pixelShaderEntryPointName,
+			E_PIXEL_SHADER_TYPE psCompileTarget, IShaderConstantSetCallBack* callback, E_MATERIAL_TYPE baseMaterial,
+			s32 userData);
+
+		//! Returns pointer to the IGPUProgrammingServices interface.
+		virtual IGPUProgrammingServices* getGPUProgrammingServices();
 
 		//! Returns a pointer to the IVideoDriver interface. (Implementation for
 		//! IMaterialRendererServices)
@@ -294,10 +288,6 @@ namespace video
 		//! set or reset render target texture
 		virtual bool setRenderTarget(video::ITexture* texture, bool clearBackBuffer,
 					bool clearZBuffer, SColor color);
-
-		//! Sets multiple render targets
-		virtual bool setRenderTarget(const core::array<video::IRenderTarget>& texture,
-			bool clearBackBuffer=true, bool clearZBuffer=true, SColor color=SColor(0,0,0,0));
 
 		//! Clears the ZBuffer.
 		virtual void clearZBuffer();
@@ -323,10 +313,7 @@ namespace video
 		virtual void enableClipPlane(u32 index, bool enable);
 
 		//! Returns the graphics card vendor name.
-		virtual core::stringc getVendorInfo() {return VendorName;}
-
-		//! Returns the maximum texture size supported.
-		virtual core::dimension2du getMaxTextureSize() const;
+		virtual core::stringc getVendorInfo() {return vendorName;}
 
 		ITexture* createDepthTexture(ITexture* texture, bool shared=true);
 		void removeDepthTexture(ITexture* texture);
@@ -344,7 +331,7 @@ namespace video
 		//! inits the parts of the open gl driver used on all platforms
 		bool genericDriverInit(const core::dimension2d<u32>& screenSize, bool stencilBuffer);
 		//! returns a device dependent texture from a software surface (IImage)
-		virtual video::ITexture* createDeviceDependentTexture(IImage* surface, const io::path& name, void* mipmapData);
+		virtual video::ITexture* createDeviceDependentTexture(IImage* surface, const io::path& name);
 
 		//! creates a transposed matrix in supplied GLfloat array to pass to OpenGL
 		inline void createGLMatrix(GLfloat gl_matrix[16], const core::matrix4& m);
@@ -352,9 +339,6 @@ namespace video
 
 		//! Set GL pipeline to desired texture wrap modes of the material
 		void setWrapMode(const SMaterial& material);
-
-		//! get native wrap mode value
-		GLint getTextureWrapMode(const u8 clamp);
 
 		//! sets the needed renderstates
 		void setRenderStates3DMode();
@@ -401,17 +385,12 @@ namespace video
 		COpenGLTexture* RenderTargetTexture;
 		const ITexture* CurrentTexture[MATERIAL_MAX_TEXTURES];
 		core::array<ITexture*> DepthTextures;
-		struct SUserClipPlane
-		{
-			SUserClipPlane() : Enabled(false) {}
-			core::plane3df Plane;
-			bool Enabled;
-		};
-		core::array<SUserClipPlane> UserClipPlanes;
+		core::array<core::plane3df> UserClipPlane;
+		core::array<bool> UserClipPlaneEnabled;
 
 		core::dimension2d<u32> CurrentRendertargetSize;
 
-		core::stringc VendorName;
+		core::stringc vendorName;
 
 		core::matrix4 TextureFlipMatrix;
 
@@ -432,7 +411,7 @@ namespace video
 				: LightData(lightData), HardwareLightIndex(-1), DesireToBeOn(true) { }
 
 			SLight	LightData;
-			s32	HardwareLightIndex; // GL_LIGHT0 - GL_LIGHT7
+			s32		HardwareLightIndex; // GL_LIGHT0 - GL_LIGHT7
 			bool	DesireToBeOn;
 		};
 		core::array<RequestedLight> RequestedLights;

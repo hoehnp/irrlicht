@@ -178,7 +178,6 @@ void CMeshSceneNode::render()
 	{
 		video::SMaterial m;
 		m.Lighting = false;
-		m.AntiAliasing=0;
 		driver->setMaterial(m);
 
 		if (DebugDataVisible & scene::EDS_BBOX)

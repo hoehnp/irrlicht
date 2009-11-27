@@ -9,6 +9,7 @@
 #include "IGUISpriteBank.h"
 #include "IVideoDriver.h"
 #include "IAttributes.h"
+#include "SoftwareDriver2_helper.h"
 
 namespace irr
 {
@@ -30,14 +31,14 @@ CGUISkin::CGUISkin(EGUI_SKIN_TYPE type, video::IVideoDriver* driver)
 		Colors[EGDC_3D_HIGH_LIGHT]    = video::SColor(101,255,255,255);
 		Colors[EGDC_3D_LIGHT]         =	video::SColor(101,210,210,210);
 		Colors[EGDC_ACTIVE_BORDER]    = video::SColor(101,16,14,115);
-		Colors[EGDC_ACTIVE_CAPTION]   = video::SColor(255,255,255,255);
+		Colors[EGDC_ACTIVE_CAPTION]   = video::SColor(200,255,255,255);
 		Colors[EGDC_APP_WORKSPACE]    = video::SColor(101,100,100,100);
 		Colors[EGDC_BUTTON_TEXT]      = video::SColor(240,10,10,10);
 		Colors[EGDC_GRAY_TEXT]        = video::SColor(240,130,130,130);
 		Colors[EGDC_HIGH_LIGHT]       = video::SColor(101,8,36,107);
 		Colors[EGDC_HIGH_LIGHT_TEXT]  = video::SColor(240,255,255,255);
 		Colors[EGDC_INACTIVE_BORDER]  = video::SColor(101,165,165,165);
-		Colors[EGDC_INACTIVE_CAPTION] = video::SColor(255,30,30,30);
+		Colors[EGDC_INACTIVE_CAPTION] = video::SColor(101,210,210,210);
 		Colors[EGDC_TOOLTIP]          = video::SColor(200,0,0,0);
 		Colors[EGDC_TOOLTIP_BACKGROUND]= video::SColor(200,255,255,225);
 		Colors[EGDC_SCROLLBAR]        = video::SColor(101,230,230,230);
@@ -71,14 +72,14 @@ CGUISkin::CGUISkin(EGUI_SKIN_TYPE type, video::IVideoDriver* driver)
 		Colors[EGDC_3D_HIGH_LIGHT]	=	0x40c7ccdc;
 		Colors[EGDC_3D_LIGHT]		=	0x802e313a;
 		Colors[EGDC_ACTIVE_BORDER]	=	0x80404040;		// window title
-		Colors[EGDC_ACTIVE_CAPTION] =	0xffd0d0d0;
+		Colors[EGDC_ACTIVE_CAPTION] =	0xf0d0d0d0;
 		Colors[EGDC_APP_WORKSPACE]	=	0xc0646464;		// unused
 		Colors[EGDC_BUTTON_TEXT]	=	0xd0161616;
 		Colors[EGDC_GRAY_TEXT]		=	0x3c141414;
 		Colors[EGDC_HIGH_LIGHT]		=	0x6c606060;
 		Colors[EGDC_HIGH_LIGHT_TEXT]=	0xd0e0e0e0;
 		Colors[EGDC_INACTIVE_BORDER]=	0xf0a5a5a5;
-		Colors[EGDC_INACTIVE_CAPTION]=	0xffd2d2d2;
+		Colors[EGDC_INACTIVE_CAPTION]=	0xf0d2d2d2;
 		Colors[EGDC_TOOLTIP]		=	0xf00f2033;
 		Colors[EGDC_TOOLTIP_BACKGROUND]=0xc0cbd2d9;
 		Colors[EGDC_SCROLLBAR]		=	0xf0e0e0e0;
@@ -102,12 +103,6 @@ CGUISkin::CGUISkin(EGUI_SKIN_TYPE type, video::IVideoDriver* driver)
 		Sizes[EGDS_TITLEBARTEXT_DISTANCE_X] = 3;
 		Sizes[EGDS_TITLEBARTEXT_DISTANCE_Y] = 2;
 	}
-
-	Sizes[EGDS_MESSAGE_BOX_GAP_SPACE] = 15;
-	Sizes[EGDS_MESSAGE_BOX_MIN_TEXT_WIDTH] = 0;
-	Sizes[EGDS_MESSAGE_BOX_MAX_TEST_WIDTH] = 500;
-	Sizes[EGDS_MESSAGE_BOX_MIN_TEXT_HEIGHT] = 0;
-	Sizes[EGDS_MESSAGE_BOX_MAX_TEXT_HEIGHT] = 99999;
 
 	Texts[EGDT_MSG_BOX_OK] = L"OK";
 	Texts[EGDT_MSG_BOX_CANCEL] = L"Cancel";
@@ -203,7 +198,7 @@ void CGUISkin::setSize(EGUI_DEFAULT_SIZE which, s32 size)
 //! returns the default font
 IGUIFont* CGUISkin::getFont(EGUI_DEFAULT_FONT which) const
 {
-	if (((u32)which < EGDF_COUNT) && Fonts[which])
+	if (((u32)which < EGDS_COUNT) && Fonts[which])
 		return Fonts[which];
 	else
 		return Fonts[EGDF_DEFAULT];
@@ -213,7 +208,7 @@ IGUIFont* CGUISkin::getFont(EGUI_DEFAULT_FONT which) const
 //! sets a default font
 void CGUISkin::setFont(IGUIFont* font, EGUI_DEFAULT_FONT which)
 {
-	if ((u32)which >= EGDF_COUNT)
+	if ((u32)which >= EGDS_COUNT)
 		return;
 
 	if (font)

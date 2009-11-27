@@ -47,7 +47,7 @@ void CDepthBuffer::clear()
 #endif
 
 	u32 zMaxValue;
-	zMaxValue = IR(zMax);
+	zMaxValue = *(u32*) &zMax;
 
 	memset32 ( Buffer, zMaxValue, TotalSize );
 }

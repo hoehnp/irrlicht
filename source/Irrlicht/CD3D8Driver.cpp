@@ -151,7 +151,7 @@ bool CD3D8Driver::initDriver(const core::dimension2d<u32>& screenSize,
 #if defined( _IRR_XBOX_PLATFORM_)
 	D3DCREATETYPE d3dCreate = (D3DCREATETYPE) &Direct3DCreate8;
 #else
-	D3DLibrary = LoadLibrary( __TEXT("d3d8.dll") );
+	D3DLibrary = LoadLibrary( "d3d8.dll" );
 
 	if (!D3DLibrary)
 	{
@@ -674,9 +674,9 @@ void CD3D8Driver::setMaterial(const SMaterial& material)
 
 
 //! returns a device dependent texture from a software surface (IImage)
-video::ITexture* CD3D8Driver::createDeviceDependentTexture(IImage* surface,const io::path& name, void* mipmapData)
+video::ITexture* CD3D8Driver::createDeviceDependentTexture(IImage* surface,const io::path& name)
 {
-	return new CD3D8Texture(surface, this, TextureCreationFlags, name, mipmapData);
+	return new CD3D8Texture(surface, this, TextureCreationFlags, name);
 }
 
 
@@ -904,19 +904,7 @@ void CD3D8Driver::draw2D3DVertexPrimitiveList(const void* vertices,
 			return;
 	}
 	else
-	{
-		if (Material.MaterialType==EMT_ONETEXTURE_BLEND)
-		{
-			E_BLEND_FACTOR srcFact;
-			E_BLEND_FACTOR dstFact;
-			E_MODULATE_FUNC modulo;
-			u32 alphaSource;
-			unpack_texureBlendFunc ( srcFact, dstFact, modulo, alphaSource, Material.MaterialTypeParam);
-			setRenderStates2DMode(alphaSource&video::EAS_VERTEX_COLOR, (Material.getTexture(0) != 0), (alphaSource&video::EAS_TEXTURE) != 0);
-		}
-		else
-			setRenderStates2DMode(Material.MaterialType==EMT_TRANSPARENT_VERTEX_ALPHA, (Material.getTexture(0) != 0), Material.MaterialType==EMT_TRANSPARENT_ALPHA_CHANNEL);
-	}
+		setRenderStates2DMode(true, (Material.getTexture(0) != 0), true);
 
 	switch (pType)
 	{
@@ -1354,39 +1342,6 @@ bool CD3D8Driver::setRenderStates3DMode()
 }
 
 
-//! Map Irrlicht texture wrap mode to native values
-D3DTEXTUREADDRESS CD3D8Driver::getTextureWrapMode(const u8 clamp)
-{
-	switch (clamp)
-	{
-		case ETC_REPEAT:
-			if (Caps.TextureAddressCaps & D3DPTADDRESSCAPS_WRAP)
-				return D3DTADDRESS_WRAP;
-		case ETC_CLAMP:
-		case ETC_CLAMP_TO_EDGE:
-			if (Caps.TextureAddressCaps & D3DPTADDRESSCAPS_CLAMP)
-				return D3DTADDRESS_CLAMP;
-		case ETC_MIRROR:
-			if (Caps.TextureAddressCaps & D3DPTADDRESSCAPS_MIRROR)
-				return D3DTADDRESS_MIRROR;
-		case ETC_CLAMP_TO_BORDER:
-			if (Caps.TextureAddressCaps & D3DPTADDRESSCAPS_BORDER)
-				return D3DTADDRESS_BORDER;
-			else
-				return D3DTADDRESS_CLAMP;
-		case ETC_MIRROR_CLAMP:
-		case ETC_MIRROR_CLAMP_TO_EDGE:
-		case ETC_MIRROR_CLAMP_TO_BORDER:
-			if (Caps.TextureAddressCaps & D3DPTADDRESSCAPS_MIRRORONCE)
-				return D3DTADDRESS_MIRRORONCE;
-			else
-				return D3DTADDRESS_CLAMP;
-		default:
-			return D3DTADDRESS_WRAP;
-	}
-}
-
-
 //! Can be called by an IMaterialRenderer to make its work easier.
 void CD3D8Driver::setBasicRenderStates(const SMaterial& material, const SMaterial& lastmaterial,
 	bool resetAllRenderstates)
@@ -1563,13 +1518,29 @@ void CD3D8Driver::setBasicRenderStates(const SMaterial& material, const SMateria
 			pID3DDevice->SetTextureStageState(st, D3DTSS_MIPMAPLODBIAS, *(DWORD*)(&tmp));
 		}
 
-		if (resetAllRenderstates || lastmaterial.TextureLayer[st].TextureWrapU != material.TextureLayer[st].TextureWrapU)
-			pID3DDevice->SetTextureStageState(st, D3DTSS_ADDRESSU, getTextureWrapMode(material.TextureLayer[st].TextureWrapU));
-		// If separate UV not supported reuse U for V
-		if (!(Caps.TextureAddressCaps & D3DPTADDRESSCAPS_INDEPENDENTUV))
-			pID3DDevice->SetTextureStageState(st, D3DTSS_ADDRESSV, getTextureWrapMode(material.TextureLayer[st].TextureWrapU));
-		else if (resetAllRenderstates || lastmaterial.TextureLayer[st].TextureWrapV != material.TextureLayer[st].TextureWrapV)
-			pID3DDevice->SetTextureStageState(st, D3DTSS_ADDRESSV, getTextureWrapMode(material.TextureLayer[st].TextureWrapV));
+		if (resetAllRenderstates || lastmaterial.TextureLayer[st].TextureWrap != material.TextureLayer[st].TextureWrap)
+		{
+			u32 mode = D3DTADDRESS_WRAP;
+			switch (material.TextureLayer[st].TextureWrap)
+			{
+				case ETC_REPEAT:
+					mode=D3DTADDRESS_WRAP;
+					break;
+				case ETC_CLAMP:
+				case ETC_CLAMP_TO_EDGE:
+					mode=D3DTADDRESS_CLAMP;
+					break;
+				case ETC_MIRROR:
+					mode=D3DTADDRESS_MIRROR;
+					break;
+				case ETC_CLAMP_TO_BORDER:
+					mode=D3DTADDRESS_BORDER;
+					break;
+			}
+
+			pID3DDevice->SetTextureStageState(st, D3DTSS_ADDRESSU, mode );
+			pID3DDevice->SetTextureStageState(st, D3DTSS_ADDRESSV, mode );
+		}
 
 		// Bilinear and/or trilinear
 		if (resetAllRenderstates ||
@@ -2144,6 +2115,13 @@ bool CD3D8Driver::setPixelShaderConstant(const c8* name, const f32* floats, int 
 }
 
 
+//! Returns pointer to the IGPUProgrammingServices interface.
+IGPUProgrammingServices* CD3D8Driver::getGPUProgrammingServices()
+{
+	return this;
+}
+
+
 //! Adds a new material renderer to the VideoDriver, using pixel and/or
 //! vertex shaders to render geometry.
 s32 CD3D8Driver::addShaderMaterial(const c8* vertexShaderProgram,
@@ -2315,12 +2293,6 @@ void CD3D8Driver::enableClipPlane(u32 index, bool enable)
 		renderstate &= ~(1 << index);
 	pID3DDevice->SetRenderState(D3DRS_CLIPPLANEENABLE, renderstate);
 #endif
-}
-
-
-core::dimension2du CD3D8Driver::getMaxTextureSize() const
-{
-	return core::dimension2du(Caps.MaxTextureWidth, Caps.MaxTextureHeight);
 }
 
 

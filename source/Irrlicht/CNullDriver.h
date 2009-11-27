@@ -98,10 +98,6 @@ namespace video
 		virtual bool setRenderTarget(video::E_RENDER_TARGET target, bool clearTarget,
 					bool clearZBuffer, SColor color);
 
-		//! Sets multiple render targets
-		virtual bool setRenderTarget(const core::array<video::IRenderTarget>& texture,
-					bool clearBackBuffer=true, bool clearZBuffer=true, SColor color=SColor(0,0,0,0));
-
 		//! sets a viewport
 		virtual void setViewPort(const core::rect<s32>& area);
 
@@ -111,12 +107,34 @@ namespace video
 		//! draws a vertex primitive list
 		virtual void drawVertexPrimitiveList(const void* vertices, u32 vertexCount,
 				const void* indexList, u32 primitiveCount,
-				E_VERTEX_TYPE vType=EVT_STANDARD, scene::E_PRIMITIVE_TYPE pType=scene::EPT_TRIANGLES, E_INDEX_TYPE iType=EIT_16BIT);
+				E_VERTEX_TYPE vType, scene::E_PRIMITIVE_TYPE pType, E_INDEX_TYPE iType);
 
 		//! draws a vertex primitive list in 2d
 		virtual void draw2DVertexPrimitiveList(const void* vertices, u32 vertexCount,
 				const void* indexList, u32 primitiveCount,
-				E_VERTEX_TYPE vType=EVT_STANDARD, scene::E_PRIMITIVE_TYPE pType=scene::EPT_TRIANGLES, E_INDEX_TYPE iType=EIT_16BIT);
+				E_VERTEX_TYPE vType, scene::E_PRIMITIVE_TYPE pType, E_INDEX_TYPE iType);
+
+		//! draws an indexed triangle list
+		virtual void drawIndexedTriangleList(const S3DVertex* vertices, u32 vertexCount, const u16* indexList, u32 triangleCount);
+
+		//! draws an indexed triangle list
+		virtual void drawIndexedTriangleList(const S3DVertex2TCoords* vertices, u32 vertexCount, const u16* indexList, u32 triangleCount);
+
+		//! Draws an indexed triangle list.
+		virtual void drawIndexedTriangleList(const S3DVertexTangents* vertices,
+			u32 vertexCount, const u16* indexList, u32 triangleCount);
+
+		//! Draws an indexed triangle fan.
+		virtual void drawIndexedTriangleFan(const S3DVertex* vertices,
+			u32 vertexCount, const u16* indexList, u32 triangleCount);
+
+		//! Draws an indexed triangle list.
+		virtual void drawIndexedTriangleFan(const S3DVertex2TCoords* vertices,
+			u32 vertexCount, const u16* indexList, u32 triangleCount);
+
+		//! Draws an indexed triangle fan.
+		virtual void drawIndexedTriangleFan(const S3DVertexTangents* vertices,
+			u32 vertexCount, const u16* indexList, u32 triangleCount);
 
 		//! Draws a 3d line.
 		virtual void draw3DLine(const core::vector3df& start,
@@ -219,10 +237,6 @@ namespace video
 				E_FOG_TYPE fogType=EFT_FOG_LINEAR,
 				f32 start=50.0f, f32 end=100.0f, f32 density=0.01f,
 				bool pixelFog=false, bool rangeFog=false);
-
-		virtual void getFog(SColor& color, E_FOG_TYPE& fogType,
-				f32& start, f32& end, f32& density,
-				bool& pixelFog, bool& rangeFog);
 
 		//! get color format of the current color buffer
 		virtual ECOLOR_FORMAT getColorFormat() const;
@@ -478,9 +492,6 @@ namespace video
 			const c8* pixelShaderProgram = 0,
 			const c8* pixelShaderEntryPointName = 0,
 			E_PIXEL_SHADER_TYPE psCompileTarget = EPST_PS_1_1,
-			const c8* geometryShaderProgram = 0,
-			const c8* geometryShaderEntryPointName = "main",
-			E_GEOMETRY_SHADER_TYPE gsCompileTarget = EGST_GS_4_0,
 			IShaderConstantSetCallBack* callback = 0,
 			E_MATERIAL_TYPE baseMaterial = video::EMT_SOLID,
 			s32 userData=0);
@@ -494,9 +505,6 @@ namespace video
 			const io::path& pixelShaderProgramFile = "",
 			const c8* pixelShaderEntryPointName = "main",
 			E_PIXEL_SHADER_TYPE psCompileTarget = EPST_PS_1_1,
-			const io::path& geometryShaderProgramFileName="",
-			const c8* geometryShaderEntryPointName = "main",
-			E_GEOMETRY_SHADER_TYPE gsCompileTarget = EGST_GS_4_0,
 			IShaderConstantSetCallBack* callback = 0,
 			E_MATERIAL_TYPE baseMaterial = video::EMT_SOLID,
 			s32 userData=0);
@@ -510,9 +518,6 @@ namespace video
 			io::IReadFile* pixelShaderProgram = 0,
 			const c8* pixelShaderEntryPointName = "main",
 			E_PIXEL_SHADER_TYPE psCompileTarget = EPST_PS_1_1,
-			io::IReadFile* geometryShaderProgram= 0,
-			const c8* geometryShaderEntryPointName = "main",
-			E_GEOMETRY_SHADER_TYPE gsCompileTarget = EGST_GS_4_0,
 			IShaderConstantSetCallBack* callback = 0,
 			E_MATERIAL_TYPE baseMaterial = video::EMT_SOLID,
 			s32 userData=0);
@@ -574,9 +579,6 @@ namespace video
 		virtual void setAllowZWriteOnTransparent(bool flag)
 		{ AllowZWriteOnTransparent=flag; }
 
-		//! Returns the maximum texture size supported.
-		virtual core::dimension2du getMaxTextureSize() const;
-
 		//! deprecated method
 		virtual ITexture* createRenderTargetTexture(const core::dimension2d<u32>& size,
 				const c8* name=0);
@@ -594,11 +596,11 @@ namespace video
 		void addTexture(video::ITexture* surface);
 
 		//! Creates a texture from a loaded IImage.
-		virtual ITexture* addTexture(const io::path& name, IImage* image, void* mipmapData=0);
+		virtual ITexture* addTexture(const io::path& name, IImage* image);
 
 		//! returns a device dependent texture from a software surface (IImage)
 		//! THIS METHOD HAS TO BE OVERRIDDEN BY DERIVED DRIVERS WITH OWN TEXTURES
-		virtual video::ITexture* createDeviceDependentTexture(IImage* surface, const io::path& name, void* mipmapData=0);
+		virtual video::ITexture* createDeviceDependentTexture(IImage* surface, const io::path& name);
 
 		//! checks triangle count and print warning if wrong
 		bool checkPrimitiveCount(u32 prmcnt) const;
@@ -649,14 +651,14 @@ namespace video
 		{
 			SDummyTexture(const io::path& name) : ITexture(name), size(0,0) {};
 
-			virtual void* lock(bool readOnly = false, u32 mipmapLevel=0) { return 0; };
+			virtual void* lock(bool readOnly = false) { return 0; };
 			virtual void unlock(){}
 			virtual const core::dimension2d<u32>& getOriginalSize() const { return size; }
 			virtual const core::dimension2d<u32>& getSize() const { return size; }
 			virtual E_DRIVER_TYPE getDriverType() const { return video::EDT_NULL; }
 			virtual ECOLOR_FORMAT getColorFormat() const { return video::ECF_A1R5G5B5; };
 			virtual u32 getPitch() const { return 0; }
-			virtual void regenerateMipMapLevels(void* mipmapData=0) {};
+			virtual void regenerateMipMapLevels() {};
 			core::dimension2d<u32> size;
 		};
 

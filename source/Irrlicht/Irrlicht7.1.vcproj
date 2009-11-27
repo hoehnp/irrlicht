@@ -1979,12 +1979,6 @@
 				RelativePath=".\CPakReader.h">
 			</File>
 			<File
-				RelativePath=".\CNPKReader.cpp">
-			</File>
-			<File
-				RelativePath=".\CNPKReader.h">
-			</File>
-			<File
 				RelativePath=".\CReadFile.cpp">
 			</File>
 			<File

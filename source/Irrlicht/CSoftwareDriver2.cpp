@@ -956,55 +956,21 @@ void CBurningVideoDriver::VertexCache_fill(const u32 sourceIndex,
 					sizeof ( f32 ) * 2 );
 			}
 
-			switch ( Material.org.TextureLayer[t].TextureWrapU )
+			switch ( Material.org.TextureLayer[t].TextureWrap )
 			{
-				case ETC_CLAMP:
-				case ETC_CLAMP_TO_EDGE:
-				case ETC_CLAMP_TO_BORDER:
-					dest->Tex[t].x = core::clamp ( (f32) ( M[0] * srcT.x + M[4] * srcT.y + M[8] ), 0.f, 1.f );
-					break;
-				case ETC_MIRROR:
-					dest->Tex[t].x = M[0] * srcT.x + M[4] * srcT.y + M[8];
-					if (core::fract(dest->Tex[t].x)>0.5f)
-						dest->Tex[t].x=1.f-dest->Tex[t].x;
-				break;
-				case ETC_MIRROR_CLAMP:
-				case ETC_MIRROR_CLAMP_TO_EDGE:
-				case ETC_MIRROR_CLAMP_TO_BORDER:
-					dest->Tex[t].x = core::clamp ( (f32) ( M[0] * srcT.x + M[4] * srcT.y + M[8] ), 0.f, 1.f );
-					if (core::fract(dest->Tex[t].x)>0.5f)
-						dest->Tex[t].x=1.f-dest->Tex[t].x;
-				break;
 				case ETC_REPEAT:
 				default:
 					dest->Tex[t].x = M[0] * srcT.x + M[4] * srcT.y + M[8];
+					dest->Tex[t].y = M[1] * srcT.x + M[5] * srcT.y + M[9];
 					break;
-			}
-			switch ( Material.org.TextureLayer[t].TextureWrapV )
-			{
 				case ETC_CLAMP:
 				case ETC_CLAMP_TO_EDGE:
-				case ETC_CLAMP_TO_BORDER:
+					dest->Tex[t].x = core::clamp ( (f32) ( M[0] * srcT.x + M[4] * srcT.y + M[8] ), 0.f, 1.f );
 					dest->Tex[t].y = core::clamp ( (f32) ( M[1] * srcT.x + M[5] * srcT.y + M[9] ), 0.f, 1.f );
-					break;
-				case ETC_MIRROR:
-					dest->Tex[t].y = M[1] * srcT.x + M[5] * srcT.y + M[9];
-					if (core::fract(dest->Tex[t].y)>0.5f)
-						dest->Tex[t].y=1.f-dest->Tex[t].y;
-				break;
-				case ETC_MIRROR_CLAMP:
-				case ETC_MIRROR_CLAMP_TO_EDGE:
-				case ETC_MIRROR_CLAMP_TO_BORDER:
-					dest->Tex[t].y = core::clamp ( (f32) ( M[1] * srcT.x + M[5] * srcT.y + M[9] ), 0.f, 1.f );
-					if (core::fract(dest->Tex[t].y)>0.5f)
-						dest->Tex[t].y=1.f-dest->Tex[t].y;
-				break;
-				case ETC_REPEAT:
-				default:
-					dest->Tex[t].y = M[1] * srcT.x + M[5] * srcT.y + M[9];
 					break;
 			}
 		}
+
 	}
 #endif
 
@@ -2049,11 +2015,7 @@ void CBurningVideoDriver::clearZBuffer()
 IImage* CBurningVideoDriver::createScreenShot()
 {
 	if (BackBuffer)
-	{
-		CImage* tmp = new CImage(BackBuffer->getColorFormat(), BackBuffer->getDimension());
-		BackBuffer->copyTo(tmp);
-		return tmp;
-	}
+		return new CImage(BackBuffer->getColorFormat(), BackBuffer);
 	else
 		return 0;
 
@@ -2062,12 +2024,13 @@ IImage* CBurningVideoDriver::createScreenShot()
 
 //! returns a device dependent texture from a software surface (IImage)
 //! THIS METHOD HAS TO BE OVERRIDDEN BY DERIVED DRIVERS WITH OWN TEXTURES
-ITexture* CBurningVideoDriver::createDeviceDependentTexture(IImage* surface, const io::path& name, void* mipmapData)
+ITexture* CBurningVideoDriver::createDeviceDependentTexture(IImage* surface, const io::path& name)
 {
 	return new CSoftwareTexture2(
 		surface, name,
 		(getTextureCreationFlag(ETCF_CREATE_MIP_MAPS) ? CSoftwareTexture2::GEN_MIPMAP : 0 ) |
-		(getTextureCreationFlag(ETCF_ALLOW_NON_POWER_2) ? 0 : CSoftwareTexture2::NP2_SIZE ), mipmapData);
+		(getTextureCreationFlag(ETCF_ALLOW_NON_POWER_2) ? 0 : CSoftwareTexture2::NP2_SIZE )
+	);
 
 }
 
@@ -2162,12 +2125,6 @@ void CBurningVideoDriver::drawStencilShadow(bool clearStencilBuffer, video::SCol
 }
 
 
-core::dimension2du CBurningVideoDriver::getMaxTextureSize() const
-{
-	return core::dimension2du(SOFTWARE_DRIVER_2_TEXTURE_MAXSIZE, SOFTWARE_DRIVER_2_TEXTURE_MAXSIZE);
-}
-
-
 } // end namespace video
 } // end namespace irr
 
@@ -2192,4 +2149,3 @@ IVideoDriver* createSoftwareDriver2(const core::dimension2d<u32>& windowSize, bo
 
 } // end namespace video
 } // end namespace irr
-

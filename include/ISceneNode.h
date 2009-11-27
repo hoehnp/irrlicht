@@ -24,11 +24,6 @@ namespace scene
 {
 	class ISceneManager;
 
-	//! Typedef for list of scene nodes
-	typedef core::list<ISceneNode*> ISceneNodeList;
-	//! Typedef for list of scene node animators
-	typedef core::list<ISceneNodeAnimator*> ISceneNodeAnimatorList;
-
 	//! Scene node interface.
 	/** A scene node is a node in the hierarchical scene graph. Every scene
 	node may have children, which are also scene nodes. Children move
@@ -65,7 +60,7 @@ namespace scene
 			removeAll();
 
 			// delete all animators
-			ISceneNodeAnimatorList::Iterator ait = Animators.begin();
+			core::list<ISceneNodeAnimator*>::Iterator ait = Animators.begin();
 			for (; ait != Animators.end(); ++ait)
 				(*ait)->drop();
 
@@ -92,7 +87,7 @@ namespace scene
 		{
 			if (IsVisible)
 			{
-				ISceneNodeList::Iterator it = Children.begin();
+				core::list<ISceneNode*>::Iterator it = Children.begin();
 				for (; it != Children.end(); ++it)
 					(*it)->OnRegisterSceneNode();
 			}
@@ -111,7 +106,7 @@ namespace scene
 			{
 				// animate this node with all animators
 
-				ISceneNodeAnimatorList::Iterator ait = Animators.begin();
+				core::list<ISceneNodeAnimator*>::Iterator ait = Animators.begin();
 				while (ait != Animators.end())
 					{
 					// continue to the next node before calling animateNode()
@@ -127,7 +122,7 @@ namespace scene
 
 				// perform the post render process on all children
 
-				ISceneNodeList::Iterator it = Children.begin();
+				core::list<ISceneNode*>::Iterator it = Children.begin();
 				for (; it != Children.end(); ++it)
 					(*it)->OnAnimate(timeMs);
 			}
@@ -294,7 +289,7 @@ namespace scene
 		e.g. because it couldn't be found in the children list. */
 		virtual bool removeChild(ISceneNode* child)
 		{
-			ISceneNodeList::Iterator it = Children.begin();
+			core::list<ISceneNode*>::Iterator it = Children.begin();
 			for (; it != Children.end(); ++it)
 				if ((*it) == child)
 				{
@@ -312,7 +307,7 @@ namespace scene
 		//! Removes all children of this scene node
 		virtual void removeAll()
 		{
-			ISceneNodeList::Iterator it = Children.begin();
+			core::list<ISceneNode*>::Iterator it = Children.begin();
 			for (; it != Children.end(); ++it)
 			{
 				(*it)->Parent = 0;
@@ -355,7 +350,7 @@ namespace scene
 		/** \param animator A pointer to the animator to be deleted. */
 		virtual void removeAnimator(ISceneNodeAnimator* animator)
 		{
-			ISceneNodeAnimatorList::Iterator it = Animators.begin();
+			core::list<ISceneNodeAnimator*>::Iterator it = Animators.begin();
 			for (; it != Animators.end(); ++it)
 				if ((*it) == animator)
 				{
@@ -369,7 +364,7 @@ namespace scene
 		//! Removes all animators from this scene node.
 		virtual void removeAnimators()
 		{
-			ISceneNodeAnimatorList::Iterator it = Animators.begin();
+			core::list<ISceneNodeAnimator*>::Iterator it = Animators.begin();
 			for (; it != Animators.end(); ++it)
 				(*it)->drop();
 
@@ -749,13 +744,13 @@ namespace scene
 
 			// clone children
 
-			ISceneNodeList::Iterator it = toCopyFrom->Children.begin();
+			core::list<ISceneNode*>::Iterator it = toCopyFrom->Children.begin();
 			for (; it != toCopyFrom->Children.end(); ++it)
 				(*it)->clone(this, newManager);
 
 			// clone animators
 
-			ISceneNodeAnimatorList::Iterator ait = toCopyFrom->Animators.begin();
+			core::list<ISceneNodeAnimator*>::Iterator ait = toCopyFrom->Animators.begin();
 			for (; ait != toCopyFrom->Animators.end(); ++ait)
 			{
 				ISceneNodeAnimator* anim = (*ait)->createClone(this, SceneManager);
@@ -773,7 +768,7 @@ namespace scene
 		{
 			SceneManager = newManager;
 
-			ISceneNodeList::Iterator it = Children.begin();
+			core::list<ISceneNode*>::Iterator it = Children.begin();
 			for (; it != Children.end(); ++it)
 				(*it)->setSceneManager(newManager);
 		}
@@ -823,7 +818,6 @@ namespace scene
 		//! Is debug object?
 		bool IsDebugObject;
 	};
-
 
 } // end namespace scene
 } // end namespace irr

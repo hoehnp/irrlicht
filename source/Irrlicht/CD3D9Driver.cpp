@@ -163,7 +163,7 @@ bool CD3D9Driver::initDriver(const core::dimension2d<u32>& screenSize,
 
 	if (!pID3D)
 	{
-		D3DLibrary = LoadLibrary( __TEXT("d3d9.dll") );
+		D3DLibrary = LoadLibrary( "d3d9.dll" );
 
 		if (!D3DLibrary)
 		{
@@ -627,12 +627,6 @@ bool CD3D9Driver::queryFeature(E_VIDEO_DRIVER_FEATURE feature) const
 		return (Caps.TextureCaps & D3DPTEXTURECAPS_POW2) == 0;
 	case EVDF_COLOR_MASK:
 		return (Caps.PrimitiveMiscCaps & D3DPMISCCAPS_COLORWRITEENABLE) != 0;
-	case EVDF_MULTIPLE_RENDER_TARGETS:
-		return Caps.NumSimultaneousRTs > 1;
-	case EVDF_MRT_COLOR_MASK:
-		return (Caps.PrimitiveMiscCaps & D3DPMISCCAPS_INDEPENDENTWRITEMASKS) != 0;
-	case EVDF_MRT_BLEND:
-		return (Caps.PrimitiveMiscCaps & D3DPMISCCAPS_MRTPOSTPIXELSHADERBLENDING) != 0;
 	default:
 		return false;
 	};
@@ -720,9 +714,9 @@ void CD3D9Driver::setMaterial(const SMaterial& material)
 
 
 //! returns a device dependent texture from a software surface (IImage)
-video::ITexture* CD3D9Driver::createDeviceDependentTexture(IImage* surface,const io::path& name, void* mipmapData)
+video::ITexture* CD3D9Driver::createDeviceDependentTexture(IImage* surface,const io::path& name)
 {
-	return new CD3D9Texture(surface, this, TextureCreationFlags, name, mipmapData);
+	return new CD3D9Texture(surface, this, TextureCreationFlags, name);
 }
 
 
@@ -810,120 +804,6 @@ bool CD3D9Driver::setRenderTarget(video::ITexture* texture,
 		{
 			os::Printer::log("Error: Could not set new depth buffer.", ELL_ERROR);
 		}
-	}
-
-	if (clearBackBuffer || clearZBuffer)
-	{
-		DWORD flags = 0;
-
-		if (clearBackBuffer)
-			flags |= D3DCLEAR_TARGET;
-
-		if (clearZBuffer)
-			flags |= D3DCLEAR_ZBUFFER;
-
-		pID3DDevice->Clear(0, NULL, flags, color.color, 1.0f, 0);
-	}
-
-	return ret;
-}
-
-
-//! Sets multiple render targets
-bool CD3D9Driver::setRenderTarget(const core::array<video::IRenderTarget>& targets,
-				bool clearBackBuffer, bool clearZBuffer, SColor color)
-{
-	if (targets.size()==0)
-		return setRenderTarget(0, clearBackBuffer, clearZBuffer, color);
-
-	u32 maxMultipleRTTs = core::min_(4u, targets.size());
-
-	for (u32 i = 0; i < maxMultipleRTTs; ++i)
-	{
-		if (targets[i].TargetType != ERT_RENDER_TEXTURE || !targets[i].RenderTexture)
-		{
-			maxMultipleRTTs = i;
-			os::Printer::log("Missing texture for MRT.", ELL_WARNING);
-			break;
-		}
-
-		// check for right driver type
-
-		if (targets[i].RenderTexture->getDriverType() != EDT_DIRECT3D9)
-		{
-			maxMultipleRTTs = i;
-			os::Printer::log("Tried to set a texture not owned by this driver.", ELL_WARNING);
-			break;
-		}
-
-		// check for valid render target
-
-		if (!targets[i].RenderTexture->isRenderTarget())
-		{
-			maxMultipleRTTs = i;
-			os::Printer::log("Tried to set a non render target texture as render target.", ELL_WARNING);
-			break;
-		}
-
-		// check for valid size
-
-		if (targets[0].RenderTexture->getSize() != targets[i].RenderTexture->getSize())
-		{
-			maxMultipleRTTs = i;
-			os::Printer::log("Render target texture has wrong size.", ELL_WARNING);
-			break;
-		}
-	}
-	if (maxMultipleRTTs==0)
-	{
-		os::Printer::log("Fatal Error: No valid MRT found.", ELL_ERROR);
-		return false;
-	}
-
-	CD3D9Texture* tex = static_cast<CD3D9Texture*>(targets[0].RenderTexture);
-
-	// check if we should set the previous RT back
-
-	bool ret = true;
-
-	// we want to set a new target. so do this.
-	// store previous target
-
-	if (!PrevRenderTarget)
-	{
-		if (FAILED(pID3DDevice->GetRenderTarget(0, &PrevRenderTarget)))
-		{
-			os::Printer::log("Could not get previous render target.", ELL_ERROR);
-			return false;
-		}
-	}
-
-	// set new render target
-
-	D3DRENDERSTATETYPE colorWrite[4]={D3DRS_COLORWRITEENABLE, D3DRS_COLORWRITEENABLE1, D3DRS_COLORWRITEENABLE2, D3DRS_COLORWRITEENABLE3};
-	for (u32 i = 0; i < maxMultipleRTTs; ++i)
-	{
-		if (FAILED(pID3DDevice->SetRenderTarget(i, static_cast<CD3D9Texture*>(targets[i].RenderTexture)->getRenderTargetSurface())))
-		{
-			os::Printer::log("Error: Could not set render target.", ELL_ERROR);
-			return false;
-		}
-		if (i<4 && (i==0 || queryFeature(EVDF_MRT_COLOR_MASK)))
-		{
-			const DWORD flag =
-				((targets[i].ColorMask & ECP_RED)?D3DCOLORWRITEENABLE_RED:0) |
-				((targets[i].ColorMask & ECP_GREEN)?D3DCOLORWRITEENABLE_GREEN:0) |
-				((targets[i].ColorMask & ECP_BLUE)?D3DCOLORWRITEENABLE_BLUE:0) |
-				((targets[i].ColorMask & ECP_ALPHA)?D3DCOLORWRITEENABLE_ALPHA:0);
-			pID3DDevice->SetRenderState(colorWrite[i], flag);
-		}
-	}
-
-	CurrentRendertargetSize = tex->getSize();
-
-	if (FAILED(pID3DDevice->SetDepthStencilSurface(tex->DepthSurface->Surface)))
-	{
-		os::Printer::log("Error: Could not set new depth buffer.", ELL_ERROR);
 	}
 
 	if (clearBackBuffer || clearZBuffer)
@@ -1293,19 +1173,7 @@ void CD3D9Driver::draw2D3DVertexPrimitiveList(const void* vertices,
 			return;
 	}
 	else
-	{
-		if (Material.MaterialType==EMT_ONETEXTURE_BLEND)
-		{
-			E_BLEND_FACTOR srcFact;
-			E_BLEND_FACTOR dstFact;
-			E_MODULATE_FUNC modulo;
-			u32 alphaSource;
-			unpack_texureBlendFunc ( srcFact, dstFact, modulo, alphaSource, Material.MaterialTypeParam);
-			setRenderStates2DMode(alphaSource&video::EAS_VERTEX_COLOR, (Material.getTexture(0) != 0), (alphaSource&video::EAS_TEXTURE) != 0);
-		}
-		else
-			setRenderStates2DMode(Material.MaterialType==EMT_TRANSPARENT_VERTEX_ALPHA, (Material.getTexture(0) != 0), Material.MaterialType==EMT_TRANSPARENT_ALPHA_CHANNEL);
-	}
+		setRenderStates2DMode(true, (Material.getTexture(0) != 0), true);
 
 	switch (pType)
 	{
@@ -1919,39 +1787,6 @@ bool CD3D9Driver::setRenderStates3DMode()
 }
 
 
-//! Map Irrlicht texture wrap mode to native values
-D3DTEXTUREADDRESS CD3D9Driver::getTextureWrapMode(const u8 clamp)
-{
-	switch (clamp)
-	{
-		case ETC_REPEAT:
-			if (Caps.TextureAddressCaps & D3DPTADDRESSCAPS_WRAP)
-				return D3DTADDRESS_WRAP;
-		case ETC_CLAMP:
-		case ETC_CLAMP_TO_EDGE:
-			if (Caps.TextureAddressCaps & D3DPTADDRESSCAPS_CLAMP)
-				return D3DTADDRESS_CLAMP;
-		case ETC_MIRROR:
-			if (Caps.TextureAddressCaps & D3DPTADDRESSCAPS_MIRROR)
-				return D3DTADDRESS_MIRROR;
-		case ETC_CLAMP_TO_BORDER:
-			if (Caps.TextureAddressCaps & D3DPTADDRESSCAPS_BORDER)
-				return D3DTADDRESS_BORDER;
-			else
-				return D3DTADDRESS_CLAMP;
-		case ETC_MIRROR_CLAMP:
-		case ETC_MIRROR_CLAMP_TO_EDGE:
-		case ETC_MIRROR_CLAMP_TO_BORDER:
-			if (Caps.TextureAddressCaps & D3DPTADDRESSCAPS_MIRRORONCE)
-				return D3DTADDRESS_MIRRORONCE;
-			else
-				return D3DTADDRESS_CLAMP;
-		default:
-			return D3DTADDRESS_WRAP;
-	}
-}
-
-
 //! Can be called by an IMaterialRenderer to make its work easier.
 void CD3D9Driver::setBasicRenderStates(const SMaterial& material, const SMaterial& lastmaterial,
 	bool resetAllRenderstates)
@@ -2164,13 +1999,29 @@ void CD3D9Driver::setBasicRenderStates(const SMaterial& material, const SMateria
 			pID3DDevice->SetSamplerState(st, D3DSAMP_MIPMAPLODBIAS, *(DWORD*)(&tmp));
 		}
 
-		if (resetAllRenderstates || lastmaterial.TextureLayer[st].TextureWrapU != material.TextureLayer[st].TextureWrapU)
-			pID3DDevice->SetSamplerState(st, D3DSAMP_ADDRESSU, getTextureWrapMode(material.TextureLayer[st].TextureWrapU));
-		// If separate UV not supported reuse U for V
-		if (!(Caps.TextureAddressCaps & D3DPTADDRESSCAPS_INDEPENDENTUV))
-			pID3DDevice->SetSamplerState(st, D3DSAMP_ADDRESSV, getTextureWrapMode(material.TextureLayer[st].TextureWrapU));
-		else if (resetAllRenderstates || lastmaterial.TextureLayer[st].TextureWrapV != material.TextureLayer[st].TextureWrapV)
-			pID3DDevice->SetSamplerState(st, D3DSAMP_ADDRESSV, getTextureWrapMode(material.TextureLayer[st].TextureWrapV));
+		if (resetAllRenderstates || lastmaterial.TextureLayer[st].TextureWrap != material.TextureLayer[st].TextureWrap)
+		{
+			u32 mode = D3DTADDRESS_WRAP;
+			switch (material.TextureLayer[st].TextureWrap)
+			{
+				case ETC_REPEAT:
+					mode=D3DTADDRESS_WRAP;
+					break;
+				case ETC_CLAMP:
+				case ETC_CLAMP_TO_EDGE:
+					mode=D3DTADDRESS_CLAMP;
+					break;
+				case ETC_MIRROR:
+					mode=D3DTADDRESS_MIRROR;
+					break;
+				case ETC_CLAMP_TO_BORDER:
+					mode=D3DTADDRESS_BORDER;
+					break;
+			}
+
+			pID3DDevice->SetSamplerState(st, D3DSAMP_ADDRESSU, mode );
+			pID3DDevice->SetSamplerState(st, D3DSAMP_ADDRESSV, mode );
+		}
 
 		// Bilinear, trilinear, and anisotropic filter
 		if (resetAllRenderstates ||
@@ -2884,6 +2735,13 @@ bool CD3D9Driver::setPixelShaderConstant(const c8* name, const f32* floats, int 
 }
 
 
+//! Returns pointer to the IGPUProgrammingServices interface.
+IGPUProgrammingServices* CD3D9Driver::getGPUProgrammingServices()
+{
+	return this;
+}
+
+
 //! Adds a new material renderer to the VideoDriver, using pixel and/or
 //! vertex shaders to render geometry.
 s32 CD3D9Driver::addShaderMaterial(const c8* vertexShaderProgram,
@@ -3250,12 +3108,6 @@ void CD3D9Driver::removeDepthSurface(SDepthSurface* depth)
 			return;
 		}
 	}
-}
-
-
-core::dimension2du CD3D9Driver::getMaxTextureSize() const
-{
-	return core::dimension2du(Caps.MaxTextureWidth, Caps.MaxTextureHeight);
 }
 
 

@@ -90,9 +90,8 @@ namespace irr
 		public:
 
 			CCursorControl(const core::dimension2d<u32>& wsize, HWND hwnd, bool fullscreen)
-				: WindowSize(wsize), InvWindowSize(0.0f, 0.0f),
-					HWnd(hwnd), BorderX(0), BorderY(0),
-					UseReferenceRect(false), IsVisible(true)
+				: WindowSize(wsize), InvWindowSize(0.0f, 0.0f), IsVisible(true),
+					HWnd(hwnd), BorderX(0), BorderY(0), UseReferenceRect(false)
 			{
 				if (WindowSize.Width!=0)
 					InvWindowSize.Width = 1.0f / WindowSize.Width;
@@ -162,7 +161,7 @@ namespace irr
 			}
 
 			//! Returns the current position of the mouse cursor.
-			virtual const core::position2d<s32>& getPosition()
+			virtual core::position2d<s32> getPosition()
 			{
 				updateInternalCursorPosition();
 				return CursorPos;
@@ -257,12 +256,12 @@ namespace irr
 			core::position2d<s32> CursorPos;
 			core::dimension2d<s32> WindowSize;
 			core::dimension2d<f32> InvWindowSize;
+			bool IsVisible;
 			HWND HWnd;
 
 			s32 BorderX, BorderY;
-			core::rect<s32> ReferenceRect;
 			bool UseReferenceRect;
-			bool IsVisible;
+			core::rect<s32> ReferenceRect;
 		};
 
 

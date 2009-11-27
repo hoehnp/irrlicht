@@ -187,7 +187,7 @@ struct SSkinMeshBuffer : public IMeshBuffer
 	}
 
 	//! Convert to 2tcoords vertex type
-	virtual void convertTo2TCoords()
+	virtual void MoveTo_2TCoords()
 	{
 		if (VertexType==video::EVT_STANDARD)
 		{
@@ -206,7 +206,7 @@ struct SSkinMeshBuffer : public IMeshBuffer
 	}
 
 	//! Convert to tangents vertex type
-	virtual void convertToTangents()
+	virtual void MoveTo_Tangents()
 	{
 		if (VertexType==video::EVT_STANDARD)
 		{

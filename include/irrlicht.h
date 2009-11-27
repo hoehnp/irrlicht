@@ -357,7 +357,7 @@ namespace irr
 	// THE FOLLOWING IS AN EMPTY LIST OF ALL SUB NAMESPACES
 	// EXISTING ONLY FOR THE DOCUMENTATION SOFTWARE DOXYGEN.
 
-	//! Basic classes such as vectors, planes, arrays, lists, and so on can be found in this namespace.
+	//! In this namespace can be found basic classes like vectors, planes, arrays, lists and so on.
 	namespace core
 	{
 	}
@@ -367,12 +367,14 @@ namespace irr
 	{
 	}
 
-	//! This namespace provides interfaces for input/output: Reading and writing files, accessing zip archives, xml files, ...
+	//! This namespace provides interfaces for input/output: Reading and
+	//! writing files, accessing zip archives, xml files, ...
 	namespace io
 	{
 	}
 
-	//! All scene management can be found in this namespace: Mesh loading, special scene nodes like octrees and billboards, ...
+	//! All scene management can be found in this namespace: Mesh loading,
+	//! special scene nodes like octrees and billboards, ...
 	namespace scene
 	{
 	}
@@ -388,4 +390,5 @@ namespace irr
 */
 
 #endif
+
 

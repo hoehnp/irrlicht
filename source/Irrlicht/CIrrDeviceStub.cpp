@@ -19,8 +19,7 @@ namespace irr
 CIrrDeviceStub::CIrrDeviceStub(const SIrrlichtCreationParameters& params)
 : IrrlichtDevice(), VideoDriver(0), GUIEnvironment(0), SceneManager(0),
 	Timer(0), CursorControl(0), UserReceiver(params.EventReceiver), Logger(0), Operator(0),
-	FileSystem(0), InputReceivingSceneManager(0), CreationParams(params),
-	Close(false)
+	FileSystem(0), InputReceivingSceneManager(0), CreationParams(params)
 {
 	Timer = new CTimer();
 	if (os::Printer::Logger)
@@ -172,7 +171,7 @@ bool CIrrDeviceStub::checkVersion(const char* version)
 
 
 //! Compares to the last call of this function to return double and triple clicks.
-u32 CIrrDeviceStub::checkSuccessiveClicks(s32 mouseX, s32 mouseY, EMOUSE_INPUT_EVENT inputEvent )
+u32 CIrrDeviceStub::checkSuccessiveClicks(s32 mouseX, s32 mouseY)
 {
 	const s32 MAX_MOUSEMOVE = 3;
 
@@ -181,9 +180,7 @@ u32 CIrrDeviceStub::checkSuccessiveClicks(s32 mouseX, s32 mouseY, EMOUSE_INPUT_E
 	if ( (clickTime-MouseMultiClicks.LastClickTime) < MouseMultiClicks.DoubleClickTime
 		&& core::abs_(MouseMultiClicks.LastClick.X - mouseX ) <= MAX_MOUSEMOVE
 		&& core::abs_(MouseMultiClicks.LastClick.Y - mouseY ) <= MAX_MOUSEMOVE
-		&& MouseMultiClicks.CountSuccessiveClicks < 3 
-		&& MouseMultiClicks.LastMouseInputEvent == inputEvent
-	   )
+		&& MouseMultiClicks.CountSuccessiveClicks < 3 )
 	{
 		++MouseMultiClicks.CountSuccessiveClicks;
 	}
@@ -192,7 +189,6 @@ u32 CIrrDeviceStub::checkSuccessiveClicks(s32 mouseX, s32 mouseY, EMOUSE_INPUT_E
 		MouseMultiClicks.CountSuccessiveClicks = 1;
 	}
 
-	MouseMultiClicks.LastMouseInputEvent = inputEvent;
 	MouseMultiClicks.LastClickTime = clickTime;
 	MouseMultiClicks.LastClick.X = mouseX;
 	MouseMultiClicks.LastClick.Y = mouseY;

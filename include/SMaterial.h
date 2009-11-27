@@ -477,10 +477,7 @@ namespace video
 				case EMF_TEXTURE_WRAP:
 				{
 					for (u32 i=0; i<MATERIAL_MAX_TEXTURES; ++i)
-					{
-						TextureLayer[i].TextureWrapU = (E_TEXTURE_CLAMP)value;
-						TextureLayer[i].TextureWrapV = (E_TEXTURE_CLAMP)value;
-					}
+						TextureLayer[i].TextureWrap = (E_TEXTURE_CLAMP)value;
 				}
 				break;
 				case EMF_ANTI_ALIASING:
@@ -531,14 +528,10 @@ namespace video
 				case EMF_NORMALIZE_NORMALS:
 					return NormalizeNormals;
 				case EMF_TEXTURE_WRAP:
-					return !(TextureLayer[0].TextureWrapU ||
-							TextureLayer[0].TextureWrapV ||
-							TextureLayer[1].TextureWrapU ||
-							TextureLayer[1].TextureWrapV ||
-							TextureLayer[2].TextureWrapU ||
-							TextureLayer[2].TextureWrapV ||
-							TextureLayer[3].TextureWrapU ||
-							TextureLayer[3].TextureWrapV);
+					return !(TextureLayer[0].TextureWrap ||
+							TextureLayer[1].TextureWrap ||
+							TextureLayer[2].TextureWrap ||
+							TextureLayer[3].TextureWrap);
 				case EMF_ANTI_ALIASING:
 					return (AntiAliasing==1);
 				case EMF_COLOR_MASK:

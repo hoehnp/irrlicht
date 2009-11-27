@@ -104,12 +104,10 @@ namespace video
 	{
 		//! Render target is the main color frame buffer
 		ERT_FRAME_BUFFER=0,
+		//! Render target is the main color frame buffer
+		ERT_STEREO_LEFT_BUFFER=0,
 		//! Render target is a render texture
 		ERT_RENDER_TEXTURE,
-		//! Multi-Render target textures
-		ERT_MULTI_RENDER_TEXTURES,
-		//! Render target is the main color frame buffer
-		ERT_STEREO_LEFT_BUFFER,
 		//! Render target is the right color buffer (left is the main buffer)
 		ERT_STEREO_RIGHT_BUFFER,
 		//! Render to both stereo buffers at once
@@ -132,14 +130,6 @@ namespace video
 		EFT_FOG_EXP=0,
 		EFT_FOG_LINEAR,
 		EFT_FOG_EXP2
-	};
-
-	const c8* const FogTypeNames[] =
-	{
-		"FogExp",
-		"FogLinear",
-		"FogExp2",
-		0
 	};
 
 	struct SOverrideMaterial
@@ -187,44 +177,13 @@ namespace video
 						case EMF_BILINEAR_FILTER: material.TextureLayer[0].BilinearFilter = Material.TextureLayer[0].BilinearFilter; break;
 						case EMF_TRILINEAR_FILTER: material.TextureLayer[0].TrilinearFilter = Material.TextureLayer[0].TrilinearFilter; break;
 						case EMF_ANISOTROPIC_FILTER: material.TextureLayer[0].AnisotropicFilter = Material.TextureLayer[0].AnisotropicFilter; break;
-						case EMF_TEXTURE_WRAP:
-							material.TextureLayer[0].TextureWrapU = Material.TextureLayer[0].TextureWrapU;
-							material.TextureLayer[0].TextureWrapV = Material.TextureLayer[0].TextureWrapV;
-							break;
+						case EMF_TEXTURE_WRAP: material.TextureLayer[0].TextureWrap = Material.TextureLayer[0].TextureWrap; break;
 						}
 					}
 				}
 			}
 		}
 
-	};
-
-	struct IRenderTarget
-	{
-		IRenderTarget(ITexture* texture,
-				E_COLOR_PLANE colorMask=ECP_ALL,
-				E_BLEND_FACTOR blendFuncSrc=EBF_ONE,
-				E_BLEND_FACTOR blendFuncDst=EBF_ONE_MINUS_SRC_ALPHA,
-				bool blendEnable=false) :
-			RenderTexture(texture),
-			TargetType(ERT_RENDER_TEXTURE), ColorMask(colorMask),
-			BlendFuncSrc(blendFuncSrc), BlendFuncDst(blendFuncDst),
-			BlendEnable(blendEnable) {}
-		IRenderTarget(E_RENDER_TARGET target,
-				E_COLOR_PLANE colorMask=ECP_ALL,
-				E_BLEND_FACTOR blendFuncSrc=EBF_ONE,
-				E_BLEND_FACTOR blendFuncDst=EBF_ONE_MINUS_SRC_ALPHA,
-				bool blendEnable=false) :
-			RenderTexture(0),
-			TargetType(target), ColorMask(colorMask),
-			BlendFuncSrc(blendFuncSrc), BlendFuncDst(blendFuncDst),
-			BlendEnable(blendEnable) {}
-		ITexture* RenderTexture;
-		E_RENDER_TARGET TargetType:8;
-		E_COLOR_PLANE ColorMask:8;
-		E_BLEND_FACTOR BlendFuncSrc:4;
-		E_BLEND_FACTOR BlendFuncDst:4;
-		bool BlendEnable;
 	};
 
 	//! Interface to driver which is able to perform 2d and 3d graphics functions.
@@ -382,13 +341,10 @@ namespace video
 		/** \param name A name for the texture. Later calls of
 		getTexture() with this name will return this texture
 		\param image Image the texture is created from.
-		\mipmapData Optional pointer to a set of images which build up the
-		whole mipmap set. Must be images of the same color type as image. If
-		this parameter is not given, the mipmaps are derived from image.
 		\return Pointer to the newly created texture. This pointer
 		should not be dropped. See IReferenceCounted::drop() for more
 		information. */
-		virtual ITexture* addTexture(const io::path& name, IImage* image, void* mipmapData=0) = 0;
+		virtual ITexture* addTexture(const io::path& name, IImage* image) = 0;
 
 		//! Adds a new render target texture to the texture cache.
 		/** \param size Size of the texture, in pixels. Width and
@@ -440,7 +396,7 @@ namespace video
 		example in picture edit programs. To avoid this problem, you
 		could use the makeColorKeyTexture method, which takes the
 		position of a pixel instead a color value.
-		\param zeroTexels \deprecated If set to true, then any texels that match
+		\param \deprecated zeroTexels If set to true, then any texels that match
 		the color key will have their color, as well as their alpha, set to zero
 		(i.e. black). This behaviour matches the legacy (buggy) behaviour prior
 		to release 1.5 and is provided for backwards compatibility only.*/
@@ -456,7 +412,7 @@ namespace video
 		\param colorKeyPixelPos Position of a pixel with the color key
 		color. Every texel with this color will become fully transparent as
 		described above.
-		\param zeroTexels \deprecated If set to true, then any texels that match
+		\param \deprecated zeroTexels If set to true, then any texels that match
 		the color key will have their color, as well as their alpha, set to zero
 		(i.e. black). This behaviour matches the legacy (buggy) behaviour prior
 		to release 1.5 and is provided for backwards compatibility only.*/
@@ -526,11 +482,6 @@ namespace video
 					bool clearZBuffer=true,
 					SColor color=video::SColor(0,0,0,0)) =0;
 
-		//! Sets new multiple render targets.
-		virtual bool setRenderTarget(const core::array<video::IRenderTarget>& texture,
-			bool clearBackBuffer=true, bool clearZBuffer=true,
-			SColor color=video::SColor(0,0,0,0)) =0;
-
 		//! Sets a new viewport.
 		/** Every rendering operation is done into this new area.
 		\param area: Rectangle defining the new area of rendering
@@ -597,11 +548,8 @@ namespace video
 		\param vertexCount Amount of vertices in the array.
 		\param indexList Pointer to array of indices.
 		\param triangleCount Amount of Triangles. Usually amount of indices / 3. */
-		void drawIndexedTriangleList(const S3DVertex* vertices,
-			u32 vertexCount, const u16* indexList, u32 triangleCount)
-		{
-			drawVertexPrimitiveList(vertices, vertexCount, indexList, triangleCount, EVT_STANDARD, scene::EPT_TRIANGLES, EIT_16BIT);
-		}
+		virtual void drawIndexedTriangleList(const S3DVertex* vertices,
+			u32 vertexCount, const u16* indexList, u32 triangleCount) =0;
 
 		//! Draws an indexed triangle list.
 		/** Note that there may be at maximum 65536 vertices, because
@@ -612,11 +560,8 @@ namespace video
 		\param vertexCount Amount of vertices in the array.
 		\param indexList Pointer to array of indices.
 		\param triangleCount Amount of Triangles. Usually amount of indices / 3. */
-		void drawIndexedTriangleList(const S3DVertex2TCoords* vertices,
-			u32 vertexCount, const u16* indexList, u32 triangleCount)
-		{
-			drawVertexPrimitiveList(vertices, vertexCount, indexList, triangleCount, EVT_2TCOORDS, scene::EPT_TRIANGLES, EIT_16BIT);
-		}
+		virtual void drawIndexedTriangleList(const S3DVertex2TCoords* vertices,
+			u32 vertexCount, const u16* indexList, u32 triangleCount) =0;
 
 		//! Draws an indexed triangle list.
 		/** Note that there may be at maximum 65536 vertices, because
@@ -627,11 +572,8 @@ namespace video
 		\param vertexCount Amount of vertices in the array.
 		\param indexList Pointer to array of indices.
 		\param triangleCount Amount of Triangles. Usually amount of indices / 3. */
-		void drawIndexedTriangleList(const S3DVertexTangents* vertices,
-			u32 vertexCount, const u16* indexList, u32 triangleCount)
-		{
-			drawVertexPrimitiveList(vertices, vertexCount, indexList, triangleCount, EVT_TANGENTS, scene::EPT_TRIANGLES, EIT_16BIT);
-		}
+		virtual void drawIndexedTriangleList(const S3DVertexTangents* vertices,
+			u32 vertexCount, const u16* indexList, u32 triangleCount) =0;
 
 		//! Draws an indexed triangle fan.
 		/** Note that there may be at maximum 65536 vertices, because
@@ -642,11 +584,8 @@ namespace video
 		\param vertexCount Amount of vertices in the array.
 		\param indexList Pointer to array of indices.
 		\param triangleCount Amount of Triangles. Usually amount of indices - 2. */
-		void drawIndexedTriangleFan(const S3DVertex* vertices,
-			u32 vertexCount, const u16* indexList, u32 triangleCount)
-		{
-			drawVertexPrimitiveList(vertices, vertexCount, indexList, triangleCount, EVT_STANDARD, scene::EPT_TRIANGLE_FAN, EIT_16BIT);
-		}
+		virtual void drawIndexedTriangleFan(const S3DVertex* vertices,
+			u32 vertexCount, const u16* indexList, u32 triangleCount) =0;
 
 		//! Draws an indexed triangle fan.
 		/** Note that there may be at maximum 65536 vertices, because
@@ -657,36 +596,18 @@ namespace video
 		\param vertexCount Amount of vertices in the array.
 		\param indexList Pointer to array of indices.
 		\param triangleCount Amount of Triangles. Usually amount of indices - 2. */
-		void drawIndexedTriangleFan(const S3DVertex2TCoords* vertices,
-			u32 vertexCount, const u16* indexList, u32 triangleCount)
-		{
-			drawVertexPrimitiveList(vertices, vertexCount, indexList, triangleCount, EVT_2TCOORDS, scene::EPT_TRIANGLE_FAN, EIT_16BIT);
-		}
-
-		//! Draws an indexed triangle fan.
-		/** Note that there may be at maximum 65536 vertices, because
-		the index list is an array of 16 bit values each with a maximum
-		value of 65536. If there are more than 65536 vertices in the
-		list, results of this operation are not defined.
-		\param vertices Pointer to array of vertices.
-		\param vertexCount Amount of vertices in the array.
-		\param indexList Pointer to array of indices.
-		\param triangleCount Amount of Triangles. Usually amount of indices - 2. */
-		void drawIndexedTriangleFan(const S3DVertexTangents* vertices,
-			u32 vertexCount, const u16* indexList, u32 triangleCount)
-		{
-			drawVertexPrimitiveList(vertices, vertexCount, indexList, triangleCount, EVT_TANGENTS, scene::EPT_TRIANGLE_FAN, EIT_16BIT);
-		}
+		virtual void drawIndexedTriangleFan(const S3DVertex2TCoords* vertices,
+			u32 vertexCount, const u16* indexList, u32 triangleCount) =0;
 
 		//! Draws a 3d line.
 		/** For some implementations, this method simply calls
-		drawVertexPrimitiveList for some triangles.
+		drawIndexedTriangles for some triangles.
 		Note that the line is drawn using the current transformation
 		matrix and material. So if you need to draw the 3D line
 		independently of the current transformation, use
 		\code
-		driver->setMaterial(someMaterial);
-		driver->setTransform(video::ETS_WORLD, core::IdentityMatrix);
+		driver->setMaterial(unlitMaterial);
+		driver->setTransform(video::ETS_WORLD, core::matrix4());
 		\endcode
 		for some properly set up material before drawing the line.
 		Some drivers support line thickness set in the material.
@@ -697,15 +618,15 @@ namespace video
 			const core::vector3df& end, SColor color = SColor(255,255,255,255)) =0;
 
 		//! Draws a 3d triangle.
-		/** This method calls drawVertexPrimitiveList for some triangles.
+		/** This method calls drawIndexedTriangles for some triangles.
 		This method works with all drivers because it simply calls
-		drawVertexPrimitiveList, but it is hence not very fast.
+		drawIndexedTriangleList but it is hence not very fast.
 		Note that the triangle is drawn using the current
 		transformation matrix and material. So if you need to draw it
 		independently of the current transformation, use
 		\code
-		driver->setMaterial(someMaterial);
-		driver->setTransform(video::ETS_WORLD, core::IdentityMatrix);
+		driver->setMaterial(unlitMaterial);
+		driver->setTransform(video::ETS_WORLD, core::matrix4());
 		\endcode
 		for some properly set up material before drawing the triangle.
 		\param triangle The triangle to draw.
@@ -719,8 +640,8 @@ namespace video
 		matrix and material. So if you need to draw it independently of
 		the current transformation, use
 		\code
-		driver->setMaterial(someMaterial);
-		driver->setTransform(video::ETS_WORLD, core::IdentityMatrix);
+		driver->setMaterial(unlitMaterial);
+		driver->setTransform(video::ETS_WORLD, core::matrix4());
 		\endcode
 		for some properly set up material before drawing the box.
 		\param box The axis aligned box to draw
@@ -943,7 +864,8 @@ namespace video
 		/** These are global values attached to each 3d object rendered,
 		which has the fog flag enabled in its material.
 		\param color Color of the fog
-		\param fogType Type of fog used
+		\param linearFog Set this to true for linear fog, otherwise
+		exponential fog is applied.
 		\param start Only used in linear fog mode (linearFog=true).
 		Specifies where fog starts.
 		\param end Only used in linear fog mode (linearFog=true).
@@ -960,11 +882,6 @@ namespace video
 				E_FOG_TYPE fogType=EFT_FOG_LINEAR,
 				f32 start=50.0f, f32 end=100.0f, f32 density=0.01f,
 				bool pixelFog=false, bool rangeFog=false) =0;
-
-		//! Gets the fog mode.
-		virtual void getFog(SColor& color, E_FOG_TYPE& fogType,
-				f32& start, f32& end, f32& density,
-				bool& pixelFog, bool& rangeFog) = 0;
 
 		//! Get the current color format of the color buffer
 		/** \return Color format of the color buffer. */
@@ -1048,7 +965,7 @@ namespace video
 
 		//! Returns the maximum amount of primitives
 		/** (mostly vertices) which the device is able to render with
-		one drawVertexPrimitiveList call.
+		one drawIndexedTriangleList call.
 		\return Maximum amount of primitives. */
 		virtual u32 getMaximalPrimitiveCount() const =0;
 
@@ -1142,7 +1059,7 @@ namespace video
 		virtual IImage* createImage(ECOLOR_FORMAT format, const core::dimension2d<u32>& size) =0;
 
 		//! Creates a software image by converting it to given format from another image.
-		/** \deprecated Create an empty image and use copyTo()
+		/**
 		\param format Desired color format of the image.
 		\param imageToCopy Image to copy to the new image.
 		\return The created image.
@@ -1151,7 +1068,7 @@ namespace video
 		virtual IImage* createImage(ECOLOR_FORMAT format, IImage *imageToCopy) =0;
 
 		//! Creates a software image from a part of another image.
-		/** \deprecated Create an empty image and use copyTo()
+		/**
 		\param imageToCopy Image to copy to the new image in part.
 		\param pos Position of rectangle to copy.
 		\param size Extents of rectangle to copy.
@@ -1336,9 +1253,6 @@ namespace video
 		Use the SceneManager attribute to set this value from your app.
 		\param flag Default behavior is to disable ZWrite, i.e. false. */
 		virtual void setAllowZWriteOnTransparent(bool flag) =0;
-
-		//! Returns the maximum texture size supported.
-		virtual core::dimension2du getMaxTextureSize() const =0;
 	};
 
 } // end namespace video

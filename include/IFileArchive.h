@@ -18,7 +18,7 @@ namespace io
 enum EFileSystemType
 {
 	FILESYSTEM_NATIVE = 0,	// Native OS FileSystem
-	FILESYSTEM_VIRTUAL	// Virtual FileSystem
+	FILESYSTEM_VIRTUAL,	// Virtual FileSystem
 };
 
 //! Contains the different types of archives
@@ -35,9 +35,6 @@ enum E_FILE_ARCHIVE_TYPE
 
 	//! An ID Software PAK archive
 	EFAT_PAK     = MAKE_IRR_ID('P','A','K', 0),
-
-	//! A Nebula Device archive
-	EFAT_NPK     = MAKE_IRR_ID('N','P','K', 0),
 
 	//! A Tape ARchive
 	EFAT_TAR     = MAKE_IRR_ID('T','A','R', 0),
@@ -58,7 +55,7 @@ public:
 	or 0 on failure. */
 	virtual IReadFile* createAndOpenFile(const path& filename) =0;
 
-	//! Opens a file based on its position in the file list.
+	//! Opens a file based on its position.
 	/** Creates and returns
 	\param index The zero based index of the file.
 	\return Returns a pointer to the created file on success, or 0 on failure. */
@@ -83,7 +80,7 @@ class IArchiveLoader : public virtual IReferenceCounted
 public:
 	//! Check if the file might be loaded by this class
 	/** Check based on the file extension (e.g. ".zip")
-	\param filename Name of file to check.
+	\param fileName Name of file to check.
 	\return True if file seems to be loadable. */
 	virtual bool isALoadableFileFormat(const path& filename) const =0;
 
@@ -100,16 +97,12 @@ public:
 	virtual bool isALoadableFileFormat(E_FILE_ARCHIVE_TYPE fileType) const =0;
 
 	//! Creates an archive from the filename
-	/** \param filename File to use.
-	\param ignoreCase Searching is performed without regarding the case
-	\param ignorePaths Files are searched for without checking for the directories
+	/** \param file File handle to check.
 	\return Pointer to newly created archive, or 0 upon error. */
 	virtual IFileArchive* createArchive(const path& filename, bool ignoreCase, bool ignorePaths) const =0;
 
 	//! Creates an archive from the file
-	/** \param file File handle to use.
-	\param ignoreCase Searching is performed without regarding the case
-	\param ignorePaths Files are searched for without checking for the directories
+	/** \param file File handle to check.
 	\return Pointer to newly created archive, or 0 upon error. */
 	virtual IFileArchive* createArchive(io::IReadFile* file, bool ignoreCase, bool ignorePaths) const =0;
 };

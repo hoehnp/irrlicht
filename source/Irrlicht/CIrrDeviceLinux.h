@@ -135,8 +135,6 @@ namespace irr
 
 		void initXAtoms();
 
-		bool switchToFullscreen(bool reset=false);
-
 		//! Implementation of the linux cursor control
 		class CCursorControl : public gui::ICursorControl
 		{
@@ -252,7 +250,7 @@ namespace irr
 			}
 
 			//! Returns the current position of the mouse cursor.
-			virtual const core::position2d<s32>& getPosition()
+			virtual core::position2d<s32> getPosition()
 			{
 				updateCursorPos();
 				return CursorPos;
@@ -356,6 +354,7 @@ namespace irr
 		#endif
 #endif
 		u32 Width, Height;
+		bool Close;
 		bool WindowHasFocus;
 		bool WindowMinimized;
 		bool UseXVidMode;

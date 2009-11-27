@@ -110,7 +110,7 @@ bool CCameraSceneNode::OnEvent(const SEvent& event)
 
 	// send events to event receiving animators
 
-	ISceneNodeAnimatorList::Iterator ait = Animators.begin();
+	core::list<ISceneNodeAnimator*>::Iterator ait = Animators.begin();
 	
 	for (; ait != Animators.end(); ++ait)
 		if ((*ait)->isEventReceiverEnabled() && (*ait)->OnEvent(event))
@@ -234,16 +234,6 @@ void CCameraSceneNode::recalculateProjectionMatrix()
 //! prerender
 void CCameraSceneNode::OnRegisterSceneNode()
 {
-	if ( SceneManager->getActiveCamera () == this )
-		SceneManager->registerNodeForRendering(this, ESNRP_CAMERA);
-
-	ISceneNode::OnRegisterSceneNode();
-}
-
-
-//! render
-void CCameraSceneNode::render()
-{	
 	core::vector3df pos = getAbsolutePosition();
 	core::vector3df tgtv = Target - pos;
 	tgtv.normalize();
@@ -255,7 +245,7 @@ void CCameraSceneNode::render()
 
 	f32 dp = tgtv.dotProduct(up);
 
-	if ( core::equals(core::abs_<f32>(dp), 1.f) )
+	if ( core::equals(fabsf(dp), 1.f) )
 	{
 		up.X += 0.5f;
 	}
@@ -264,6 +254,16 @@ void CCameraSceneNode::render()
 	ViewArea.getTransform(video::ETS_VIEW) *= Affector;
 	recalculateViewArea();
 
+	if ( SceneManager->getActiveCamera () == this )
+		SceneManager->registerNodeForRendering(this, ESNRP_CAMERA);
+
+	ISceneNode::OnRegisterSceneNode();
+}
+
+
+//! render
+void CCameraSceneNode::render()
+{	
 	video::IVideoDriver* driver = SceneManager->getVideoDriver();
 	if ( driver)
 	{
@@ -342,24 +342,6 @@ void CCameraSceneNode::bindTargetAndRotation(bool bound)
 bool CCameraSceneNode::getTargetAndRotationBinding(void) const
 {
 	return TargetAndRotationAreBound;
-}
-
-
-//! Creates a clone of this scene node and its children.
-ISceneNode* CCameraSceneNode::clone(ISceneNode* newParent, ISceneManager* newManager)
-{
-	if (!newParent)
-		newParent = Parent;
-	if (!newManager)
-		newManager = SceneManager;
-
-	CCameraSceneNode* nb = new CCameraSceneNode(newParent, 
-		newManager, ID, RelativeTranslation, Target);
-
-	nb->cloneMembers(this, newManager);
-
-	nb->drop();
-	return nb;
 }
 
 

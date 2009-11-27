@@ -10,7 +10,6 @@
 #include "CZipReader.h"
 #include "CMountPointReader.h"
 #include "CPakReader.h"
-#include "CNPKReader.h"
 #include "CTarReader.h"
 #include "CFileList.h"
 #include "CXMLReader.h"
@@ -66,10 +65,6 @@ CFileSystem::CFileSystem()
 
 #ifdef __IRR_COMPILE_WITH_PAK_ARCHIVE_LOADER_
 	ArchiveLoader.push_back(new CArchiveLoaderPAK(this));
-#endif
-
-#ifdef __IRR_COMPILE_WITH_NPK_ARCHIVE_LOADER_
-	ArchiveLoader.push_back(new CArchiveLoaderNPK(this));
 #endif
 
 #ifdef __IRR_COMPILE_WITH_TAR_ARCHIVE_LOADER_
@@ -190,7 +185,7 @@ bool CFileSystem::moveFileArchive(u32 sourceIndex, s32 relative)
 
 //! Adds an archive to the file system.
 bool CFileSystem::addFileArchive(const io::path& filename, bool ignoreCase,
-			  bool ignorePaths, E_FILE_ARCHIVE_TYPE archiveType)
+									  bool ignorePaths, E_FILE_ARCHIVE_TYPE archiveType)
 {
 	IFileArchive* archive = 0;
 	bool ret = false;
@@ -199,7 +194,7 @@ bool CFileSystem::addFileArchive(const io::path& filename, bool ignoreCase,
 	// check if the archive was already loaded
 	for (i = 0; i < FileArchives.size(); ++i)
 	{
-		if (getAbsolutePath(filename) == FileArchives[i]->getFileList()->getPath())
+		if (filename == FileArchives[i]->getFileList()->getPath())
 			return true;
 	}
 
@@ -409,7 +404,7 @@ bool CFileSystem::changeWorkingDirectoryTo(const io::path& newDirectory)
 
 	if (FileSystemType != FILESYSTEM_NATIVE)
 	{
-		WorkingDirectory[FILESYSTEM_VIRTUAL] = newDirectory;
+		WorkingDirectory[FILESYSTEM_VIRTUAL].append(newDirectory);
 		flattenFilename(WorkingDirectory[FILESYSTEM_VIRTUAL], "");
 		success = 1;
 	}
@@ -436,24 +431,21 @@ bool CFileSystem::changeWorkingDirectoryTo(const io::path& newDirectory)
 
 io::path CFileSystem::getAbsolutePath(const io::path& filename) const
 {
-#if defined(_IRR_WINDOWS_API_) && !defined(_IRR_WINDOWS_CE_PLATFORM_)
 	fschar_t *p=0;
 
+#if defined(_IRR_WINDOWS_CE_PLATFORM_)
+	return filename;
+#elif defined(_IRR_WINDOWS_API_)
+
 	#if defined(_IRR_WCHAR_FILESYSTEM )
-		wchar_t fpath[_MAX_PATH];
+		c16 fpath[_MAX_PATH];
 		p = _wfullpath(fpath, filename.c_str(), _MAX_PATH);
-		core::stringw tmp(p);
-		tmp.replace(L'\\', L'/');
 	#else
 		c8 fpath[_MAX_PATH];
 		p = _fullpath(fpath, filename.c_str(), _MAX_PATH);
-		core::stringc tmp(p);
-		tmp.replace('\\', '/');
 	#endif
-	return tmp;
-#elif (defined(_IRR_POSIX_API_) || defined(_IRR_OSX_PLATFORM_))
-	c8* p=0;
 
+#elif (defined(_IRR_POSIX_API_) || defined(_IRR_OSX_PLATFORM_))
 	c8 fpath[4096];
 	fpath[0]=0;
 	p = realpath(filename.c_str(), fpath);
@@ -474,7 +466,7 @@ io::path CFileSystem::getAbsolutePath(const io::path& filename) const
 
 #endif
 
-	return io::path(filename);
+	return io::path(p);
 }
 
 
@@ -697,13 +689,6 @@ IFileList* CFileSystem::createFileList()
 	return r;
 }
 
-//! Creates an empty filelist
-IFileList* CFileSystem::createEmptyFileList(const io::path& path, bool ignoreCase, bool ignorePaths)
-{
-	return new CFileList(path, ignoreCase, ignorePaths);
-}
-
-
 //! determines if a file exists and would be able to be opened.
 bool CFileSystem::existFile(const io::path& filename) const
 {
@@ -715,7 +700,7 @@ bool CFileSystem::existFile(const io::path& filename) const
 #if defined(_IRR_WCHAR_FILESYSTEM)
 	HANDLE hFile = CreateFileW(filename.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 #else
-	HANDLE hFile = CreateFileW(core::stringw(filename).c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+	HANDLE hFile = CreateFileA(filename.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 #endif
 	if (hFile == INVALID_HANDLE_VALUE)
 		return false;

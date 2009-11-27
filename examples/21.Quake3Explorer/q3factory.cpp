@@ -18,8 +18,8 @@ using namespace quake3;
 //! This list is based on the original quake3.
 static const SItemElement Quake3ItemElement [] = {
 {	"item_health",
-	{"models/powerups/health/medium_cross.md3",
-	"models/powerups/health/medium_sphere.md3"},
+	"models/powerups/health/medium_cross.md3",
+	"models/powerups/health/medium_sphere.md3",
 	"sound/items/n_health.wav",
 	"icons/iconh_yellow",
 	"25 Health",
@@ -278,7 +278,7 @@ static const SItemElement Quake3ItemElement [] = {
 	SPECIAL_SFX_ROTATE
 },
 {
-	0
+	""
 }
 
 };
@@ -755,11 +755,7 @@ vector3df getGravity ( const c8 * surface )
 	Dynamically load the Irrlicht Library
 */
 
-#if defined(_IRR_WINDOWS_API_)
-#ifdef _MSC_VER
-#pragma comment(lib, "Irrlicht.lib")
-#endif
-
+#if defined(_IRR_WINDOWS_API_) && 1
 #include <windows.h>
 
 funcptr_createDevice load_createDevice ( const c8 * filename)
@@ -775,6 +771,10 @@ funcptr_createDeviceEx load_createDeviceEx ( const c8 * filename)
 #else
 
 // TODO: Dynamic Loading for other os
+#ifdef _MSC_VER
+#pragma comment(lib, "Irrlicht.lib")
+#endif
+
 funcptr_createDevice load_createDevice ( const c8 * filename)
 {
 	return createDevice;

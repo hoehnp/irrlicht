@@ -154,9 +154,6 @@ namespace video
 		//! Returns the graphics card vendor name.
 		virtual core::stringc getVendorInfo();
 
-		//! Returns the maximum texture size supported.
-		virtual core::dimension2du getMaxTextureSize() const;
-
 	protected:
 
 
@@ -168,7 +165,7 @@ namespace video
 
 		//! returns a device dependent texture from a software surface (IImage)
 		//! THIS METHOD HAS TO BE OVERRIDDEN BY DERIVED DRIVERS WITH OWN TEXTURES
-		virtual video::ITexture* createDeviceDependentTexture(IImage* surface, const io::path& name, void* mipmapData=0);
+		virtual video::ITexture* createDeviceDependentTexture(IImage* surface, const io::path& name);
 
 		video::CImage* BackBuffer;
 		video::IImagePresenter* Presenter;

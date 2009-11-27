@@ -15,34 +15,20 @@ namespace irr
 namespace io
 {
 
-namespace
-{
-
-inline bool isHeaderValid(const SPAKFileHeader& header)
-{
-	const c8* tag = header.tag;
-	return tag[0] == 'P' &&
-		   tag[1] == 'A' &&
-		   tag[2] == 'C' &&
-		   tag[3] == 'K';
-}
-
-} // end namespace
-
 //! Constructor
 CArchiveLoaderPAK::CArchiveLoaderPAK( io::IFileSystem* fs)
 : FileSystem(fs)
 {
-#ifdef _DEBUG
+	#ifdef _DEBUG
 	setDebugName("CArchiveLoaderPAK");
-#endif
+	#endif
 }
 
 
 //! returns true if the file maybe is able to be loaded by this class
 bool CArchiveLoaderPAK::isALoadableFileFormat(const io::path& filename) const
 {
-	return core::hasFileExtension(filename, "pak");
+	return core::hasFileExtension ( filename, "pak" );
 }
 
 //! Check to see if the loader can create archives of this type.
@@ -61,7 +47,7 @@ IFileArchive* CArchiveLoaderPAK::createArchive(const io::path& filename, bool ig
 
 	if (file)
 	{
-		archive = createArchive(file, ignoreCase, ignorePaths);
+		archive = createArchive ( file, ignoreCase, ignorePaths );
 		file->drop ();
 	}
 
@@ -90,9 +76,9 @@ bool CArchiveLoaderPAK::isALoadableFileFormat(io::IReadFile* file) const
 {
 	SPAKFileHeader header;
 
-	file->read(&header, sizeof(header));
+	file->read( &header.tag, 4 );
 
-	return isHeaderValid(header);
+	return header.tag[0] == 'P' && header.tag[1] == 'A';
 }
 
 
@@ -102,14 +88,17 @@ bool CArchiveLoaderPAK::isALoadableFileFormat(io::IReadFile* file) const
 CPakReader::CPakReader(IReadFile* file, bool ignoreCase, bool ignorePaths)
 : CFileList(file ? file->getFileName() : "", ignoreCase, ignorePaths), File(file)
 {
-#ifdef _DEBUG
+	#ifdef _DEBUG
 	setDebugName("CPakReader");
-#endif
+	#endif
 
 	if (File)
 	{
 		File->grab();
+
+		// scan local headers
 		scanLocalHeader();
+
 		sort();
 	}
 }
@@ -127,43 +116,48 @@ const IFileList* CPakReader::getFileList() const
 	return this;
 }
 
+//! scans for a local header, returns false if there is no more local file header.
 bool CPakReader::scanLocalHeader()
 {
-	SPAKFileHeader header;
-		
-	// Read and validate the header
-	File->read(&header, sizeof(header));
-	if (!isHeaderValid(header))
-		return false;
 
-	// Seek to the table of contents	
-#ifdef __BIG_ENDIAN__
-	header.offset = os::Byteswap::byteswap(header.offset);
-	header.length = os::Byteswap::byteswap(header.length);
-#endif
+	c8 tmp[1024];
+	io::path PakFileName;
+
+	memset(&header, 0, sizeof(SPAKFileHeader));
+	File->read(&header, sizeof(SPAKFileHeader));
+
+	if (header.tag[0] != 'P' && header.tag[1] != 'A')
+		return false; // local file headers end here.
+
 	File->seek(header.offset);
 
-	const int numberOfFiles = header.length / sizeof(SPAKFileEntry);
+	const int count = header.length / ((sizeof(u32) * 2) + 56);
 
-	Offsets.reallocate(numberOfFiles);
-	// Loop through each entry in the table of contents
-	for(int i = 0; i < numberOfFiles; i++)
+	for(int i = 0; i < count; i++)
 	{
-		// read an entry
-		SPAKFileEntry entry;
-		File->read(&entry, sizeof(entry));
+		// read filename
+		PakFileName.reserve(56+2);
+		File->read(tmp, 56);
+		tmp[56] = 0x0;
+		PakFileName = tmp;
 
-#ifdef _DEBUG
-		os::Printer::log(entry.name);
-#endif
+		#ifdef _DEBUG
+		os::Printer::log(PakFileName.c_str());
+		#endif
+
+		s32 offset;
+		s32 size;
+
+		File->read(&offset, sizeof(u32));
+		File->read(&size, sizeof(u32));
 
 #ifdef __BIG_ENDIAN__
-		entry.offset = os::Byteswap::byteswap(entry.offset);
-		entry.length = os::Byteswap::byteswap(entry.length);
+		os::Byteswap::byteswap(offset);
+		os::Byteswap::byteswap(size);
 #endif
 
-		addItem(io::path(entry.name), entry.length, false, Offsets.size());
-		Offsets.push_back(entry.offset);
+		addItem(PakFileName, size, false, Offsets.size());
+		Offsets.push_back(offset);
 	}
 	return true;
 }
@@ -196,4 +190,3 @@ IReadFile* CPakReader::createAndOpenFile(u32 index)
 } // end namespace irr
 
 #endif // __IRR_COMPILE_WITH_PAK_ARCHIVE_LOADER_
-

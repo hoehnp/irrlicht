@@ -19,7 +19,7 @@ namespace gui
 
 //! constructor
 CGUIWindow::CGUIWindow(IGUIEnvironment* environment, IGUIElement* parent, s32 id, core::rect<s32> rectangle)
-: IGUIWindow(environment, parent, id, rectangle), Dragging(false), IsDraggable(true), DrawBackground(true), DrawTitlebar(true), IsActive(false)
+: IGUIWindow(environment, parent, id, rectangle), Dragging(false), IsDraggable(true), DrawBackground(true), DrawTitlebar(true)
 {
 	#ifdef _DEBUG
 	setDebugName("CGUIWindow");
@@ -118,20 +118,12 @@ bool CGUIWindow::OnEvent(const SEvent& event)
 			if (event.GUIEvent.EventType == EGET_ELEMENT_FOCUS_LOST)
 			{
 				Dragging = false;
-				IsActive = false;
 			}
 			else
 			if (event.GUIEvent.EventType == EGET_ELEMENT_FOCUSED)
 			{
 				if (Parent && ((event.GUIEvent.Caller == this) || isMyChild(event.GUIEvent.Caller)))
-				{
 					Parent->bringToFront(this);
-					IsActive = true;
-				}
-				else
-				{
-					IsActive = false;
-				}
 			}
 			else
 			if (event.GUIEvent.EventType == EGET_BUTTON_CLICKED)
@@ -226,9 +218,8 @@ void CGUIWindow::draw()
 		// draw body fast
         if ( DrawBackground )
         {
-	        rect = skin->draw3DWindowBackground(this, DrawTitlebar, 
-							skin->getColor(IsActive ? EGDC_ACTIVE_BORDER : EGDC_INACTIVE_BORDER),
-							AbsoluteRect, &AbsoluteClippingRect);
+            rect = skin->draw3DWindowBackground(this, DrawTitlebar, skin->getColor(EGDC_ACTIVE_BORDER),
+                AbsoluteRect, &AbsoluteClippingRect);
 
             if (DrawTitlebar && Text.size())
             {
@@ -240,8 +231,7 @@ void CGUIWindow::draw()
                 if (font)
                 {
                     font->draw(Text.c_str(), rect,
-						skin->getColor(IsActive ? EGDC_ACTIVE_CAPTION:EGDC_INACTIVE_CAPTION), 
-						false, true, &AbsoluteClippingRect);
+                        skin->getColor(EGDC_ACTIVE_CAPTION), false, true, &AbsoluteClippingRect);
                 }
             }
         }
@@ -337,7 +327,6 @@ void CGUIWindow::deserializeAttributes(io::IAttributes* in, io::SAttributeReadWr
 	IGUIWindow::deserializeAttributes(in,options);
 
     Dragging = false;
-	IsActive = false;
     IsDraggable = in->getAttributeAsBool("IsDraggable");
     DrawBackground = in->getAttributeAsBool("DrawBackground");
     DrawTitlebar = in->getAttributeAsBool("DrawTitlebar");

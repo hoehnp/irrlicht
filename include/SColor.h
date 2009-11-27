@@ -191,19 +191,13 @@ namespace video
 		0 means no blue, 255 means full blue. */
 		u32 getBlue() const { return color & 0xff; }
 
-		//! Get lightness of the color in the range [0,255]
-		f32 getLightness() const
-		{
-			return 0.5f*(core::max_(core::max_(getRed(),getGreen()),getBlue())+core::min_(core::min_(getRed(),getGreen()),getBlue()));
-		}
-
-		//! Get luminance of the color in the range [0,255].
+		//! Returns the luminance of the color.
 		f32 getLuminance() const
 		{
 			return 0.3f*getRed() + 0.59f*getGreen() + 0.11f*getBlue();
 		}
 
-		//! Get average intensity of the color in the range [0,255].
+		//! Returns the average intensity of the color.
 		u32 getAverage() const
 		{
 			return ( getRed() + getGreen() + getBlue() ) / 3;
