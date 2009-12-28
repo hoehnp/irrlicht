@@ -1,845 +1,3 @@
-Changes in 1.7
-
- - Add hasType to IGUIElement as a dynamic_cast substitute.
-
- - Add another parameter to IGUISkin::draw3DWindowBackground to allow getting the client area without actually drawing 
-
- - Add function getClientRect to IGUIWindow for getting the draw-able area
-
- - Fix bug that menus on IGUIWindows with titlebar got drawn too high (id: 2714400)
-
- - Renamed OctTree to Octree
-
- - Allow getting a ConstIterator from a non-const core:list
-
- - Add swap functions to irrMath and to the core classes.
-
- - Deprecate map::isEmpty() and replace it with map::empty() to make it similar to other base classes.
-
- - Allow to set the logging level already in SIrrlichtCreationParameters.
-
- - Add clearSystemMessages to devices (implemented only for Linux and Win32 so far).
- 
- - Fix incorrect cursorpos for resizable windows on Windows Vista (found and patched by buffer)
-
- - Change the beginScene window parameter from void* to SExposedVideoData&. This will allow to manage contexts for OpenGL at some point.
-
- - Add bzip2 and LZMA decompression modes for zip loader.
-
- - Add OBJ_TEXTURE_PATH and B3D_TEXTURE_PATH to SceneParameters to allow setting texture-paths for obj and b3d.
-
- - Irrlicht keeps now filenames additionaly to the internally used names, thereby fixing some problems with uppercase-filenames on Linux.
-
- - Bugfix: Mousewheel no longer sends EMIE_MOUSE_WHEEL messages twice on Linux.
-
- - refactoring: E_ATTRIBUTE_TYPE and IAttribute have now own headers
-
- - CStringWArrayAttribute speedup
-
- - SceneNodeAnimatorFollowSpline can now loop and pingpong
-
- - Meshviewer.example got some fast-scale buttons.
-
- - Support AES-encrypted zip files. Should work with 128, 196, and 256 bit AES. This addition also adds a new PRNG, SHA, and other algorithms to the engine, though no interface is yet added for them. The implementation of the encryption algorithms is provided by Dr Brian Gladman.
-
- - Added geometry shaders for OpenGL. A first version of the code was submitted by Matthew Kielan (devsh).
-
- - Bugfix: irrArray should no longer crash when using other allocators.
-
- - Add MaterialViewer example.
-
- - Checkbox uses now disabled text color when disabled.
-
- - Changed colors for window-title caption to keep them readable when not active.
-
- - Draw sub-menus to left side if they would be outside main-window otherwise.
-
- - Give ListBox better defaults for the ScrollBar stepsizes.
-
- - Double and triple click events now for each mouse-button. Old events for that got removed.
-
- - Fix adding archives twice, which caused multiple archives of the same name and type covering each other. This one required a texture name change from using backslashes to slahes under Windows.
-
- - Give access to texture mipmaps. You can provide custom mipmap textures upon generation, regeneration, and locking.
-   Make sure the provided data is large enough and covers all miplevels. Also the returned pointer (from lock) will only cover the smaller data of the mipmap level dimension chosen (level 0 is the original texture).
-
- - Separate TextureWrap mode into U and V fields
-
- - Add mirror texture wrap modes
- 
- - windows show now active/inactive state
-
- - remove unneed drop/grab calls found by manik_sheeri
-
- - fix rounding problem in IGUIElements which have EGUIA_SCALE alignments.
-
- - MessageBox supports now automatic resizing and images.
-   Deprecated EGDS_MESSAGE_BOX_WIDTH and EGDS_MESSAGE_BOX_HEIGHT
-
- - Let maya-cam animator react on a setTarget call to the camera which happened outside it's own control
-
- - New contextmenue features:
-	automatic checking for checked flag.
-	close handling now customizable
-	serialization can handle incomplete xml's
-	setEventParent now in public interface
-	New function findItemWithCommandId
-  	New function insertItem
-
- - irrArray: Fixed issues with push_front and reallocation
-   Changed behavior for set_pointer and clear, when free_when_destroyed is false
-
- - NPK (Nebula device archive) reader added, it's an uncompressed PAK-like format
-
- - SSkinMeshBuffer::MoveTo* methods renamed to convertTo*
-
- - Multiple Render Target (MRT) support added, including some enhanced blend features where supported
-
- - Directory changing fixed for virtual file systems (Archives etc)
-
- - Fix texture matrix init in scene manager and driver
-
- - More draw2dimage support in software drivers
-
- - Sphere node now properly chooses a good tesselation based on the parameters
-
- - Active camera not registered twice anymore
-
- - Parallax/normal map shader rotation bug under OpenGL fixed 
-
- - bump map handling for obj files fixed
-
- - Fog serialization added
-
- - New context menu features added
-
- - Bounding Box updates for skinned meshes fixed
-
- - The current FPS for an animated scene node cn be queried now, added some variables to serialization
-
- - Scrollbars fixed
-
- - Fixed 2d vertex primitive method to correctly handle transparency
-
- - Fullscreen handling has been ehanced for Windows, now proper resolution is restored on Alt-Tab etc.
-
- - Cameras can now be added to the scene node without automatically activating them
-   Clone method added
-
- - New video driver method getMaxTextureSize
-
- - PAK archive reader fixed
-
- - TRANSPARENT_ALPHA_CHANNEL_REF uses modulate to enable lighting
-
- - LIGHTMAP_ADD now always uses add operator
-
- - Some Unicode file system fixes
-
- - destructor of irrString not virtual anymore, please don't derive from irrString
-   Some new methods added, for searching and splitting
-   Assignment operator optimized
-
- - new lightness method for SColor
-
- - draw3DTriangle now renders filled polygons, old behavior can be achieved by setting EMT_WIREFRAME
-
-----------------
-Changes in 1.6.1
-
- - Fix problem that the window did sometimes not get the keyboard focus in X11 in fullscreen. Add more debug output in case focus grabbing goes wrong.
-
- - Fix screensize in videodriver when we didn't get the requested window size. This also prevents that gui-clicks are no longer synchronized with gui-drawing and elements can't be hit anymore.
-
- - Bugfix: Prevent a crash when getTypeName was called for the guienvironment. EGUIET_ELEMENT got changed for this.
-
- - Bugfix: Horizontal centered font with linebreaks draw now all lines. For example multiline TextSceneNodes work again.
-
- - Bugfix: spinbox can no longer get in an endless loop due to floating point rounding error (found by slavik262)
-
- - !!API change!! Disabled AntiAliasing of Lines in material default
-   Please enable this manually per material when sure that it won't lead to SW rendering.
-
- - IGUIComboBox: clicking on the statictext displaying the active selection does now close and open listbox correctly. (Bug found by Reiko)
-
- - Scrollbuttons in IGUITabControl adapt now to tab-height.
-
- - Fix texturing of cylinder mesh
-
- - Fix modal dialog position (found by LoneBoco: http://sourceforge.net/tracker/?func=detail&aid=2900266&group_id=74339&atid=540676)
-
- - Fix DMF loading
-
- - Fixing left+right special keys (ctrl, shift, alt) on Win32 (thanks to pc0de for good patch-ideas).
-
- - Make stringarrays for enums in IGUISkin a little safer
-
- - Add support for keys KEY_PRINT, KEY_HOME (on numpad) and KEY_NUMLOCK on Linux.
-
- - Fix material handling in createMeshWith1TCoords
-
- - Fix another (OldValue == NewValue) before drop()/grap(), this time in CTextureAttribute::setTexture.
-
- - Fix LIGHTMAP_LIGHTING for D3D drivers.
-
- - AntiAliasing disabled for debug render elements.
-
- - Bugfix: CGUIToolBar::addButton does no longer mess up when no image is set and does now actually work with the text.
-
- - Fix ninja animation range which got messed up a little when b3d animations got fixed (thx gbox for finding)
-
----------------------------
-Changes in 1.6 (23.09.2009)
-
- - Added IFileSystem::createEmptyFileList, exposed IFileList::sort, addItem and added getID
-
- - Fix MAKE_IRR_ID so it can be used from outside the irr namespace (Micha's patch)
-
- - Renamed some methods in ISkinnedMesh to match the official Irrlicht naming scheme according to createXXX()
-
- - Change debug data to draw using lines instead of arrows, which is much faster. Patch by pc0de
-
- - Fix a bug with FPS camera animator causing stutters. Patch by FuzzYspo0N
-
- - Fix scrolling controls in CGUITabControl
-
- - Fix a bug when getting optimal texture size in D3D drivers, by Jetro Lauha (tonic)
-
- - Added EGDS_TITLEBARTEXT_DISTANCE_X and EGDS_TITLEBARTEXT_DISTANCE_Y to GUI, submitted by FuzzYspo0N
-
- - Fix for UFT8 filenames displayed in file dialog, patch by MadHyde.
-
- - Added const method for array::binary_search, potentially slow as it doesn't sort the list!
-
- - Add support for scaling button images.
-
- - Irrlicht can now come with multiple device types compiled in, the device to use is selected by SIrrlichtCreationParameters.DeviceType. This defaults to EIDT_BEST which automatically select the best device available starting with native, then X11, SDL and finally the console.
-
- - Added support for EXP2 fog distribution. This required a change in the setFog parameters where now an enum value instead of the bool linear is given.
-
- - IFileSystem changes:
-
-   - Renamed the following functions-
-      IFileArchive::getArchiveType to getType
-      IFileSystem::registerFileArchive to addFileArchive
-      IFileSystem::unregisterFileArchive to removeFileArchive
-      IFileArchive::openFile to createAndOpenFile
-
-   - New enum, E_FILE_ARCHIVE_TYPE. getType on IArchiveLoader and IFileArchive now both return this.
-
-   - IFileSystem::addFileArchive takes a parameter to specify the archive type rather always using the file extension. IFileSystem::addZipFileArchive, addFolderFileArchive and addPakFileArchive now use this but these functions are now marked as deprecated. Users should now use addFileArchive instead.
-
-   - Added TAR archive loader.
-
-   - The ZIP archive loader can now load gzip files, combined with the TAR loader this means Irrlicht now has native support for .tar.gz
-     Currently this must be done in two calls, for example:
-       fileSystem->addFileArchive("path/to/myArchive.tar.gz");
-       fileSystem->addFileArchive("myArchive.tar");
-
- - Fix highlighting in IGUIEditBox where kerning pairs are used in the font. For example in future italic, OS or other custom fonts.
-
- - IOSOperator::getTextFromClipboard returns now const c8* instead of c8*
-
- - Support for copy&paste on linux (X11) added (fixing bug 2804014 found by Pan)
-
- - bugfix for 2795321 found by egrath: Don't rely anymore on broken XkbSetDetectableAutoRepeat.
-
- - bugfix: CMountPointReader::openFile no longer returns true for empty files. Corresponding test added.
-
- - Direct3D now also uses screen coordinates in 2d mode, just like OpenGL. This means that screen coords are going from 0..ScreenWidth and 0..ScreenHeight instead of -1..1.
-
- - ALT+F4 keypress now closes Windows SDL device
-
- - Allow Direct3D drivers in SDL, patch by Halifax
-
- - Added compiler error when attempting to compile with VC6.
-
- - Use setWindowTextA in Windows device for WIN64 platform, posted by veegun
-
- - ELL_ERROR log events are now created when shaders fail to compile or link, reported by Halan
-
- - irrList now uses irrAllocator, fixed by Nox
-
- - Added IGUIWindow::setDraggable and IGUIWindow::isDraggable, by Nox
-
- - Added SGI RGB file reader by Gary Conway, for loading Silicon Graphics .rgb, .rgba, .sgi, .int and .inta textures
-
- - Renamed setResizeAble to setResizable
-
- - Added new device method minimizeWindow which minimizes the window (just as if the minimize button has been clicked).
-
- - SkyDome is now serialized correctly
-
- - Added PLY mesh reader and writer
-
- - Ensure ListBox on combo box doesn't hang off the bottom of the GUI root, by Matthias Specht
-
- - Made IGUIElements recalculate clipping rectangle after setNotClipped, reported by Aelis440
-
- - Bug fix for the combo box where it showed white text instead of skin colour before being focused, fix posted by drewbacca
-
- - EGDS_MESSAGE_BOX_HEIGHT is now honoured, bug reported by Spkka
-
- - Fixed a bug in the edit box where events are sometimes sent to a null parent, reported by Sudi.
-
- - Coordinate system fix for OpenGL in SDL device
-
- - Added generic console device. You can now use Irrlicht to create and manipuate graphics on a shell where no graphics hardware
-   or windowing system is available. To enable it uncomment #define _IRR_USE_CONSOLE_DEVICE_ in IrrCompileConfig.h
-   - The console device can now present images from the software drivers and display them as ASCII art in the console
-   - By default it replaces the default font in the skin, to prevent fonts from being huge.
-
- - Fixed problems with changing cursor visibility while mouse is pressed on windows
-
- - Allow control of background drawing in listbox
-
- - Allow control of drawing background and titlebar in windows
-
- - Improved window serialization
-
- - Add mouse events EMIE_MOUSE_DOUBLE_CLICK and EMIE_MOUSE_TRIPLE_CLICK (thx to Ulf for patch proposal)
-
- - Set "ButtonStates" for mouse events also on Linux (was only for Windows formerly)
-
- - Add Shift+Control states to mouse event
-
- - bugfix (2003238): serialize modal screens
-
- - allow stacking modal screens
-
- - allowing hiding modals
-
- - replace many IsVisible checks with virtual isVisible() checks in IGUIElement
-
- - bugfix: reset selected row when clearing CGUITable
-
- - adding events EGET_EDITBOX_CHANGED and EGET_EDITBOX_MARKING_CHANGED
-
- - prevent editbox from recalculating its textbreaking each frame
-
- - let spinbox react on each textchange without waiting for enter to prevent getting value changes without corresponding EGET_SPINBOX_CHANGED events.
-
- - new test for zipreader
-
- - prevent dropping objects accidentally in many set functions
-
- - Reversed change in vector3d::normalize.
-   Works now again as documented and a corresponding test has been added.
-   Does fix bug 2770709 (https://sourceforge.net/tracker/?func=detail&aid=2770709&group_id=74339&atid=540676)
-
- - Animations can now be paused by setting the fps to 0.
-
- - Avoid fp-precision problem in getPickedNodeBB (see also http://irrlicht.sourceforge.net/phpBB2/viewtopic.php?t=33838&highlight=).
-   This change might also fix the problem with picking nodes found by aanderse (http://irrlicht.sourceforge.net/phpBB2/viewtopic.php?t=32890&highlight=)
-
- - implemented isALoadableFileFormat ( File *file ) for the Archive Loader
-
- - PixelBlend16 and PixelBlend16_simd are working for the new rules.
-
- - bugfix. CLightSceneNode didn't correctly update it's attributes
-
- - vector template and equals tests
-    also set the equal test for s32 to behave like the f32 routine.
-    The function equals always implements a weak test.
-    that means a tolerance MUST always be used if you use the equal function. default is 1.
-
-  - VideoDriver drawPixel
-    The HW renderes are using the alpha components for blending.
-    The Software Renderes and image loaders are using CImage::setPixel copy.
-    so setPixel is engaged to either blends or copy the pixel
-    default: false
-  - Burningvideo
-    added RenderMaterial EMT_SPHERE_MAP
-      pushed burningsvideo to 0.43
-    added RenderMaterial EMT_REFLECTION_2_LAYER
-      pushed burningsvideo to 0.44
-    set  EMT_TRANSPARENT_ALPHA_CHANNEL_REF
-      to use AlphaRef 0.5 like Direct3D
-
-    One Note: in OpenGL there is know difference between sphere_map and reflection layer
-    both using GL_TEXTURE_GEN_MODE GL_SPHERE_MAP, whereas in d3d one time using camera_normal
-    on sphere and reflection on refletcion_layer.
-
-    The visual difference is that on sphere map the "image is not moving" when you rotate the
-    viewer. For Burning i took the opengl visual. always moving
-
-  - rename quake3 SEntity to IEntity to be confom with IShader
-
-  - fixed createMeshWith2TCoords, normals were missing during copy.
-
-  - added
-    //! Creates a copy of the mesh, which will only consist of S3DVertex vertices.
-    IMesh* CMeshManipulator::createMeshWith1TCoords(IMesh* mesh) const
-
-  - added io::IFileSystem* CSceneManager::getFileSystem()
-
-  - added virtual const c8* ISceneManager::getAnimatorTypeName(ESCENE_NODE_ANIMATOR_TYPE type);
-
-  - added CSceneNodeAnimatorFlyCircle::radiusEllipsoid.
-    if radiusEllipsoid == 0 the default circle animation is done
-    else radiusEllipsoid forms the b-axe of the ellipsoid.
-    -> gummiball bouncing
-
-  - added ISceneManager::createFlyStraightAnimator variable bool ping-pong
-    used in loop mode to device if start from beginning ( default ) or make ping-pong
-    -> straight bouncing
-
-  - changed IFileSystem::registerFileArchive
-    remove the index of the hierarchy and added a new interface method
-    //! move the hirarchy of the filesystem. moves sourceIndex relative up or down
-    virtual bool moveFileArchive( u32 sourceIndex, s32 relative ) = 0;
-
-  - bugfix and changes in SViewFrustum::SViewFrustum
-    wrong size of Matrices copy.
-    renamed E_TRANSFORMATION_STATE_2 to E_TRANSFORMATION_STATE_FRUSTUM
-    therefore also changed SViewFrustum::setTransformState to not tap
-    in the pitfall again of wrong memory...
-
-  - moved
-    //! EMT_ONETEXTURE_BLEND: has BlendFactor Alphablending
-    inline bool textureBlendFunc_hasAlpha ( E_BLEND_FACTOR factor ) const
-    from the material renderes ( 3x declared ) to SMaterial.h
-
-  - updated managed light example to use standard driver selection
-
-  - BurningsVideo
-    - LightModel reworked.
-      Point Light & Direction Light works for Diffuse Color as expected
-      Specular and Fog still have problems ( needs new pixel shader )
-      pushed burningsvideo to 0.42 for this major step
-
-    -  removed obsolete matrix transformations
-      renamed E_TRANSFORMATION_STATE_2 to E_TRANSFORMATION_STATE_BURNING
-
-  - cleaned line3d.h vector3d.h template behavior.
-    many mixed f32/f64 implementations are here. i'm not sure if this should be
-    the default behavior to use f64 for example for 1.0/x value, because they
-    benefit from more precisions, but in my point of view the user is responsible
-    of choosing a vector3d<f32> or vector3d<f64>.
-
-  - added core::squareroot to irrmath.h
-    -> for having candidates for faster math in the same file
-
-  - added AllowZWriteOnTransparent from SceneManager to burningsvideo
-
-  -added hasAlpha() to ITexture
-    This info can be used for e.q to downgrade a transparent alpha channel blit
-    to add if the texture has no alpha channel.
-
-- FileSystem 2.0 SUPER MASTER MAJOR API CHANGE !!!
-
-  The FileSystem is now build internally like for e.g. the image- and meshloaders.
-  There exists a known list of ArchiveLoaders, which know how to produce a Archive.
-  The Loaders and the Archives can be attached/detached on runtime.
-
-  The FileNames are now stored as core::string<c16>. where c16 is toggled between char/wchar
-  with the #define flag _IRR_WCHAR_FILESYSTEM, to supported unicode backends (default:off)
-  Replaced most (const c8* filename) to string references.
-
-  Basically the FileSystem is divided into two regions. Native and Virtual.
-    Native means using the backend OS.
-    Virtual means only use currently attached IArchives.
-
-  Browsing
-    each FileSystem has it's own workdirectory and it's own methods to
-      - create a FileTree
-      - add/remove files & directory ( to be done )
-        Hint: store a savegame in a zip archive...
-
-     basic browsing for all archives is implemented.
-     Example 21. Quake3Explorer shows this
-
-   TODO:
-    - a file filter should be implemented.
-    - The IArchive should have a function to create a filetree
-      for now CFileList is used.
-
-  Class Hierarchy:
-
-  IArchiveLoader: is able to produce a IFileArchive
-    - ZipLoader
-    - PakLoader
-    - MountPointReader ( formaly known as CUnzipReader )
-
-  IFileArchive:
-    -ZipArchive
-    -PakArchive
-    -MountPoint (known as FolderFile)
-
-  IFileSystem
-    - addArchiveLoader
-
-  - changed implementation of isALoadableFileExtension in all loaders
-    to have consistent behavior
-  - added a parameter to IFileList * createFileList
-    setFileListSystem
-    allows to query files in any of the game archives
-    standard behavior listtype = SYSTEM ( default)
-
-  - CLimitReadFile
-    added multiple file random-access support.
-    solved problems with mixed compressed & uncompressed files in a zip
-
-- IrrlichtDevice
-  added:
-    virtual bool setGammaRamp( f32 red, f32 green, f32 blue, f32 brightness, f32 contrast ) = 0;
-    virtual bool getGammaRamp( f32 &red, f32 &green, f32 &blue ) = 0;
-  and calculating methods to DeviceStub.
-  implemented in Win32, SDL, Linux TODO: other Devices
-
-  -  irrlicht.h
-    changed exported irrlicht.dll routines createDevice, createDeviceEx, IdentityMatrix
-    to extern "C" name mangling.
-
- - ParticleSystem
-    removed the private (old?,wrong?) interface from the ParticleEffectors
-    to match the parent class irr::io::IAttributeExchangingObject::deserializeAttributes
-
-- Generic
-  - vector3d<T>& normalize() optimized
-    added reciprocal_squareroot for f64
-
-  - dimension2d
-    added operator dimension2d<T>& operator=(const dimension2d<U>& other)
-    to cast between different types
-
-  - vector2d bugfix operator+=
-
-  - C3DSMeshLoader renamed chunks const u16 to a enum
-    removing "variable declared but never used warning"
-
-  - added a global const identity Material
-    changed all references *((video::SMaterial*)0) to point to IdentityMaterial
-    removed warning: "a NULL reference is not allowed"
-
-  - modified IRRLICHT_MATH to not support reciprocal stuff
-    but to use faster float-to-int conversion.
-
-  - core::matrix4
-      USE_MATRIX_TEST
-
-      i tried to optimize the identity-check ( w.r.t. performance)
-      i didn't succeed so well, so i made a define for the matrix isIdentity -check
-      for now it's sometimes faster to always calculate versus identity-check
-      but if there are a lot of scenenodes/ particles one can profit from the
-      fast_inverse matrix, when no scaling is used. further approvement could
-      be done on inverse for just translation! ( many static scenenodes are not rotated,
-      they are just placed somewhere in the world)
-      one thing to take in account is that sizeof(matrix) is 64 byte and
-      with the additional bool/u32 makes it 66 byte which is not really cache-friendly..
-
-    - added  buildRotateFromTo
-        Builds a matrix that rotates from one vector to another
-
-  - irr::array. changed allocating routine in push_back
-
-    added a new method setAllocStrategy,
-    safe ( used + 1 ), double ( used * 2 + 1)
-    better default strategies will be implemented
-
-    - removed binary_search_const
-      i added it quite a long time ago, but it doesnt make real sense
-      a call to a sort method should happen always. i just wanted to safe
-      a few cycles..
-    - added binary_search_multi
-      searches for a multi-set ( more than 1 entry in the sorted array)
-      returns start and end-index
-
-  - changed some identity matrix settings to use core::IdentityMatrix
-
-  -  added deletePathFromFilename to generic string functions in coreutil.h and
-    removed from CZipReader and CPakReader
-
-  - s32 deserializeAttributes used instead of virtual void deserializeAttributes in
-    ParticleSystem ( wrong virtual was used)
-
-- strings & Locale
-  - started to add locale support
-  - added verify to string
-  - added some helper functions
-
-- XBOX
-  i have access to a XBOX development machine now. I started to compile
-  for the XBOX. Question: Who did the previous implementation?. There
-  is no XBOX-Device inhere. maybe it's forbidden because of using the offical
-  Microsoft XDK. I will implement a native or sdl device based on opendk.
-  irrlicht compiles without errors on the xbox but can't be used.
-
-- Windows Mobile
-    reworked a little. added the mobile example to the windows solution for
-    cross development.
-    added maximal 128x128 texture size for windows mobile ( memory issues )
-
-- Collision  Speed Up
-
-  The Collision Speed Up greatly improves with many small static child-nodes
-
-  - added COctTreeTriangleSelector::getTriangles for 3dline from user Piraaate
-
-  - modified createOctTreeTriangleSelector and createTriangleSelector
-    to allow node == 0, to be added to a meta selector
-
-  - CSceneNodeAnimatorCollisionResponse has the same problem as CSceneNodeAnimatorFPS
-    on first update:
-    Problem. you start setting the map. (setWorld). First update cames 4000 ms later.
-    The Animator applies the missing force... big problem...
-    changed to react on first update like camera.
-
-    -  add Variable FirstUpdate. if set to true ( on all changes )
-      then position, lasttime, and falling are initialized
-
-  -added #define OCTTREE_USE_HARDWARE in Octree.h
-
-    if defined octtree uses internally a derived scene::MeshBuffer which has
-    the possibility to use the Hardware Vertex Buffer for static vertices and
-    dirty indices;-)
-
-    if defined OCTTREE_USE_HARDWARE octree uses internally a derived scene::CMeshBuffer
-    so it's not just a replacement inside the octree. It also in the OctTreeSceneNode.
-    #define OCTTREE_PARENTTEST is also used. It's skip testing on fully outside and takes everything on fully inside
-
-  - virtual void ISceneNode::updateAbsolutePosition()
-    -  changed inline CMatrix4<T> CMatrix4<T>::operator*(const CMatrix4<T>& m2) const
-
-  - changed inline bool CMatrix4<T>::isIdentity() const
-    to look first on Translation, because this is the most challenging element
-
-  - virtual core::matrix4 getRelativeTransformation() const
-    Hierarchy on Identity-Check
-      1) ->getRelativeTransform -> 9 floating point checks to be passed as Identity
-      2) ->isIdentity () -> 16 floating point checks to be passed as Identity
-
-  - inline void CMatrix4<T>::transformBoxEx(core::aabbox3d<f32>& box) const
-    added isIdentity() check
-
-- changed CSceneNodeAnimatorCollisionResponse
-  - added CSceneNodeAnimatorCollisionResponse::setGravity
-    needed to set the differents Forces for the Animator. for eq. water..
-  - added CSceneNodeAnimatorCollisionResponse::setAnimateTarget
-  - added CSceneNodeAnimatorCollisionResponse::getAnimateTarget
-  - changed CSceneNodeAnimatorCollisionResponse::animateNode to react on FirstUpdate
-  - TODO: set Gravity to Physically frame independent values..
-    current response uses an frame depdended acceleration vector.
-    ~9.81 m/s^2 was achieved at around 50 fps with a setting of -0.03
-    may effect existing application..
-
-- SceneNodes
-  - CSkyDomeSceneNode
-    moved radius ( default 1000 ) to constructor
-    added Normals
-    added DebugInfo
-    added Material.ZBuffer, added SceneManager
-
-  - CVolumeLightSceneNode:
-    changed default blending OneTextureBlendgl_src_color gl_src_alpha to
-      EMT_TRANSPARENT_ADD_COLOR ( gl_src_color gl_one )
-    which gives the same effect on non-transparent-materials.
-    Following the unspoken guide-line, lowest effect as default
-
-  - changed SceneNode Skydome from f64 to f32
-
-  - AnimatedMesh Debug Data:
-      mesh normals didn't rotate with the scenenode fixed ( matrix-multiplication order)
-
-  - Camera SceneNode setPosition
-    Camera now finally allow to change position and target and updates all
-    effected animators..
-
-- Device:
-    added the current mousebutton state to the Mouse Event
-    so i need to get the current mouse state from the OS
-
-- GUI
-
-  - CGUIFont:
-    - added virtual void setInvisibleCharacters( const wchar_t *s ) = 0;
-    define which characters should not be drawn ( send to driver) by the font.
-    default: setInvisibleCharacters ( L" " );
-
-    - added MultiLine rendering
-      should avoid to us CStaticText breaking text in future
-
-  - CGUIListBox
-    - changed Scrollbar LargeStepSize to ItemHeight
-      which easy enables to scroll line by line
-
-  - CGUIScrollBar
-      - bug: event lost when moving outside the window
-      - bug: Scrollbar notifyListBox notify when the scrollbar is clicked.
-      - changed timed event in draw to OnPostRender
-
-  -  added GUI Image List from Reinhard Ostermeier, modified to work
-
-  - FileOpenDialog
-    changed the static text for the filename to an edit box.
-
-  - changed the interface for addEditBox to match with addStaticText
-
-  - changed the interface for addSpinBox to match with addEditBox
-
-  - added MouseWheel to Spinbox
-
-  - changed CGUITable CLICK_AREA from 3 to 12 to enable clicking on the visible marker
-
-  - CGUISpritebank
-    removed some crashes with empty Sprite banks
-
-  - IGUIScrollBar
-    added SetMin before min was always 0
-    changed ScrollWheel Direction on horizontal to move right on wheel up, left on wheel down
-
-  - IComboBox: added ItemData
-
-  - optimized IsVisible check in IGUIElement::draw
-
-- Image Loaders
-  - added TGA file type 2 ( grayscale uncompressed )
-  - added TGA file type (1) 8 Bit indexed color uncompressed
-
-  ColorConverter:
-    - added convert_B8G8R8toA8R8G8B8
-    - added convert_B8G8R8A8toA8R8G8B8
-
-- Media Files
-  - added missing shaders and textures to map-20kdm2.
-    Taken from free implementation
-  - ball.wav. adjusted DC-Offset, amplified to -4dB, trim cross-zero
-  - impact.wav clip-restoration, trim cross-zero
-  - added gun.md2, gun.pcx to media-files
-  - added new irrlicht logo irrlicht3.png
-
-- OctTree
-  -added
-    #define OCTTREE_PARENTTEST ( default: disabled )
-    used to leave-out children test if the parent passed a complete frustum.
-    plus: leaves out children test
-    minus: all edges have to be checked
-  - added MeshBuffer Hardware Hint Vertex to octtree
-
-- CQuake3ShaderSceneNode:
-  - removed function releaseMesh
-    Shader doesn't copy the original mesh anymore ( saving memory )
-    so therefore this (for others often misleading ) function was removed
-  - changed constructor to take a (shared) destination meshbuffer for rendering
-    reducing vertex-memory to a half
-  - don't copy the original vertices anymore
-  - added deformvertexes autosprite
-  - added deformvertexes move
-  - added support for RTCW and Raven BSPs ( qmap2 )
-  - added polygonoffset (TODO: not perfect)
-  - added added nomipmaps
-  - added rgbgen const
-  - added alphagen
-  - added MesBuffer Hardware Hint Vertex/Index to Quake3: static geometry, dynamic indices
-  - added Quake3Explorer examples
-  - added wave noise
-  - added tcmod transform
-  - added whiteimage
-  - added collision to Quake3Explorer
-  - renamed SMD3QuaterionTag* to SMD3QuaternionTag* ( typo )
-  - updated quake3:blendfunc
-  - added crouch to Quake3Explorer
-    (modifying the ellipsiodRadius of the camera animator )
-    added crouch to CSceneNodeAnimatorCameraFPS
-    still problems with stand up and collision
-  - Quake3MapLoader
-    modified memory allocation for faster loading
-  - Quake3LoadParam
-    added Parameter to the Mesh-Loader
-  - added
-    The still existing missing caulking of curved surfaces.
-    using round in the coordinates doesn't solve the problem.
-    but for the demo bsp mesh it solves the problem... (luck)
-    so for now it's switchable.
-    TJUNCTION_SOLVER_ROUND
-    default:off
-
-- BurningVideo
-  - pushed BurningsVideo to 0.40
-  - added blendfunc gl_one_minus_dst_alpha gl_one
-  - added blendfunc gl_dst_color gl_zero
-  - added blendfunc gl_dst_color src_alpha
-  - modified AlphaChannel_Ref renderer to support alpha test lessequal
-  - addded 32 Bit Index Buffer
-  - added sourceRect/destRect check to 2D-Blitter ( slower, but resolves crash )
-  - added setTextureCreationFlag video::ETCF_ALLOW_NON_POWER_2
-    Burning checks this flag and when set, it bypasses the power2 size check,
-    which is necessary on 3D but can be avoided on 2D.
-    used on fonts automatically.
-  - added Support for Destination Alpha
-
-- Direct3D8
-  - added 32 Bit Index Buffer
-  - compile for XBOX
-
-- Direct3D9
-  - fixed crash on RTT Textures DepthBuffer freed twice.
-    added deleteAllTextures to destructor
-
-- NullDriver
-  - removeallTextures. added setMaterial ( SMaterial() ) to clean pointers for freed textures
-
- - ISceneCollisionManager::getSceneNodeAndCollisionPointFromRay() allows selection by BB and triangle on a heirarchy of scene nodes.
-
- - Triangle selectors created from animated mesh scene nodes will update themselves as required to stay in sync with the node.
-
- - IVideoDriver has methods to enumerate the available image loaders and writers.
-
- - Octtree scene nodes are now IMeshSceneNodes rather than ISceneNodes, and so you can call getMesh() on them.
-
- - New scene parameter B3D_LOADER_IGNORE_MIPMAP_FLAG to ignore the often missing mipmap flag in b3d files. If this parameter is true, the old pre Irrlicht-1.5 behavior is restored.
-
- - Added Mipmap LOD Bias attribute to MaterialLayer.
-
- - Added ColorMask support to selectively disable color planes on rendering.
-
- - Added support for all available depth test functions.
-
- - Add an outNode to getCollisionPoint() that returns the scene node that was hit, as well as the triangle.
-
- - Initial support for Alpha To Coverage, needs some more fixing until it works on all supported platforms.
-
- - Added support for Anti-Aliasing modes per material
-
- - Added an ICollisionCallback to ISceneNodeAnimatorCollisionResponse, to inform the application that a collision has occured.  Thanks to garrittg for this.
-
- - Added an startPosition parameter to createFlyCircleAnimator() to allow starting the animator at any position on the circle.
-
- - Many uses of dimension2d<s32> changed to dimension2d<u32>, including IImage, ITexture and screen dimensions.  You will have to change (at least) createDevice() calls to use dimension2d<u32>
-
- - Added Doublebuffer flag to SIrrCreationParameters, for better finetuning
-
- - Added Stereo-Framebuffer support for professional OpenGL cards
-
- - Added IFileSystem::createMemoryWriteFile() to allow creation of an IWriteFile interface that uses an application supplied memory buffer.
-
- - Added an IVideoDriver::writeImageToFile() overload that can take an IWriteFile interface.
-
- - (Internal) Replaced CMemoryReadFile with CMemoryFile, that also implements an IWriteFile interface.
-
- - Added an optional light manager to the scene manager to allow the user application to turn lights on and off during scene rendering.  This can be used to produce "zoned" lighting. See example 20.ManagedLights.
-
- - Added a method to flip the Y movement of the FPS camera.
-
- - The Anisotropy filter can now be set to the AF value per texture layer. So no forced MAX_ANISOTROPY anymore. .irr files will probably fail, though.
-
- - AntiAlias parameter in SIrrCreationParameters is now an u8 value specifying the multisampling level (0 for disabled, 4,6,8, and others for anti-aliasing)
-
- - D3D devices use DISCARD for windowed renderbuffers now, can be faster.
-
- - Changed behaviour of PixelBlend16() / PixelBlend16_simd() so that they treat the 1 bit alpha of the source pixel as boolean, i.e. they draw either the source pixel, or the destination pixel, rather than "blending". (Issue revealed by the fix to IVideoDriver::makeColorKeyTexture()).
-
- - IVideoDriver::makeColorKeyTexture() bug fixed so that only alphas, not whole texel colors, are zeroed. An optional parameter allows using the old (buggy) behaviour for backwards compatibility.
-
- - position2d is now a synonym for vector2d. position2d is therefore marked as deprecated, although it's unlikely to be removed.
-
- - ISceneNodeAnimator now has a hasFinished() method.
-
- - ISceneNodeAnimatorCollisionResponse exposes the target node. Setting the node again resets the last position, allowing the node to be teleported.
-
- - Add a hitPosition out parameter to ISceneCollisionManager::getCollisionResultPosition() - this is a (small) API breaking change.
-
--------------------------------------
 Changes in version 1.5.2 (16.12.2009)
 
  - Properly check boundaries in getFont and setFont.
@@ -895,7 +53,7 @@ Changes in version 1.5.1 (05.08.2009)
 
  - copyToScaling fixed.
 
- - Fixed problem with highlighting menus when mouse was outside sub-menu area.
+ - Fixed problem with highlighting menus when mouse was outside sub-menu area. 
 
  - bugfix (2796207): menu acted (wrongly) on left-click down instead of left-click up.
 
@@ -966,9 +124,9 @@ Changes in version 1.5 (15.12.2008)
 
  - Construction calls for FPS camera changed to take speed in units/milliseconds, just as the setSpeed method does.
 
- - Code::Blocks workspaces added. C::B projects (using gcc) now output to /lib/gcc and /bin/gcc, when built on either Windows or Linux.
+ - Code::Blocks workspaces added.  C::B projects (using gcc) now output to /lib/gcc and /bin/gcc, when built on either Windows or Linux.
 
- - Added a test suite in the /tests directory. This can be used to perform regression tests, and should be updated with new tests to verify fixes or validate new features.
+ - Added a test suite in the /tests directory.  This can be used to perform regression tests, and should be updated with new tests to verify fixes or validate new features.
 
  - Changed the preferred way of altering light node's radius: Use the new member methods of ILightSceneNode instead of directly modifying the SLight structure.
 
@@ -978,7 +136,7 @@ Changes in version 1.5 (15.12.2008)
 
  - Terrain heightmap and texture were flipped in order to draw them as expected (looking onto the terrain from high above will just look like the actual texture/heightmap).
 
- - Significant internal change to the way that FPS camera jump speed and collision response animator gravity interact. The behaviour is now much more realistic, but it will require you to adjust your jump speed and gravity.
+ - Significant internal change to the way that FPS camera jump speed and collision response animator gravity interact.  The behaviour is now much more realistic, but it will require you to adjust your jump speed and gravity.
 
  - Skybox won't be culled anymore by nearplane or farplane.
 
@@ -1006,7 +164,7 @@ Changes in version 1.5 (15.12.2008)
 
  - ISceneNode::setParent and addChild now updates node SceneManager pointers if the node was from another SceneManager.
 
- - Basic support for joystick input events on Windows, Linux, SDL and OSX. Tested with wired Logitech and Thrustmaster wired controllers and XBox 360 wireless controller ( http://tattiebogle.net/index.php/ProjectRoot/Xbox360Controller/OsxDriver )
+ - Basic support for joystick input events on Windows, Linux, SDL and OSX.  Tested with wired Logitech and Thrustmaster wired controllers and XBox 360 wireless controller ( http://tattiebogle.net/index.php/ProjectRoot/Xbox360Controller/OsxDriver )
 
  - Fixed scaled octree nodes being incorrectly frustum culled.
 
@@ -1785,8 +943,8 @@ Changes in version 1.3 (15 Mar 2007)
    - Enable Irrlicht to change TextureAddress Mode (Clamping), for each layer separately
    - Added Texture matrices to SMaterial for all texture layers
    - Removed the anonymous union/struct access to textures and material flags.
-    Now, Texture1..4 is removed - use Textures[i] instead
-    The Flags[x] is replaced by setFlags(x, bool) resp. getFlags(x)
+	  Now, Texture1..4 is removed - use Textures[i] instead
+	  The Flags[x] is replaced by setFlags(x, bool) resp. getFlags(x)
 
 - The methods OnPreRender and OnPostRender of ISceneNode have been changed to
   OnRegisterSceneNode() and OnAnimate(). Also, they are now called at different
@@ -1871,8 +1029,8 @@ Font improvements:
 - Burning Video (the second but only complete software renderer)
   - New Compile Config BURNINGVIDEO_RENDERER_ULTRA_FAST
   - New Compile Config BURNINGVIDEO_RENDERER_FAST
-  touching the 20fps border in the demo ( P4 mobile 2Ghz ). 15fps average.
-  ( Compile config Release Fast-FPU )
+	touching the 20fps border in the demo ( P4 mobile 2Ghz ). 15fps average.
+	( Compile config Release Fast-FPU )
 
   - VertexCache for Tansformed & Light Vertices
     boost small drawPrimitive Calls ( 2DRectangle, Billboard ) and Real Index Triangles
@@ -1880,11 +1038,11 @@ Font improvements:
   - Bilinear Dither
   - clipping test ( compare instead of generic plane normal )
   - support for NOT using vertexcolor
-  #define SOFTWARE_DRIVER_2_USE_VERTEX_COLOR
+	#define SOFTWARE_DRIVER_2_USE_VERTEX_COLOR
 
 - added vertex to color to billboard.
-  shade top & shade down.
-  to support some static lighting effect on billboards
+	shade top & shade down.
+	to support some static lighting effect on billboards
 
 - Implemented line rendering for SoftwareDriver
 
@@ -1898,7 +1056,7 @@ Font improvements:
   and a Key Map Entry.
 
 - added param to IIImageWriteFile::writeImage
-  control Parameter for the backend ( e.g. jpeg compression level )
+	control Parameter for the backend ( e.g. jpeg compression level )
 
 - addContextMenu: CGUIEnvironment::addContextMenu set the focus on the submenu.
 
@@ -1933,7 +1091,7 @@ Font improvements:
   Texture scaling bugfix, support for alpha blending, new option to normalise weights,
   animation code optimization, fixed memory leak
 
-- ROUNDING_ERROR is now ROUNDING_ERROR_f32 or ROUNDING_ERROR_f64
+- ROUNDING_ERROR is now ROUNDING_ERROR_32 or ROUNDING_ERROR_64
 
 - Material ZBuffer flag changed to a u32 value
   Reason: change ( off or on ) to , off, lequal, equal
@@ -1975,7 +1133,7 @@ Font improvements:
   - Indexed Triangle List
   - initial support for quake3 Shaders and Entities
   - Shaders are parsed. When it's possible to resolve a 2 Texture Scheme it's taken
-   Shaders exist in namespace scene::quake3
+ 	Shaders exist in namespace scene::quake3
   - The Example Quake3Map shows how to continue applying the Q3Shaders with SceneNodes
      ( for example animmap converts to TextureAnimator.)
      TODO: use the Irrlicht Variable Syntax to remove redundant code..
@@ -2023,19 +1181,19 @@ Font improvements:
    better kerning would need a seperate coordinate set for each symbol.
 
 - changed MD2_FRAME_SHIFT to lower framerate
-  -> lower IPol
-  problems can occur if somebody uses hardcoded frame-numbers instead
-  of Animation name...
+	-> lower IPol
+	problems can occur if somebody uses hardcoded frame-numbers instead
+	of Animation name...
 
 - changed spelling "frustrum" to "frustum"
-  -> changed also SViewFrustrum.h to SViewFrustum.h
+	-> changed also SViewFrustrum.h to SViewFrustum.h
 
 - changed Parameter AutomaticCulling from bool to enum E_CULLING_TYPE
-  to support more than two culling modes.
+	to support more than two culling modes.
 
-  added Frustum culling ( it's a copy & paste from the octree )
-  added initial bounding sphere
-    used for culling point lights..
+	added Frustum culling ( it's a copy & paste from the octree )
+	added initial bounding sphere
+		used for culling point lights..
 
 - Added getSystemMemory and getProcessorSpeedMHz for Windows and Linux to the OSOperator, submitted by Vitek.
 
@@ -2077,8 +1235,8 @@ Changes in version 1.2 (29 Nov 2006)
 - Color selection dialog added.
 
 - New GUI skin "Burning Skin".
-  it's a black & white skin. look elegant on true-color.
-  and looks ok on 1-Bit ( e.g. no vertex color in burnings video )
+	it's a black & white skin. look elegant on true-color.
+	and looks ok on 1-Bit ( e.g. no vertex color in burnings video )
 
 - GUIStatic text is correctly grayed out if disabled.
 
@@ -2117,7 +1275,7 @@ Changes in version 1.2 (29 Nov 2006)
 
 - Scolor: replaced s16 color with u16 color, replaced s32 color with u32 color to get rid of unnecessary arithmetic shift
 
-- Colorconverter: X8R8G8B8toA1R5G5B5, set Alpha High, minor: A1R5G5B5toA8R8G8B8   changed if (a) to conditional set
+- Colorconverter: X8R8G8B8toA1R5G5B5, set Alpha High, minor: A1R5G5B5toA8R8G8B8 	changed if (a) to conditional set
 
 - CImage: added boxfilter (weigthed average), (generic, slow)
 
@@ -2253,7 +1411,7 @@ Changes in version 1.0 (19 Apr 2006)
 
 - It is now possible to draw temporarily to foreign windows, by specifying a window handle when
   calling IVideoDriver::endScene(). Note: This does not work in fullscreen mode and is not
-  implemented for all devices (only for  D3D8, D3D9, Software1 and Software2, and only for Windows).
+  implemented for all devices (only for	D3D8, D3D9, Software1 and Software2, and only for Windows).
   In addition, you can also specify the source rectangle to present.
 
 - Picking is now more accurate and also works with view ports and better with orthogonal cameras.
@@ -2264,7 +1422,7 @@ Changes in version 1.0 (19 Apr 2006)
   from collision detection, picking or from serialization, etc.
 
 - Scene Nodes now have the possibility to return their type using
-  virtual ESCENE_NODE_TYPE getType().
+	virtual ESCENE_NODE_TYPE getType().
 
 - Improved support for orthogonal rendering: Skyboxes and billboards can be
   used with orthogonal cameras now, too.
@@ -3520,16 +2678,16 @@ Changes in version 0.5: (17 Feb 2004)
   I'll compile this version from now on always with optimization switched on.
 
 - Other, Minor New/Changed methods in public interfaces:
-  * buildShadowMatrix in matrix4
-  * getRotationDegrees in matrix4 (sent in by Chev)
-  * rotateVect in matrix4
-  * linear_search in array
-  * recalculateBoundingBox in MeshManipulator
-  * ISceneManager::addStaticText() now has a parameter for word wrapping
-  * getCharacterFromPos() in IGUIFont
-  * drawMeshBuffer() in IVideoDriver;
-  * interpolate() in matrix4
-  * getLast in array
+	* buildShadowMatrix in matrix4
+	* getRotationDegrees in matrix4 (sent in by Chev)
+	* rotateVect in matrix4
+	* linear_search in array
+	* recalculateBoundingBox in MeshManipulator
+	* ISceneManager::addStaticText() now has a parameter for word wrapping
+	* getCharacterFromPos() in IGUIFont
+	* drawMeshBuffer() in IVideoDriver;
+	* interpolate() in matrix4
+	* getLast in array
 
 -------------------------------------------------------------------------------------
 Changes in version 0.4.2: (13 Dec 2003)

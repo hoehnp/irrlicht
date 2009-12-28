@@ -28,9 +28,9 @@ CImageWriterPCX::CImageWriterPCX()
 #endif
 }
 
-bool CImageWriterPCX::isAWriteableFileExtension(const io::path& filename) const
+bool CImageWriterPCX::isAWriteableFileExtension(const c8* fileName) const
 {
-	return core::hasFileExtension ( filename, "pcx" );
+	return strstr(fileName, ".pcx") != 0;
 }
 
 bool CImageWriterPCX::writeImage(io::IWriteFile *file, IImage *image,u32 param) const
@@ -40,7 +40,7 @@ bool CImageWriterPCX::writeImage(io::IWriteFile *file, IImage *image,u32 param) 
 
 	u8 d1;
 	u16 d2;
-	u32 i;
+	s32 i;
 
 	d1 = 10; // Manufacturer
 	file->write(&d1, 1);
@@ -113,7 +113,7 @@ bool CImageWriterPCX::writeImage(io::IWriteFile *file, IImage *image,u32 param) 
 		value = 0;
 		for (u32 j=0; j<3; ++j) // color planes
 		{
-			for (u32 k=0; k<image->getDimension().Width; ++k)
+			for (s32 k=0; k<image->getDimension().Width; ++k)
 			{
 				const SColor pix = image->getPixel(k,i);
 				if ((cnt!=0) && (cnt<63) &&

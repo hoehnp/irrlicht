@@ -38,7 +38,7 @@ namespace gui
 		\param color: New color of the text. */
 		virtual void setOverrideColor(video::SColor color) = 0;
 
-		//! Sets if the text should use the override color or the color in the gui skin.
+		//! Sets if the text should use the overide color or the color in the gui skin.
 		/** \param enable: If set to true, the override color, which can be set
 		with IGUIEditBox::setOverrideColor is used, otherwise the
 		EGDC_BUTTON_TEXT color of the skin. */
@@ -70,7 +70,7 @@ namespace gui
 		virtual void setMultiLine(bool enable) = 0;
 
 		//! Checks if multi line editing is enabled
-		/** \return true if multi-line is enabled, false otherwise */
+		/** \return true if mult-line is enabled, false otherwise */
 		virtual bool isMultiLineEnabled() const = 0;
 
 		//! Enables or disables automatic scrolling with cursor position
@@ -92,7 +92,7 @@ namespace gui
 
 		//! Gets the size area of the text in the edit box
 		/** \return The size in pixels of the text */
-		virtual core::dimension2du getTextDimension() = 0;
+		virtual core::dimension2di getTextDimension() = 0;
 
 		//! Sets the maximum amount of characters which may be entered in the box.
 		/** \param max: Maximum amount of characters. If 0, the character amount is

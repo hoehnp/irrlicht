@@ -17,7 +17,7 @@ namespace gui
 
 //! constructor
 CGUIModalScreen::CGUIModalScreen(IGUIEnvironment* environment, IGUIElement* parent, s32 id)
-: IGUIElement(EGUIET_MODAL_SCREEN, environment, parent, id, core::recti(0, 0, parent->getAbsolutePosition().getWidth(), parent->getAbsolutePosition().getHeight()) ),
+: IGUIElement(EGUIET_MODAL_SCREEN, environment, parent, id, parent->getAbsolutePosition()),
 	MouseDownTime(0)
 {
 	#ifdef _DEBUG
@@ -29,72 +29,24 @@ CGUIModalScreen::CGUIModalScreen(IGUIEnvironment* environment, IGUIElement* pare
 	setTabGroup(true);
 }
 
-bool CGUIModalScreen::canTakeFocus(IGUIElement* target) const
-{
-    return (target && (target == this // this element can take it
-                        || isMyChild(target)    // own childs also
-                        || (target->getType() == EGUIET_MODAL_SCREEN )// other modals also fine
-                        || (target->getParent() && target->getParent()->getType() == EGUIET_MODAL_SCREEN )))   // childs of other modals will do
-            ;
-}
-
-bool CGUIModalScreen::isVisible() const
-{
-    // any parent invisible?
-    IGUIElement * parentElement = getParent();
-    while ( parentElement )
-    {
-        if ( !parentElement->isVisible() )
-            return false;
-        parentElement = parentElement->getParent();
-    }
-
-    // if we have no children then the modal is probably abused as a way to block input
-    if ( Children.empty() )
-    {
-        return IGUIElement::isVisible();
-    }
-
-    // any child visible?
-    bool visible = false;
-    core::list<IGUIElement*>::ConstIterator it = Children.begin();
-    for (; it != Children.end(); ++it)
-    {
-        if ( (*it)->isVisible() )
-        {
-            visible = true;
-            break;
-        }
-    }
-    return visible;
-}
-
-bool CGUIModalScreen::isPointInside(const core::position2d<s32>& point) const
-{
-    return true;
-}
 
 //! called if an event happened.
 bool CGUIModalScreen::OnEvent(const SEvent& event)
 {
-    if (!IsEnabled || !isVisible() )
-        return IGUIElement::OnEvent(event);
-
     switch(event.EventType)
 	{
 	case EET_GUI_EVENT:
 		switch(event.GUIEvent.EventType)
 		{
 		case EGET_ELEMENT_FOCUSED:
-			if ( !canTakeFocus(event.GUIEvent.Caller))
-			{
+			// only children are allowed the focus
+			if (event.GUIEvent.Caller != this && !isMyChild(event.GUIEvent.Caller))
 				Environment->setFocus(this);
-			}
-			IGUIElement::OnEvent(event);
 			return false;
 		case EGET_ELEMENT_FOCUS_LOST:
-			if ( !canTakeFocus(event.GUIEvent.Element))
-            {
+			// only children are allowed the focus
+			if (!(isMyChild(event.GUIEvent.Element) || event.GUIEvent.Element == this))
+			{
 				MouseDownTime = os::Timer::getTime();
 				return true;
 			}
@@ -164,9 +116,7 @@ void CGUIModalScreen::removeChild(IGUIElement* child)
 	IGUIElement::removeChild(child);
 
 	if (Children.empty())
-	{
 		remove();
-	}
 }
 
 
@@ -198,13 +148,13 @@ void CGUIModalScreen::updateAbsolutePosition()
 //! Writes attributes of the element.
 void CGUIModalScreen::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options=0) const
 {
-	IGUIElement::serializeAttributes(out,options);
+	// these don't get serialized, their status is added to their children.
 }
 
 //! Reads attributes of the element
 void CGUIModalScreen::deserializeAttributes(io::IAttributes* in, io::SAttributeReadWriteOptions* options=0)
 {
-	IGUIElement::deserializeAttributes(in, options);
+	// these don't get deserialized. children create them if required
 }
 
 

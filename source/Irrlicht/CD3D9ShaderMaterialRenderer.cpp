@@ -29,6 +29,7 @@ CD3D9ShaderMaterialRenderer::CD3D9ShaderMaterialRenderer(IDirect3DDevice9* d3dde
 : pID3DDevice(d3ddev), Driver(driver), CallBack(callback), BaseMaterial(baseMaterial),
 	VertexShader(0), OldVertexShader(0), PixelShader(0), UserData(userData)
 {
+
 	#ifdef _DEBUG
 	setDebugName("CD3D9ShaderMaterialRenderer");
 	#endif
@@ -43,15 +44,18 @@ CD3D9ShaderMaterialRenderer::CD3D9ShaderMaterialRenderer(IDirect3DDevice9* d3dde
 }
 
 
+
 //! constructor only for use by derived classes who want to
 //! create a fall back material for example.
 CD3D9ShaderMaterialRenderer::CD3D9ShaderMaterialRenderer(IDirect3DDevice9* d3ddev,
-			video::IVideoDriver* driver,
-			IShaderConstantSetCallBack* callback,
-			IMaterialRenderer* baseMaterial, s32 userData)
+						video::IVideoDriver* driver,
+						IShaderConstantSetCallBack* callback,
+						IMaterialRenderer* baseMaterial,
+						s32 userData)
 : pID3DDevice(d3ddev), Driver(driver), CallBack(callback), BaseMaterial(baseMaterial),
 	VertexShader(0), OldVertexShader(0), PixelShader(0), UserData(userData)
 {
+
 	#ifdef _DEBUG
 	setDebugName("CD3D9ShaderMaterialRenderer");
 	#endif
@@ -64,8 +68,8 @@ CD3D9ShaderMaterialRenderer::CD3D9ShaderMaterialRenderer(IDirect3DDevice9* d3dde
 }
 
 
-void CD3D9ShaderMaterialRenderer::init(s32& outMaterialTypeNr,
-		const c8* vertexShaderProgram, const c8* pixelShaderProgram)
+void CD3D9ShaderMaterialRenderer::init(s32& outMaterialTypeNr, const c8* vertexShaderProgram,
+					const c8* pixelShaderProgram)
 {
 	outMaterialTypeNr = -1;
 
@@ -82,6 +86,7 @@ void CD3D9ShaderMaterialRenderer::init(s32& outMaterialTypeNr,
 }
 
 
+
 //! Destructor
 CD3D9ShaderMaterialRenderer::~CD3D9ShaderMaterialRenderer()
 {
@@ -95,9 +100,8 @@ CD3D9ShaderMaterialRenderer::~CD3D9ShaderMaterialRenderer()
 		PixelShader->Release();
 
 	if (BaseMaterial)
-		BaseMaterial->drop();
+		BaseMaterial->drop ();
 }
-
 
 bool CD3D9ShaderMaterialRenderer::OnRender(IMaterialRendererServices* service, E_VERTEX_TYPE vtxtype)
 {
@@ -107,7 +111,6 @@ bool CD3D9ShaderMaterialRenderer::OnRender(IMaterialRendererServices* service, E
 
 	return true;
 }
-
 
 void CD3D9ShaderMaterialRenderer::OnSetMaterial(const video::SMaterial& material, const video::SMaterial& lastMaterial,
 	bool resetAllRenderstates, video::IMaterialRendererServices* services)
@@ -121,14 +124,14 @@ void CD3D9ShaderMaterialRenderer::OnSetMaterial(const video::SMaterial& material
 
 			// set new vertex shader
 			if (FAILED(pID3DDevice->SetVertexShader(VertexShader)))
-				os::Printer::log("Could not set vertex shader.", ELL_WARNING);
+				os::Printer::log("Could not set vertex shader.");
 		}
 
 		// set new pixel shader
 		if (PixelShader)
 		{
 			if (FAILED(pID3DDevice->SetPixelShader(PixelShader)))
-				os::Printer::log("Could not set pixel shader.", ELL_WARNING);
+				os::Printer::log("Could not set pixel shader.");
 		}
 
 		if (BaseMaterial)
@@ -141,7 +144,6 @@ void CD3D9ShaderMaterialRenderer::OnSetMaterial(const video::SMaterial& material
 
 	services->setBasicRenderStates(material, lastMaterial, resetAllRenderstates);
 }
-
 
 void CD3D9ShaderMaterialRenderer::OnUnsetMaterial()
 {
@@ -163,7 +165,6 @@ bool CD3D9ShaderMaterialRenderer::isTransparent() const
 	return BaseMaterial ? BaseMaterial->isTransparent() : false;
 }
 
-
 bool CD3D9ShaderMaterialRenderer::createPixelShader(const c8* pxsh)
 {
 	if (!pxsh)
@@ -177,7 +178,7 @@ bool CD3D9ShaderMaterialRenderer::createPixelShader(const c8* pxsh)
 	#ifdef _IRR_D3D_NO_SHADER_DEBUGGING
 
 		// compile shader without debug info
-		stubD3DXAssembleShader(pxsh, (UINT)strlen(pxsh), 0, 0, 0, &code, &errors);
+		stubD3DXAssembleShader(pxsh, strlen(pxsh), 0, 0, 0, &code, &errors);
 	#else
 
 		// compile shader and emitt some debug informations to
@@ -201,8 +202,8 @@ bool CD3D9ShaderMaterialRenderer::createPixelShader(const c8* pxsh)
 	if (errors)
 	{
 		// print out compilation errors.
-		os::Printer::log("Pixel shader compilation failed:", ELL_ERROR);
-		os::Printer::log((c8*)errors->GetBufferPointer(), ELL_ERROR);
+		os::Printer::log("Pixel shader compilation failed:");
+		os::Printer::log((c8*)errors->GetBufferPointer());
 
 		if (code)
 			code->Release();
@@ -213,7 +214,7 @@ bool CD3D9ShaderMaterialRenderer::createPixelShader(const c8* pxsh)
 
 	if (FAILED(pID3DDevice->CreatePixelShader((DWORD*)code->GetBufferPointer(), &PixelShader)))
 	{
-		os::Printer::log("Could not create pixel shader.", ELL_ERROR);
+		os::Printer::log("Could not create pixel shader.");
 		code->Release();
 		return false;
 	}
@@ -221,6 +222,7 @@ bool CD3D9ShaderMaterialRenderer::createPixelShader(const c8* pxsh)
 	code->Release();
 	return true;
 }
+
 
 
 bool CD3D9ShaderMaterialRenderer::createVertexShader(const char* vtxsh)
@@ -236,7 +238,7 @@ bool CD3D9ShaderMaterialRenderer::createVertexShader(const char* vtxsh)
 	#ifdef _IRR_D3D_NO_SHADER_DEBUGGING
 
 		// compile shader without debug info
-		stubD3DXAssembleShader(vtxsh, (UINT)strlen(vtxsh), 0, 0, 0, &code, &errors);
+		stubD3DXAssembleShader(vtxsh, strlen(vtxsh), 0, 0, 0, &code, &errors);
 
 	#else
 
@@ -257,11 +259,12 @@ bool CD3D9ShaderMaterialRenderer::createVertexShader(const char* vtxsh)
 
 	#endif
 
+
 	if (errors)
 	{
 		// print out compilation errors.
-		os::Printer::log("Vertex shader compilation failed:", ELL_ERROR);
-		os::Printer::log((c8*)errors->GetBufferPointer(), ELL_ERROR);
+		os::Printer::log("Vertex shader compilation failed:");
+		os::Printer::log((c8*)errors->GetBufferPointer());
 
 		if (code)
 			code->Release();
@@ -272,7 +275,7 @@ bool CD3D9ShaderMaterialRenderer::createVertexShader(const char* vtxsh)
 
 	if (!code || FAILED(pID3DDevice->CreateVertexShader((DWORD*)code->GetBufferPointer(), &VertexShader)))
 	{
-		os::Printer::log("Could not create vertex shader.", ELL_ERROR);
+		os::Printer::log("Could not create vertex shader.");
 		if (code)
 			code->Release();
 		return false;
@@ -282,11 +285,10 @@ bool CD3D9ShaderMaterialRenderer::createVertexShader(const char* vtxsh)
 	return true;
 }
 
-
-HRESULT CD3D9ShaderMaterialRenderer::stubD3DXAssembleShader(LPCSTR pSrcData,
-		UINT SrcDataLen, CONST D3DXMACRO* pDefines,
-		LPD3DXINCLUDE pInclude, DWORD Flags, LPD3DXBUFFER* ppShader,
-		LPD3DXBUFFER* ppErrorMsgs)
+HRESULT CD3D9ShaderMaterialRenderer::stubD3DXAssembleShader(LPCSTR pSrcData,  UINT SrcDataLen,
+								   CONST D3DXMACRO* pDefines, LPD3DXINCLUDE pInclude,
+								   DWORD Flags, LPD3DXBUFFER* ppShader,
+								   LPD3DXBUFFER* ppErrorMsgs)
 {
 	// Because Irrlicht needs to be able to start up even without installed d3d dlls, it
 	// needs to load external d3d dlls manually. examples for the dlls are:
@@ -308,16 +310,16 @@ HRESULT CD3D9ShaderMaterialRenderer::stubD3DXAssembleShader(LPCSTR pSrcData,
 
 		// invoke static linked function
 		return D3DXAssembleShader(pSrcData, SrcDataLen, pDefines, pInclude,
-						  Flags, ppShader, ppErrorMsgs);
+								  Flags, ppShader, ppErrorMsgs);
 	#else
 	{
 		// try to load shader functions from the dll and print error if failed.
 
 		// D3DXAssembleShader signature
 		typedef HRESULT (WINAPI *AssembleShaderFunction)(LPCSTR pSrcData,  UINT SrcDataLen,
-					CONST D3DXMACRO* pDefines, LPD3DXINCLUDE pInclude,
-					DWORD Flags, LPD3DXBUFFER* ppShader,
-					LPD3DXBUFFER* ppErrorMsgs);
+									CONST D3DXMACRO* pDefines, LPD3DXINCLUDE pInclude,
+									DWORD Flags, LPD3DXBUFFER* ppShader,
+									LPD3DXBUFFER* ppErrorMsgs);
 
 		static bool LoadFailed = false;
 		static AssembleShaderFunction pFn = 0;
@@ -325,7 +327,7 @@ HRESULT CD3D9ShaderMaterialRenderer::stubD3DXAssembleShader(LPCSTR pSrcData,
 		if (!pFn && !LoadFailed)
 		{
 			// try to load dll
-			io::path strDllName = "d3dx9_";
+			core::stringc strDllName = "d3dx9_";
 			strDllName += (int)D3DX_SDK_VERSION;
 			strDllName += ".dll";
 
@@ -352,10 +354,9 @@ HRESULT CD3D9ShaderMaterialRenderer::stubD3DXAssembleShader(LPCSTR pSrcData,
 	return 0;
 }
 
-
 HRESULT CD3D9ShaderMaterialRenderer::stubD3DXAssembleShaderFromFile(LPCSTR pSrcFile,
-		        CONST D3DXMACRO* pDefines, LPD3DXINCLUDE  pInclude, DWORD Flags,
-			LPD3DXBUFFER* ppShader, LPD3DXBUFFER* ppErrorMsgs)
+				        CONST D3DXMACRO* pDefines, LPD3DXINCLUDE  pInclude, DWORD Flags,
+						LPD3DXBUFFER* ppShader, LPD3DXBUFFER* ppErrorMsgs)
 {
 	// wondering what I'm doing here?
 	// see comment in CD3D9ShaderMaterialRenderer::stubD3DXAssembleShader()
@@ -368,7 +369,7 @@ HRESULT CD3D9ShaderMaterialRenderer::stubD3DXAssembleShaderFromFile(LPCSTR pSrcF
 		#endif
 
 		// invoke static linked function
-		return D3DXAssembleShaderFromFileA(pSrcFile, pDefines, pInclude, Flags,
+		return D3DXAssembleShaderFromFile(pSrcFile, pDefines, pInclude, Flags,
 										  ppShader, ppErrorMsgs);
 	#else
 	{
@@ -376,8 +377,8 @@ HRESULT CD3D9ShaderMaterialRenderer::stubD3DXAssembleShaderFromFile(LPCSTR pSrcF
 
 		// D3DXAssembleShaderFromFileA signature
 		typedef HRESULT (WINAPI *AssembleShaderFromFileFunction)(LPCSTR pSrcFile,
-				CONST D3DXMACRO* pDefines, LPD3DXINCLUDE pInclude, DWORD Flags,
-				LPD3DXBUFFER* ppShader, LPD3DXBUFFER* ppErrorMsgs);
+									CONST D3DXMACRO* pDefines, LPD3DXINCLUDE pInclude, DWORD Flags,
+									LPD3DXBUFFER* ppShader, LPD3DXBUFFER* ppErrorMsgs);
 
 		static bool LoadFailed = false;
 		static AssembleShaderFromFileFunction pFn = 0;
@@ -385,7 +386,7 @@ HRESULT CD3D9ShaderMaterialRenderer::stubD3DXAssembleShaderFromFile(LPCSTR pSrcF
 		if (!pFn && !LoadFailed)
 		{
 			// try to load dll
-			io::path strDllName = "d3dx9_";
+			core::stringc strDllName = "d3dx9_";
 			strDllName += (int)D3DX_SDK_VERSION;
 			strDllName += ".dll";
 
@@ -414,9 +415,9 @@ HRESULT CD3D9ShaderMaterialRenderer::stubD3DXAssembleShaderFromFile(LPCSTR pSrcF
 
 
 HRESULT CD3D9ShaderMaterialRenderer::stubD3DXCompileShader(LPCSTR pSrcData, UINT SrcDataLen, CONST D3DXMACRO* pDefines,
-				LPD3DXINCLUDE pInclude, LPCSTR pFunctionName,
-				LPCSTR pProfile, DWORD Flags, LPD3DXBUFFER* ppShader,
-				LPD3DXBUFFER* ppErrorMsgs, LPD3DXCONSTANTTABLE* ppConstantTable)
+								LPD3DXINCLUDE pInclude, LPCSTR pFunctionName,
+								LPCSTR pProfile, DWORD Flags, LPD3DXBUFFER* ppShader,
+								LPD3DXBUFFER* ppErrorMsgs, LPD3DXCONSTANTTABLE* ppConstantTable)
 {
 	// wondering what I'm doing here?
 	// see comment in CD3D9ShaderMaterialRenderer::stubD3DXAssembleShader()
@@ -436,9 +437,9 @@ HRESULT CD3D9ShaderMaterialRenderer::stubD3DXCompileShader(LPCSTR pSrcData, UINT
 
 		// D3DXCompileShader
 		typedef HRESULT (WINAPI *D3DXCompileShaderFunction)(LPCSTR pSrcData, UINT SrcDataLen, CONST D3DXMACRO* pDefines,
-				LPD3DXINCLUDE pInclude, LPCSTR pFunctionName,
-				LPCSTR pProfile, DWORD Flags, LPD3DXBUFFER* ppShader,
-				LPD3DXBUFFER* ppErrorMsgs, LPD3DXCONSTANTTABLE* ppConstantTable);
+								LPD3DXINCLUDE pInclude, LPCSTR pFunctionName,
+								LPCSTR pProfile, DWORD Flags, LPD3DXBUFFER* ppShader,
+								LPD3DXBUFFER* ppErrorMsgs, LPD3DXCONSTANTTABLE* ppConstantTable);
 
 		static bool LoadFailed = false;
 		static D3DXCompileShaderFunction pFn = 0;
@@ -446,7 +447,7 @@ HRESULT CD3D9ShaderMaterialRenderer::stubD3DXCompileShader(LPCSTR pSrcData, UINT
 		if (!pFn && !LoadFailed)
 		{
 			// try to load dll
-			io::path strDllName = "d3dx9_";
+			core::stringc strDllName = "d3dx9_";
 			strDllName += (int)D3DX_SDK_VERSION;
 			strDllName += ".dll";
 
@@ -474,9 +475,9 @@ HRESULT CD3D9ShaderMaterialRenderer::stubD3DXCompileShader(LPCSTR pSrcData, UINT
 }
 
 HRESULT CD3D9ShaderMaterialRenderer::stubD3DXCompileShaderFromFile(LPCSTR pSrcFile, CONST D3DXMACRO* pDefines,
-				LPD3DXINCLUDE pInclude, LPCSTR pFunctionName,
-				LPCSTR pProfile, DWORD Flags, LPD3DXBUFFER* ppShader, LPD3DXBUFFER* ppErrorMsgs,
-				LPD3DXCONSTANTTABLE* ppConstantTable)
+								LPD3DXINCLUDE pInclude, LPCSTR pFunctionName,
+								LPCSTR pProfile, DWORD Flags, LPD3DXBUFFER* ppShader, LPD3DXBUFFER* ppErrorMsgs,
+								LPD3DXCONSTANTTABLE* ppConstantTable)
 {
 	// wondering what I'm doing here?
 	// see comment in CD3D9ShaderMaterialRenderer::stubD3DXAssembleShader()
@@ -489,7 +490,7 @@ HRESULT CD3D9ShaderMaterialRenderer::stubD3DXCompileShaderFromFile(LPCSTR pSrcFi
 		#endif
 
 		// invoke static linked function
-		return D3DXCompileShaderFromFileA(pSrcFile, pDefines, pInclude, pFunctionName, pProfile, Flags, ppShader, ppErrorMsgs, ppConstantTable);
+		return D3DXCompileShaderFromFile(pSrcFile, pDefines, pInclude, pFunctionName, pProfile, Flags, ppShader, ppErrorMsgs, ppConstantTable);
 	#else
 	{
 		// try to load shader functions from the dll and print error if failed.
@@ -506,7 +507,7 @@ HRESULT CD3D9ShaderMaterialRenderer::stubD3DXCompileShaderFromFile(LPCSTR pSrcFi
 		if (!pFn && !LoadFailed)
 		{
 			// try to load dll
-			io::path strDllName = "d3dx9_";
+			core::stringc strDllName = "d3dx9_";
 			strDllName += (int)D3DX_SDK_VERSION;
 			strDllName += ".dll";
 
@@ -538,3 +539,4 @@ HRESULT CD3D9ShaderMaterialRenderer::stubD3DXCompileShaderFromFile(LPCSTR pSrcFi
 } // end namespace irr
 
 #endif // _IRR_COMPILE_WITH_DIRECT3D_9_
+

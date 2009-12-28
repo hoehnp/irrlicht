@@ -14,8 +14,7 @@ namespace scene
 //! constructor
 CSceneNodeAnimatorTexture::CSceneNodeAnimatorTexture(const core::array<video::ITexture*>& textures, 
 					 s32 timePerFrame, bool loop, u32 now)
-: ISceneNodeAnimatorFinishing(0),
-	TimePerFrame(timePerFrame), StartTime(now), Loop(loop)
+: TimePerFrame(timePerFrame), StartTime(now), Loop(loop)
 {
 	#ifdef _DEBUG
 	setDebugName("CSceneNodeAnimatorTexture");
@@ -29,8 +28,9 @@ CSceneNodeAnimatorTexture::CSceneNodeAnimatorTexture(const core::array<video::IT
 		Textures.push_back(textures[i]);
 	}
 
-	FinishTime = now + (timePerFrame * Textures.size());
+	EndTime = now + (timePerFrame * Textures.size());
 }
+
 
 
 //! destructor
@@ -38,6 +38,7 @@ CSceneNodeAnimatorTexture::~CSceneNodeAnimatorTexture()
 {
 	clearTextures();
 }
+
 
 
 void CSceneNodeAnimatorTexture::clearTextures()
@@ -48,26 +49,19 @@ void CSceneNodeAnimatorTexture::clearTextures()
 }
 
 
+
 //! animates a scene node
 void CSceneNodeAnimatorTexture::animateNode(ISceneNode* node, u32 timeMs)
 {
-	if(!node)
-		return;
-
 	if (Textures.size())
 	{
 		const u32 t = (timeMs-StartTime);
 
 		u32 idx = 0;
-		if (!Loop && timeMs >= FinishTime)
-		{
+		if (!Loop && timeMs >= EndTime)
 			idx = Textures.size() - 1;
-			HasFinished = true;
-		}
 		else
-		{
 			idx = (t/TimePerFrame) % Textures.size();
-		}
 
 		if (idx < Textures.size())
 			node->setMaterialTexture(0, Textures[idx]);
@@ -97,7 +91,6 @@ void CSceneNodeAnimatorTexture::serializeAttributes(io::IAttributes* out, io::SA
 	}
 }
 
-
 //! Reads attributes of the scene node animator.
 void CSceneNodeAnimatorTexture::deserializeAttributes(io::IAttributes* in, io::SAttributeReadWriteOptions* options)
 {
@@ -125,7 +118,6 @@ void CSceneNodeAnimatorTexture::deserializeAttributes(io::IAttributes* in, io::S
 	}
 }
 
-
 ISceneNodeAnimator* CSceneNodeAnimatorTexture::createClone(ISceneNode* node, ISceneManager* newManager)
 {
 	CSceneNodeAnimatorTexture * newAnimator = 
@@ -133,7 +125,6 @@ ISceneNodeAnimator* CSceneNodeAnimatorTexture::createClone(ISceneNode* node, ISc
 
 	return newAnimator;
 }
-
 
 } // end namespace scene
 } // end namespace irr

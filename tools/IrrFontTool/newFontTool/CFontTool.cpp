@@ -189,7 +189,7 @@ inline u32 getTextureSizeFromSurfaceSize(u32 size)
 		u32 lastTextureHeight = getTextureSizeFromSurfaceSize(currenty);
 
 		// delete the glyph set
-		delete [] buf;
+		delete buf;
 
 		currentImages.set_used(currentImage+1);
 		currentTextures.set_used(currentImage+1);
@@ -364,7 +364,7 @@ inline u32 getTextureSizeFromSurfaceSize(u32 size)
 			{
 				// turn mip-mapping off
 				bool b = Device->getVideoDriver()->getTextureCreationFlag(video::ETCF_CREATE_MIP_MAPS);
-				currentImages[currentImage] = Device->getVideoDriver()->createImageFromData((video::ECOLOR_FORMAT)cformat, core::dimension2d<u32>(textureWidth,texHeight), (void*)lpBits);
+				currentImages[currentImage] = Device->getVideoDriver()->createImageFromData((video::ECOLOR_FORMAT)cformat, core::dimension2d<s32>(textureWidth,texHeight), (void*)lpBits);
 				Device->getVideoDriver()->setTextureCreationFlag(video::ETCF_CREATE_MIP_MAPS,b);
 			}
 			else
@@ -608,7 +608,7 @@ inline u32 getTextureSizeFromSurfaceSize(u32 size)
 				texHeight = lastTextureHeight;
 
 			/* The texture that holds this "page" of characters */
-			currentImages[currentImage] = Device->getVideoDriver()->createImage(video::ECF_A8R8G8B8, core::dimension2du(textureWidth, texHeight));
+			currentImages[currentImage] = Device->getVideoDriver()->createImage(video::ECF_A8R8G8B8, core::dimension2d<s32>(textureWidth, texHeight));
 			currentImages[currentImage]->fill(video::SColor(alpha ? 0 : 255,0,0,0));
 
 			for (core::map<wchar_t, u32>::Iterator it = CharMap.getIterator(); !it.atEnd(); it++)

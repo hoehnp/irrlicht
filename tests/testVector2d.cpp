@@ -2,6 +2,7 @@
 // No rights reserved: this software is in the public domain.
 
 #include "testUtils.h"
+#include "irrlicht.h"
 
 using namespace irr;
 using namespace core;
@@ -10,7 +11,7 @@ template<class T>
 static bool compareVectors(const core::vector2d<T> & compare,
 						   const core::vector2d<T> & with)
 {
-	if (!compare.equals(with))
+	if(compare != with)
 	{
 		logTestString("\nERROR: vector2d %.16f, %.16f != vector2d %.16f, %.16f\n",
 			(f64)compare.X, (f64)compare.Y, (f64)with.X, (f64)with.Y);
@@ -52,12 +53,12 @@ static bool doTests()
 
 	vec.set(5, 5);
 	vec.normalize();
-	COMPARE_VECTORS(vec, vector2d<T>((T)0.7071068137884140, (T)0.7071068137884140));
+	compareVectors(vec, vector2d<T>((T)0.70710681378841400, (T)0.70710681378841400));
 
 	vec.set(5, 5);
 	otherVec.set(10, 20);
 
-	logTestString("vector2d interpolation\n");
+	logTestString("vector2df interpolation\n");
 	vector2d<T> interpolated;
 	(void)interpolated.interpolate(vec, otherVec, 0.f);
 	COMPARE_VECTORS(interpolated, otherVec); // 0.f means all the second vector
@@ -85,7 +86,7 @@ static bool doTests()
 	COMPARE_VECTORS(interpolated, vec); // 1.f means all the first vector
 
 
-	logTestString("vector2d quadratic interpolation\n");
+	logTestString("vector2df quadratic interpolation\n");
 	vector2d<T> thirdVec(20, 10);
 	interpolated = vec.getInterpolated_quadratic(otherVec, thirdVec, 0.f);
 	COMPARE_VECTORS(interpolated, vec); // 0.f means all the 1st vector
@@ -103,10 +104,10 @@ static bool doTests()
 	COMPARE_VECTORS(interpolated, thirdVec); // 1.f means all the 3rd vector
 
 	// check if getAngle returns values matching those of the double precision version
-	logTestString("vector2d getAngle\n");
+	logTestString("vector2df getAngle\n");
 	for (s32 i=0; i<200; ++i)
 	{
-		core::vector2d<T> tmp((T)-1, (T)(-100+i));
+		core::vector2d<T> tmp(-1, (T)-100+i);
 		core::vector2d<f64> ref(-1, -100+i);
 		if (!equals(tmp.getAngle(),ref.getAngle(), 0.0003))
 		{
@@ -114,7 +115,7 @@ static bool doTests()
 				tmp.getAngle(), ref.getAngle());
 			return false;
 		}
-		f32 val = atan2f((float)tmp.Y, (float)tmp.X)*core::RADTODEG;
+		f32 val = atan2f((f32)tmp.Y, (f32)tmp.X)*core::RADTODEG;
 		if (val<=0)
 			val=-val;
 		else
@@ -125,7 +126,7 @@ static bool doTests()
 				tmp.getAngle(), val, tmp.X, tmp.Y);
 			return false;
 		}
-		tmp = core::vector2d<T>((T)1, (T)(-100+i));
+		tmp = core::vector2d<T>(1, (T)-100+i);
 		ref = core::vector2d<f64>(1, -100+i);
 		if (!equals(tmp.getAngle(),ref.getAngle(), 0.0003))
 		{
@@ -159,16 +160,6 @@ static bool doTests()
 	{
 		logTestString("\nERROR: angle %.16f != angle %.16f\n",
 			tmp.getAngle(), ref.getAngle());
-		return false;
-	}
-
-	core::vector2d<T> zeroZero(0, 0);
-	core::vector2d<T> oneOne(1, 1);
-	// Check if comparing (0.0, 0.0) with (1.0, 1.0) returns false.
-	if(zeroZero == oneOne)
-	{
-		logTestString("\nERROR: vector2d %.16f, %.16f == vector2d %.16f, %.16f\n",
-			(f64)zeroZero.X, (f64)zeroZero.Y, (f64)oneOne.X, (f64)oneOne.Y);
 		return false;
 	}
 

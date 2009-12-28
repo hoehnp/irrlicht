@@ -2,6 +2,8 @@
 // No rights reserved: this software is in the public domain.
 
 #include "testUtils.h"
+#include "irrlicht.h"
+#include <assert.h>
 
 using namespace irr;
 using namespace core;

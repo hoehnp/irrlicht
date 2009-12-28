@@ -1,6 +1,7 @@
 // Copyright (C) 2008-2009 Christian Stehno, Colin MacDonald
 // No rights reserved: this software is in the public domain.
 
+#include "irrlicht.h"
 #include "testUtils.h"
 
 using namespace irr;
@@ -12,7 +13,7 @@ using namespace video;
 //! Check that EMT_TRANSPARENT_ALPHA_CHANNEL_REF works as expected
 bool testWithDriver(video::E_DRIVER_TYPE driverType)
 {
-	IrrlichtDevice* device = createDevice(driverType, core::dimension2d<u32>(160, 120), 32);
+	IrrlichtDevice* device = createDevice(driverType, core::dimension2d<s32>(160, 120), 32);
 	if(!device)
 		return true;
 
@@ -53,7 +54,7 @@ bool transparentAlphaChannelRef(void)
 
 	// FIXME Rogerborg 8-January-2009. Burning's video currently produces unexpected results,
 	// blending using the full alpha value instead of using a boolean mask. This test is being
-	// added now anyway to help verify the fix when it's done; it should just require an
+	// added now anyway to help verify the fix when it's done; it should just require an 
 	// update of the reference image.
 	result &= testWithDriver(EDT_BURNINGSVIDEO);
 	return result;

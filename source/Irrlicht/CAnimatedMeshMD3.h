@@ -12,7 +12,6 @@
 #include "irrString.h"
 #include "SMesh.h"
 #include "SMeshBuffer.h"
-#include "IQ3Shader.h"
 
 namespace irr
 {
@@ -24,26 +23,27 @@ namespace scene
 	public:
 
 		//! constructor
-		CAnimatedMeshMD3( );
+		CAnimatedMeshMD3();
 
 		//! destructor
 		virtual ~CAnimatedMeshMD3();
 
 		//! loads a quake3 md3 file
-		virtual bool loadModelFile( u32 modelIndex, io::IReadFile* file, 
-									io::IFileSystem* fs, video::IVideoDriver * driver
-									);
+		virtual bool loadModelFile( u32 modelIndex, io::IReadFile* file);
 
 		// IAnimatedMeshMD3
 		virtual void setInterpolationShift ( u32 shift, u32 loopMode );
 		virtual SMD3Mesh * getOriginalMesh ();
-		virtual SMD3QuaternionTagList *getTagList(s32 frame, s32 detailLevel, s32 startFrameLoop, s32 endFrameLoop);
+		virtual SMD3QuaterionTagList *getTagList(s32 frame, s32 detailLevel, s32 startFrameLoop, s32 endFrameLoop);
 
 		//IAnimatedMesh
 		virtual u32 getFrameCount() const;
 		virtual IMesh* getMesh(s32 frame, s32 detailLevel, s32 startFrameLoop, s32 endFrameLoop);
 		virtual const core::aabbox3d<f32>& getBoundingBox() const;
 		virtual E_ANIMATED_MESH_TYPE getMeshType() const;
+
+
+		//link?
 
 		//! returns amount of mesh buffers.
 		virtual u32 getMeshBufferCount() const
@@ -116,20 +116,29 @@ namespace scene
 
 		//! return a Mesh per frame
 		SMesh MeshIPol;
-		SMD3QuaternionTagList TagListIPol;
+		SMD3QuaterionTagList TagListIPol;
 
-		IMeshBuffer * createMeshBuffer ( const SMD3MeshBuffer *source, io::IFileSystem* fs, video::IVideoDriver * driver );
+		IMeshBuffer * createMeshBuffer ( const SMD3MeshBuffer *source );
 
 		void buildVertexArray ( u32 frameA, u32 frameB, f32 interpolate,
 								const SMD3MeshBuffer * source,
-								SMeshBufferLightMap * dest
+								SMeshBuffer * dest
 							);
 
 		void buildTagArray ( u32 frameA, u32 frameB, f32 interpolate );
-	};
 
+		core::vector3df getNormal ( u32 i, u32 j )
+		{
+			const f32 lng = i * 2.0f * core::PI / 255.0f;
+			const f32 lat = j * 2.0f * core::PI / 255.0f;
+			return core::vector3df(cosf ( lat ) * sinf ( lng ),
+					sinf ( lat ) * sinf ( lng ),
+					cos ( lng ));
+		}
+	};
 
 } // end namespace scene
 } // end namespace irr
 
 #endif
+

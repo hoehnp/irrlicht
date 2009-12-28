@@ -75,9 +75,6 @@ namespace gui
 		//! sets the selected item. Set this to -1 if no item should be selected
 		virtual void setSelected(s32 index) = 0;
 
-		//! sets the selected item. Set this to 0 if no item should be selected
-		virtual void setSelected(const wchar_t *item) = 0;
-
 		//! set whether the listbox should scroll to new or newly selected items
 		virtual void setAutoScrollEnabled(bool scroll) = 0;
 
@@ -114,12 +111,6 @@ namespace gui
 
 		//! Swap the items at the given indices
 		virtual void swapItems(u32 index1, u32 index2) = 0;
-
-		//! set global itemHeight
-		virtual void setItemHeight( s32 height ) = 0;
-
-		//! Sets whether to draw the background
-		virtual void setDrawBackground(bool draw) = 0;
 };
 
 

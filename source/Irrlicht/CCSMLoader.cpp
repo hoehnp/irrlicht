@@ -5,7 +5,7 @@
 // This file was written by Saurav Mohapatra and modified by Nikolaus Gebhardt.
 // See CCSMLoader.h for details.
 
-#include "IrrCompileConfig.h"
+#include "IrrCompileConfig.h" 
 #ifdef _IRR_COMPILE_WITH_CSM_LOADER_
 
 #include "CCSMLoader.h"
@@ -18,10 +18,6 @@
 #include "IVideoDriver.h"
 #include "SAnimatedMesh.h"
 #include "SMeshBufferLightMap.h"
-
-#ifdef _DEBUG
-#define _IRR_DEBUG_CSM_LOADER_
-#endif
 
 namespace irr
 {
@@ -36,34 +32,15 @@ namespace scene
 		s32 green;
 		s32 blue;
 
-		color_rgb_t() : red(0), green(0), blue(0) {}
-		void clear() { red=0; green=0; blue=0; }
-		video::SColor toSColor() const { return video::SColor(255, red, green, blue); }
-	};
-
-
-	//
-	//	A Binary File Reader
-	//
-	struct BinaryFileReader
-	{
-		BinaryFileReader(io::IReadFile* pFile) : file(pFile) { }
-
-		s32 readBuffer(void* buffer, s32 len)
+		void clear()
 		{
-			return file->read(buffer,len);
+			red = 0;
+			green = 0;
+			blue = 0;
 		}
-
-		s32 readLong();
-		f32 readFloat();
-
-		void readString(core::stringc &str);
-		void readVec3f(core::vector3df* v);
-		void readVec2f(core::vector2df* v);
-		void readColorRGB(color_rgb_t* color);
-
-		io::IReadFile *file;
 	};
+
+	class BinaryFileReader;
 
 	//
 	//	The file header
@@ -72,20 +49,15 @@ namespace scene
 	{
 	public:
 
-		enum E_CSM_VERSION
-		{
-			VERSION_4 = 4,
-			VERSION_4_1 = 5
-		};
+		static const s32 VERSION_4;
+		static const s32 VERSION_4_1;
 
 		Header(){ clear(); }
+		virtual ~Header(){ clear(); }
 
-		s32 getVersion() const { return version; }
+		s32 getVersion() const{ return version; }
 		void clear(){ version = 0; }
-		void load(BinaryFileReader* pReader)
-		{
-			version = pReader->readLong();
-		}
+		void load(BinaryFileReader* pReader);
 
 	private:
 
@@ -101,7 +73,7 @@ namespace scene
 	public:
 
 		Group(){ clear(); }
-		~Group(){ clear(); }
+		virtual ~Group(){ clear(); }
 
 		void clear();
 		void load(BinaryFileReader* pReader);
@@ -109,7 +81,7 @@ namespace scene
 		s32 getFlags() const { return flags; }
 		s32 getParentGroupID() const { return parentGroup; }
 		const core::stringc& getProperties() const { return props; }
-		video::SColor getColor() const { return color.toSColor(); }
+		const color_rgb_t* getColor() const { return &color; }
 
 	private:
 
@@ -128,13 +100,13 @@ namespace scene
 	public:
 
 		VisGroup(){ clear(); }
-		~VisGroup(){ clear(); }
+		virtual ~VisGroup(){ clear(); }
 		void clear();
 		void load(BinaryFileReader* pReader);
 
 		s32 getFlags() const{ return flags; }
 		const core::stringc& getName() const{ return name; }
-		video::SColor getColor() const{ return color.toSColor(); }
+		const color_rgb_t* getColor() const{ return &color; }
 
 	private:
 
@@ -152,12 +124,12 @@ namespace scene
 	public:
 
 		LightMap() : pixelData(0){ clear(); }
-		~LightMap(){ clear(); }
+		virtual ~LightMap(){ clear(); }
 		void clear();
 		void load(BinaryFileReader* pReader);
 		s32 getWidth() const{ return width; }
 		s32 getHeight() const{ return height; }
-		s32* getPixelData() const{ return pixelData; }
+		const s32* getPixelData() const{ return pixelData; }
 
 	private:
 
@@ -183,15 +155,15 @@ namespace scene
 	public:
 
 		Vertex(){ clear(); }
-		~Vertex(){ clear(); }
+		virtual ~Vertex(){ clear(); }
 		void clear();
 		void load(BinaryFileReader* pReader);
 
-		const core::vector3df& getPosition() const { return position; }
-		const core::vector3df& getNormal() const { return normal; }
-		video::SColor getColor() const { return color.toSColor(); }
-		const core::vector3df& getTextureCoordinates() const { return texCoords; }
-		const core::vector3df& getLightMapCoordinates() const { return lmapCoords; }
+		const core::vector3df* getPosition() const { return &position; }
+		const core::vector3df* getNormal() const { return &normal; }
+		const color_rgb_t* getColor() const { return &color; }
+		const core::vector3df* getTextureCoordinates() const { return &texCoords; }
+		const core::vector3df* getLightMapCoordinates() const { return &lmapCoords; }
 
 	private:
 
@@ -208,7 +180,7 @@ namespace scene
 	public:
 
 		Surface() { clear(); }
-		~Surface(){ clear(); }
+		virtual ~Surface(){ clear(); }
 
 		void clear();
 		void load(BinaryFileReader *pReader);
@@ -221,9 +193,9 @@ namespace scene
 		f32 getUVRotation() const{ return uvRotation; }
 
 		u32 getVertexCount() const{ return vertices.size(); }
-		const Vertex& getVertexAt(const s32 index) const{ return vertices[index]; }
+		const Vertex* getVertexAt(const s32 index) const{ return vertices[index]; }
 
-		u32 getTriangleCount() const{ return triangles.size(); }
+		s32 getTriangleCount() const{ return triangles.size(); }
 		const Triangle& getTriangleAt(const s32 index) const{ return triangles[index]; }
 
 	private:
@@ -234,7 +206,7 @@ namespace scene
 		core::vector2df uvOffset;
 		core::vector2df uvScale;
 		f32 uvRotation;
-		core::array<Vertex> vertices;
+		core::array<Vertex*> vertices;
 		core::array<Triangle> triangles;
 		core::array<Line> lines;
 	};
@@ -244,7 +216,7 @@ namespace scene
 	public:
 
 		Mesh(){ clear(); }
-		~Mesh(){ clear(); }
+		virtual ~Mesh(){ clear(); }
 
 		void clear();
 		void load(BinaryFileReader* pReader, bool bReadVisGroups);
@@ -252,7 +224,7 @@ namespace scene
 		s32 getFlags() const { return flags; }
 		s32 getGroupID() const { return groupId; }
 		const core::stringc& getProperties() const { return props; }
-		video::SColor getColor() const { return color.toSColor(); }
+		const color_rgb_t* getColor() const { return &color; }
 		const core::vector3df* getPosition() const { return &position; }
 		s32 getVisgroupID() const { return visgroupId; }
 		s32 getSurfaceCount() const { return surfaces.size(); }
@@ -275,7 +247,7 @@ namespace scene
 	public:
 
 		Entity() { clear(); }
-		~Entity() { clear(); }
+		virtual ~Entity() { clear(); }
 
 		void clear();
 		void load(BinaryFileReader* pReader);
@@ -298,7 +270,7 @@ namespace scene
 	public:
 
 		CameraData(){ clear(); }
-		~CameraData(){ clear(); }
+		virtual ~CameraData(){ clear(); }
 
 		void clear();
 		void load(BinaryFileReader* pReader);
@@ -322,25 +294,25 @@ namespace scene
 	public:
 
 		CSMFile(){ clear(); }
-		~CSMFile(){ clear(); }
+		virtual ~CSMFile(){ clear(); }
 		void clear();
 		void load(BinaryFileReader* pReader);
 
 		const Header* getHeader() const{ return &header; }
 
-		u32 getGroupCount() const{ return groups.size(); }
+		s32 getGroupCount() const{ return groups.size(); }
 		const Group* getGroupAt(const s32 index) const{ return groups[index]; }
 
-		u32 getVisGroupCount() const{ return visgroups.size(); }
+		s32 getVisGroupCount() const{ return visgroups.size(); }
 		const VisGroup* getVisGroupAt(const s32 index) const{ return visgroups[index]; }
 
-		u32 getLightMapCount() const{ return lightmaps.size(); }
+		s32 getLightMapCount() const{ return lightmaps.size(); }
 		const LightMap* getLightMapAt(const s32 index) const { return lightmaps[index]; }
 
-		u32 getMeshCount() const{ return meshes.size(); }
+		s32 getMeshCount() const{ return meshes.size(); }
 		const Mesh* getMeshAt(const s32 index) const{ return meshes[index]; }
 
-		u32 getEntityCount() const{ return entities.size(); }
+		s32 getEntityCount() const{ return entities.size(); }
 		const Entity* getEntityAt(const s32 index) const{ return entities[index]; }
 
 		const CameraData* getCameraData() const{ return &cameraData; }
@@ -356,6 +328,35 @@ namespace scene
 		CameraData cameraData;
 	};
 
+
+	//
+	//	A Binary File Reader
+	//
+	class BinaryFileReader
+	{
+	public:
+
+		BinaryFileReader(io::IReadFile* pFile, bool closeWhenDone=true);
+		virtual ~BinaryFileReader();
+
+		virtual s32 readBuffer(void* buffer, s32 len);
+
+		s32 readLong();
+		f32 readFloat();
+		u8  readByte();
+
+		core::stringc readString();
+		void readVec3f(core::vector3df* v);
+		void readVec2f(core::vector2df* v);
+		void readColorRGB(color_rgb_t* color);
+
+	private:
+
+		io::IReadFile *file;
+		bool autoClose;
+
+	};
+
 	CCSMLoader::CCSMLoader(scene::ISceneManager* manager, io::IFileSystem* fs)
 		: FileSystem(fs), SceneManager(manager)
 	{
@@ -365,18 +366,22 @@ namespace scene
 		#endif
 	}
 
+	CCSMLoader::~CCSMLoader()
+	{
+	}
 
 	//! returns true if the file maybe is able to be loaded by this class
 	//! based on the file extension (e.g. ".bsp")
-	bool CCSMLoader::isALoadableFileExtension(const io::path& filename) const
+	bool CCSMLoader::isALoadableFileExtension(const c8* fileName) const
 	{
-		return core::hasFileExtension ( filename, "csm" );
+		return strstr(fileName, ".csm")!=0;
 	}
-
 
 	//! creates/loads an animated mesh from the file.
 	IAnimatedMesh* CCSMLoader::createMesh(io::IReadFile* file)
 	{
+		file->grab(); // originally, this loader created the file on its own.
+
 		scene::IMesh* m = createCSMMesh(file);
 
 		if (!m)
@@ -396,41 +401,47 @@ namespace scene
 		if (!file)
 			return 0;
 
-		BinaryFileReader reader(file);
-		CSMFile csmFile;
-		csmFile.load(&reader);
+		if(file)
+		{
+			BinaryFileReader reader(file, true);
+			CSMFile csmFile;
+			csmFile.load(&reader);
 
-		return createIrrlichtMesh(&csmFile,
-			SceneManager->getParameters()->getAttributeAsString(CSM_TEXTURE_PATH),
-			file->getFileName());
+			scene::IMesh* pMesh = createIrrlichtMesh(&csmFile,
+				SceneManager->getParameters()->getAttributeAsString(CSM_TEXTURE_PATH),
+				file->getFileName());
+			return pMesh;
+		}
+
+		return 0;
 	}
 
-
 	scene::IMesh* CCSMLoader::createIrrlichtMesh(const CSMFile* csmFile,
-		const core::stringc& textureRoot, const io::path& lmprefix)
+		core::stringc textureRoot, const c8* lmprefix)
 	{
 		scene::SMesh *pMesh = new scene::SMesh();
 		video::IVideoDriver* driver = SceneManager->getVideoDriver();
 
-		for(u32 l = 0; l<csmFile->getLightMapCount(); l++)
+		for(s32 l = 0; l<csmFile->getLightMapCount(); l++)
 		{
 			const LightMap* lmap = csmFile->getLightMapAt(l);
 
-			io::path lmapName = lmprefix;
+			core::stringc lmapName = lmprefix;
 			lmapName += "LMAP_";
-			lmapName += io::path(l+1);
+			lmapName += (int)(l+1);
 			os::Printer::log("CCSMLoader loading light map", lmapName.c_str());
 
 			video::IImage* lmapImg = driver->createImageFromData(
 				video::ECF_A8R8G8B8,
-				core::dimension2d<u32>(lmap->getWidth(),lmap->getHeight()),
-				lmap->getPixelData());
+				core::dimension2d<s32>(lmap->getWidth(),lmap->getHeight()),
+				(void *)(lmap->getPixelData()));
 
 			driver->addTexture(lmapName.c_str(), lmapImg);
 			lmapImg->drop();
+
 		}
 
-		for(u32 m = 0; m<csmFile->getMeshCount(); m++)
+		for(s32 m = 0; m<csmFile->getMeshCount(); m++)
 		{
 			const Mesh* mshPtr = csmFile->getMeshAt(m);
 
@@ -438,64 +449,42 @@ namespace scene
 			{
 				const Surface* surface = mshPtr->getSurfaceAt(s);
 
-				core::stringc texName;
-			       	if (textureRoot.size())
-				{
-					texName += textureRoot;
-					texName += "/";
-				}
+				core::stringc texName = textureRoot;
+				texName+= "/";
 				texName+= surface->getTextureName();
 
-				video::ITexture* texture = 0;
-				if (texName.size())
-				{
-					if (FileSystem->existFile(texName))
-						texture = driver->getTexture(texName);
-					else if (FileSystem->existFile(surface->getTextureName()))
-						texture = driver->getTexture(surface->getTextureName());
-					else if (FileSystem->existFile(FileSystem->getFileBasename(surface->getTextureName())))
-						texture = driver->getTexture(FileSystem->getFileBasename(surface->getTextureName()));
-					else if (FileSystem->existFile(FileSystem->getFileDir(lmprefix)+"/"+surface->getTextureName()))
-						texture = driver->getTexture(FileSystem->getFileDir(lmprefix)+"/"+surface->getTextureName());
-					else
-						texture = driver->getTexture(FileSystem->getFileDir(lmprefix)+"/"+FileSystem->getFileBasename(surface->getTextureName()));
-				}
+				video::ITexture* texture = driver->getTexture(texName.c_str());
+				scene::SMeshBufferLightMap *buffer = new scene::SMeshBufferLightMap();
 
 				//material
-				io::path lmapName = lmprefix;
+				core::stringc lmapName = lmprefix;
 				lmapName += "LMAP_";
-				lmapName += io::path(surface->getLightMapId());
+				lmapName += (int)surface->getLightMapId();
 
-				scene::SMeshBufferLightMap *buffer = new scene::SMeshBufferLightMap();
 				buffer->Material.setTexture(0, texture);
-				if (surface->getLightMapId())
-				{
-					buffer->Material.setTexture(1, driver->getTexture(lmapName));
-					buffer->Material.Lighting = false;
-					buffer->Material.MaterialType = video::EMT_LIGHTMAP_ADD;
-				}
+				buffer->Material.setTexture(1, driver->getTexture(lmapName.c_str()));
+				buffer->Material.Lighting = false;
+				buffer->Material.MaterialType = video::EMT_LIGHTMAP_M4;
 
-				buffer->Vertices.reallocate(surface->getVertexCount());
-				for(u32 v = 0; v < surface->getVertexCount(); ++v)
+				for(u32 v = 0; v < surface->getVertexCount(); v++)
 				{
-					const Vertex& vtxPtr = surface->getVertexAt(v);
+					const Vertex *vtxPtr = surface->getVertexAt(v);
 					video::S3DVertex2TCoords vtx;
-					vtx.Pos = vtxPtr.getPosition();
-					vtx.Normal = vtxPtr.getPosition();
-					vtx.Color=vtxPtr.getColor();
-					vtx.TCoords.set(vtxPtr.getTextureCoordinates().X, 1.f-vtxPtr.getTextureCoordinates().Y);
-					vtx.TCoords2.set(vtxPtr.getLightMapCoordinates().X, 1.f-vtxPtr.getLightMapCoordinates().Y);
+					vtx.Pos = *(vtxPtr->getPosition());
+					vtx.Normal = *(vtxPtr->getPosition());
+					vtx.Color.set(255,vtxPtr->getColor()->red,vtxPtr->getColor()->green,vtxPtr->getColor()->blue);
+					vtx.TCoords.set(vtxPtr->getTextureCoordinates()->X,vtxPtr->getTextureCoordinates()->Y);
+					vtx.TCoords2.set(vtxPtr->getLightMapCoordinates()->X,0.0f - vtxPtr->getLightMapCoordinates()->Y);
 
 					buffer->Vertices.push_back(vtx);
 				}
 
-				buffer->Indices.reallocate(surface->getTriangleCount()*3);
-				for(u32 t = 0; t < surface->getTriangleCount(); ++t)
+				for(s32 t = 0; t < surface->getTriangleCount(); t++)
 				{
 					const Triangle& tri = surface->getTriangleAt(t);
+					buffer->Indices.push_back(tri.a);
 					buffer->Indices.push_back(tri.c);
 					buffer->Indices.push_back(tri.b);
-					buffer->Indices.push_back(tri.a);
 				}
 
 				buffer->recalculateBoundingBox();
@@ -506,6 +495,14 @@ namespace scene
 
 		pMesh->recalculateBoundingBox();
 		return pMesh;
+	}
+
+	const s32 Header::VERSION_4 = 4;
+	const s32 Header::VERSION_4_1 = 5;
+
+	void Header::load(BinaryFileReader* pReader)
+	{
+		version = pReader->readLong();
 	}
 
 	void Group::clear()
@@ -520,7 +517,7 @@ namespace scene
 	{
 		flags = pReader->readLong();
 		parentGroup = pReader->readLong();
-		pReader->readString(props);
+		props = pReader->readString();
 		pReader->readColorRGB(&color);
 	}
 
@@ -529,19 +526,23 @@ namespace scene
 		color.clear();
 		flags = 0;
 		name = "";
+
 	}
 
 	void VisGroup::load(BinaryFileReader* pReader)
 	{
-		pReader->readString(name);
+		name = pReader->readString();
 		flags = pReader->readLong();
 		pReader->readColorRGB(&color);
 	}
 
 	void LightMap::clear()
 	{
-		delete[] pixelData;
-		pixelData = 0;
+		if(pixelData)
+		{
+			delete[] pixelData;
+			pixelData = 0;
+		}
 		width = height = 0;
 	}
 
@@ -564,7 +565,10 @@ namespace scene
 
 		for(u32 s = 0; s < surfaces.size(); s++)
 		{
-			delete surfaces[s];
+			if(surfaces[s])
+			{
+				delete surfaces[s];
+			}
 		}
 		surfaces.clear();
 	}
@@ -573,7 +577,7 @@ namespace scene
 	{
 		flags = pReader->readLong();
 		groupId = pReader->readLong();
-		pReader->readString(props);
+		props = pReader->readString();
 		pReader->readColorRGB(&color);
 		pReader->readVec3f(&position);
 		if(bReadVisGroups)
@@ -601,14 +605,17 @@ namespace scene
 		uvRotation = 0.0f;
 		triangles.clear();
 		lines.clear();
+
+		for(u32 v = 0; v < vertices.size(); v++)
+			delete vertices[v];
+
 		vertices.clear();
 	}
 
 	void Surface::load(BinaryFileReader* pReader)
 	{
 		flags = pReader->readLong();
-		pReader->readString(textureName);
-		textureName.replace('\\', '/');
+		textureName = pReader->readString();
 
 		lightMapId = pReader->readLong();
 		pReader->readVec2f(&uvOffset);
@@ -620,8 +627,9 @@ namespace scene
 
 		for(s32 v = 0; v < vtxCount; v++)
 		{
-			vertices.push_back(Vertex());
-			vertices.getLast().load(pReader);
+			Vertex *vtx = new Vertex();
+			vtx->load(pReader);
+			vertices.push_back(vtx);
 		}
 
 		for(s32 t = 0; t < triCount; t++)
@@ -670,7 +678,7 @@ namespace scene
 	{
 		visgroupId = pReader->readLong();
 		groupId = pReader->readLong();
-		pReader->readString(props);
+		props = pReader->readString();
 		pReader->readVec3f(&position);
 	}
 
@@ -728,13 +736,8 @@ namespace scene
 
 		//groups
 		{
-			const s32 count = pReader->readLong();
-#ifdef _IRR_DEBUG_CSM_LOADER_
-			os::Printer::log("CSM Version", core::stringc(header.getVersion()).c_str());
-			os::Printer::log("Loading groups. Count", core::stringc(count));
-#endif
+			s32 count = pReader->readLong();
 
-			groups.reallocate(count);
 			for (s32 i = 0; i < count; i++)
 			{
 				Group* grp = new Group();
@@ -742,17 +745,13 @@ namespace scene
 				groups.push_back(grp);
 			}
 		}
-		const bool bHasVGroups = (header.getVersion() == Header::VERSION_4_1);
+		bool bHasVGroups = (header.getVersion() == Header::VERSION_4_1);
 
 		if (bHasVGroups)
 		{
 			//visgroups
-			const s32 count = pReader->readLong();
-#ifdef _IRR_DEBUG_CSM_LOADER_
-			os::Printer::log("Loading visgroups. Count", core::stringc(count));
-#endif
+			s32 count = pReader->readLong();
 
-			visgroups.reallocate(count);
 			for (s32 i = 0; i < count; i++)
 			{
 				VisGroup* grp = new VisGroup();
@@ -763,89 +762,99 @@ namespace scene
 
 		//lightmaps
 		{
-			const s32 count = pReader->readLong();
-#ifdef _IRR_DEBUG_CSM_LOADER_
-			os::Printer::log("Loading lightmaps. Count", core::stringc(count));
-#endif
+			s32 count = pReader->readLong();
 
-			lightmaps.reallocate(count);
 			for(s32 i = 0; i < count; i++)
 			{
-				LightMap* lm = new LightMap();
-				lm->load(pReader);
-				lightmaps.push_back(lm);
+				LightMap* grp = new LightMap();
+				grp->load(pReader);
+				lightmaps.push_back(grp);
 			}
 		}
 
 		//meshes
 		{
-			const s32 count = pReader->readLong();
-#ifdef _IRR_DEBUG_CSM_LOADER_
-			os::Printer::log("Loading meshes. Count", core::stringc(count));
-#endif
+			s32 count = pReader->readLong();
 
-			meshes.reallocate(count);
 			for(s32 i = 0; i < count; i++)
 			{
-				Mesh* mesh = new Mesh();
-				mesh->load(pReader,bHasVGroups);
-				meshes.push_back(mesh);
+				Mesh* grp = new Mesh();
+				grp->load(pReader,bHasVGroups);
+				meshes.push_back(grp);
 			}
 		}
 
 		//entities
 		{
-			const s32 count = pReader->readLong();
-#ifdef _IRR_DEBUG_CSM_LOADER_
-			os::Printer::log("Loading entitites. Count", core::stringc(count));
-#endif
+			s32 count = pReader->readLong();
 
-			entities.reallocate(count);
 			for(s32 i = 0; i < count; i++)
 			{
-				Entity* ent = new Entity();
-				ent->load(pReader);
-				entities.push_back(ent);
+				Entity* grp = new Entity();
+				grp->load(pReader);
+				entities.push_back(grp);
 			}
 		}
 
 		//camera data
-#ifdef _IRR_DEBUG_CSM_LOADER_
-		os::Printer::log("Loading camera data.");
-#endif
 		cameraData.load(pReader);
+
+
+	}
+
+	BinaryFileReader::BinaryFileReader(io::IReadFile* pFile,
+		bool closeWhenDone)
+		: file(pFile), autoClose(closeWhenDone)
+	{
+	}
+
+	BinaryFileReader::~BinaryFileReader()
+	{
+		if(autoClose && file)
+		{
+			file->drop();
+			file = 0;
+
+		}
+	}
+
+	s32 BinaryFileReader::readBuffer(void* buffer, s32 len)
+	{
+		return file->read(buffer,len);
+
 	}
 
 	s32 BinaryFileReader::readLong()
 	{
 		int ret = 0;
 		readBuffer(&ret,sizeof(int));
-#ifdef __BIG_ENDIAN__
-		ret = os::Byteswap::byteswap(ret);
-#endif
-		return ret;
+		return (s32)ret;
 	}
 
 	f32 BinaryFileReader::readFloat()
 	{
 		float ret = 0;
 		readBuffer(&ret,sizeof(float));
-#ifdef __BIG_ENDIAN__
-		ret = os::Byteswap::byteswap(ret);
-#endif
-		return ret;
+		return (f32)ret;
 	}
 
-	void BinaryFileReader::readString(core::stringc &str)
+	u8  BinaryFileReader::readByte()
 	{
-		str = "";
-		c8 c;
-		readBuffer(&c,sizeof(char));
+		char ret = 0;
+		readBuffer(&ret,sizeof(char));
+		return (u8)ret;
+	}
+
+	core::stringc BinaryFileReader::readString()
+	{
+		core::stringc str = "";
+		c8 c = (c8)readByte();
 		while(c != 0)
 		{
 			str += c;
-			readBuffer(&c,sizeof(char));
+			c = (c8)readByte();
 		}
+		return str;
 	}
 
 	void BinaryFileReader::readVec3f(core::vector3df* v)

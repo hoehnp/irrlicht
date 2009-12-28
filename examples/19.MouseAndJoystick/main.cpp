@@ -129,7 +129,7 @@ int main()
 	MyEventReceiver receiver;
 
 	IrrlichtDevice* device = createDevice(driverType,
-			core::dimension2d<u32>(640, 480), 16, false, false, false, &receiver);
+			core::dimension2d<s32>(640, 480), 16, false, false, false, &receiver);
 
 	if (device == 0)
 		return 1; // could not create selected driver.
@@ -182,15 +182,7 @@ int main()
 	/*
 	We'll create an arrow mesh and move it around either with the joystick axis/hat,
 	or make it follow the mouse pointer. */
-	scene::ISceneNode * node = smgr->addMeshSceneNode(
-		smgr->addArrowMesh( "Arrow",
-				video::SColor(255, 255, 0, 0),
-				video::SColor(255, 0, 255, 0),
-				16,16,
-				2.f, 1.3f,
-				0.1f, 0.6f
-				)
-		);
+	scene::ISceneNode * node = smgr->addMeshSceneNode(smgr->addArrowMesh("Arrow", video::SColor(255, 255, 0, 0), video::SColor(255, 0, 255, 0)));
 	node->setMaterialFlag(video::EMF_LIGHTING, false);
 
 	scene::ICameraSceneNode * camera = smgr->addCameraSceneNode();

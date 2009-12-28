@@ -126,6 +126,7 @@ namespace scene
 		virtual void calculateBoundingBox();
 
 		u32 FrameCount;
+		s32 TriangleCount;
 
 	private:
 

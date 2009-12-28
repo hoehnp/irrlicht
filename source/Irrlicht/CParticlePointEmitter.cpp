@@ -99,7 +99,7 @@ void CParticlePointEmitter::serializeAttributes(io::IAttributes* out, io::SAttri
 
 
 //! Reads attributes of the object.
-void CParticlePointEmitter::deserializeAttributes(io::IAttributes* in, io::SAttributeReadWriteOptions* options)
+s32 CParticlePointEmitter::deserializeAttributes(s32 startIndex, io::IAttributes* in, io::SAttributeReadWriteOptions* options)
 {
 	Direction = in->getAttributeAsVector3d("Direction");
 	if (Direction.getLength() == 0)
@@ -122,6 +122,8 @@ void CParticlePointEmitter::deserializeAttributes(io::IAttributes* in, io::SAttr
 	MinLifeTime = core::max_(0u, MinLifeTime);
 	MaxLifeTime = core::max_(MaxLifeTime, MinLifeTime);
 	MinLifeTime = core::min_(MinLifeTime, MaxLifeTime);
+
+	return in->findAttribute("MaxAngleDegrees");
 }
 
 

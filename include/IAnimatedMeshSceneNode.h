@@ -81,13 +81,9 @@ namespace scene
 		\return True if successful, false if not. */
 		virtual bool setFrameLoop(s32 begin, s32 end) = 0;
 
-		//! Sets the speed with which the animation is played.
+		//! Sets the speed with witch the animation is played.
 		/** \param framesPerSecond: Frames per second played. */
 		virtual void setAnimationSpeed(f32 framesPerSecond) = 0;
-
-		//! Gets the speed with which the animation is played.
-		/** \return Frames per second played. */
-		virtual f32 getAnimationSpeed() const =0;
 
 		//! Creates shadow volume scene node as child of this node.
 		/** The shadow can be rendered using the ZPass or the zfail
@@ -197,7 +193,7 @@ namespace scene
 		virtual IAnimatedMesh* getMesh(void) = 0;
 
 		//! Get the absolute transformation for a special MD3 Tag if the mesh is a md3 mesh, or the absolutetransformation if it's a normal scenenode
-		virtual const SMD3QuaternionTag* getMD3TagTransformation( const core::stringc & tagname) = 0;
+		virtual const SMD3QuaterionTag& getMD3TagTransformation( const core::stringc & tagname) = 0;
 
 		//! Set how the joints should be updated on render
 		virtual void setJointMode(E_JOINT_UPDATE_ON_RENDER mode)=0;

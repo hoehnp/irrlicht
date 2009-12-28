@@ -7,7 +7,7 @@
 
 #include "IrrCompileConfig.h"
 
-#ifdef _IRR_COMPILE_WITH_X11_DEVICE_
+#ifdef _IRR_USE_LINUX_DEVICE_
 
 #include "CIrrDeviceStub.h"
 #include "IrrlichtDevice.h"
@@ -87,43 +87,11 @@ namespace irr
 		//! supported by the gfx adapter.
 		video::IVideoModeList* getVideoModeList();
 
-		//! Sets if the window should be resizable in windowed mode.
-		virtual void setResizable(bool resize=false);
-
-		//! Minimizes the window.
-		virtual void minimizeWindow();
-
-		//! Maximizes the window.
-		virtual void maximizeWindow();
-
-		//! Restores the window size.
-		virtual void restoreWindow();
+		//! Sets if the window should be resizeable in windowed mode.
+		virtual void setResizeAble(bool resize=false);
 
 		//! Activate any joysticks, and generate events for them.
 		virtual bool activateJoysticks(core::array<SJoystickInfo> & joystickInfo);
-
-		//! Set the current Gamma Value for the Display
-		virtual bool setGammaRamp( f32 red, f32 green, f32 blue, f32 brightness, f32 contrast );
-
-		//! Get the current Gamma Value for the Display
-		virtual bool getGammaRamp( f32 &red, f32 &green, f32 &blue, f32 &brightness, f32 &contrast );
-
-		//! gets text from the clipboard
-		//! \return Returns 0 if no string is in there.
-		virtual const c8* getTextFromClipboard() const;
-
-		//! copies text to the clipboard
-		//! This sets the clipboard selection and _not_ the primary selection which you have on X on the middle mouse button.
-		virtual void copyToClipboard(const c8* text) const;
-
-		//! Remove all messages pending in the system message loop
-		virtual void clearSystemMessages();
-
-		//! Get the device type
-		virtual E_DEVICE_TYPE getType() const
-		{
-				return EIDT_X11;
-		}
 
 	private:
 
@@ -134,11 +102,7 @@ namespace irr
 
 		void createKeyMap();
 
-		void pollJoysticks();
-
-		void initXAtoms();
-
-		bool switchToFullscreen(bool reset=false);
+		void pollJoysticks(); 
 
 		//! Implementation of the linux cursor control
 		class CCursorControl : public gui::ICursorControl
@@ -183,8 +147,6 @@ namespace irr
 			//! Changes the visible state of the mouse cursor.
 			virtual void setVisible(bool visible)
 			{
-				if (visible==IsVisible)
-					return;
 				IsVisible = visible;
 #ifdef _IRR_COMPILE_WITH_X11_
 				if (!Null)
@@ -255,7 +217,7 @@ namespace irr
 			}
 
 			//! Returns the current position of the mouse cursor.
-			virtual const core::position2d<s32>& getPosition()
+			virtual core::position2d<s32> getPosition()
 			{
 				updateCursorPos();
 				return CursorPos;
@@ -336,8 +298,6 @@ namespace irr
 		friend class CCursorControl;
 
 #ifdef _IRR_COMPILE_WITH_X11_
-		friend class COpenGLDriver;
-
 		Display *display;
 		XVisualInfo* visual;
 		int screennr;
@@ -345,7 +305,6 @@ namespace irr
 		XSetWindowAttributes attributes;
 		XSizeHints* StdHints;
 		XImage* SoftwareImage;
-		mutable core::stringc Clipboard;
 		#ifdef _IRR_LINUX_X11_VIDMODE_
 		XF86VidModeModeInfo oldVideoMode;
 		#endif
@@ -359,12 +318,12 @@ namespace irr
 		#endif
 #endif
 		u32 Width, Height;
+		bool Close;
 		bool WindowHasFocus;
 		bool WindowMinimized;
 		bool UseXVidMode;
 		bool UseXRandR;
 		bool UseGLXWindow;
-		bool ExternalWindow;
 		int AutorepeatSupport;
 
 		struct SKeyMap
@@ -404,6 +363,6 @@ namespace irr
 
 } // end namespace irr
 
-#endif // _IRR_COMPILE_WITH_X11_DEVICE_
+#endif // _IRR_USE_LINUX_DEVICE_
 #endif // __C_IRR_DEVICE_LINUX_H_INCLUDED__
 

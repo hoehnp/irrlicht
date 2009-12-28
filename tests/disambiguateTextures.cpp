@@ -15,7 +15,7 @@ using namespace gui;
 bool disambiguateTextures(void)
 {
 	IrrlichtDevice *device =
-		createDevice( video::EDT_NULL, dimension2d<u32>(640, 480));
+		createDevice( video::EDT_NULL, dimension2d<s32>(640, 480));
 
 	if (!device)
 	{
@@ -60,8 +60,7 @@ bool disambiguateTextures(void)
 	readFile->drop();
 
 	// All 3 of the above textures should be identical.
-	assert(tex1 == tex2);
-	assert(tex1 == tex3);
+	assert(tex1 == tex2 && tex1 == tex3);
 
 	stringc newWd = wd + "/empty/empty";
 	bool changed = device->getFileSystem()->changeWorkingDirectoryTo(newWd.c_str());

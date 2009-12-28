@@ -97,7 +97,7 @@ int main()
 	MyEventReceiver receiver;
 
 	IrrlichtDevice* device = createDevice(driverType,
-			core::dimension2d<u32>(640, 480), 16, false, false, false, &receiver);
+			core::dimension2d<s32>(640, 480), 16, false, false, false, &receiver);
 
 	if (device == 0)
 		return 1; // could not create selected driver.
@@ -146,7 +146,7 @@ int main()
 
 	/*
 	The last scene node we add to show possibilities of scene node animators is
-	a b3d model, which uses a 'fly straight' animator to run between to points.
+	a md2 model, which uses a 'fly straight' animator to run between to points.
 	*/
 	scene::IAnimatedMeshSceneNode* anms =
 		smgr->addAnimatedMeshSceneNode(smgr->getMesh("../../media/ninja.b3d"));
@@ -176,7 +176,7 @@ int main()
 		*/
 		anms->setMaterialFlag(video::EMF_LIGHTING, false);
 
-		anms->setFrameLoop(0, 13);
+		anms->setFrameLoop(0, 14);
 		anms->setAnimationSpeed(15);
 //		anms->setMD2Animation(scene::EMAT_RUN);
 
@@ -191,7 +191,7 @@ int main()
 	To be able to look at and move around in this scene, we create a first
 	person shooter style camera and make the mouse cursor invisible.
 	*/
-	smgr->addCameraSceneNodeFPS();
+	smgr->addCameraSceneNodeFPS(0, 100.0f, .1f);
 	device->getCursorControl()->setVisible(false);
 
 	/*

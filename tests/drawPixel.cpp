@@ -17,7 +17,7 @@ using namespace gui;
 	cyan 100% opaque at the top right. */
 static bool runTestWithDriver(E_DRIVER_TYPE driverType)
 {
-	IrrlichtDevice *device = createDevice( driverType, dimension2d<u32>(160, 120), 32);
+	IrrlichtDevice *device = createDevice( driverType, dimension2d<s32>(160, 120), 32);
 	if (!device)
 		return true; // Treat a failure to create a driver as benign; this saves a lot of #ifdefs
 
@@ -56,16 +56,11 @@ bool drawPixel(void)
 {
 	bool passed = true;
 
-	logTestString("Check OpenGL driver\n");
-	passed &= runTestWithDriver(EDT_OPENGL);
-	logTestString("Check Software driver\n");
 	passed &= runTestWithDriver(EDT_SOFTWARE);
-	logTestString("Check Burning's Video driver\n");
 	passed &= runTestWithDriver(EDT_BURNINGSVIDEO);
-	logTestString("Check Direct3D9 driver\n");
 	passed &= runTestWithDriver(EDT_DIRECT3D9);
-	logTestString("Check Direct3D8 driver\n");
 	passed &= runTestWithDriver(EDT_DIRECT3D8);
+	passed &= runTestWithDriver(EDT_OPENGL);
 
 	return passed;
 }

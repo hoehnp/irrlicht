@@ -4,7 +4,7 @@ Sources = $(wildcard *.cpp)
 
 CPPFLAGS = -I../include -I/usr/X11R6/include -pipe
 # CXXFLAGS += -O3
-CXXFLAGS += -Wall -ansi -pedantic -O0 -g -D_DEBUG
+CXXFLAGS += -Wall -g -D_DEBUG
 
 ifeq ($(HOSTTYPE), x86_64)
 LIBSELECT=64
@@ -37,12 +37,3 @@ clean_linux clean_win32:
 	@$(RM) $(DESTPATH)
 
 .PHONY: all all_win32 clean clean_linux clean_win32
-
-# Create dependency files for automatic recompilation
-%.d:%.cpp
-	$(CXX) $(CPPFLAGS) -MM -MF $@ $<
-
-ifneq ($(MAKECMDGOALS),clean)
--include $(OBJ:.o=.d)
-endif
-

@@ -180,7 +180,7 @@ int main()
 	// create device
 
 	IrrlichtDevice* device = createDevice(driverType,
-			core::dimension2d<u32>(640, 480));
+			core::dimension2d<s32>(640, 480));
 
 	if (device == 0)
 		return 1; // could not create selected driver.
@@ -207,7 +207,8 @@ int main()
 		core::position2d<s32>(10,10));
 
 	// add camera
-	scene::ICameraSceneNode* camera = smgr->addCameraSceneNodeFPS();
+	scene::ICameraSceneNode* camera =
+		smgr->addCameraSceneNodeFPS(0, 100.0f, .3f);
 	camera->setPosition(core::vector3df(-200,200,-200));
 
 	// disable mouse cursor
@@ -222,7 +223,7 @@ int main()
 	Please note that you will have to set the material flag EMF_FOG_ENABLE
 	to 'true' in every scene node which should be affected by this fog.
 	*/
-	driver->setFog(video::SColor(0,138,125,81), video::EFT_FOG_LINEAR, 250, 1000, .003f, true, false);
+	driver->setFog(video::SColor(0,138,125,81), true, 250, 1000, 0, true);
 
 	/*
 	To be able to display something interesting, we load a mesh from a .3ds
@@ -258,11 +259,12 @@ int main()
 		to a bigger value, the map will look more rocky.
 		*/
 
+		video::ITexture* colorMap =
+			driver->getTexture("../../media/rockwall.bmp");
 		video::ITexture* normalMap =
 			driver->getTexture("../../media/rockwall_height.bmp");
 
-		if (normalMap)
-			driver->makeNormalMapTexture(normalMap, 9.0f);
+		driver->makeNormalMapTexture(normalMap, 9.0f);
 
 		/*
 		But just setting color and normal map is not everything. The
@@ -281,8 +283,7 @@ int main()
 			roomMesh->getMesh(0));
 
 		room = smgr->addMeshSceneNode(tangentMesh);
-		room->setMaterialTexture(0,
-				driver->getTexture("../../media/rockwall.jpg"));
+		room->setMaterialTexture(0, colorMap);
 		room->setMaterialTexture(1, normalMap);
 
 		room->getMaterial(0).SpecularColor.set(0,0,0,0);
@@ -331,16 +332,13 @@ int main()
 		sphere->setPosition(core::vector3df(-70,130,45));
 
 		// load heightmap, create normal map from it and set it
-		video::ITexture* earthNormalMap = driver->getTexture("../../media/earthbump.jpg");
-		if (earthNormalMap)
-		{
-			driver->makeNormalMapTexture(earthNormalMap, 20.0f);
-			sphere->setMaterialTexture(1, earthNormalMap);
-			sphere->setMaterialType(video::EMT_NORMAL_MAP_TRANSPARENT_VERTEX_ALPHA);
-		}
+		video::ITexture* earthNormalMap = driver->getTexture("../../media/earthbump.bmp");
+		driver->makeNormalMapTexture(earthNormalMap, 20.0f);
+		sphere->setMaterialTexture(1, earthNormalMap);
 
 		// adjust material settings
 		sphere->setMaterialFlag(video::EMF_FOG_ENABLE, true);
+		sphere->setMaterialType(video::EMT_NORMAL_MAP_TRANSPARENT_VERTEX_ALPHA);
 
 		// add rotation animator
 		scene::ISceneNodeAnimator* anim =
@@ -364,8 +362,6 @@ int main()
 	scene::ILightSceneNode* light1 =
 		smgr->addLightSceneNode(0, core::vector3df(0,0,0),
 		video::SColorf(0.5f, 1.0f, 0.5f, 0.0f), 800.0f);
-
-	light1->setDebugDataVisible ( scene::EDS_BBOX );
 
 
 	// add fly circle animator to light 1

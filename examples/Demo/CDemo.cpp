@@ -37,7 +37,7 @@ CDemo::~CDemo()
 
 void CDemo::run()
 {
-	core::dimension2d<u32> resolution ( 800, 600 );
+	core::dimension2d<s32> resolution ( 800, 600 );
 
 	if ( driverType == video::EDT_BURNINGSVIDEO || driverType == video::EDT_SOFTWARE )
 	{
@@ -113,7 +113,7 @@ void CDemo::run()
 			static s32 lastfps = 0;
 			s32 nowfps = driver->getFPS();
 
-			swprintf(tmp, 255, L"%ls fps:%3d triangles:%0.3f mio",
+			swprintf(tmp, 255, L"%ls fps:%3d triangles:%0.3f mio", 
 								driver->getName(),
 								driver->getFPS(),
 								(f32) driver->getPrimitiveCountDrawn( 1 ) * ( 1.f / 1000000.f )
@@ -148,11 +148,11 @@ bool CDemo::OnEvent(const SEvent& event)
 			device->closeDevice();
 	}
 	else
-	if (((event.EventType == EET_KEY_INPUT_EVENT &&
+	if ((event.EventType == EET_KEY_INPUT_EVENT &&
 		event.KeyInput.Key == KEY_SPACE &&
 		event.KeyInput.PressedDown == false) ||
 		(event.EventType == EET_MOUSE_INPUT_EVENT &&
-		 event.MouseInput.Event == EMIE_LMOUSE_LEFT_UP)) &&
+		event.MouseInput.Event == EMIE_LMOUSE_LEFT_UP) &&
 		currentScene == 3)
 	{
 		// shoot
@@ -351,9 +351,6 @@ void CDemo::loadSceneData()
 	video::IVideoDriver* driver = device->getVideoDriver();
 	scene::ISceneManager* sm = device->getSceneManager();
 
-	// Quake3 Shader controls Z-Writing
-	sm->getParameters()->setAttribute(scene::ALLOW_ZWRITE_ON_TRANSPARENT, true);
-
 	quakeLevelMesh = (scene::IQ3LevelMesh*) sm->getMesh("maps/20kdm2.bsp");
 
 	if (quakeLevelMesh)
@@ -369,7 +366,7 @@ void CDemo::loadSceneData()
 			sm->getMeshManipulator()->transformMesh ( quakeLevelMesh->getMesh(i), m );
 		}
 
-		quakeLevelNode = sm->addOctreeSceneNode(
+		quakeLevelNode = sm->addOctTreeSceneNode( 
 			quakeLevelMesh->getMesh( scene::quake3::E_Q3_MESH_GEOMETRY)
 									);
 		if (quakeLevelNode)
@@ -378,7 +375,7 @@ void CDemo::loadSceneData()
 			quakeLevelNode->setVisible(true);
 
 			// create map triangle selector
-			mapSelector = sm->createOctreeTriangleSelector(quakeLevelMesh->getMesh(0),
+			mapSelector = sm->createOctTreeTriangleSelector(quakeLevelMesh->getMesh(0),
 				quakeLevelNode, 128);
 
 			// if not using shader and no gamma it's better to use more lighting, because
@@ -402,7 +399,7 @@ void CDemo::loadSceneData()
 			s32 shaderIndex = (s32) material.MaterialTypeParam2;
 
 			// the meshbuffer can be rendered without additional support, or it has no shader
-			const scene::quake3::IShader *shader = quakeLevelMesh->getShader ( shaderIndex );
+			const scene::quake3::SShader *shader = quakeLevelMesh->getShader ( shaderIndex );
 			if ( 0 == shader )
 			{
 				continue;
@@ -410,6 +407,9 @@ void CDemo::loadSceneData()
 			// Now add the MeshBuffer(s) with the current Shader to the Manager
 			sm->addQuake3SceneNode ( meshBuffer, shader );
 		}
+
+		// original mesh is not needed anymore
+		quakeLevelMesh->releaseMesh ( scene::quake3::E_Q3_MESH_ITEMS );
 
 	}
 
@@ -482,7 +482,7 @@ void CDemo::loadSceneData()
 		core::stringc tmp("../../media/portal");
 		tmp += g;
 		tmp += ".bmp";
-		video::ITexture* t = driver->getTexture( tmp );
+		video::ITexture* t = driver->getTexture( tmp.c_str () );
 		textures.push_back(t);
 	}
 
@@ -570,7 +570,7 @@ void CDemo::loadSceneData()
 
 void CDemo::createLoadingScreen()
 {
-	core::dimension2d<u32> size = device->getVideoDriver()->getScreenSize();
+	core::dimension2d<int> size = device->getVideoDriver()->getScreenSize();
 
 	device->getCursorControl()->setVisible(false);
 
@@ -635,9 +635,9 @@ void CDemo::shoot()
 	core::line3d<f32> line(start, end);
 
 	// get intersection point with map
-	const scene::ISceneNode* hitNode;
+
 	if (sm->getSceneCollisionManager()->getCollisionPoint(
-		line, mapSelector, end, triangle, hitNode))
+		line, mapSelector, end, triangle))
 	{
 		// collides with wall
 		core::vector3df out = triangle.getNormal();
@@ -741,7 +741,7 @@ void CDemo::createParticleImpacts()
 			#ifdef USE_IRRKLANG
 			if (irrKlang)
 			{
-				irrklang::ISound* sound =
+				irrklang::ISound* sound = 
 					irrKlang->play3D(impactSound, Impacts[i].pos, false, false, true);
 
 				if (sound)

@@ -15,8 +15,6 @@
 #include "SMeshBufferLightMap.h"
 #include "IMeshManipulator.h"
 #include "matrix4.h"
-#include "quaternion.h"
-#include "CSkinnedMesh.h"
 
 namespace irr
 {
@@ -36,7 +34,7 @@ public:
 
 	//! returns true if the file maybe is able to be loaded by this class
 	//! based on the file extension (e.g. ".cob")
-	virtual bool isALoadableFileExtension(const io::path& filename) const;
+	virtual bool isALoadableFileExtension(const c8* fileName) const;
 
 	//! creates/loads an animated mesh from the file.
 	//! \return Pointer to the created mesh. Returns 0 if loading failed.
@@ -47,7 +45,7 @@ public:
 private:
 
 	// byte-align structures
-	#if defined(_MSC_VER) ||  defined(__BORLANDC__) || defined (__BCPLUSPLUS__)
+	#if defined(_MSC_VER) ||  defined(__BORLANDC__) || defined (__BCPLUSPLUS__) 
 	#	pragma pack( push, packing )
 	#	pragma pack( 1 )
 	#	define PACK_STRUCT
@@ -64,7 +62,7 @@ private:
 	} PACK_STRUCT;
 
 	// Default alignment
-	#if defined(_MSC_VER) ||  defined(__BORLANDC__) || defined (__BCPLUSPLUS__)
+	#if defined(_MSC_VER) ||  defined(__BORLANDC__) || defined (__BCPLUSPLUS__) 
 	#	pragma pack( pop, packing )
 	#endif
 
@@ -94,7 +92,7 @@ private:
 	{
 		OgrePass() : AmbientTokenColor(false),
 			DiffuseTokenColor(false), SpecularTokenColor(false),
-			EmissiveTokenColor(false),
+			EmissiveTokenColor(false), ColorWrite(true),
 			MaxLights(8), PointSize(1.0f), PointSprites(false),
 			PointSizeMin(0), PointSizeMax(0) {}
 
@@ -104,6 +102,7 @@ private:
 		bool DiffuseTokenColor;
 		bool SpecularTokenColor;
 		bool EmissiveTokenColor;
+		bool ColorWrite;
 		u32 MaxLights;
 		f32 PointSize;
 		bool PointSprites;
@@ -136,10 +135,11 @@ private:
 	struct OgreVertexBuffer
 	{
 		OgreVertexBuffer() : BindIndex(0), VertexSize(0), Data(0) {}
+		void destroy() { delete [] Data; Data = 0; }
 
-		u16 BindIndex;
-		u16 VertexSize;
-		core::array<f32> Data;
+		u16 BindIndex,
+		VertexSize;
+		f32 *Data;
 	};
 
 	struct OgreVertexElement
@@ -170,13 +170,6 @@ private:
 		core::stringc Alias;
 	};
 
-	struct OgreBoneAssignment
-	{
-		s32 VertexID;
-		u16 BoneID;
-		f32 Weight;
-	};
-
 	struct OgreSubMesh
 	{
 		core::stringc Material;
@@ -185,7 +178,6 @@ private:
 		OgreGeometry Geometry;
 		u16 Operation;
 		core::array<OgreTextureAlias> TextureAliases;
-		core::array<OgreBoneAssignment> BoneAssignments;
 		bool Indices32Bit;
 	};
 
@@ -194,42 +186,9 @@ private:
 		bool SkeletalAnimation;
 		OgreGeometry Geometry;
 		core::array<OgreSubMesh> SubMeshes;
-		core::array<OgreBoneAssignment> BoneAssignments;
 		core::vector3df BBoxMinEdge;
 		core::vector3df BBoxMaxEdge;
 		f32 BBoxRadius;
-	};
-
-	struct OgreBone
-	{
-		core::stringc Name;
-		core::vector3df Position;
-		core::quaternion Orientation;
-		core::vector3df Scale;
-		u16 Handle;
-		u16 Parent;
-	};
-
-	struct OgreKeyframe
-	{
-		u16 BoneID;
-		f32 Time;
-		core::vector3df Position;
-		core::quaternion Orientation;
-		core::vector3df Scale;
-	};
-
-	struct OgreAnimation
-	{
-		core::stringc Name;
-		f32 Length;
-		core::array<OgreKeyframe> Keyframes;
-	};
-
-	struct OgreSkeleton
-	{
-		core::array<OgreBone> Bones;
-		core::array<OgreAnimation> Animations;
 	};
 
 	bool readChunk(io::IReadFile* file);
@@ -242,23 +201,22 @@ private:
 	void readChunkData(io::IReadFile* file, ChunkData& data);
 	void readString(io::IReadFile* file, ChunkData& data, core::stringc& out);
 	void readBool(io::IReadFile* file, ChunkData& data, bool& out);
-	void readInt(io::IReadFile* file, ChunkData& data, s32* out, u32 num=1);
-	void readShort(io::IReadFile* file, ChunkData& data, u16* out, u32 num=1);
-	void readFloat(io::IReadFile* file, ChunkData& data, f32* out, u32 num=1);
+	void readInt(io::IReadFile* file, ChunkData& data, s32& out);
+	void readShort(io::IReadFile* file, ChunkData& data, u16& out);
+	void readFloat(io::IReadFile* file, ChunkData& data, f32& out);
 	void readVector(io::IReadFile* file, ChunkData& data, core::vector3df& out);
-	void readQuaternion(io::IReadFile* file, ChunkData& data, core::quaternion& out);
 
 	void composeMeshBufferMaterial(scene::IMeshBuffer* mb, const core::stringc& materialName);
 	scene::SMeshBuffer* composeMeshBuffer(const core::array<s32>& indices, const OgreGeometry& geom);
 	scene::SMeshBufferLightMap* composeMeshBufferLightMap(const core::array<s32>& indices, const OgreGeometry& geom);
-	scene::IMeshBuffer* composeMeshBufferSkinned(scene::CSkinnedMesh& mesh, const core::array<s32>& indices, const OgreGeometry& geom);
 	void composeObject(void);
 	bool readColor(io::IReadFile* meshFile, video::SColor& col);
 	void getMaterialToken(io::IReadFile* file, core::stringc& token, bool noNewLine=false);
 	void readTechnique(io::IReadFile* meshFile, OgreMaterial& mat);
 	void readPass(io::IReadFile* file, OgreTechnique& technique);
 	void loadMaterials(io::IReadFile* file);
-	bool loadSkeleton(io::IReadFile* meshFile, const core::stringc& name);
+	core::stringc getTextureFileName(const core::stringc& texture, core::stringc& model);
+	void setCurrentlyLoadingPath(io::IReadFile* file);
 	void clearMeshes();
 
 	io::IFileSystem* FileSystem;
@@ -267,12 +225,11 @@ private:
 	core::stringc Version;
 	bool SwapEndian;
 	core::array<OgreMesh> Meshes;
-	io::path CurrentlyLoadingFromPath;
+	core::stringc CurrentlyLoadingFromPath;
 
 	core::array<OgreMaterial> Materials;
-	OgreSkeleton Skeleton;
 
-	IMesh* Mesh;
+	SMesh* Mesh;
 	u32 NumUV;
 };
 

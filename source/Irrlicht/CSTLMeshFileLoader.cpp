@@ -2,7 +2,7 @@
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
-#include "IrrCompileConfig.h"
+#include "IrrCompileConfig.h" 
 
 #ifdef _IRR_COMPILE_WITH_STL_LOADER_
 
@@ -23,9 +23,9 @@ namespace scene
 
 //! returns true if the file maybe is able to be loaded by this class
 //! based on the file extension (e.g. ".bsp")
-bool CSTLMeshFileLoader::isALoadableFileExtension(const io::path& filename) const
+bool CSTLMeshFileLoader::isALoadableFileExtension(const c8* filename) const
 {
-	return core::hasFileExtension ( filename, "stl" );
+	return strstr(filename, ".stl")!=0;
 }
 
 
@@ -43,9 +43,7 @@ IAnimatedMesh* CSTLMeshFileLoader::createMesh(io::IReadFile* file)
 	const u32 WORD_BUFFER_LENGTH = 512;
 
 	SMesh* mesh = new SMesh();
-	SMeshBuffer* meshBuffer = new SMeshBuffer();
-	mesh->addMeshBuffer(meshBuffer);
-	meshBuffer->drop();
+	mesh->addMeshBuffer( new SMeshBuffer() );
 
 	core::vector3df vertex[3];
 	core::vector3df normal;

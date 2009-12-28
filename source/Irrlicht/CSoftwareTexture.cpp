@@ -14,8 +14,7 @@ namespace video
 {
 
 //! constructor
-CSoftwareTexture::CSoftwareTexture(IImage* image, const io::path& name,
-		bool renderTarget, void* mipmapData)
+CSoftwareTexture::CSoftwareTexture(IImage* image, const char* name, bool renderTarget)
 : ITexture(name), Texture(0), IsRenderTarget(renderTarget)
 {
 	#ifdef _DEBUG
@@ -24,11 +23,13 @@ CSoftwareTexture::CSoftwareTexture(IImage* image, const io::path& name,
 
 	if (image)
 	{
+		core::dimension2d<s32> optSize;
 		OrigSize = image->getDimension();
-		core::dimension2d<u32> optSize=OrigSize.getOptimalSize();
 
-		Image = new CImage(ECF_A1R5G5B5, OrigSize);
-		image->copyTo(Image);
+		optSize.Width = getTextureSizeFromSurfaceSize(OrigSize.Width);
+		optSize.Height = getTextureSizeFromSurfaceSize(OrigSize.Height);
+
+		Image = new CImage(ECF_A1R5G5B5, image);
 
 		if (optSize == OrigSize)
 		{
@@ -58,7 +59,7 @@ CSoftwareTexture::~CSoftwareTexture()
 
 
 //! lock function
-void* CSoftwareTexture::lock(bool readOnly, u32 mipmapLevel)
+void* CSoftwareTexture::lock(bool readOnly)
 {
 	return Image->lock();
 }
@@ -79,14 +80,14 @@ void CSoftwareTexture::unlock()
 
 
 //! Returns original size of the texture.
-const core::dimension2d<u32>& CSoftwareTexture::getOriginalSize() const
+const core::dimension2d<s32>& CSoftwareTexture::getOriginalSize() const
 {
 	return OrigSize;
 }
 
 
 //! Returns (=size) of the texture.
-const core::dimension2d<u32>& CSoftwareTexture::getSize() const
+const core::dimension2d<s32>& CSoftwareTexture::getSize() const
 {
 	return Image->getDimension();
 }
@@ -104,6 +105,18 @@ CImage* CSoftwareTexture::getImage()
 CImage* CSoftwareTexture::getTexture()
 {
 	return Texture;
+}
+
+
+
+//! returns the size of a texture which would be the optimize size for rendering it
+inline s32 CSoftwareTexture::getTextureSizeFromSurfaceSize(s32 size) const
+{
+	s32 ts = 0x01;
+	while(ts < size)
+		ts <<= 1;
+
+	return ts;
 }
 
 
@@ -133,7 +146,7 @@ u32 CSoftwareTexture::getPitch() const
 
 //! Regenerates the mip map levels of the texture. Useful after locking and
 //! modifying the texture
-void CSoftwareTexture::regenerateMipMapLevels(void* mipmapData)
+void CSoftwareTexture::regenerateMipMapLevels()
 {
 	// our software textures don't have mip maps
 }

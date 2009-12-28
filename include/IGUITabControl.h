@@ -13,8 +13,7 @@ namespace irr
 {
 namespace gui
 {
-	//! A tab-page, onto which other gui elements could be added.
-	/** IGUITab refers to the page itself, not to the tab in the tabbar of an IGUITabControl. */
+	//! A tab, onto which other gui elements could be added.
 	class IGUITab : public IGUIElement
 	{
 	public:
@@ -86,12 +85,6 @@ namespace gui
 		//! Get the height of the tabs
 		/** return Returns the height of the tabs */
 		virtual s32 getTabHeight() const = 0;
-
-		//! set the maximal width of a tab. Per default width is 0 which means "no width restriction".
-		virtual void setTabMaxWidth(s32 width ) = 0;
-
-		//! get the maximal width of a tab
-		virtual s32 getTabMaxWidth() const = 0;
 
 		//! Set the alignment of the tabs
 		/** Use EGUIA_UPPERLEFT or EGUIA_LOWERRIGHT */

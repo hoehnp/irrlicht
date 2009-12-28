@@ -101,7 +101,7 @@ int main()
 
 	//Initialise the engine
 	IrrlichtDevice *device = createDevice(driverType,
-			dimension2du(ResX,ResY), 32, fullScreen,
+			dimension2d<s32>(ResX,ResY), 32, fullScreen,
 			false, false, &receiver);
 	if (!device)
 		return 1;
@@ -129,7 +129,7 @@ int main()
 	IAnimatedMesh *map = smgr->getMesh("20kdm2.bsp");
 	if (map)
 	{
-		ISceneNode *map_node = smgr->addOctreeSceneNode(map->getMesh(0));
+		ISceneNode *map_node = smgr->addOctTreeSceneNode(map->getMesh(0));
 		//Set position
 		map_node->setPosition(vector3df(-850,-220,-850));
 	}

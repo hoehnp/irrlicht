@@ -9,7 +9,6 @@
 #include "IFileSystem.h"
 #include "IVideoDriver.h"
 #include "ISceneManager.h"
-#include "IQ3Shader.h"
 
 namespace irr
 {
@@ -29,7 +28,7 @@ public:
 
 	//! returns true if the file maybe is able to be loaded by this class
 	//! based on the file extension (e.g. ".bsp")
-	virtual bool isALoadableFileExtension(const io::path& filename) const;
+	virtual bool isALoadableFileExtension(const c8* fileName) const;
 
 	//! creates/loads an animated mesh from the file.
 	//! \return Pointer to the created mesh. Returns 0 if loading failed.
@@ -41,8 +40,6 @@ private:
 
 	io::IFileSystem* FileSystem;
 	scene::ISceneManager* SceneManager;
-
-	quake3::Q3LevelLoadParameter LoadParam;
 };
 
 } // end namespace scene

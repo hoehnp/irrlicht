@@ -18,8 +18,7 @@ namespace scene
 		//! constructor
 		CSceneNodeAnimatorFlyCircle(u32 time,
 				const core::vector3df& center, f32 radius,
-				f32 speed, const core::vector3df& direction, 
-				f32 radiusEllipsoid);
+				f32 speed, const core::vector3df& direction);
 
 		//! animates a scene node
 		virtual void animateNode(ISceneNode* node, u32 timeMs);
@@ -51,7 +50,6 @@ namespace scene
 		core::vector3df VecU;
 		core::vector3df VecV;
 		f32 Radius;
-		f32 RadiusEllipsoid;
 		f32 Speed;
 		u32 StartTime;
 	};

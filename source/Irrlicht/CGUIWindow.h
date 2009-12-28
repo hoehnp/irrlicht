@@ -44,48 +44,14 @@ namespace gui
 		//! Returns pointer to the maximize button
 		virtual IGUIButton* getMaximizeButton() const;
 
-		//! Returns true if the window is draggable, false if not
-		virtual bool isDraggable() const;
-
-		//! Sets whether the window is draggable
-		virtual void setDraggable(bool draggable);
-
-        //! Set if the window background will be drawn
-        virtual void setDrawBackground(bool draw);
-
-        //! Get if the window background will be drawn
-        virtual bool getDrawBackground() const;
-
-        //! Set if the window titlebar will be drawn
-        //! Note: If the background is not drawn, then the titlebar is automatically also not drawn
-        virtual void setDrawTitlebar(bool draw);
-
-        //! Get if the window titlebar will be drawn
-        virtual bool getDrawTitlebar() const;
-
-		//! Returns the rectangle of the drawable area (without border and without titlebar)
-		virtual core::rect<s32> getClientRect() const;
-
-		//! Writes attributes of the element.
-		virtual void serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options) const;
-
-		//! Reads attributes of the element
-		virtual void deserializeAttributes(io::IAttributes* in, io::SAttributeReadWriteOptions* options);
-
 	protected:
-
-		void updateClientRect();
 
 		IGUIButton* CloseButton;
 		IGUIButton* MinButton;
 		IGUIButton* RestoreButton;
-		core::rect<s32> ClientRect;
 
 		core::position2d<s32> DragStart;
-		bool Dragging, IsDraggable;
-        bool DrawBackground;
-        bool DrawTitlebar;
-		bool IsActive;
+		bool Dragging;
 	};
 
 } // end namespace gui

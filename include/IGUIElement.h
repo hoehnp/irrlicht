@@ -28,7 +28,7 @@ public:
 
 	//! Constructor
 	IGUIElement(EGUI_ELEMENT_TYPE type, IGUIEnvironment* environment, IGUIElement* parent,
-		s32 id, const core::rect<s32>& rectangle)
+		s32 id, core::rect<s32> rectangle)
 		: Parent(0), RelativeRect(rectangle), AbsoluteRect(rectangle),
 		AbsoluteClippingRect(rectangle), DesiredRect(rectangle),
 		MaxSize(0,0), MinSize(1,1), IsVisible(true), IsEnabled(true),
@@ -42,9 +42,15 @@ public:
 
 		// if we were given a parent to attach to
 		if (parent)
+			parent->addChild(this);
+
+		// if we succeeded in becoming a child
+		if (Parent)
 		{
-			parent->addChildToEnd(this);
-			recalculateAbsolutePosition(true);
+			LastParentRect = Parent->getAbsolutePosition();
+			AbsoluteRect += LastParentRect.UpperLeftCorner;
+			AbsoluteClippingRect = AbsoluteRect;
+			AbsoluteClippingRect.clipAgainst(Parent->AbsoluteClippingRect);
 		}
 	}
 
@@ -154,7 +160,6 @@ public:
 	void setNotClipped(bool noClip)
 	{
 		NoClip = noClip;
-		updateAbsolutePosition();
 	}
 
 
@@ -168,7 +173,7 @@ public:
 
 	//! Sets the maximum size allowed for this element
 	/** If set to 0,0, there is no maximum size */
-	void setMaxSize(core::dimension2du size)
+	void setMaxSize(core::dimension2di size)
 	{
 		MaxSize = size;
 		updateAbsolutePosition();
@@ -176,7 +181,7 @@ public:
 
 
 	//! Sets the minimum size allowed for this element
-	void setMinSize(core::dimension2du size)
+	void setMinSize(core::dimension2di size)
 	{
 		MinSize = size;
 		if (MinSize.Width < 1)
@@ -215,7 +220,120 @@ public:
 	//! Updates the absolute position.
 	virtual void updateAbsolutePosition()
 	{
-		recalculateAbsolutePosition(false);
+		core::rect<s32> parentAbsolute(0,0,0,0);
+		core::rect<s32> parentAbsoluteClip;
+		f32 fw=0.f, fh=0.f;
+
+		if (Parent)
+		{
+			parentAbsolute = Parent->AbsoluteRect;
+
+			if (NoClip)
+			{
+				IGUIElement* p=this;
+				while (p && p->Parent)
+					p = p->Parent;
+				parentAbsoluteClip = p->AbsoluteClippingRect;
+			}
+			else
+				parentAbsoluteClip = Parent->AbsoluteClippingRect;
+		}
+
+		const s32 diffx = parentAbsolute.getWidth() - LastParentRect.getWidth();
+		const s32 diffy = parentAbsolute.getHeight() - LastParentRect.getHeight();
+
+		if (AlignLeft == EGUIA_SCALE || AlignRight == EGUIA_SCALE)
+			fw = (f32)parentAbsolute.getWidth();
+
+		if (AlignTop == EGUIA_SCALE || AlignBottom == EGUIA_SCALE)
+			fh = (f32)parentAbsolute.getHeight();
+
+		switch (AlignLeft)
+		{
+			case EGUIA_UPPERLEFT:
+				break;
+			case EGUIA_LOWERRIGHT:
+				DesiredRect.UpperLeftCorner.X += diffx;
+				break;
+			case EGUIA_CENTER:
+				DesiredRect.UpperLeftCorner.X += diffx/2;
+				break;
+			case EGUIA_SCALE:
+				DesiredRect.UpperLeftCorner.X = (s32)(ScaleRect.UpperLeftCorner.X * fw);
+				break;
+		}
+
+		switch (AlignRight)
+		{
+			case EGUIA_UPPERLEFT:
+				break;
+			case EGUIA_LOWERRIGHT:
+				DesiredRect.LowerRightCorner.X += diffx;
+				break;
+			case EGUIA_CENTER:
+				DesiredRect.LowerRightCorner.X += diffx/2;
+				break;
+			case EGUIA_SCALE:
+				DesiredRect.LowerRightCorner.X = (s32)(ScaleRect.LowerRightCorner.X * fw);
+				break;
+		}
+
+		switch (AlignTop)
+		{
+			case EGUIA_UPPERLEFT:
+				break;
+			case EGUIA_LOWERRIGHT:
+				DesiredRect.UpperLeftCorner.Y += diffy;
+				break;
+			case EGUIA_CENTER:
+				DesiredRect.UpperLeftCorner.Y += diffy/2;
+				break;
+			case EGUIA_SCALE:
+				DesiredRect.UpperLeftCorner.Y = (s32)(ScaleRect.UpperLeftCorner.Y * fh);
+				break;
+		}
+
+		switch (AlignBottom)
+		{
+			case EGUIA_UPPERLEFT:
+				break;
+			case EGUIA_LOWERRIGHT:
+				DesiredRect.LowerRightCorner.Y += diffy;
+				break;
+			case EGUIA_CENTER:
+				DesiredRect.LowerRightCorner.Y += diffy/2;
+				break;
+			case EGUIA_SCALE:
+				DesiredRect.LowerRightCorner.Y = (s32)(ScaleRect.LowerRightCorner.Y * fh);
+				break;
+		}
+
+		RelativeRect = DesiredRect;
+
+		const s32 w = RelativeRect.getWidth();
+		const s32 h = RelativeRect.getHeight();
+
+		// make sure the desired rectangle is allowed
+		if (w < MinSize.Width)
+			RelativeRect.LowerRightCorner.X = RelativeRect.UpperLeftCorner.X + MinSize.Width;
+		if (h < MinSize.Height)
+			RelativeRect.LowerRightCorner.Y = RelativeRect.UpperLeftCorner.Y + MinSize.Height;
+		if (MaxSize.Width && w > MaxSize.Width)
+			RelativeRect.LowerRightCorner.X = RelativeRect.UpperLeftCorner.X + MaxSize.Width;
+		if (MaxSize.Height && h > MaxSize.Height)
+			RelativeRect.LowerRightCorner.Y = RelativeRect.UpperLeftCorner.Y + MaxSize.Height;
+
+		RelativeRect.repair();
+
+		AbsoluteRect = RelativeRect + parentAbsolute.UpperLeftCorner;
+
+		if (!Parent)
+			parentAbsoluteClip = AbsoluteRect;
+
+		AbsoluteClippingRect = AbsoluteRect;
+		AbsoluteClippingRect.clipAgainst(parentAbsoluteClip);
+
+		LastParentRect = parentAbsolute;
 
 		// update all children
 		core::list<IGUIElement*>::Iterator it = Children.begin();
@@ -237,7 +355,7 @@ public:
 	\param point: The point at which to find a GUI element.
 	\return The topmost GUI element at that point, or 0 if there are
 	no candidate elements at this point.
-	*/
+	 */
 	IGUIElement* getElementFromPoint(const core::position2d<s32>& point)
 	{
 		IGUIElement* target = 0;
@@ -247,7 +365,7 @@ public:
 
 		core::list<IGUIElement*>::Iterator it = Children.getLast();
 
-		if (isVisible())
+		if (IsVisible)
 		{
 			while(it != Children.end())
 			{
@@ -259,7 +377,7 @@ public:
 			}
 		}
 
-		if (isVisible() && isPointInside(point))
+		if (IsVisible && isPointInside(point))
 			target = this;
 
 		return target;
@@ -277,12 +395,16 @@ public:
 	//! Adds a GUI element as new child of this element.
 	virtual void addChild(IGUIElement* child)
 	{
-		addChildToEnd(child);
 		if (child)
 		{
-			child->updateAbsolutePosition();
+			child->grab();
+			child->remove(); // remove from old parent
+			child->LastParentRect = getAbsolutePosition();
+			child->Parent = this;
+			Children.push_back(child);
 		}
 	}
+
 
 	//! Removes a child.
 	virtual void removeChild(IGUIElement* child)
@@ -310,24 +432,24 @@ public:
 	//! Draws the element and its children.
 	virtual void draw()
 	{
-		if ( isVisible() )
-		{
-			core::list<IGUIElement*>::Iterator it = Children.begin();
-			for (; it != Children.end(); ++it)
-				(*it)->draw();
-		}
+		if (!IsVisible)
+			return;
+
+		core::list<IGUIElement*>::Iterator it = Children.begin();
+		for (; it != Children.end(); ++it)
+			(*it)->draw();
 	}
 
 
 	//! animate the element and its children.
 	virtual void OnPostRender(u32 timeMs)
 	{
-		if ( isVisible() )
-		{
-			core::list<IGUIElement*>::Iterator it = Children.begin();
-			for (; it != Children.end(); ++it)
-				(*it)->OnPostRender( timeMs );
-		}
+		if (!IsVisible)
+			return;
+
+		core::list<IGUIElement*>::Iterator it = Children.begin();
+		for (; it != Children.end(); ++it)
+			(*it)->OnPostRender( timeMs );
 	}
 
 
@@ -683,20 +805,6 @@ public:
 		return Type;
 	}
 
-	//! Returns true if the gui element supports the given type.
-	/** This is mostly used to check if you can cast a gui element to the class that goes with the type.
-	Most gui elements will only support their own type, but if you derive your own classes from interfaces
-	you can overload this function and add a check for the type of the base-class additionally.
-	This allows for checks comparable to the dynamic_cast of c++ with enabled rtti.
-	Note that you can't do that by calling BaseClass::hasType(type), but you have to do an explicit
-	comparison check, because otherwise the base class usually just checks for the membervariable
-	Type which contains the type of your derived class.
-	*/
-	virtual bool hasType(EGUI_ELEMENT_TYPE type) const
-	{
-		return type == Type;
-	}
-
 
 	//! Returns the type name of the gui element.
 	/** This is needed serializing elements. For serializing your own elements, override this function
@@ -717,6 +825,7 @@ public:
 		out->addRect("Rect", DesiredRect);
 		out->addPosition2d("MinSize", core::position2di(MinSize.Width, MinSize.Height));
 		out->addPosition2d("MaxSize", core::position2di(MaxSize.Width, MaxSize.Height));
+		out->addBool("NoClip", NoClip);
 		out->addEnum("LeftAlign", AlignLeft, GUIAlignmentNames);
 		out->addEnum("RightAlign", AlignRight, GUIAlignmentNames);
 		out->addEnum("TopAlign", AlignTop, GUIAlignmentNames);
@@ -726,7 +835,6 @@ public:
 		out->addBool("TabStop", IsTabStop);
 		out->addBool("TabGroup", IsTabGroup);
 		out->addInt("TabOrder", TabOrder);
-		out->addBool("NoClip", NoClip);
 	}
 
 
@@ -744,162 +852,18 @@ public:
 		TabOrder = in->getAttributeAsInt("TabOrder");
 
 		core::position2di p = in->getAttributeAsPosition2d("MaxSize");
-		setMaxSize(core::dimension2du(p.X,p.Y));
+		setMaxSize(core::dimension2di(p.X,p.Y));
 
 		p = in->getAttributeAsPosition2d("MinSize");
-		setMinSize(core::dimension2du(p.X,p.Y));
+		setMinSize(core::dimension2di(p.X,p.Y));
 
+		setNotClipped(in->getAttributeAsBool("NoClip"));
 		setAlignment((EGUI_ALIGNMENT) in->getAttributeAsEnumeration("LeftAlign", GUIAlignmentNames),
 			(EGUI_ALIGNMENT)in->getAttributeAsEnumeration("RightAlign", GUIAlignmentNames),
 			(EGUI_ALIGNMENT)in->getAttributeAsEnumeration("TopAlign", GUIAlignmentNames),
 			(EGUI_ALIGNMENT)in->getAttributeAsEnumeration("BottomAlign", GUIAlignmentNames));
 
 		setRelativePosition(in->getAttributeAsRect("Rect"));
-
-		setNotClipped(in->getAttributeAsBool("NoClip"));
-	}
-
-protected:
-	// not virtual because needed in constructor
-	void addChildToEnd(IGUIElement* child)
-	{
-		if (child)
-		{
-			child->grab(); // prevent destruction when removed
-			child->remove(); // remove from old parent
-			child->LastParentRect = getAbsolutePosition();
-			child->Parent = this;
-			Children.push_back(child);
-		}
-	}
-
-	// not virtual because needed in constructor
-	void recalculateAbsolutePosition(bool recursive)
-	{
-		core::rect<s32> parentAbsolute(0,0,0,0);
-		core::rect<s32> parentAbsoluteClip;
-		f32 fw=0.f, fh=0.f;
-
-		if (Parent)
-		{
-			parentAbsolute = Parent->AbsoluteRect;
-
-			if (NoClip)
-			{
-				IGUIElement* p=this;
-				while (p && p->Parent)
-					p = p->Parent;
-				parentAbsoluteClip = p->AbsoluteClippingRect;
-			}
-			else
-				parentAbsoluteClip = Parent->AbsoluteClippingRect;
-		}
-
-		const s32 diffx = parentAbsolute.getWidth() - LastParentRect.getWidth();
-		const s32 diffy = parentAbsolute.getHeight() - LastParentRect.getHeight();
-
-		if (AlignLeft == EGUIA_SCALE || AlignRight == EGUIA_SCALE)
-			fw = (f32)parentAbsolute.getWidth();
-
-		if (AlignTop == EGUIA_SCALE || AlignBottom == EGUIA_SCALE)
-			fh = (f32)parentAbsolute.getHeight();
-
-		switch (AlignLeft)
-		{
-			case EGUIA_UPPERLEFT:
-				break;
-			case EGUIA_LOWERRIGHT:
-				DesiredRect.UpperLeftCorner.X += diffx;
-				break;
-			case EGUIA_CENTER:
-				DesiredRect.UpperLeftCorner.X += diffx/2;
-				break;
-			case EGUIA_SCALE:
-				DesiredRect.UpperLeftCorner.X = core::round32(ScaleRect.UpperLeftCorner.X * fw);
-				break;
-		}
-
-		switch (AlignRight)
-		{
-			case EGUIA_UPPERLEFT:
-				break;
-			case EGUIA_LOWERRIGHT:
-				DesiredRect.LowerRightCorner.X += diffx;
-				break;
-			case EGUIA_CENTER:
-				DesiredRect.LowerRightCorner.X += diffx/2;
-				break;
-			case EGUIA_SCALE:
-				DesiredRect.LowerRightCorner.X = core::round32(ScaleRect.LowerRightCorner.X * fw);
-				break;
-		}
-
-		switch (AlignTop)
-		{
-			case EGUIA_UPPERLEFT:
-				break;
-			case EGUIA_LOWERRIGHT:
-				DesiredRect.UpperLeftCorner.Y += diffy;
-				break;
-			case EGUIA_CENTER:
-				DesiredRect.UpperLeftCorner.Y += diffy/2;
-				break;
-			case EGUIA_SCALE:
-				DesiredRect.UpperLeftCorner.Y = core::round32(ScaleRect.UpperLeftCorner.Y * fh);
-				break;
-		}
-
-		switch (AlignBottom)
-		{
-			case EGUIA_UPPERLEFT:
-				break;
-			case EGUIA_LOWERRIGHT:
-				DesiredRect.LowerRightCorner.Y += diffy;
-				break;
-			case EGUIA_CENTER:
-				DesiredRect.LowerRightCorner.Y += diffy/2;
-				break;
-			case EGUIA_SCALE:
-				DesiredRect.LowerRightCorner.Y = core::round32(ScaleRect.LowerRightCorner.Y * fh);
-				break;
-		}
-
-		RelativeRect = DesiredRect;
-
-		const s32 w = RelativeRect.getWidth();
-		const s32 h = RelativeRect.getHeight();
-
-		// make sure the desired rectangle is allowed
-		if (w < (s32)MinSize.Width)
-			RelativeRect.LowerRightCorner.X = RelativeRect.UpperLeftCorner.X + MinSize.Width;
-		if (h < (s32)MinSize.Height)
-			RelativeRect.LowerRightCorner.Y = RelativeRect.UpperLeftCorner.Y + MinSize.Height;
-		if (MaxSize.Width && w > (s32)MaxSize.Width)
-			RelativeRect.LowerRightCorner.X = RelativeRect.UpperLeftCorner.X + MaxSize.Width;
-		if (MaxSize.Height && h > (s32)MaxSize.Height)
-			RelativeRect.LowerRightCorner.Y = RelativeRect.UpperLeftCorner.Y + MaxSize.Height;
-
-		RelativeRect.repair();
-
-		AbsoluteRect = RelativeRect + parentAbsolute.UpperLeftCorner;
-
-		if (!Parent)
-			parentAbsoluteClip = AbsoluteRect;
-
-		AbsoluteClippingRect = AbsoluteRect;
-		AbsoluteClippingRect.clipAgainst(parentAbsoluteClip);
-
-		LastParentRect = parentAbsolute;
-
-		if ( recursive )
-		{
-			// update all children
-			core::list<IGUIElement*>::Iterator it = Children.begin();
-			for (; it != Children.end(); ++it)
-			{
-				(*it)->recalculateAbsolutePosition(recursive);
-			}
-		}
 	}
 
 protected:
@@ -930,7 +894,7 @@ protected:
 	core::rect<f32> ScaleRect;
 
 	//! maximum and minimum size of the element
-	core::dimension2du MaxSize, MinSize;
+	core::dimension2di MaxSize, MinSize;
 
 	//! is visible?
 	bool IsVisible;

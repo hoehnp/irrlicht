@@ -1,6 +1,7 @@
 
 #include "testUtils.h"
-
+#include "irrlicht.h"
+#include <assert.h>
 using namespace irr;
 using namespace core;
 using namespace scene;
@@ -9,7 +10,7 @@ using namespace video;
 bool terrainSceneNode(void)
 {
     IrrlichtDevice *device =
-        createDevice(video::EDT_OPENGL, dimension2du(160, 120), 32);
+        createDevice(video::EDT_OPENGL, dimension2di(160, 120), 32);
 
     IVideoDriver* driver = device->getVideoDriver();
     ISceneManager* smgr = device->getSceneManager();
@@ -45,7 +46,7 @@ bool terrainSceneNode(void)
 	driver->endScene();
 
 	// Note that this has to be a slightly fuzzier than usual compare to satisfy multiple OpenGL environments
-	bool result = takeScreenshotAndCompareAgainstReference(driver, "-terrainSceneNode-1.png", 98.22f);
+	bool result = takeScreenshotAndCompareAgainstReference(driver, "-terrainSceneNode-1.png", 98.27f);
 	if(!result)
 	{
 		logTestString("Small camera up rotation caused bad recalc.\n");
@@ -60,7 +61,7 @@ bool terrainSceneNode(void)
 	smgr->drawAll();
 	driver->endScene();
 
-	result &= takeScreenshotAndCompareAgainstReference(driver, "-terrainSceneNode-2.png", 98.83f);
+	result &= takeScreenshotAndCompareAgainstReference(driver, "-terrainSceneNode-2.png", 98.9f);
 	if(!result)
 	{
 		logTestString("Large camera up rotation caused bad recalc.\n");

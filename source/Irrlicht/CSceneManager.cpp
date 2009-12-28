@@ -17,6 +17,8 @@
 
 #include "os.h"
 
+#include "CGeometryCreator.h"
+
 #ifdef _IRR_COMPILE_WITH_IRR_MESH_LOADER_
 #include "CIrrMeshFileLoader.h"
 #endif
@@ -89,10 +91,6 @@
 #include "CSTLMeshFileLoader.h"
 #endif
 
-#ifdef _IRR_COMPILE_WITH_PLY_LOADER_
-#include "CPLYMeshFileLoader.h"
-#endif
-
 #ifdef _IRR_COMPILE_WITH_COLLADA_WRITER_
 #include "CColladaMeshWriter.h"
 #endif
@@ -109,14 +107,10 @@
 #include "COBJMeshWriter.h"
 #endif
 
-#ifdef _IRR_COMPILE_WITH_PLY_WRITER_
-#include "CPLYMeshWriter.h"
-#endif
-
 #include "CCubeSceneNode.h"
 #include "CSphereSceneNode.h"
 #include "CAnimatedMeshSceneNode.h"
-#include "COctreeSceneNode.h"
+#include "COctTreeSceneNode.h"
 #include "CCameraSceneNode.h"
 
 #include "CLightSceneNode.h"
@@ -134,7 +128,7 @@
 
 #include "CSceneCollisionManager.h"
 #include "CTriangleSelector.h"
-#include "COctreeTriangleSelector.h"
+#include "COctTreeTriangleSelector.h"
 #include "CTriangleBBSelector.h"
 #include "CMetaTriangleSelector.h"
 #include "CTerrainTriangleSelector.h"
@@ -152,7 +146,6 @@
 
 #include "CQuake3ShaderSceneNode.h"
 #include "CVolumeLightSceneNode.h"
-#include "CGeometryCreator.h"
 
 //! Enable debug features
 #define SCENEMANAGER_DEBUG
@@ -169,7 +162,7 @@ CSceneManager::CSceneManager(video::IVideoDriver* driver, io::IFileSystem* fs,
 : ISceneNode(0, 0), Driver(driver), FileSystem(fs), GUIEnvironment(gui),
 	CursorControl(cursorControl), CollisionManager(0),
 	ActiveCamera(0), ShadowColor(150,0,0,0), AmbientLight(0,0,0,0),
-	MeshCache(cache), CurrentRendertime(ESNRP_NONE), LightManager(0),
+	MeshCache(cache), CurrentRendertime(ESNRP_COUNT),
 	IRR_XML_FORMAT_SCENE(L"irr_scene"), IRR_XML_FORMAT_NODE(L"node"), IRR_XML_FORMAT_NODE_ATTR_TYPE(L"type")
 {
 	#ifdef _DEBUG
@@ -179,10 +172,6 @@ CSceneManager::CSceneManager(video::IVideoDriver* driver, io::IFileSystem* fs,
 
 	// root node's scene manager
 	SceneManager = this;
-
-	// set scene parameters
-	Parameters.setAttribute( DEBUG_NORMAL_LENGTH, 1.f );
-	Parameters.setAttribute( DEBUG_NORMAL_COLOR, video::SColor(255, 34, 221, 221));
 
 	if (Driver)
 		Driver->grab();
@@ -204,9 +193,6 @@ CSceneManager::CSceneManager(video::IVideoDriver* driver, io::IFileSystem* fs,
 
 	// create collision manager
 	CollisionManager = new CSceneCollisionManager(this, Driver);
-
-	// create geometry creator
-	GeometryCreator = new CGeometryCreator();
 
 	// add file format loaders
 
@@ -253,7 +239,7 @@ CSceneManager::CSceneManager(video::IVideoDriver* driver, io::IFileSystem* fs,
 	MeshLoaderList.push_back(new COBJMeshFileLoader(this, FileSystem));
 	#endif
 	#ifdef _IRR_COMPILE_WITH_MD3_LOADER_
-	MeshLoaderList.push_back(new CMD3MeshFileLoader( this));
+	MeshLoaderList.push_back(new CMD3MeshFileLoader());
 	#endif
 	#ifdef _IRR_COMPILE_WITH_B3D_LOADER_
 	MeshLoaderList.push_back(new CB3DMeshFileLoader(this));
@@ -263,9 +249,6 @@ CSceneManager::CSceneManager(video::IVideoDriver* driver, io::IFileSystem* fs,
 	#endif
 	#ifdef _IRR_COMPILE_WITH_STL_LOADER_
 	MeshLoaderList.push_back(new CSTLMeshFileLoader());
-	#endif
-	#ifdef _IRR_COMPILE_WITH_PLY_LOADER_
-	MeshLoaderList.push_back(new CPLYMeshFileLoader());
 	#endif
 
 	// factories
@@ -277,6 +260,7 @@ CSceneManager::CSceneManager(video::IVideoDriver* driver, io::IFileSystem* fs,
 	registerSceneNodeAnimatorFactory(animatorFactory);
 	animatorFactory->drop();
 }
+
 
 
 //! destructor
@@ -292,9 +276,6 @@ CSceneManager::~CSceneManager()
 
 	if (CollisionManager)
 		CollisionManager->drop();
-
-	if (GeometryCreator)
-		GeometryCreator->drop();
 
 	if (GUIEnvironment)
 		GUIEnvironment->drop();
@@ -317,18 +298,8 @@ CSceneManager::~CSceneManager()
 	for (i=0; i<SceneNodeAnimatorFactoryList.size(); ++i)
 		SceneNodeAnimatorFactoryList[i]->drop();
 
-	//! force to remove hardwareTextures from the driver
-	//! because Scenes may hold internally data bounded to sceneNodes
-	//! which may be destroyed twice
-	if (Driver)
-		Driver->removeAllHardwareBuffers ();
-
-	if(LightManager)
-		LightManager->drop();
-
 	// remove all nodes and animators before dropping the driver
 	// as render targets may be destroyed twice
-
 	removeAll();
 	removeAnimators();
 
@@ -338,23 +309,25 @@ CSceneManager::~CSceneManager()
 
 
 //! gets an animateable mesh. loads it if needed. returned pointer must not be dropped.
-IAnimatedMesh* CSceneManager::getMesh(const io::path& filename)
+IAnimatedMesh* CSceneManager::getMesh(const c8* filename)
 {
-	IAnimatedMesh* msh = MeshCache->getMeshByName(filename);
+	IAnimatedMesh* msh = MeshCache->getMeshByFilename(filename);
 	if (msh)
 		return msh;
 
 	io::IReadFile* file = FileSystem->createAndOpenFile(filename);
 	if (!file)
 	{
-		os::Printer::log("Could not load mesh, because file could not be opened: ", filename, ELL_ERROR);
+		os::Printer::log("Could not load mesh, because file could not be opened.", filename, ELL_ERROR);
 		return 0;
 	}
 
+	core::stringc name = filename;
+	name.make_lower();
 	s32 count = MeshLoaderList.size();
 	for (s32 i=count-1; i>=0; --i)
 	{
-		if (MeshLoaderList[i]->isALoadableFileExtension(filename))
+		if (MeshLoaderList[i]->isALoadableFileExtension(name.c_str()))
 		{
 			// reset file to avoid side effects of previous calls to createMesh
 			file->seek(0);
@@ -385,15 +358,16 @@ IAnimatedMesh* CSceneManager::getMesh(io::IReadFile* file)
 	if (!file)
 		return 0;
 
-	io::path name = file->getFileName();
-	IAnimatedMesh* msh = MeshCache->getMeshByName(file->getFileName());
+	core::stringc name = file->getFileName();
+	IAnimatedMesh* msh = MeshCache->getMeshByFilename(file->getFileName());
 	if (msh)
 		return msh;
 
+	name.make_lower();
 	s32 count = MeshLoaderList.size();
 	for (s32 i=count-1; i>=0; --i)
 	{
-		if (MeshLoaderList[i]->isALoadableFileExtension(name))
+		if (MeshLoaderList[i]->isALoadableFileExtension(name.c_str()))
 		{
 			// reset file to avoid side effects of previous calls to createMesh
 			file->seek(0);
@@ -428,15 +402,6 @@ gui::IGUIEnvironment* CSceneManager::getGUIEnvironment()
 {
 	return GUIEnvironment;
 }
-
-//! Get the active FileSystem
-/** \return Pointer to the FileSystem
-This pointer should not be dropped. See IReferenceCounted::drop() for more information. */
-io::IFileSystem* CSceneManager::getFileSystem()
-{
-	return FileSystem;
-}
-
 
 
 //! Adds a text scene node, which is able to display
@@ -485,9 +450,9 @@ IBillboardTextSceneNode* CSceneManager::addBillboardTextSceneNode(gui::IGUIFont*
 
 
 //! Adds a scene node, which can render a quake3 shader
-IMeshSceneNode* CSceneManager::addQuake3SceneNode(IMeshBuffer* meshBuffer,
-					const quake3::IShader * shader,
-					ISceneNode* parent, s32 id )
+ISceneNode* CSceneManager::addQuake3SceneNode(IMeshBuffer* meshBuffer,
+					const quake3::SShader * shader,
+					ISceneNode* parent, s32 id)
 {
 #ifdef _IRR_COMPILE_WITH_BSP_LOADER_
 	if ( 0 == shader )
@@ -496,9 +461,7 @@ IMeshSceneNode* CSceneManager::addQuake3SceneNode(IMeshBuffer* meshBuffer,
 	if (!parent)
 		parent = this;
 
-	CQuake3ShaderSceneNode* node = new CQuake3ShaderSceneNode( parent,
-		this, id, FileSystem,
-		meshBuffer, shader );
+	CQuake3ShaderSceneNode* node = new CQuake3ShaderSceneNode( parent, this, id, FileSystem, meshBuffer, shader );
 	node->drop();
 
 	return node;
@@ -507,14 +470,12 @@ IMeshSceneNode* CSceneManager::addQuake3SceneNode(IMeshBuffer* meshBuffer,
 #endif
 }
 
-
 //! adds Volume Lighting Scene Node.
 //! the returned pointer must not be dropped.
-IVolumeLightSceneNode* CSceneManager::addVolumeLightSceneNode(
-		ISceneNode* parent, s32 id,
-		const u32 subdivU, const u32 subdivV,
-		const video::SColor foot, const video::SColor tail,
-		const core::vector3df& position, const core::vector3df& rotation, const core::vector3df& scale)
+IVolumeLightSceneNode* CSceneManager::addVolumeLightSceneNode(ISceneNode* parent, s32 id,
+	const u32 subdivU, const u32 subdivV,
+	const video::SColor foot, const video::SColor tail,
+	const core::vector3df& position, const core::vector3df& rotation, const core::vector3df& scale)
 {
 	if (!parent)
 		parent = this;
@@ -524,7 +485,6 @@ IVolumeLightSceneNode* CSceneManager::addVolumeLightSceneNode(
 
 	return node;
 }
-
 
 //! adds a test scene node for test purposes to the scene. It is a simple cube of (1,1,1) size.
 //! the returned pointer must not be dropped.
@@ -615,25 +575,25 @@ IAnimatedMeshSceneNode* CSceneManager::addAnimatedMeshSceneNode(IAnimatedMesh* m
 }
 
 
-//! Adds a scene node for rendering using a octree to the scene graph. This a good method for rendering
+//! Adds a scene node for rendering using a octtree to the scene graph. This a good method for rendering
 //! scenes with lots of geometry. The Octree is built on the fly from the mesh, much
 //! faster then a bsp tree.
-IMeshSceneNode* CSceneManager::addOctreeSceneNode(IAnimatedMesh* mesh, ISceneNode* parent,
+ISceneNode* CSceneManager::addOctTreeSceneNode(IAnimatedMesh* mesh, ISceneNode* parent,
 			s32 id, s32 minimalPolysPerNode, bool alsoAddIfMeshPointerZero)
 {
 	if (!alsoAddIfMeshPointerZero && (!mesh || !mesh->getFrameCount()))
 		return 0;
 
-	return addOctreeSceneNode(mesh ? mesh->getMesh(0) : 0,
+	return addOctTreeSceneNode(mesh ? mesh->getMesh(0) : 0,
 				parent, id, minimalPolysPerNode,
 				alsoAddIfMeshPointerZero);
 }
 
 
-//! Adds a scene node for rendering using a octree. This a good method for rendering
+//! Adss a scene node for rendering using a octtree. This a good method for rendering
 //! scenes with lots of geometry. The Octree is built on the fly from the mesh, much
 //! faster then a bsp tree.
-IMeshSceneNode* CSceneManager::addOctreeSceneNode(IMesh* mesh, ISceneNode* parent,
+ISceneNode* CSceneManager::addOctTreeSceneNode(IMesh* mesh, ISceneNode* parent,
 		s32 id, s32 minimalPolysPerNode, bool alsoAddIfMeshPointerZero)
 {
 	if (!alsoAddIfMeshPointerZero && !mesh)
@@ -642,13 +602,12 @@ IMeshSceneNode* CSceneManager::addOctreeSceneNode(IMesh* mesh, ISceneNode* paren
 	if (!parent)
 		parent = this;
 
-	COctreeSceneNode* node = new COctreeSceneNode(parent, this, id, minimalPolysPerNode);
+	COctTreeSceneNode* node = new COctTreeSceneNode(parent, this, id, minimalPolysPerNode);
 
-	if (node)
-	{
-		node->setMesh(mesh);
-		node->drop();
-	}
+	if (mesh)
+		node->createTree(mesh);
+
+	node->drop();
 
 	return node;
 }
@@ -661,64 +620,65 @@ IMeshSceneNode* CSceneManager::addOctreeSceneNode(IMesh* mesh, ISceneNode* paren
 //! the camera will move too.
 //! \return Returns pointer to interface to camera
 ICameraSceneNode* CSceneManager::addCameraSceneNode(ISceneNode* parent,
-	const core::vector3df& position, const core::vector3df& lookat, s32 id,
-	bool makeActive)
+	const core::vector3df& position, const core::vector3df& lookat, s32 id)
 {
 	if (!parent)
 		parent = this;
 
 	ICameraSceneNode* node = new CCameraSceneNode(parent, this, id, position, lookat);
+	node->drop();
 
-	if (makeActive)
-		setActiveCamera(node);
+	setActiveCamera(node);
+
+	return node;
+}
+
+
+//! Adds a camera scene node which is able to be controlld with the mouse similar
+//! to in the 3D Software Maya by Alias Wavefront.
+//! The returned pointer must not be dropped.
+ICameraSceneNode* CSceneManager::addCameraSceneNodeMaya(ISceneNode* parent,
+	f32 rotateSpeed, f32 zoomSpeed, f32 translationSpeed, s32 id)
+{
+	if (!parent)
+		parent = this;
+
+	ICameraSceneNode* node = new CCameraSceneNode(parent, this, id);
+	ISceneNodeAnimator* anm = new CSceneNodeAnimatorCameraMaya(CursorControl, 
+		rotateSpeed, zoomSpeed, translationSpeed);
+
+	node->addAnimator(anm);
+	setActiveCamera(node);
+
+	anm->drop();
 	node->drop();
 
 	return node;
 }
 
 
-//! Adds a camera scene node which is able to be controlled with the mouse similar
-//! to in the 3D Software Maya by Alias Wavefront.
-//! The returned pointer must not be dropped.
-ICameraSceneNode* CSceneManager::addCameraSceneNodeMaya(ISceneNode* parent,
-	f32 rotateSpeed, f32 zoomSpeed, f32 translationSpeed, s32 id,
-	bool makeActive)
-{
-	ICameraSceneNode* node = addCameraSceneNode(parent, core::vector3df(),
-			core::vector3df(0,0,100), id, makeActive);
-	if (node)
-	{
-		ISceneNodeAnimator* anm = new CSceneNodeAnimatorCameraMaya(CursorControl,
-			rotateSpeed, zoomSpeed, translationSpeed);
-
-		node->addAnimator(anm);
-		anm->drop();
-	}
-
-	return node;
-}
-
-
-//! Adds a camera scene node which is able to be controlled with the mouse and keys
+//! Adds a camera scene node which is able to be controled with the mouse and keys
 //! like in most first person shooters (FPS):
 ICameraSceneNode* CSceneManager::addCameraSceneNodeFPS(ISceneNode* parent,
-	f32 rotateSpeed, f32 moveSpeed, s32 id, SKeyMap* keyMapArray,
-	s32 keyMapSize, bool noVerticalMovement, f32 jumpSpeed,
-	bool invertMouseY, bool makeActive)
+	f32 rotateSpeed, f32 moveSpeed, s32 id,
+	SKeyMap* keyMapArray, s32 keyMapSize, bool noVerticalMovement,f32 jumpSpeed)
 {
-	ICameraSceneNode* node = addCameraSceneNode(parent, core::vector3df(),
-			core::vector3df(0,0,100), id, makeActive);
-	if (node)
-	{
-		ISceneNodeAnimator* anm = new CSceneNodeAnimatorCameraFPS(CursorControl,
-				rotateSpeed, moveSpeed, jumpSpeed,
-				keyMapArray, keyMapSize, noVerticalMovement, invertMouseY);
+	if (!parent)
+		parent = this;
 
-		// Bind the node's rotation to its target. This is consistent with 1.4.2 and below.
-		node->bindTargetAndRotation(true);
-		node->addAnimator(anm);
-		anm->drop();
-	}
+	ICameraSceneNode* node = new CCameraSceneNode(parent, this, id);
+	ISceneNodeAnimator* anm = new CSceneNodeAnimatorCameraFPS(CursorControl,
+			rotateSpeed, moveSpeed, jumpSpeed,
+			keyMapArray, keyMapSize, noVerticalMovement);
+
+	// Bind the node's rotation to its target. This is consistent with 1.4.2 and below.
+	node->bindTargetAndRotation(true);
+
+	node->addAnimator(anm);
+	setActiveCamera(node);
+
+	anm->drop();
+	node->drop();
 
 	return node;
 }
@@ -759,6 +719,7 @@ IBillboardSceneNode* CSceneManager::addBillboardSceneNode(ISceneNode* parent,
 }
 
 
+
 //! Adds a skybox scene node. A skybox is a big cube with 6 textures on it and
 //! is drawn around the camera position.
 ISceneNode* CSceneManager::addSkyBoxSceneNode(video::ITexture* top, video::ITexture* bottom,
@@ -779,14 +740,14 @@ ISceneNode* CSceneManager::addSkyBoxSceneNode(video::ITexture* top, video::IText
 //! Adds a skydome scene node. A skydome is a large (half-) sphere with a
 //! panoramic texture on it and is drawn around the camera position.
 ISceneNode* CSceneManager::addSkyDomeSceneNode(video::ITexture* texture,
-	u32 horiRes, u32 vertRes, f32 texturePercentage,f32 spherePercentage, f32 radius,
-	ISceneNode* parent, s32 id)
+	u32 horiRes, u32 vertRes, f64 texturePercentage,
+	f64 spherePercentage, ISceneNode* parent, s32 id)
 {
 	if (!parent)
 		parent = this;
 
 	ISceneNode* node = new CSkyDomeSceneNode(texture, horiRes, vertRes,
-		texturePercentage, spherePercentage, radius, parent, this, id);
+		texturePercentage, spherePercentage, parent, this, id);
 
 	node->drop();
 	return node;
@@ -812,7 +773,7 @@ IParticleSystemSceneNode* CSceneManager::addParticleSystemSceneNode(
 
 //! Adds a terrain scene node to the scene graph.
 ITerrainSceneNode* CSceneManager::addTerrainSceneNode(
-	const io::path& heightMapFileName,
+	const char* heightMapFileName,
 	ISceneNode* parent, s32 id,
 	const core::vector3df& position,
 	const core::vector3df& rotation,
@@ -912,17 +873,20 @@ IDummyTransformationSceneNode* CSceneManager::addDummyTransformationSceneNode(
 //! specify a name for the mesh, because the mesh is added to the mesh pool,
 //! and can be retrieved again using ISceneManager::getMesh with the name as
 //! parameter.
-IAnimatedMesh* CSceneManager::addHillPlaneMesh(const io::path& name,
+IAnimatedMesh* CSceneManager::addHillPlaneMesh(const c8* name,
 		const core::dimension2d<f32>& tileSize,
 		const core::dimension2d<u32>& tileCount,
 		video::SMaterial* material, f32 hillHeight,
 		const core::dimension2d<f32>& countHills,
 		const core::dimension2d<f32>& textureRepeatCount)
 {
-	if (MeshCache->isMeshLoaded(name))
-		return MeshCache->getMeshByName(name);
+	if (!name)
+		return 0;
 
-	IMesh* mesh = GeometryCreator->createHillPlaneMesh(tileSize,
+	if (MeshCache->isMeshLoaded(name))
+		return MeshCache->getMeshByFilename(name);
+
+	IMesh* mesh = CGeometryCreator::createHillPlaneMesh(tileSize,
 			tileCount, material, hillHeight, countHills,
 			textureRepeatCount);
 	if (!mesh)
@@ -947,16 +911,19 @@ IAnimatedMesh* CSceneManager::addHillPlaneMesh(const io::path& name,
 
 
 //! Adds a terrain mesh to the mesh pool.
-IAnimatedMesh* CSceneManager::addTerrainMesh(const io::path& name,
+IAnimatedMesh* CSceneManager::addTerrainMesh(const c8* name,
 	video::IImage* texture, video::IImage* heightmap,
 	const core::dimension2d<f32>& stretchSize,
 	f32 maxHeight,
-	const core::dimension2d<u32>& defaultVertexBlockSize)
+	const core::dimension2d<s32>& defaultVertexBlockSize)
 {
-	if (MeshCache->isMeshLoaded(name))
-		return MeshCache->getMeshByName(name);
+	if (!name)
+		return 0;
 
-	IMesh* mesh = GeometryCreator->createTerrainMesh(texture, heightmap,
+	if (MeshCache->isMeshLoaded(name))
+		return MeshCache->getMeshByFilename(name);
+
+	IMesh* mesh = CGeometryCreator::createTerrainMesh(texture, heightmap,
 			stretchSize, maxHeight, getVideoDriver(),
 			defaultVertexBlockSize);
 	if (!mesh)
@@ -979,17 +946,19 @@ IAnimatedMesh* CSceneManager::addTerrainMesh(const io::path& name,
 	return animatedMesh;
 }
 
-
 //! Adds an arrow mesh to the mesh pool.
-IAnimatedMesh* CSceneManager::addArrowMesh(const io::path& name,
+IAnimatedMesh* CSceneManager::addArrowMesh(const c8* name,
 		video::SColor vtxColor0, video::SColor vtxColor1,
 		u32 tesselationCylinder, u32 tesselationCone, f32 height,
 		f32 cylinderHeight, f32 width0,f32 width1)
 {
-	if (MeshCache->isMeshLoaded(name))
-		return MeshCache->getMeshByName(name);
+	if (!name)
+		return 0;
 
-	IMesh* mesh = GeometryCreator->createArrowMesh( tesselationCylinder,
+	if (MeshCache->isMeshLoaded(name))
+		return MeshCache->getMeshByFilename(name);
+
+	IMesh* mesh = CGeometryCreator::createArrowMesh( tesselationCylinder,
 			tesselationCone, height, cylinderHeight, width0,width1,
 			vtxColor0, vtxColor1);
 	if (!mesh)
@@ -1013,14 +982,18 @@ IAnimatedMesh* CSceneManager::addArrowMesh(const io::path& name,
 }
 
 
+
 //! Adds a static sphere mesh to the mesh pool.
-IAnimatedMesh* CSceneManager::addSphereMesh(const io::path& name,
+IAnimatedMesh* CSceneManager::addSphereMesh(const c8* name,
 		f32 radius, u32 polyCountX, u32 polyCountY)
 {
-	if (MeshCache->isMeshLoaded(name))
-		return MeshCache->getMeshByName(name);
+	if (!name)
+		return 0;
 
-	IMesh* mesh = GeometryCreator->createSphereMesh(radius, polyCountX, polyCountY);
+	if (MeshCache->isMeshLoaded(name))
+		return MeshCache->getMeshByFilename(name);
+
+	IMesh* mesh = CGeometryCreator::createSphereMesh(radius, polyCountX, polyCountY);
 	if (!mesh)
 		return 0;
 
@@ -1041,36 +1014,6 @@ IAnimatedMesh* CSceneManager::addSphereMesh(const io::path& name,
 	return animatedMesh;
 }
 
-
-
-//! Adds a static volume light mesh to the mesh pool.
-IAnimatedMesh* CSceneManager::addVolumeLightMesh(const io::path& name,
-		const u32 SubdivideU, const u32 SubdivideV,
-		const video::SColor FootColor, const video::SColor TailColor)
-{
-	if (MeshCache->isMeshLoaded(name))
-		return MeshCache->getMeshByName(name);
-
-	IMesh* mesh = GeometryCreator->createVolumeLightMesh(SubdivideU, SubdivideV, FootColor, TailColor);
-	if (!mesh)
-		return 0;
-
-	SAnimatedMesh* animatedMesh = new SAnimatedMesh();
-	if (!animatedMesh)
-	{
-		mesh->drop();
-		return 0;
-	}
-
-	animatedMesh->addMesh(mesh);
-	mesh->drop();
-	animatedMesh->recalculateBoundingBox();
-
-	MeshCache->addMesh(name, animatedMesh);
-	animatedMesh->drop();
-
-	return animatedMesh;
-}
 
 
 //! Returns the root scene node. This is the scene node wich is parent
@@ -1087,7 +1030,7 @@ ISceneNode* CSceneManager::getRootSceneNode()
 //! Returns the current active camera.
 //! \return The active camera is returned. Note that this can be NULL, if there
 //! was no camera created yet.
-ICameraSceneNode* CSceneManager::getActiveCamera() const
+ICameraSceneNode* CSceneManager::getActiveCamera()
 {
 	return ActiveCamera;
 }
@@ -1097,8 +1040,8 @@ ICameraSceneNode* CSceneManager::getActiveCamera() const
 //! \param camera: The new camera which should be active.
 void CSceneManager::setActiveCamera(ICameraSceneNode* camera)
 {
-	if (camera)
-		camera->grab();
+    if (camera)
+        camera->grab();
 	if (ActiveCamera)
 		ActiveCamera->drop();
 
@@ -1123,7 +1066,7 @@ const core::aabbox3d<f32>& CSceneManager::getBoundingBox() const
 
 
 //! returns if node is culled
-bool CSceneManager::isCulled(const ISceneNode* node) const
+bool CSceneManager::isCulled(const ISceneNode* node)
 {
 	const ICameraSceneNode* cam = getActiveCamera();
 	if (!cam)
@@ -1155,8 +1098,8 @@ bool CSceneManager::isCulled(const ISceneNode* node) const
 			SViewFrustum frust = *cam->getViewFrustum();
 
 			//transform the frustum to the node's current absolute transformation
-			core::matrix4 invTrans(node->getAbsoluteTransformation(), core::matrix4::EM4CONST_INVERSE);
-			//invTrans.makeInverse();
+			core::matrix4 invTrans(node->getAbsoluteTransformation());
+			invTrans.makeInverse();
 			frust.transform(invTrans);
 
 			core::vector3df edges[8];
@@ -1196,8 +1139,8 @@ u32 CSceneManager::registerNodeForRendering(ISceneNode* node, E_SCENE_NODE_RENDE
 
 	switch(time)
 	{
-		// take camera if it is not already registered
-	case ESNRP_CAMERA:
+		// take camera if it doesn't exists
+		case ESNRP_CAMERA:
 		{
 			taken = 1;
 			for ( u32 i = 0; i != CameraList.size(); ++i )
@@ -1212,15 +1155,14 @@ u32 CSceneManager::registerNodeForRendering(ISceneNode* node, E_SCENE_NODE_RENDE
 			{
 				CameraList.push_back(node);
 			}
-		}
-		break;
+		}break;
 
 	case ESNRP_LIGHT:
 		// TODO: Point Light culling..
-		// Lighting model in irrlicht has to be redone..
+		// Lighting modell in irrlicht has to be redone..
 		//if (!isCulled(node))
 		{
-			LightList.push_back(static_cast<ILightSceneNode*>(node));
+			LightList.push_back(DistanceNodeEntry(node, camWorldPos));
 			taken = 1;
 		}
 		break;
@@ -1240,13 +1182,6 @@ u32 CSceneManager::registerNodeForRendering(ISceneNode* node, E_SCENE_NODE_RENDE
 		if (!isCulled(node))
 		{
 			TransparentNodeList.push_back(TransparentNodeEntry(node, camWorldPos));
-			taken = 1;
-		}
-		break;
-	case ESNRP_TRANSPARENT_EFFECT:
-		if (!isCulled(node))
-		{
-			TransparentEffectNodeList.push_back(TransparentNodeEntry(node, camWorldPos));
 			taken = 1;
 		}
 		break;
@@ -1286,7 +1221,7 @@ u32 CSceneManager::registerNodeForRendering(ISceneNode* node, E_SCENE_NODE_RENDE
 		}
 		break;
 
-	case ESNRP_NONE: // ignore this one
+	case ESNRP_COUNT: // ignore this one
 		break;
 	}
 
@@ -1304,7 +1239,6 @@ u32 CSceneManager::registerNodeForRendering(ISceneNode* node, E_SCENE_NODE_RENDE
 	return taken;
 }
 
-
 //! This method is called just before the rendering process of the whole scene.
 //! draws all scene nodes
 void CSceneManager::drawAll()
@@ -1315,11 +1249,7 @@ void CSceneManager::drawAll()
 	// reset attributes
 	Parameters.setAttribute ( "culled", 0 );
 	Parameters.setAttribute ( "calls", 0 );
-	Parameters.setAttribute ( "drawn_solid", 0 );
-	Parameters.setAttribute ( "drawn_transparent", 0 );
-	Parameters.setAttribute ( "drawn_transparent_effect", 0 );
-
-	u32 i; // new ISO for scoping problem in some compilers
+	Parameters.setAttribute ( "drawn", 0 );
 
 	// reset all transforms
 	video::IVideoDriver* driver = getVideoDriver();
@@ -1329,8 +1259,10 @@ void CSceneManager::drawAll()
 		driver->setTransform ( video::ETS_PROJECTION, core::IdentityMatrix );
 		driver->setTransform ( video::ETS_VIEW, core::IdentityMatrix );
 		driver->setTransform ( video::ETS_WORLD, core::IdentityMatrix );
-		for (i=video::ETS_COUNT-1; i>=video::ETS_TEXTURE_0; --i)
-			driver->setTransform ( (video::E_TRANSFORMATION_STATE)i, core::IdentityMatrix );
+		driver->setTransform ( video::ETS_TEXTURE_0, core::IdentityMatrix );
+		driver->setTransform ( video::ETS_TEXTURE_1, core::IdentityMatrix );
+		driver->setTransform ( video::ETS_TEXTURE_2, core::IdentityMatrix );
+		driver->setTransform ( video::ETS_TEXTURE_3, core::IdentityMatrix );
 	}
 
 	driver->setAllowZWriteOnTransparent(Parameters.getAttributeAsBool( ALLOW_ZWRITE_ON_TRANSPARENT) );
@@ -1345,246 +1277,92 @@ void CSceneManager::drawAll()
 	camWorldPos.set(0,0,0);
 	if ( ActiveCamera )
 	{
-		ActiveCamera->render();
+		ActiveCamera->OnRegisterSceneNode();
 		camWorldPos = ActiveCamera->getAbsolutePosition();
 	}
 
 	// let all nodes register themselves
 	OnRegisterSceneNode();
 
-	if(LightManager)
-		LightManager->OnPreRender(LightList);
+	u32 i; // new ISO for scoping problem in some compilers
 
 	//render camera scenes
 	{
 		CurrentRendertime = ESNRP_CAMERA;
-		Driver->getOverrideMaterial().Enabled = ((Driver->getOverrideMaterial().EnablePasses & CurrentRendertime) != 0);
-
-		if(LightManager)
-			LightManager->OnRenderPassPreRender(CurrentRendertime);
-
 		for (i=0; i<CameraList.size(); ++i)
 			CameraList[i]->render();
 
 		CameraList.set_used(0);
-
-		if(LightManager)
-			LightManager->OnRenderPassPostRender(CurrentRendertime);
 	}
 
 	//render lights scenes
 	{
 		CurrentRendertime = ESNRP_LIGHT;
-		Driver->getOverrideMaterial().Enabled = ((Driver->getOverrideMaterial().EnablePasses & CurrentRendertime) != 0);
-
-		if(LightManager)
-		{
-			LightManager->OnRenderPassPreRender(CurrentRendertime);
-		}
-		else
-		{
-			// Sort the lights by distance from the camera
-			core::vector3df camWorldPos(0, 0, 0);
-			if(ActiveCamera)
-				camWorldPos = ActiveCamera->getAbsolutePosition();
-
-			core::array<DistanceNodeEntry> SortedLights;
-			SortedLights.set_used(LightList.size());
-			for(s32 light = (s32)LightList.size() - 1; light >= 0; --light)
-				SortedLights[light].setNodeAndDistanceFromPosition(LightList[light], camWorldPos);
-
-			SortedLights.set_sorted(false);
-			SortedLights.sort();
-
-			for(s32 light = (s32)LightList.size() - 1; light >= 0; --light)
-				LightList[light] = static_cast<ILightSceneNode*>(SortedLights[light].Node);
-		}
 
 		Driver->deleteAllDynamicLights();
 
 		Driver->setAmbientLight(AmbientLight);
 
-		u32 maxLights = LightList.size();
+		LightList.sort();		// on distance to camera
 
-		if(!LightManager)
-			maxLights = core::min_ ( Driver->getMaximalDynamicLightAmount(), maxLights);
-
+		u32 maxLights = core::min_ ( Driver->getMaximalDynamicLightAmount(), LightList.size() );
 		for (i=0; i< maxLights; ++i)
-			LightList[i]->render();
+			LightList[i].Node->render();
 
-		if(LightManager)
-			LightManager->OnRenderPassPostRender(CurrentRendertime);
+		LightList.set_used(0);
 	}
 
 	// render skyboxes
 	{
 		CurrentRendertime = ESNRP_SKY_BOX;
-		Driver->getOverrideMaterial().Enabled = ((Driver->getOverrideMaterial().EnablePasses & CurrentRendertime) != 0);
 
-		if(LightManager)
-		{
-			LightManager->OnRenderPassPreRender(CurrentRendertime);
-			for (i=0; i<SkyBoxList.size(); ++i)
-			{
-				ISceneNode* node = SkyBoxList[i];
-				LightManager->OnNodePreRender(node);
-				node->render();
-				LightManager->OnNodePostRender(node);
-			}
-		}
-		else
-		{
-			for (i=0; i<SkyBoxList.size(); ++i)
-				SkyBoxList[i]->render();
-		}
+		for (i=0; i<SkyBoxList.size(); ++i)
+			SkyBoxList[i]->render();
 
 		SkyBoxList.set_used(0);
-
-		if(LightManager)
-			LightManager->OnRenderPassPostRender(CurrentRendertime);
 	}
 
 
 	// render default objects
 	{
 		CurrentRendertime = ESNRP_SOLID;
-		Driver->getOverrideMaterial().Enabled = ((Driver->getOverrideMaterial().EnablePasses & CurrentRendertime) != 0);
-
 		SolidNodeList.sort(); // sort by textures
 
-		if(LightManager)
-		{
-			LightManager->OnRenderPassPreRender(CurrentRendertime);
-			for (i=0; i<SolidNodeList.size(); ++i)
-			{
-				ISceneNode* node = SolidNodeList[i].Node;
-				LightManager->OnNodePreRender(node);
-				node->render();
-				LightManager->OnNodePostRender(node);
-			}
-		}
-		else
-		{
-			for (i=0; i<SolidNodeList.size(); ++i)
-				SolidNodeList[i].Node->render();
-		}
+		for (i=0; i<SolidNodeList.size(); ++i)
+			SolidNodeList[i].Node->render();
 
-		Parameters.setAttribute ( "drawn_solid", (s32) SolidNodeList.size() );
+		Parameters.setAttribute ( "drawn", (s32) SolidNodeList.size() );
+
 		SolidNodeList.set_used(0);
-
-		if(LightManager)
-			LightManager->OnRenderPassPostRender(CurrentRendertime);
 	}
 
 	// render shadows
 	{
 		CurrentRendertime = ESNRP_SHADOW;
-		Driver->getOverrideMaterial().Enabled = ((Driver->getOverrideMaterial().EnablePasses & CurrentRendertime) != 0);
-
-		if(LightManager)
-		{
-			LightManager->OnRenderPassPreRender(CurrentRendertime);
-			for (i=0; i<ShadowNodeList.size(); ++i)
-			{
-				ISceneNode* node = ShadowNodeList[i];
-				LightManager->OnNodePreRender(node);
-				node->render();
-				LightManager->OnNodePostRender(node);
-			}
-		}
-		else
-		{
-			for (i=0; i<ShadowNodeList.size(); ++i)
-				ShadowNodeList[i]->render();
-		}
+		for (i=0; i<ShadowNodeList.size(); ++i)
+			ShadowNodeList[i]->render();
 
 		if (!ShadowNodeList.empty())
 			Driver->drawStencilShadow(true,ShadowColor, ShadowColor,
 				ShadowColor, ShadowColor);
 
 		ShadowNodeList.set_used(0);
-
-		if(LightManager)
-			LightManager->OnRenderPassPostRender(CurrentRendertime);
 	}
 
 	// render transparent objects.
 	{
 		CurrentRendertime = ESNRP_TRANSPARENT;
-		Driver->getOverrideMaterial().Enabled = ((Driver->getOverrideMaterial().EnablePasses & CurrentRendertime) != 0);
-
 		TransparentNodeList.sort(); // sort by distance from camera
-		if(LightManager)
-		{
-			LightManager->OnRenderPassPreRender(CurrentRendertime);
 
-			for (i=0; i<TransparentNodeList.size(); ++i)
-			{
-				ISceneNode* node = TransparentNodeList[i].Node;
-				LightManager->OnNodePreRender(node);
-				node->render();
-				LightManager->OnNodePostRender(node);
-			}
-		}
-		else
-		{
-			for (i=0; i<TransparentNodeList.size(); ++i)
-				TransparentNodeList[i].Node->render();
-		}
+		for (i=0; i<TransparentNodeList.size(); ++i)
+			TransparentNodeList[i].Node->render();
 
-		Parameters.setAttribute ( "drawn_transparent", (s32) TransparentNodeList.size() );
 		TransparentNodeList.set_used(0);
-
-		if(LightManager)
-			LightManager->OnRenderPassPostRender(CurrentRendertime);
 	}
 
-	// render transparent effect objects.
-	{
-		CurrentRendertime = ESNRP_TRANSPARENT_EFFECT;
-		Driver->getOverrideMaterial().Enabled = ((Driver->getOverrideMaterial().EnablePasses & CurrentRendertime) != 0);
-
-		TransparentEffectNodeList.sort(); // sort by distance from camera
-
-		if(LightManager)
-		{
-			LightManager->OnRenderPassPreRender(CurrentRendertime);
-
-			for (i=0; i<TransparentEffectNodeList.size(); ++i)
-			{
-				ISceneNode* node = TransparentEffectNodeList[i].Node;
-				LightManager->OnNodePreRender(node);
-				node->render();
-				LightManager->OnNodePostRender(node);
-			}
-		}
-		else
-		{
-			for (i=0; i<TransparentEffectNodeList.size(); ++i)
-				TransparentEffectNodeList[i].Node->render();
-		}
-
-		Parameters.setAttribute ( "drawn_transparent_effect", (s32) TransparentEffectNodeList.size() );
-		TransparentEffectNodeList.set_used(0);
-	}
-
-	if(LightManager)
-		LightManager->OnPostRender();
-
-	LightList.set_used(0);
 	clearDeletionList();
 
-	CurrentRendertime = ESNRP_NONE;
-}
-
-void CSceneManager::setLightManager(ILightManager* lightManager)
-{
-    if ( lightManager )
-        lightManager->grab();
-	if(LightManager)
-		LightManager->drop();
-
-	LightManager = lightManager;
+	CurrentRendertime = ESNRP_COUNT;
 }
 
 
@@ -1617,16 +1395,11 @@ ISceneNodeAnimator* CSceneManager::createRotationAnimator(const core::vector3df&
 //! creates a fly circle animator, which lets the attached scene node fly around a center.
 ISceneNodeAnimator* CSceneManager::createFlyCircleAnimator(
 		const core::vector3df& center, f32 radius, f32 speed,
-		const core::vector3df& direction,
-		f32 startPosition,
-		f32 radiusEllipsoid)
+		const core::vector3df& direction)
 {
-	const f32 orbitDurationMs = (core::DEGTORAD * 360.f) / speed;
-	const u32 effectiveTime = os::Timer::getTime() + (u32)(orbitDurationMs * startPosition);
-
 	ISceneNodeAnimator* anim = new CSceneNodeAnimatorFlyCircle(
-			effectiveTime, center,
-			radius, speed, direction,radiusEllipsoid);
+			os::Timer::getTime(), center,
+			radius, speed, direction);
 	return anim;
 }
 
@@ -1634,10 +1407,10 @@ ISceneNodeAnimator* CSceneManager::createFlyCircleAnimator(
 //! Creates a fly straight animator, which lets the attached scene node
 //! fly or move along a line between two points.
 ISceneNodeAnimator* CSceneManager::createFlyStraightAnimator(const core::vector3df& startPoint,
-					const core::vector3df& endPoint, u32 timeForWay, bool loop,bool pingpong)
+					const core::vector3df& endPoint, u32 timeForWay, bool loop)
 {
 	ISceneNodeAnimator* anim = new CSceneNodeAnimatorFlyStraight(startPoint,
-		endPoint, timeForWay, loop, os::Timer::getTime(), pingpong);
+		endPoint, timeForWay, loop, os::Timer::getTime());
 
 	return anim;
 }
@@ -1684,10 +1457,10 @@ ISceneNodeAnimatorCollisionResponse* CSceneManager::createCollisionResponseAnima
 //! Creates a follow spline animator.
 ISceneNodeAnimator* CSceneManager::createFollowSplineAnimator(s32 startTime,
 	const core::array< core::vector3df >& points,
-	f32 speed, f32 tightness, bool loop, bool pingpong)
+	f32 speed, f32 tightness)
 {
 	ISceneNodeAnimator* a = new CSceneNodeAnimatorFollowSpline(startTime, points,
-		speed, tightness, loop, pingpong);
+		speed, tightness);
 	return a;
 }
 
@@ -1721,22 +1494,12 @@ IMeshManipulator* CSceneManager::getMeshManipulator()
 //! Creates a simple ITriangleSelector, based on a mesh.
 ITriangleSelector* CSceneManager::createTriangleSelector(IMesh* mesh, ISceneNode* node)
 {
-	if (!mesh)
+	if (!mesh || !node)
 		return 0;
 
 	return new CTriangleSelector(mesh, node);
 }
 
-
-//! Creates a simple and updatable ITriangleSelector, based on a the mesh owned by an
-//! animated scene node
-ITriangleSelector* CSceneManager::createTriangleSelector(IAnimatedMeshSceneNode* node)
-{
-	if(!node || !node->getMesh())
-		return 0;
-
-	return new CTriangleSelector(node);
-}
 
 //! Creates a simple dynamic ITriangleSelector, based on a axis aligned bounding box.
 ITriangleSelector* CSceneManager::createTriangleSelectorFromBoundingBox(ISceneNode* node)
@@ -1749,14 +1512,14 @@ ITriangleSelector* CSceneManager::createTriangleSelectorFromBoundingBox(ISceneNo
 
 
 //! Creates a simple ITriangleSelector, based on a mesh.
-ITriangleSelector* CSceneManager::createOctreeTriangleSelector(IMesh* mesh,
+ITriangleSelector* CSceneManager::createOctTreeTriangleSelector(IMesh* mesh,
 																ISceneNode* node,
 																s32 minimalPolysPerNode)
 {
-	if (!mesh)
+	if (!mesh || !node)
 		return 0;
 
-	return new COctreeTriangleSelector(mesh, node, minimalPolysPerNode);
+	return new COctTreeTriangleSelector(mesh, node, minimalPolysPerNode);
 }
 
 
@@ -1816,8 +1579,8 @@ ISceneNode* CSceneManager::getSceneNodeFromName(const char* name, ISceneNode* st
 
 	ISceneNode* node = 0;
 
-	const ISceneNodeList& list = start->getChildren();
-	ISceneNodeList::ConstIterator it = list.begin();
+	const core::list<ISceneNode*>& list = start->getChildren();
+	core::list<ISceneNode*>::ConstIterator it = list.begin();
 	for (; it!=list.end(); ++it)
 	{
 		node = getSceneNodeFromName(name, *it);
@@ -1840,8 +1603,8 @@ ISceneNode* CSceneManager::getSceneNodeFromId(s32 id, ISceneNode* start)
 
 	ISceneNode* node = 0;
 
-	const ISceneNodeList& list = start->getChildren();
-	ISceneNodeList::ConstIterator it = list.begin();
+	const core::list<ISceneNode*>& list = start->getChildren();
+	core::list<ISceneNode*>::ConstIterator it = list.begin();
 	for (; it!=list.end(); ++it)
 	{
 		node = getSceneNodeFromId(id, *it);
@@ -1864,8 +1627,8 @@ ISceneNode* CSceneManager::getSceneNodeFromType(scene::ESCENE_NODE_TYPE type, IS
 
 	ISceneNode* node = 0;
 
-	const ISceneNodeList& list = start->getChildren();
-	ISceneNodeList::ConstIterator it = list.begin();
+	const core::list<ISceneNode*>& list = start->getChildren();
+	core::list<ISceneNode*>::ConstIterator it = list.begin();
 	for (; it!=list.end(); ++it)
 	{
 		node = getSceneNodeFromType(type, *it);
@@ -1885,8 +1648,8 @@ void CSceneManager::getSceneNodesFromType(ESCENE_NODE_TYPE type, core::array<sce
 	if (start->getType() == type || ESNT_ANY == type)
 		outNodes.push_back(start);
 
-	const ISceneNodeList& list = start->getChildren();
-	ISceneNodeList::ConstIterator it = list.begin();
+	const core::list<ISceneNode*>& list = start->getChildren();
+	core::list<ISceneNode*>::ConstIterator it = list.begin();
 
 	for (; it!=list.end(); ++it)
 	{
@@ -2032,7 +1795,7 @@ ISceneNodeAnimatorFactory* CSceneManager::getSceneNodeAnimatorFactory(u32 index)
 
 //! Saves the current scene into a file.
 //! \param filename: Name of the file .
-bool CSceneManager::saveScene(const io::path& filename, ISceneUserDataSerializer* userDataSerializer)
+bool CSceneManager::saveScene(const c8* filename, ISceneUserDataSerializer* userDataSerializer)
 {
 	bool ret = false;
 	io::IWriteFile* file = FileSystem->createAndWriteFile(filename);
@@ -2072,7 +1835,7 @@ bool CSceneManager::saveScene(io::IWriteFile* file, ISceneUserDataSerializer* us
 
 //! Loads a scene. Note that the current scene is not cleared before.
 //! \param filename: Name of the file .
-bool CSceneManager::loadScene(const io::path& filename, ISceneUserDataSerializer* userDataSerializer)
+bool CSceneManager::loadScene(const c8* filename, ISceneUserDataSerializer* userDataSerializer)
 {
 	bool ret = false;
 	io::IReadFile* read = FileSystem->createAndOpenFile(filename);
@@ -2395,7 +2158,7 @@ void CSceneManager::writeSceneNode(io::IXMLWriter* writer, ISceneNode* node, ISc
 		writer->writeElement(animatorElement);
 		writer->writeLineBreak();
 
-		ISceneNodeAnimatorList::ConstIterator it = node->getAnimators().begin();
+		core::list<ISceneNodeAnimator*>::ConstIterator it = node->getAnimators().begin();
 		for (; it != node->getAnimators().end(); ++it)
 		{
 			attr->clear();
@@ -2435,7 +2198,7 @@ void CSceneManager::writeSceneNode(io::IXMLWriter* writer, ISceneNode* node, ISc
 
 	// write children
 
-	ISceneNodeList::ConstIterator it = node->getChildren().begin();
+	core::list<ISceneNode*>::ConstIterator it = node->getChildren().begin();
 	for (; it != node->getChildren().end(); ++it)
 		writeSceneNode(writer, (*it), userDataSerializer);
 
@@ -2471,7 +2234,7 @@ ISceneNode* CSceneManager::addSceneNode(const char* sceneNodeTypeName, ISceneNod
 
 
 //! Returns a typename from a scene node animator type or null if not found
-const c8* CSceneManager::getAnimatorTypeName(ESCENE_NODE_ANIMATOR_TYPE type)
+const c8* CSceneManager::getAnimatorTypeName(ESCENE_NODE_ANIMATOR_TYPE type) const
 {
 	const char* name = 0;
 
@@ -2488,22 +2251,6 @@ void CSceneManager::serializeAttributes(io::IAttributes* out, io::SAttributeRead
 	out->addString	("Name", Name.c_str());
 	out->addInt	("Id", ID );
 	out->addColorf	("AmbientLight", AmbientLight);
-
-	// fog attributes from video driver
-	video::SColor color;
-	video::E_FOG_TYPE fogType;
-	f32 start, end, density;
-	bool pixelFog, rangeFog;
-
-	Driver->getFog(color, fogType, start, end, density, pixelFog, rangeFog);
-
-	out->addEnum("FogType", fogType, video::FogTypeNames);
-	out->addColorf("FogColor", color);
-	out->addFloat("FogStart", start);
-	out->addFloat("FogEnd", end);
-	out->addFloat("FogDensity", density);
-	out->addBool("FogPixel", pixelFog);
-	out->addBool("FogRange", rangeFog);
 }
 
 //! Reads attributes of the scene node.
@@ -2512,23 +2259,6 @@ void CSceneManager::deserializeAttributes(io::IAttributes* in, io::SAttributeRea
 	Name = in->getAttributeAsString("Name");
 	ID = in->getAttributeAsInt("Id");
 	AmbientLight = in->getAttributeAsColorf("AmbientLight");
-
-	// fog attributes
-	video::SColor color;
-	video::E_FOG_TYPE fogType;
-	f32 start, end, density;
-	bool pixelFog, rangeFog;
-	if (in->existsAttribute("FogType"))
-	{
-		fogType = (video::E_FOG_TYPE) in->getAttributeAsEnumeration("FogType", video::FogTypeNames);
-		color = in->getAttributeAsColorf("FogColor").toSColor();
-		start = in->getAttributeAsFloat("FogStart");
-		end = in->getAttributeAsFloat("FogEnd");
-		density = in->getAttributeAsFloat("FogDensity");
-		pixelFog = in->getAttributeAsBool("FogPixel");
-		rangeFog = in->getAttributeAsBool("FogRange");
-		Driver->setFog(color, fogType, start, end, density, pixelFog, rangeFog);
-	}
 
 	RelativeTranslation.set(0,0,0);
 	RelativeRotation.set(0,0,0);
@@ -2556,16 +2286,6 @@ const video::SColorf& CSceneManager::getAmbientLight() const
 }
 
 
-//! Get a skinned mesh, which is not available as header-only code
-ISkinnedMesh* CSceneManager::createSkinnedMesh()
-{
-#ifdef _IRR_COMPILE_WITH_SKINNED_MESH_SUPPORT_
-	return new CSkinnedMesh();
-#else
-	return 0;
-#endif
-}
-
 //! Returns a mesh writer implementation if available
 IMeshWriter* CSceneManager::createMeshWriter(EMESH_WRITER_TYPE type)
 {
@@ -2592,13 +2312,6 @@ IMeshWriter* CSceneManager::createMeshWriter(EMESH_WRITER_TYPE type)
 	case EMWT_OBJ:
 #ifdef _IRR_COMPILE_WITH_OBJ_WRITER_
 		return new COBJMeshWriter(this, FileSystem);
-#else
-		return 0;
-#endif
-
-	case EMWT_PLY:
-#ifdef _IRR_COMPILE_WITH_PLY_WRITER_
-		return new CPLYMeshWriter();
 #else
 		return 0;
 #endif

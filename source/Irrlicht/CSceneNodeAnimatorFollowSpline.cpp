@@ -9,13 +9,11 @@ namespace irr
 namespace scene
 {
 
-
 //! constructor
 CSceneNodeAnimatorFollowSpline::CSceneNodeAnimatorFollowSpline(u32 time,
 	const core::array<core::vector3df>& points, f32 speed,
-	f32 tightness, bool loop, bool pingpong)
-: ISceneNodeAnimatorFinishing(0), Points(points), Speed(speed), Tightness(tightness), StartTime(time)
-, Loop(loop), PingPong(pingpong)
+	f32 tightness)
+: Points(points), Speed(speed), Tightness(tightness), StartTime(time)
 {
 	#ifdef _DEBUG
 	setDebugName("CSceneNodeAnimatorFollowSpline");
@@ -32,42 +30,20 @@ inline s32 CSceneNodeAnimatorFollowSpline::clamp(s32 idx, s32 size)
 //! animates a scene node
 void CSceneNodeAnimatorFollowSpline::animateNode(ISceneNode* node, u32 timeMs)
 {
-	if(!node)
-		return;
-
 	const u32 pSize = Points.size();
 	if (pSize==0)
-	{
-		if ( !Loop )
-			HasFinished = true;
 		return;
-	}
 	if (pSize==1)
 	{
-		if ( timeMs > StartTime )
-		{
-			node->setPosition(Points[0]);
-			if ( !Loop )
-				HasFinished = true;
-		}
+		node->setPosition(Points[0]);
 		return;
 	}
 
 	const f32 dt = ( (timeMs-StartTime) * Speed * 0.001f );
-	const s32 unwrappedIdx = core::floor32( dt );
-	if ( !Loop && unwrappedIdx >= (s32)pSize-1 )
-	{
-		node->setPosition(Points[pSize-1]);
-		HasFinished = true;
-		return;
-	}
-	const bool pong = PingPong && (unwrappedIdx/(pSize-1))%2;
-	const f32 u =  pong ? 1.f-core::fract ( dt ) : core::fract ( dt );
-	const s32 idx = pong ?	(pSize-2) - (unwrappedIdx % (pSize-1))
-						: (PingPong ? unwrappedIdx % (pSize-1)
-									: unwrappedIdx % pSize);
+	const f32 u = core::fract ( dt );
+	const s32 idx = core::floor32( dt ) % pSize;
 	//const f32 u = 0.001f * fmodf( dt, 1000.0f );
-
+	
 	const core::vector3df& p0 = Points[ clamp( idx - 1, pSize ) ];
 	const core::vector3df& p1 = Points[ clamp( idx + 0, pSize ) ]; // starting point
 	const core::vector3df& p2 = Points[ clamp( idx + 1, pSize ) ]; // end point
@@ -93,8 +69,6 @@ void CSceneNodeAnimatorFollowSpline::serializeAttributes(io::IAttributes* out, i
 {
 	out->addFloat("Speed", Speed);
 	out->addFloat("Tightness", Tightness);
-	out->addBool("Loop", Loop);
-	out->addBool("PingPong", PingPong);
 
 	u32 count = Points.size();
 
@@ -120,8 +94,6 @@ void CSceneNodeAnimatorFollowSpline::deserializeAttributes(io::IAttributes* in, 
 {
 	Speed = in->getAttributeAsFloat("Speed");
 	Tightness = in->getAttributeAsFloat("Tightness");
-	Loop = in->getAttributeAsBool("Loop");
-	PingPong = in->getAttributeAsBool("PingPong");
 	Points.clear();
 
 	for(u32 i=1; true; ++i)
@@ -146,15 +118,13 @@ void CSceneNodeAnimatorFollowSpline::deserializeAttributes(io::IAttributes* in, 
 	}
 }
 
-
 ISceneNodeAnimator* CSceneNodeAnimatorFollowSpline::createClone(ISceneNode* node, ISceneManager* newManager)
 {
-	CSceneNodeAnimatorFollowSpline * newAnimator =
+	CSceneNodeAnimatorFollowSpline * newAnimator = 
 		new CSceneNodeAnimatorFollowSpline(StartTime, Points, Speed, Tightness);
 
 	return newAnimator;
 }
-
 
 } // end namespace scene
 } // end namespace irr

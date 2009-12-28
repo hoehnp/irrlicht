@@ -6,14 +6,13 @@
 #define __I_WRITE_FILE_H_INCLUDED__
 
 #include "IReferenceCounted.h"
-#include "path.h"
 
 namespace irr
 {
 namespace io
 {
 
-	//! Interface providing write access to a file.
+	//! Interface providing write acess to a file.
 	class IWriteFile : public virtual IReferenceCounted
 	{
 	public:
@@ -37,11 +36,11 @@ namespace io
 
 		//! Get name of file.
 		/** \return File name as zero terminated character string. */
-		virtual const path& getFileName() const = 0;
+		virtual const c8* getFileName() const = 0;
 	};
 
 	//! Internal function, please do not use.
-	IWriteFile* createWriteFile(const io::path& fileName, bool append);
+	IWriteFile* createWriteFile(const c8* fileName, bool append);
 
 } // end namespace io
 } // end namespace irr

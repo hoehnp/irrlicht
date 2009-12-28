@@ -16,20 +16,12 @@
 	// include windows headers for HWND
 	#define WIN32_LEAN_AND_MEAN
 	#include <windows.h>
-	#if defined(_IRR_OPENGL_USE_EXTPOINTER_)
-		#define GL_GLEXT_LEGACY 1
-	#endif
 	#include <GL/gl.h>
-	#if defined(_IRR_OPENGL_USE_EXTPOINTER_)
-		#include "glext.h"
-	#endif
-	#include "wglext.h"
-
-	#ifdef _MSC_VER
-		#pragma comment(lib, "OpenGL32.lib")
-	#endif
-
-#elif defined(_IRR_COMPILE_WITH_OSX_DEVICE_)
+	#include "glext.h"
+#ifdef _MSC_VER
+	#pragma comment(lib, "OpenGL32.lib")
+#endif
+#elif defined(_IRR_USE_OSX_DEVICE_)
 	#include "CIrrDeviceMacOSX.h"
 	#if defined(_IRR_OPENGL_USE_EXTPOINTER_)
 		#define GL_GLEXT_LEGACY 1
@@ -38,7 +30,7 @@
 	#if defined(_IRR_OPENGL_USE_EXTPOINTER_)
 		#include "glext.h"
 	#endif
-#elif defined(_IRR_COMPILE_WITH_SDL_DEVICE_) && !defined(_IRR_COMPILE_WITH_X11_DEVICE_)
+#elif defined(_IRR_USE_SDL_DEVICE_)
 	#if defined(_IRR_OPENGL_USE_EXTPOINTER_)
 		#define GL_GLEXT_LEGACY 1
 		#define GLX_GLXEXT_LEGACY 1
@@ -73,42 +65,24 @@ namespace irr
 namespace video
 {
 
-
 static const char* const OpenGLFeatureStrings[] = {
 	"GL_3DFX_multisample",
 	"GL_3DFX_tbuffer",
 	"GL_3DFX_texture_compression_FXT1",
-	"GL_AMD_draw_buffers_blend",
-	"GL_AMD_performance_monitor",
-	"GL_AMD_texture_texture4",
-	"GL_AMD_vertex_shader_tesselator",
-	"GL_APPLE_aux_depth_stencil",
 	"GL_APPLE_client_storage",
 	"GL_APPLE_element_array",
 	"GL_APPLE_fence",
-	"GL_APPLE_float_pixels",
 	"GL_APPLE_flush_buffer_range",
-	"GL_APPLE_object_purgeable",
-	"GL_APPLE_rgb_422",
-	"GL_APPLE_row_bytes",
 	"GL_APPLE_specular_vector",
-	"GL_APPLE_texture_range",
 	"GL_APPLE_transform_hint",
 	"GL_APPLE_vertex_array_object",
 	"GL_APPLE_vertex_array_range",
-	"GL_APPLE_vertex_program_evaluators",
 	"GL_APPLE_ycbcr_422",
 	"GL_ARB_color_buffer_float",
-	"GL_ARB_compatibility",
-	"GL_ARB_copy_buffer",
 	"GL_ARB_depth_buffer_float",
-	"GL_ARB_depth_clamp",
 	"GL_ARB_depth_texture",
 	"GL_ARB_draw_buffers",
-	"GL_ARB_draw_buffers_blend",
-	"GL_ARB_draw_elements_base_vertex",
 	"GL_ARB_draw_instanced",
-	"GL_ARB_fragment_coord_conventions",
 	"GL_ARB_fragment_program",
 	"GL_ARB_fragment_program_shadow",
 	"GL_ARB_fragment_shader",
@@ -127,36 +101,25 @@ static const char* const OpenGLFeatureStrings[] = {
 	"GL_ARB_pixel_buffer_object",
 	"GL_ARB_point_parameters",
 	"GL_ARB_point_sprite",
-	"GL_ARB_provoking_vertex",
-	"GL_ARB_sample_shading",
-	"GL_ARB_seamless_cube_map",
 	"GL_ARB_shader_objects",
-	"GL_ARB_shader_texture_lod",
 	"GL_ARB_shading_language_100",
 	"GL_ARB_shadow",
 	"GL_ARB_shadow_ambient",
-	"GL_ARB_sync",
 	"GL_ARB_texture_border_clamp",
 	"GL_ARB_texture_buffer_object",
 	"GL_ARB_texture_compression",
 	"GL_ARB_texture_compression_rgtc",
 	"GL_ARB_texture_cube_map",
-	"GL_ARB_texture_cube_map_array",
 	"GL_ARB_texture_env_add",
 	"GL_ARB_texture_env_combine",
 	"GL_ARB_texture_env_crossbar",
 	"GL_ARB_texture_env_dot3",
 	"GL_ARB_texture_float",
-	"GL_ARB_texture_gather",
 	"GL_ARB_texture_mirrored_repeat",
-	"GL_ARB_texture_multisample",
 	"GL_ARB_texture_non_power_of_two",
-	"GL_ARB_texture_query_lod",
 	"GL_ARB_texture_rectangle",
 	"GL_ARB_texture_rg",
 	"GL_ARB_transpose_matrix",
-	"GL_ARB_uniform_buffer_object",
-	"GL_ARB_vertex_array_bgra",
 	"GL_ARB_vertex_array_object",
 	"GL_ARB_vertex_blend",
 	"GL_ARB_vertex_buffer_object",
@@ -168,7 +131,6 @@ static const char* const OpenGLFeatureStrings[] = {
 	"GL_ATI_envmap_bumpmap",
 	"GL_ATI_fragment_shader",
 	"GL_ATI_map_object_buffer",
-	"GL_ATI_meminfo",
 	"GL_ATI_pixel_format_float",
 	"GL_ATI_pn_triangles",
 	"GL_ATI_separate_stencil",
@@ -228,10 +190,8 @@ static const char* const OpenGLFeatureStrings[] = {
 	"GL_EXT_pixel_transform_color_table",
 	"GL_EXT_point_parameters",
 	"GL_EXT_polygon_offset",
-	"GL_EXT_provoking_vertex",
 	"GL_EXT_rescale_normal",
 	"GL_EXT_secondary_color",
-	"GL_EXT_separate_shader_objects",
 	"GL_EXT_separate_specular_color",
 	"GL_EXT_shadow_funcs",
 	"GL_EXT_shared_texture_palette",
@@ -257,9 +217,7 @@ static const char* const OpenGLFeatureStrings[] = {
 	"GL_EXT_texture_object",
 	"GL_EXT_texture_perturb_normal",
 	"GL_EXT_texture_shared_exponent",
-	"GL_EXT_texture_snorm",
 	"GL_EXT_texture_sRGB",
-	"GL_EXT_texture_swizzle",
 	"GL_EXT_timer_query",
 	"GL_EXT_transform_feedback",
 	"GL_EXT_vertex_array",
@@ -292,11 +250,9 @@ static const char* const OpenGLFeatureStrings[] = {
 	"GL_NV_blend_square",
 	"GL_NV_conditional_render",
 	"GL_NV_copy_depth_to_color",
-	"GL_NV_copy_image",
 	"GL_NV_depth_buffer_float",
 	"GL_NV_depth_clamp",
 	"GL_NV_evaluators",
-	"GL_NV_explicit_multisample",
 	"GL_NV_fence",
 	"GL_NV_float_buffer",
 	"GL_NV_fog_distance",
@@ -314,17 +270,14 @@ static const char* const OpenGLFeatureStrings[] = {
 	"GL_NV_occlusion_query",
 	"GL_NV_packed_depth_stencil",
 	"GL_NV_parameter_buffer_object",
-	"GL_NV_parameter_buffer_object2",
 	"GL_NV_pixel_data_range",
 	"GL_NV_point_sprite",
 	"GL_NV_present_video",
 	"GL_NV_primitive_restart",
 	"GL_NV_register_combiners",
 	"GL_NV_register_combiners2",
-	"GL_NV_shader_buffer_load",
 	"GL_NV_texgen_emboss",
 	"GL_NV_texgen_reflection",
-	"GL_NV_texture_barrier",
 	"GL_NV_texture_compression_vtc",
 	"GL_NV_texture_env_combine4",
 	"GL_NV_texture_expand_normal",
@@ -333,17 +286,14 @@ static const char* const OpenGLFeatureStrings[] = {
 	"GL_NV_texture_shader2",
 	"GL_NV_texture_shader3",
 	"GL_NV_transform_feedback",
-	"GL_NV_transform_feedback2",
 	"GL_NV_vertex_array_range",
 	"GL_NV_vertex_array_range2",
-	"GL_NV_vertex_buffer_unified_memory",
 	"GL_NV_vertex_program",
 	"GL_NV_vertex_program1_1",
 	"GL_NV_vertex_program2",
 	"GL_NV_vertex_program2_option",
 	"GL_NV_vertex_program3",
 	"GL_NV_vertex_program4",
-	"GL_NV_video_capture",
 	"GL_OES_read_format",
 	"GL_OML_interlace",
 	"GL_OML_resample",
@@ -431,37 +381,20 @@ class COpenGLExtensionHandler
 		IRR_3DFX_multisample = 0,
 		IRR_3DFX_tbuffer,
 		IRR_3DFX_texture_compression_FXT1,
-		IRR_AMD_draw_buffers_blend,
-		IRR_AMD_performance_monitor,
-		IRR_AMD_texture_texture4,
-		IRR_AMD_vertex_shader_tesselator,
-		IRR_APPLE_aux_depth_stencil,
 		IRR_APPLE_client_storage,
 		IRR_APPLE_element_array,
 		IRR_APPLE_fence,
-		IRR_APPLE_float_pixels,
 		IRR_APPLE_flush_buffer_range,
-		IRR_APPLE_object_purgeable,
-		IRR_APPLE_rgb_422,
-		IRR_APPLE_row_bytes,
 		IRR_APPLE_specular_vector,
-		IRR_APPLE_texture_range,
 		IRR_APPLE_transform_hint,
 		IRR_APPLE_vertex_array_object,
 		IRR_APPLE_vertex_array_range,
-		IRR_APPLE_vertex_program_evaluators,
 		IRR_APPLE_ycbcr_422,
 		IRR_ARB_color_buffer_float,
-		IRR_ARB_compatibility,
-		IRR_ARB_copy_buffer,
 		IRR_ARB_depth_buffer_float,
-		IRR_ARB_depth_clamp,
 		IRR_ARB_depth_texture,
 		IRR_ARB_draw_buffers,
-		IRR_ARB_draw_buffers_blend,
-		IRR_ARB_draw_elements_base_vertex,
 		IRR_ARB_draw_instanced,
-		IRR_ARB_fragment_coord_conventions,
 		IRR_ARB_fragment_program,
 		IRR_ARB_fragment_program_shadow,
 		IRR_ARB_fragment_shader,
@@ -480,36 +413,25 @@ class COpenGLExtensionHandler
 		IRR_ARB_pixel_buffer_object,
 		IRR_ARB_point_parameters,
 		IRR_ARB_point_sprite,
-		IRR_ARB_provoking_vertex,
-		IRR_ARB_sample_shading,
-		IRR_ARB_seamless_cube_map,
 		IRR_ARB_shader_objects,
-		IRR_ARB_shader_texture_lod,
 		IRR_ARB_shading_language_100,
 		IRR_ARB_shadow,
 		IRR_ARB_shadow_ambient,
-		IRR_ARB_sync,
 		IRR_ARB_texture_border_clamp,
 		IRR_ARB_texture_buffer_object,
 		IRR_ARB_texture_compression,
 		IRR_ARB_texture_compression_rgtc,
 		IRR_ARB_texture_cube_map,
-		IRR_ARB_texture_cube_map_array,
 		IRR_ARB_texture_env_add,
 		IRR_ARB_texture_env_combine,
 		IRR_ARB_texture_env_crossbar,
 		IRR_ARB_texture_env_dot3,
 		IRR_ARB_texture_float,
-		IRR_ARB_texture_gather,
 		IRR_ARB_texture_mirrored_repeat,
-		IRR_ARB_texture_multisample,
 		IRR_ARB_texture_non_power_of_two,
-		IRR_ARB_texture_query_lod,
 		IRR_ARB_texture_rectangle,
 		IRR_ARB_texture_rg,
 		IRR_ARB_transpose_matrix,
-		IRR_ARB_uniform_buffer_object,
-		IRR_ARB_vertex_array_bgra,
 		IRR_ARB_vertex_array_object,
 		IRR_ARB_vertex_blend,
 		IRR_ARB_vertex_buffer_object,
@@ -521,7 +443,6 @@ class COpenGLExtensionHandler
 		IRR_ATI_envmap_bumpmap,
 		IRR_ATI_fragment_shader,
 		IRR_ATI_map_object_buffer,
-		IRR_ATI_meminfo,
 		IRR_ATI_pixel_format_float,
 		IRR_ATI_pn_triangles,
 		IRR_ATI_separate_stencil,
@@ -581,10 +502,8 @@ class COpenGLExtensionHandler
 		IRR_EXT_pixel_transform_color_table,
 		IRR_EXT_point_parameters,
 		IRR_EXT_polygon_offset,
-		IRR_EXT_provoking_vertex,
 		IRR_EXT_rescale_normal,
 		IRR_EXT_secondary_color,
-		IRR_EXT_separate_shader_objects,
 		IRR_EXT_separate_specular_color,
 		IRR_EXT_shadow_funcs,
 		IRR_EXT_shared_texture_palette,
@@ -610,9 +529,7 @@ class COpenGLExtensionHandler
 		IRR_EXT_texture_object,
 		IRR_EXT_texture_perturb_normal,
 		IRR_EXT_texture_shared_exponent,
-		IRR_EXT_texture_snorm,
 		IRR_EXT_texture_sRGB,
-		IRR_EXT_texture_swizzle,
 		IRR_EXT_timer_query,
 		IRR_EXT_transform_feedback,
 		IRR_EXT_vertex_array,
@@ -645,11 +562,9 @@ class COpenGLExtensionHandler
 		IRR_NV_blend_square,
 		IRR_NV_conditional_render,
 		IRR_NV_copy_depth_to_color,
-		IRR_NV_copy_image,
 		IRR_NV_depth_buffer_float,
 		IRR_NV_depth_clamp,
 		IRR_NV_evaluators,
-		IRR_NV_explicit_multisample,
 		IRR_NV_fence,
 		IRR_NV_float_buffer,
 		IRR_NV_fog_distance,
@@ -667,17 +582,14 @@ class COpenGLExtensionHandler
 		IRR_NV_occlusion_query,
 		IRR_NV_packed_depth_stencil,
 		IRR_NV_parameter_buffer_object,
-		IRR_NV_parameter_buffer_object2,
 		IRR_NV_pixel_data_range,
 		IRR_NV_point_sprite,
 		IRR_NV_present_video,
 		IRR_NV_primitive_restart,
 		IRR_NV_register_combiners,
 		IRR_NV_register_combiners2,
-		IRR_NV_shader_buffer_load,
 		IRR_NV_texgen_emboss,
 		IRR_NV_texgen_reflection,
-		IRR_NV_texture_barrier,
 		IRR_NV_texture_compression_vtc,
 		IRR_NV_texture_env_combine4,
 		IRR_NV_texture_expand_normal,
@@ -686,17 +598,14 @@ class COpenGLExtensionHandler
 		IRR_NV_texture_shader2,
 		IRR_NV_texture_shader3,
 		IRR_NV_transform_feedback,
-		IRR_NV_transform_feedback2,
 		IRR_NV_vertex_array_range,
 		IRR_NV_vertex_array_range2,
-		IRR_NV_vertex_buffer_unified_memory,
 		IRR_NV_vertex_program,
 		IRR_NV_vertex_program1_1,
 		IRR_NV_vertex_program2,
 		IRR_NV_vertex_program2_option,
 		IRR_NV_vertex_program3,
 		IRR_NV_vertex_program4,
-		IRR_NV_video_capture,
 		IRR_OES_read_format,
 		IRR_OML_interlace,
 		IRR_OML_resample,
@@ -799,29 +708,23 @@ class COpenGLExtensionHandler
 	// Some variables for properties
 	bool StencilBuffer;
 	bool MultiTextureExtension;
+	bool MultiSamplingExtension;
+	bool AnisotropyExtension;
 	bool TextureCompressionExtension;
 
 	// Some non-boolean properties
 	//! Maxmimum texture layers supported by the fixed pipeline
-	u8 MaxTextureUnits;
+	u32 MaxTextureUnits;
 	//! Maximum hardware lights supported
-	u8 MaxLights;
+	GLint MaxLights;
+	//! Optimal number of indices per meshbuffer
+	GLint MaxIndices;
 	//! Maximal Anisotropy
-	u8 MaxAnisotropy;
+	f32 MaxAnisotropy;
 	//! Number of user clipplanes
-	u8 MaxUserClipPlanes;
-	//! Number of auxiliary buffers
-	u8 MaxAuxBuffers;
+	u32 MaxUserClipPlanes;
 	//! Number of rendertargets available as MRTs
 	u8 MaxMultipleRenderTargets;
-	//! Optimal number of indices per meshbuffer
-	u32 MaxIndices;
-	//! Maximal texture dimension
-	u32 MaxTextureSize;
-	//! Maximal vertices handled by geometry shaders
-	u32 MaxGeometryVerticesOut;
-	//! Maximal LOD Bias
-	f32 MaxTextureLODBias;
 	//! Minimal and maximal supported thickness for lines without smoothing
 	GLfloat DimAliasedLine[2];
 	//! Minimal and maximal supported thickness for points without smoothing
@@ -832,9 +735,9 @@ class COpenGLExtensionHandler
 	GLfloat DimSmoothedPoint[2];
 
 	//! OpenGL version as Integer: 100*Major+Minor, i.e. 2.1 becomes 201
-	u16 Version;
+	u32 Version;
 	//! GLSL version as Integer: 100*Major+Minor
-	u16 ShaderLanguageVersion;
+	u32 ShaderLanguageVersion;
 
 	// public access to the (loaded) extensions.
 	// general functions
@@ -852,7 +755,6 @@ class COpenGLExtensionHandler
 	void extGlGenPrograms(GLsizei n, GLuint *programs);
 	void extGlBindProgram(GLenum target, GLuint program);
 	void extGlProgramString(GLenum target, GLenum format, GLsizei len, const GLvoid *string);
-	void extGlLoadProgram(GLenum target, GLuint id, GLsizei len, const GLubyte *string);
 	void extGlDeletePrograms(GLsizei n, const GLuint *programs);
 	void extGlProgramLocalParameter4fv(GLenum, GLuint, const GLfloat *);
 	GLhandleARB extGlCreateShaderObject(GLenum shaderType);
@@ -902,12 +804,6 @@ class COpenGLExtensionHandler
 	GLboolean extGlIsBuffer (GLuint buffer);
 	void extGlGetBufferParameteriv (GLenum target, GLenum pname, GLint *params);
 	void extGlGetBufferPointerv (GLenum target, GLenum pname, GLvoid **params);
-	void extGlProvokingVertex(GLenum mode);
-	void extGlColorMaskIndexed(GLuint buf, GLboolean r, GLboolean g, GLboolean b, GLboolean a);
-	void extGlEnableIndexed(GLenum target, GLuint index);
-	void extGlDisableIndexed(GLenum target, GLuint index);
-	void extGlBlendFuncIndexed(GLuint buf, GLenum src, GLenum dst);
-	void extGlProgramParameteri(GLhandleARB program, GLenum pname, GLint value);
 
 
 	protected:
@@ -918,13 +814,9 @@ class COpenGLExtensionHandler
 		PFNGLACTIVETEXTUREARBPROC pGlActiveTextureARB;
 		PFNGLCLIENTACTIVETEXTUREARBPROC	pGlClientActiveTextureARB;
 		PFNGLGENPROGRAMSARBPROC pGlGenProgramsARB;
-		PFNGLGENPROGRAMSNVPROC pGlGenProgramsNV;
 		PFNGLBINDPROGRAMARBPROC pGlBindProgramARB;
-		PFNGLBINDPROGRAMNVPROC pGlBindProgramNV;
-		PFNGLDELETEPROGRAMSARBPROC pGlDeleteProgramsARB;
-		PFNGLDELETEPROGRAMSNVPROC pGlDeleteProgramsNV;
 		PFNGLPROGRAMSTRINGARBPROC pGlProgramStringARB;
-		PFNGLLOADPROGRAMNVPROC pGlLoadProgramNV;
+		PFNGLDELETEPROGRAMSNVPROC pGlDeleteProgramsARB;
 		PFNGLPROGRAMLOCALPARAMETER4FVARBPROC pGlProgramLocalParameter4fvARB;
 		PFNGLCREATESHADEROBJECTARBPROC pGlCreateShaderObjectARB;
 		PFNGLSHADERSOURCEARBPROC pGlShaderSourceARB;
@@ -953,7 +845,10 @@ class COpenGLExtensionHandler
 		PFNGLSTENCILFUNCSEPARATEATIPROC pGlStencilFuncSeparateATI;
 		PFNGLSTENCILOPSEPARATEATIPROC pGlStencilOpSeparateATI;
 		PFNGLCOMPRESSEDTEXIMAGE2DPROC pGlCompressedTexImage2D;
-		#if defined(_IRR_LINUX_PLATFORM_) && defined(GLX_SGI_swap_control)
+		#ifdef _IRR_WINDOWS_API_
+		typedef BOOL (APIENTRY *PFNWGLSWAPINTERVALFARPROC)(int);
+		PFNWGLSWAPINTERVALFARPROC wglSwapIntervalEXT;
+		#elif defined(_IRR_LINUX_PLATFORM_) && defined(GLX_SGI_swap_control)
 		PFNGLXSWAPINTERVALSGIPROC glxSwapIntervalSGI;
 		#endif
 		PFNGLBINDFRAMEBUFFEREXTPROC pGlBindFramebufferEXT;
@@ -980,15 +875,6 @@ class COpenGLExtensionHandler
 		PFNGLISBUFFERARBPROC pGlIsBufferARB;
 		PFNGLGETBUFFERPARAMETERIVARBPROC pGlGetBufferParameterivARB;
 		PFNGLGETBUFFERPOINTERVARBPROC pGlGetBufferPointervARB;
-		PFNGLPROVOKINGVERTEXPROC pGlProvokingVertexARB;
-		PFNGLPROVOKINGVERTEXEXTPROC pGlProvokingVertexEXT;
-		PFNGLCOLORMASKINDEXEDEXTPROC pGlColorMaskIndexedEXT;
-		PFNGLENABLEINDEXEDEXTPROC pGlEnableIndexedEXT;
-		PFNGLDISABLEINDEXEDEXTPROC pGlDisableIndexedEXT;
-		PFNGLBLENDFUNCINDEXEDAMDPROC pGlBlendFuncIndexedAMD;
-		PFNGLBLENDFUNCIPROC pGlBlendFunciARB;
-		PFNGLPROGRAMPARAMETERIARBPROC pGlProgramParameteriARB;
-		PFNGLPROGRAMPARAMETERIEXTPROC pGlProgramParameteriEXT;
 	#endif
 };
 
@@ -998,12 +884,7 @@ inline void COpenGLExtensionHandler::extGlActiveTexture(GLenum texture)
 	if (MultiTextureExtension && pGlActiveTextureARB)
 		pGlActiveTextureARB(texture);
 #else
-	if (MultiTextureExtension)
-#ifdef GL_ARB_multitexture
-		glActiveTextureARB(texture);
-#else
-		glActiveTexture(texture);
-#endif
+	if (MultiTextureExtension) glActiveTextureARB(texture);
 #endif
 }
 
@@ -1013,8 +894,7 @@ inline void COpenGLExtensionHandler::extGlClientActiveTexture(GLenum texture)
 	if (MultiTextureExtension && pGlClientActiveTextureARB)
 		pGlClientActiveTextureARB(texture);
 #else
-	if (MultiTextureExtension)
-		glClientActiveTextureARB(texture);
+	if (MultiTextureExtension) glClientActiveTextureARB(texture);
 #endif
 }
 
@@ -1023,12 +903,8 @@ inline void COpenGLExtensionHandler::extGlGenPrograms(GLsizei n, GLuint *program
 #ifdef _IRR_OPENGL_USE_EXTPOINTER_
 	if (pGlGenProgramsARB)
 		pGlGenProgramsARB(n, programs);
-	else if (pGlGenProgramsNV)
-		pGlGenProgramsNV(n, programs);
-#elif defined(GL_ARB_vertex_program) || defined(GL_ARB_fragment_program)
+#elif defined(GL_ARB_vertex_program)
 	glGenProgramsARB(n,programs);
-#elif defined(GL_NV_vertex_program) || defined(GL_NV_fragment_program)
-	glGenProgramsNV(n,programs);
 #else
 	os::Printer::log("glGenPrograms not supported", ELL_ERROR);
 #endif
@@ -1039,12 +915,8 @@ inline void COpenGLExtensionHandler::extGlBindProgram(GLenum target, GLuint prog
 #ifdef _IRR_OPENGL_USE_EXTPOINTER_
 	if (pGlBindProgramARB)
 		pGlBindProgramARB(target, program);
-	else if (pGlBindProgramNV)
-		pGlBindProgramNV(target, program);
-#elif defined(GL_ARB_vertex_program) || defined(GL_ARB_fragment_program)
+#elif defined(GL_ARB_vertex_program)
 	glBindProgramARB(target, program);
-#elif defined(GL_NV_vertex_program) || defined(GL_NV_fragment_program)
-	glBindProgramNV(target, program);
 #else
 	os::Printer::log("glBindProgram not supported", ELL_ERROR);
 #endif
@@ -1055,22 +927,10 @@ inline void COpenGLExtensionHandler::extGlProgramString(GLenum target, GLenum fo
 #ifdef _IRR_OPENGL_USE_EXTPOINTER_
 	if (pGlProgramStringARB)
 		pGlProgramStringARB(target, format, len, string);
-#elif defined(GL_ARB_vertex_program) || defined(GL_ARB_fragment_program)
+#elif defined(GL_ARB_vertex_program)
 	glProgramStringARB(target,format,len,string);
 #else
 	os::Printer::log("glProgramString not supported", ELL_ERROR);
-#endif
-}
-
-inline void COpenGLExtensionHandler::extGlLoadProgram(GLenum target, GLuint id, GLsizei len, const GLubyte *string)
-{
-#ifdef _IRR_OPENGL_USE_EXTPOINTER_
-	if (pGlLoadProgramNV)
-		pGlLoadProgramNV(target, id, len, string);
-#elif defined(GL_NV_vertex_program) || defined(GL_NV_fragment_program)
-	glLoadProgramNV(target,id,len,string);
-#else
-	os::Printer::log("glLoadProgram not supported", ELL_ERROR);
 #endif
 }
 
@@ -1079,12 +939,8 @@ inline void COpenGLExtensionHandler::extGlDeletePrograms(GLsizei n, const GLuint
 #ifdef _IRR_OPENGL_USE_EXTPOINTER_
 	if (pGlDeleteProgramsARB)
 		pGlDeleteProgramsARB(n, programs);
-	else if (pGlDeleteProgramsNV)
-		pGlDeleteProgramsNV(n, programs);
-#elif defined(GL_ARB_vertex_program) || defined(GL_ARB_fragment_program)
+#elif defined(GL_ARB_vertex_program)
 	glDeleteProgramsARB(n,programs);
-#elif defined(GL_NV_vertex_program) || defined(GL_NV_fragment_program)
-	glDeleteProgramsNV(n,programs);
 #else
 	os::Printer::log("glDeletePrograms not supported", ELL_ERROR);
 #endif
@@ -1095,7 +951,7 @@ inline void COpenGLExtensionHandler::extGlProgramLocalParameter4fv(GLenum n, GLu
 #ifdef _IRR_OPENGL_USE_EXTPOINTER_
 	if (pGlProgramLocalParameter4fvARB)
 		pGlProgramLocalParameter4fvARB(n,i,f);
-#elif defined(GL_ARB_vertex_program) || defined(GL_ARB_fragment_program)
+#elif defined(GL_ARB_vertex_program)
 	glProgramLocalParameter4fvARB(n,i,f);
 #else
 	os::Printer::log("glProgramLocalParameter4fv not supported", ELL_ERROR);
@@ -1703,101 +1559,6 @@ inline void COpenGLExtensionHandler::extGlGetBufferPointerv (GLenum target, GLen
 	glGetBufferPointerv(target, pname, params);
 #else
 	os::Printer::log("glGetBufferPointerv not supported", ELL_ERROR);
-#endif
-}
-
-
-inline void COpenGLExtensionHandler::extGlProvokingVertex(GLenum mode)
-{
-#ifdef _IRR_OPENGL_USE_EXTPOINTER_
-	if (FeatureAvailable[IRR_ARB_provoking_vertex] && pGlProvokingVertexARB)
-		pGlProvokingVertexARB(mode);
-	else if (FeatureAvailable[IRR_EXT_provoking_vertex] && pGlProvokingVertexEXT)
-		pGlProvokingVertexEXT(mode);
-#elif defined(GL_ARB_provoking_vertex)
-	glProvokingVertex(mode);
-#elif defined(GL_EXT_provoking_vertex)
-	glProvokingVertexEXT(mode);
-#else
-	os::Printer::log("glProvokingVertex not supported", ELL_ERROR);
-#endif
-}
-
-
-inline void COpenGLExtensionHandler::extGlColorMaskIndexed(GLuint buf, GLboolean r, GLboolean g, GLboolean b, GLboolean a)
-{
-#ifdef _IRR_OPENGL_USE_EXTPOINTER_
-	if (FeatureAvailable[IRR_EXT_draw_buffers2] && pGlColorMaskIndexedEXT)
-		pGlColorMaskIndexedEXT(buf, r, g, b, a);
-#elif defined(GL_EXT_draw_buffers2)
-	glColorMaskIndexedEXT(buf, r, g, b, a);
-#else
-	os::Printer::log("glColorMaskIndexed not supported", ELL_ERROR);
-#endif
-}
-
-
-inline void COpenGLExtensionHandler::extGlEnableIndexed(GLenum target, GLuint index)
-{
-#ifdef _IRR_OPENGL_USE_EXTPOINTER_
-	if (FeatureAvailable[IRR_EXT_draw_buffers2] && pGlEnableIndexedEXT)
-		pGlEnableIndexedEXT(target, index);
-#elif defined(GL_EXT_draw_buffers2)
-	glEnableIndexedEXT(target, index);
-#else
-	os::Printer::log("glEnableIndexed not supported", ELL_ERROR);
-#endif
-}
-
-
-inline void COpenGLExtensionHandler::extGlDisableIndexed(GLenum target, GLuint index)
-{
-#ifdef _IRR_OPENGL_USE_EXTPOINTER_
-	if (FeatureAvailable[IRR_EXT_draw_buffers2] && pGlDisableIndexedEXT)
-		pGlDisableIndexedEXT(target, index);
-#elif defined(GL_EXT_draw_buffers2)
-	glDisableIndexedEXT(target, index);
-#else
-	os::Printer::log("glDisableIndexed not supported", ELL_ERROR);
-#endif
-}
-
-
-inline void COpenGLExtensionHandler::extGlBlendFuncIndexed(GLuint buf, GLenum src, GLenum dst)
-{
-#ifdef _IRR_OPENGL_USE_EXTPOINTER_
-	if (FeatureAvailable[IRR_ARB_draw_buffers_blend] && pGlBlendFunciARB)
-		pGlBlendFunciARB(buf, src, dst);
-	if (FeatureAvailable[IRR_AMD_draw_buffers_blend] && pGlBlendFuncIndexedAMD)
-		pGlBlendFuncIndexedAMD(buf, src, dst);
-#elif defined(GL_ARB_draw_buffers_blend)
-	glBlendFunciARB(buf, src, dst);
-#elif defined(GL_AMD_draw_buffers_blend)
-	glBlendFuncIndexedAMD(buf, src, dst);
-#else
-	os::Printer::log("glBlendFuncIndexed not supported", ELL_ERROR);
-#endif
-}
-
-
-inline void COpenGLExtensionHandler::extGlProgramParameteri(GLhandleARB program, GLenum pname, GLint value)
-{
-#if defined(_IRR_OPENGL_USE_EXTPOINTER_)
-	if (queryFeature(EVDF_GEOMETRY_SHADER))
-	{
-		if (pGlProgramParameteriARB)
-			pGlProgramParameteriARB(program, pname, value);
-		else if (pGlProgramParameteriEXT)
-			pGlProgramParameteriEXT(program, pname, value);
-	}
-#elif defined(GL_ARB_geometry_shader4)
-	glProgramParameteriARB(program, pname, value);
-#elif defined(GL_EXT_geometry_shader4)
-	glProgramParameteriEXT(program, pname, value);
-#elif defined(GL_NV_geometry_program4) || defined(GL_NV_geometry_shader4)
-	glProgramParameteriNV(program, pname, value);
-#else
-	os::Printer::log("glProgramParameteri not supported", ELL_ERROR);
 #endif
 }
 

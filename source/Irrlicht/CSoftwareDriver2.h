@@ -21,7 +21,7 @@ namespace video
 	public:
 
 		//! constructor
-		CBurningVideoDriver(const core::dimension2d<u32>& windowSize, bool fullscreen, io::IFileSystem* io, video::IImagePresenter* presenter);
+		CBurningVideoDriver(const core::dimension2d<s32>& windowSize, bool fullscreen, io::IFileSystem* io, video::IImagePresenter* presenter);
 
 		//! destructor
 		virtual ~CBurningVideoDriver();
@@ -44,7 +44,7 @@ namespace video
 		//! clears the zbuffer
 		virtual bool beginScene(bool backBuffer=true, bool zBuffer=true,
 				SColor color=SColor(255,0,0,0),
-				const SExposedVideoData& videoData=SExposedVideoData(),
+				void* windowId=0,
 				core::rect<s32>* sourceRect=0);
 
 		//! presents the rendered scene on the screen, returns false if failed
@@ -52,23 +52,16 @@ namespace video
 
 		//! Only used by the internal engine. Used to notify the driver that
 		//! the window was resized.
-		virtual void OnResize(const core::dimension2d<u32>& size);
+		virtual void OnResize(const core::dimension2d<s32>& size);
 
 		//! returns size of the current render target
-		virtual const core::dimension2d<u32>& getCurrentRenderTargetSize() const;
+		virtual const core::dimension2d<s32>& getCurrentRenderTargetSize() const;
 
 		//! deletes all dynamic lights there are
 		virtual void deleteAllDynamicLights();
 
-		//! adds a dynamic light, returning an index to the light
-		//! \param light: the light data to use to create the light
-		//! \return An index to the light, or -1 if an error occurs
-		virtual s32 addDynamicLight(const SLight& light);
-
-		//! Turns a dynamic light on or off
-		//! \param lightIndex: the index returned by addDynamicLight
-		//! \param turnOn: true to turn the light on, false to turn it off
-		virtual void turnLightOn(s32 lightIndex, bool turnOn);
+		//! adds a dynamic light
+		virtual void addDynamicLight(const SLight& light);
 
 		//! returns the maximal amount of dynamic lights the device can handle
 		virtual u32 getMaximalDynamicLightAmount() const;
@@ -123,8 +116,7 @@ namespace video
 		virtual const core::matrix4& getTransform(E_TRANSFORMATION_STATE state) const;
 
 		//! Creates a render target texture.
-		virtual ITexture* addRenderTargetTexture(const core::dimension2d<u32>& size,
-			const io::path& name, const ECOLOR_FORMAT format = ECF_UNKNOWN);
+		virtual ITexture* addRenderTargetTexture(const core::dimension2d<s32>& size, const c8* name);
 
 		//! Clears the DepthBuffer.
 		virtual void clearZBuffer();
@@ -151,13 +143,12 @@ namespace video
 			video::SColor leftDownEdge = video::SColor(0,0,0,0),
 			video::SColor rightDownEdge = video::SColor(0,0,0,0));
 
-		//! Returns the graphics card vendor name.
-		virtual core::stringc getVendorInfo();
-
-		//! Returns the maximum texture size supported.
-		virtual core::dimension2du getMaxTextureSize() const;
-
 	protected:
+
+
+		void drawVertexPrimitiveList16(const void* vertices, u32 vertexCount,
+				const u16* indexList, u32 primitiveCount,
+				E_VERTEX_TYPE vType, scene::E_PRIMITIVE_TYPE pType);
 
 
 		//! sets a render target
@@ -168,7 +159,7 @@ namespace video
 
 		//! returns a device dependent texture from a software surface (IImage)
 		//! THIS METHOD HAS TO BE OVERRIDDEN BY DERIVED DRIVERS WITH OWN TEXTURES
-		virtual video::ITexture* createDeviceDependentTexture(IImage* surface, const io::path& name, void* mipmapData=0);
+		virtual video::ITexture* createDeviceDependentTexture(IImage* surface, const char* name);
 
 		video::CImage* BackBuffer;
 		video::IImagePresenter* Presenter;
@@ -178,7 +169,7 @@ namespace video
 
 		video::ITexture* RenderTargetTexture;
 		video::IImage* RenderTargetSurface;
-		core::dimension2d<u32> RenderTargetSize;
+		core::dimension2d<s32> RenderTargetSize;
 
 		//! selects the right triangle renderer based on the render states.
 		void setCurrentShader();
@@ -195,27 +186,24 @@ namespace video
 			-> combined CameraProjectionWorld
 			-> ClipScale from NDC to DC Space
 		*/
-		enum E_TRANSFORMATION_STATE_BURNING_VIDEO
+		enum E_TRANSFORMATION_STATE_2
 		{
 			ETS_VIEW_PROJECTION = ETS_COUNT,
+			ETS_WORLD_VIEW,
+			ETS_WORLD_VIEW_INVERSE_TRANSPOSED,
 			ETS_CURRENT,
 			ETS_CLIPSCALE,
-			ETS_VIEW_INVERSE,
 
-			ETS_COUNT_BURNING
+			ETS2_COUNT
 		};
 
-		enum E_TRANSFORMATION_FLAG
+		struct SMatrixStack
 		{
-			ETF_IDENTITY = 1,
-			ETF_TEXGEN_CAMERA_NORMAL = 2,
-			ETF_TEXGEN_CAMERA_REFLECTION = 4,
+			s32 isIdentity;
+			core::matrix4 m;
 		};
-		u32 TransformationFlag[ETS_COUNT_BURNING];
-		core::matrix4 Transformation[ETS_COUNT_BURNING];
 
-		void getCameraPosWorldSpace ();
-
+		SMatrixStack Transformation[ETS2_COUNT];
 
 		// Vertex Cache
 		static const SVSize vSize[];
@@ -223,11 +211,10 @@ namespace video
 		SVertexCache VertexCache;
 
 		void VertexCache_reset (const void* vertices, u32 vertexCount,
-					const void* indices, u32 indexCount,
-					E_VERTEX_TYPE vType,scene::E_PRIMITIVE_TYPE pType,
-					E_INDEX_TYPE iType);
+					const u16* indices, u32 indexCount,
+					E_VERTEX_TYPE vType,scene::E_PRIMITIVE_TYPE pType);
 		void VertexCache_get ( s4DVertex ** face );
-		void VertexCache_getbypass ( s4DVertex ** face );
+		void VertexCache_get2 ( s4DVertex ** face );
 
 		void VertexCache_fill ( const u32 sourceIndex,const u32 destIndex );
 		s4DVertex * VertexCache_getVertex ( const u32 sourceIndex );
@@ -240,11 +227,7 @@ namespace video
 
 
 #ifdef SOFTWARE_DRIVER_2_LIGHTING
-
-		void lightVertex ( s4DVertex *dest, u32 vertexargb );
-		//! Sets the fog mode.
-		virtual void setFog(SColor color, E_FOG_TYPE fogType, f32 start,
-			f32 end, f32 density, bool pixelFog, bool rangeFog);
+		void lightVertex ( s4DVertex *dest, const S3DVertex *source );
 #endif
 
 
@@ -254,20 +237,21 @@ namespace video
 
 		void ndc_2_dc_and_project ( s4DVertex *dest,s4DVertex *source, u32 vIn ) const;
 		f32 screenarea ( const s4DVertex *v0 ) const;
-		void select_polygon_mipmap ( s4DVertex *source, u32 vIn, u32 tex, const core::dimension2du& texSize );
+		void select_polygon_mipmap ( s4DVertex *source, u32 vIn, s32 tex );
 		f32 texelarea ( const s4DVertex *v0, int tex ) const;
 
 
 		void ndc_2_dc_and_project2 ( const s4DVertex **v, const u32 size ) const;
 		f32 screenarea2 ( const s4DVertex **v ) const;
 		f32 texelarea2 ( const s4DVertex **v, int tex ) const;
-		void select_polygon_mipmap2 ( s4DVertex **source, u32 tex, const core::dimension2du& texSize ) const;
+		void select_polygon_mipmap2 ( s4DVertex **source, s32 tex ) const;
 
 
 		SBurningShaderLightSpace LightSpace;
 		SBurningShaderMaterial Material;
 
 		static const sVec4 NDCPlane[6];
+
 	};
 
 } // end namespace video
@@ -275,4 +259,5 @@ namespace video
 
 
 #endif
+
 

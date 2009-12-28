@@ -16,7 +16,6 @@
 #include "irrArray.h"
 #include "SLight.h"
 #include "SMaterial.h"
-#include "os.h"
 
 
 namespace irr
@@ -27,57 +26,35 @@ namespace video
 
 	struct SBurningShaderLight
 	{
-		//SLight org;
-		bool LightIsOn;
+		SLight org;
 
-		E_LIGHT_TYPE Type;
-		f32 radius;
-		f32 linearAttenuation;
+		sVec4 posEyeSpace;
+
 		f32 constantAttenuation;
+		f32 linearAttenuation;
 		f32 quadraticAttenuation;
-		sVec4 pos;
 
-		sVec3 AmbientColor;
-		sVec3 DiffuseColor;
-		sVec3 SpecularColor;
-	};
-
-	enum eLightFlags
-	{
-		ENABLED		= 0x01,
-		POINTLIGHT	= 0x02,
-		SPECULAR	= 0x04,
-		FOG			= 0x08,
-		NORMALIZE	= 0x10,
-		VERTEXTRANSFORM	= 0x20,
+		sVec4 AmbientColor;
+		sVec4 DiffuseColor;
+		sVec4 SpecularColor;
 	};
 
 	struct SBurningShaderLightSpace
 	{
-		void reset ()
-		{
-			Light.set_used ( 0 );
-			Global_AmbientLight.set ( 0.f, 0.f, 0.f );
-			Flags = 0;
-		}
 		core::array<SBurningShaderLight> Light;
-		sVec3 Global_AmbientLight;
-		sVec4 FogColor;
-		sVec4 campos;
-		sVec4 vertex;
-		sVec4 normal;
-		u32 Flags;
+		sVec4 Global_AmbientLight;
 	};
 
 	struct SBurningShaderMaterial
 	{
 		SMaterial org;
 
-		sVec3 AmbientColor;
-		sVec3 DiffuseColor;
-		sVec3 SpecularColor;
-		sVec3 EmissiveColor;
+		sVec4 AmbientColor;
+		sVec4 DiffuseColor;
+		sVec4 SpecularColor;
+		sVec4 EmissiveColor;
 
+		u32 SpecularEnabled;	// == Power2
 	};
 
 	enum EBurningFFShader
@@ -96,14 +73,15 @@ namespace video
 
 		ETR_TEXTURE_GOURAUD_VERTEX_ALPHA,
 
-		ETR_TEXTURE_GOURAUD_LIGHTMAP_M1,
+		ETR_TEXTURE_GOURAUD_LIGHTMAP,
 		ETR_TEXTURE_GOURAUD_LIGHTMAP_M2,
-		ETR_TEXTURE_GOURAUD_LIGHTMAP_M4,
 		ETR_TEXTURE_LIGHTMAP_M4,
+		ETR_TEXTURE_GOURAUD_LIGHTMAP_M4,
+
+		ETR_TEXTURE_GOURAUD_LIGHTMAP_ADD,
 
 		ETR_TEXTURE_GOURAUD_DETAIL_MAP,
-		ETR_TEXTURE_GOURAUD_LIGHTMAP_ADD,
-	
+
 		ETR_GOURAUD_ALPHA,
 		ETR_GOURAUD_ALPHA_NOZ,
 
@@ -141,8 +119,11 @@ namespace video
 
 	protected:
 
-		video::CImage* RenderTarget;
+		video::IImage* RenderTarget;
 		IDepthBuffer* DepthBuffer;
+
+		fp24* lockedDepthBuffer;
+		tVideoSample* lockedSurface;
 
 		sInternalTexture IT[ BURNING_MATERIAL_MAX_TEXTURES ];
 

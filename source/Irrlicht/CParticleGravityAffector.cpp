@@ -51,10 +51,24 @@ void CParticleGravityAffector::serializeAttributes(io::IAttributes* out, io::SAt
 
 
 //! Reads attributes of the object.
-void CParticleGravityAffector::deserializeAttributes(io::IAttributes* in, io::SAttributeReadWriteOptions* options)
+s32 CParticleGravityAffector::deserializeAttributes(s32 startIndex, io::IAttributes* in, io::SAttributeReadWriteOptions* options)
 {
-	Gravity = in->getAttributeAsVector3d("Gravity");
-	TimeForceLost = in->getAttributeAsFloat("TimeForceLost");
+	const char* name = in->getAttributeName(startIndex);
+
+	if (!name || strcmp(name, "Gravity"))
+		return startIndex; // attribute not valid
+
+	Gravity = in->getAttributeAsVector3d(startIndex);
+	++startIndex;
+
+	name = in->getAttributeName(startIndex);
+	if (!name || strcmp(name, "TimeForceLost"))
+		return startIndex; // attribute not valid
+
+	TimeForceLost = in->getAttributeAsFloat(startIndex);
+
+	++startIndex;
+	return startIndex;
 }
 
 

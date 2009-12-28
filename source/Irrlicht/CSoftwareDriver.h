@@ -19,7 +19,7 @@ namespace video
 	public:
 
 		//! constructor
-		CSoftwareDriver(const core::dimension2d<u32>& windowSize, bool fullscreen, io::IFileSystem* io, video::IImagePresenter* presenter);
+		CSoftwareDriver(const core::dimension2d<s32>& windowSize, bool fullscreen, io::IFileSystem* io, video::IImagePresenter* presenter);
 
 		//! destructor
 		virtual ~CSoftwareDriver();
@@ -42,7 +42,7 @@ namespace video
 		//! clears the zbuffer
 		virtual bool beginScene(bool backBuffer=true, bool zBuffer=true,
 				SColor color=SColor(255,0,0,0),
-				const SExposedVideoData& videoData=SExposedVideoData(),
+				void* windowId=0,
 				core::rect<s32>* sourceRect=0);
 
 		//! presents the rendered scene on the screen, returns false if failed
@@ -50,10 +50,10 @@ namespace video
 
 		//! Only used by the internal engine. Used to notify the driver that
 		//! the window was resized.
-		virtual void OnResize(const core::dimension2d<u32>& size);
+		virtual void OnResize(const core::dimension2d<s32>& size);
 
 		//! returns size of the current render target
-		virtual const core::dimension2d<u32>& getCurrentRenderTargetSize() const;
+		virtual const core::dimension2d<s32>& getCurrentRenderTargetSize() const;
 
 		//! draws a vertex primitive list
 		void drawVertexPrimitiveList(const void* vertices, u32 vertexCount,
@@ -84,7 +84,7 @@ namespace video
 								SColor color=SColor(255,255,255,255));
 
 		//! Draws a single pixel
-		virtual void drawPixel(u32 x, u32 y, const SColor & color);
+		virtual void drawPixel(u32 x, u32 y, const SColor & color); 
 
 		//! \return Returns the name of the video driver. Example: In case of the Direct3D8
 		//! driver, it would return "Direct3D8.1".
@@ -99,13 +99,9 @@ namespace video
 		//! Returns the transformation set by setTransform
 		virtual const core::matrix4& getTransform(E_TRANSFORMATION_STATE state) const;
 
-		//! returns a device dependent texture from a software surface (IImage)
-		//! THIS METHOD HAS TO BE OVERRIDDEN BY DERIVED DRIVERS WITH OWN TEXTURES
-		virtual video::ITexture* createDeviceDependentTexture(IImage* surface, const io::path& name, void* mipmapData=0);
-
 		//! Creates a render target texture.
-		virtual ITexture* addRenderTargetTexture(const core::dimension2d<u32>& size,
-				const io::path& name, const ECOLOR_FORMAT format = ECF_UNKNOWN);
+		virtual ITexture* addRenderTargetTexture(const core::dimension2d<s32>& size,
+				const c8* name);
 
 		//! Clears the ZBuffer.
 		virtual void clearZBuffer();
@@ -124,7 +120,7 @@ namespace video
 		void setRenderTarget(video::CImage* image);
 
 		//! sets the current Texture
-		bool setActiveTexture(u32 stage, video::ITexture* texture);
+		bool setTexture(video::ITexture* texture);
 
 		//! switches to a triangle renderer
 		void switchToTriangleRenderer(ETriangleRenderer renderer);
@@ -154,10 +150,10 @@ namespace video
 		core::array<S2DVertex> TransformedPoints;
 
 		video::ITexture* RenderTargetTexture;
-		video::CImage* RenderTargetSurface;
+		video::IImage* RenderTargetSurface;
 		core::position2d<s32> Render2DTranslation;
-		core::dimension2d<u32> RenderTargetSize;
-		core::dimension2d<u32> ViewPortSize;
+		core::dimension2d<s32> RenderTargetSize;
+		core::dimension2d<s32> ViewPortSize;
 
 		core::matrix4 TransformationMatrix[ETS_COUNT];
 
@@ -177,4 +173,5 @@ namespace video
 
 
 #endif
+
 

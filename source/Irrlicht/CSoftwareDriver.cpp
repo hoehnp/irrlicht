@@ -2,9 +2,9 @@
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
-#include "IrrCompileConfig.h"
 #include "CSoftwareDriver.h"
 
+#include "IrrCompileConfig.h"
 #ifdef _IRR_COMPILE_WITH_SOFTWARE_
 
 #include "CSoftwareTexture.h"
@@ -18,7 +18,7 @@ namespace video
 
 
 //! constructor
-CSoftwareDriver::CSoftwareDriver(const core::dimension2d<u32>& windowSize, bool fullscreen, io::IFileSystem* io, video::IImagePresenter* presenter)
+CSoftwareDriver::CSoftwareDriver(const core::dimension2d<s32>& windowSize, bool fullscreen, io::IFileSystem* io, video::IImagePresenter* presenter)
 : CNullDriver(io, windowSize), BackBuffer(0), Presenter(presenter), WindowId(0),
 	SceneSourceRect(0), RenderTargetTexture(0), RenderTargetSurface(0),
 	CurrentTriangleRenderer(0), ZBuffer(0), Texture(0)
@@ -133,7 +133,7 @@ void CSoftwareDriver::selectRightTriangleRenderer()
 					renderer = ETR_TEXTURE_GOURAUD_ADD;
 				}
 				else
-				if ((Material.ZBuffer==ECFN_NEVER) && !Material.ZWriteEnable)
+				if (!Material.ZBuffer && !Material.ZWriteEnable)
 					renderer = ETR_TEXTURE_GOURAUD_NOZ;
 				else
 				{
@@ -168,6 +168,7 @@ bool CSoftwareDriver::queryFeature(E_VIDEO_DRIVER_FEATURE feature) const
 }
 
 
+
 //! sets transformation
 void CSoftwareDriver::setTransform(E_TRANSFORMATION_STATE state, const core::matrix4& mat)
 {
@@ -175,8 +176,10 @@ void CSoftwareDriver::setTransform(E_TRANSFORMATION_STATE state, const core::mat
 }
 
 
+
+
 //! sets the current Texture
-bool CSoftwareDriver::setActiveTexture(u32 stage, video::ITexture* texture)
+bool CSoftwareDriver::setTexture(video::ITexture* texture)
 {
 	if (texture && texture->getDriverType() != EDT_SOFTWARE)
 	{
@@ -197,15 +200,15 @@ bool CSoftwareDriver::setActiveTexture(u32 stage, video::ITexture* texture)
 }
 
 
+
 //! sets a material
 void CSoftwareDriver::setMaterial(const SMaterial& material)
 {
 	Material = material;
-	OverrideMaterial.apply(Material);
 
 	for (u32 i = 0; i < 1; ++i)
 	{
-		setActiveTexture(i, Material.getTexture(i));
+		setTexture(Material.getTexture(i));
 		setTransform ((E_TRANSFORMATION_STATE) ( ETS_TEXTURE_0 + i ),
 				material.getTextureMatrix(i));
 	}
@@ -214,10 +217,10 @@ void CSoftwareDriver::setMaterial(const SMaterial& material)
 
 //! clears the zbuffer
 bool CSoftwareDriver::beginScene(bool backBuffer, bool zBuffer, SColor color,
-		const SExposedVideoData& videoData, core::rect<s32>* sourceRect)
+		void* windowId, core::rect<s32>* sourceRect)
 {
-	CNullDriver::beginScene(backBuffer, zBuffer, color, videoData, sourceRect);
-	WindowId=videoData.D3D9.HWnd;
+	CNullDriver::beginScene(backBuffer, zBuffer, color, windowId, sourceRect);
+	WindowId=windowId;
 	SceneSourceRect = sourceRect;
 
 	if (backBuffer && BackBuffer)
@@ -236,14 +239,6 @@ bool CSoftwareDriver::endScene()
 	CNullDriver::endScene();
 
 	return Presenter->present(BackBuffer, WindowId, SceneSourceRect);
-}
-
-
-//! returns a device dependent texture from a software surface (IImage)
-//! THIS METHOD HAS TO BE OVERRIDDEN BY DERIVED DRIVERS WITH OWN TEXTURES
-ITexture* CSoftwareDriver::createDeviceDependentTexture(IImage* surface, const io::path& name, void* mipmapData)
-{
-	return new CSoftwareTexture(surface, name, false, mipmapData);
 }
 
 
@@ -310,6 +305,7 @@ void CSoftwareDriver::setRenderTarget(video::CImage* image)
 }
 
 
+
 //! sets a viewport
 void CSoftwareDriver::setViewPort(const core::rect<s32>& area)
 {
@@ -320,14 +316,13 @@ void CSoftwareDriver::setViewPort(const core::rect<s32>& area)
 	core::rect<s32> rendert(0,0,RenderTargetSize.Width,RenderTargetSize.Height);
 	ViewPort.clipAgainst(rendert);
 
-	ViewPortSize = core::dimension2du(ViewPort.getSize());
+	ViewPortSize = ViewPort.getSize();
 	Render2DTranslation.X = (ViewPortSize.Width / 2) + ViewPort.UpperLeftCorner.X;
 	Render2DTranslation.Y = ViewPort.UpperLeftCorner.Y + ViewPortSize.Height - (ViewPortSize.Height / 2);// + ViewPort.UpperLeftCorner.Y;
 
 	if (CurrentTriangleRenderer)
 		CurrentTriangleRenderer->setRenderTarget(RenderTargetSurface, ViewPort);
 }
-
 
 void CSoftwareDriver::drawVertexPrimitiveList(const void* vertices, u32 vertexCount,
 				const void* indexList, u32 primitiveCount,
@@ -347,8 +342,9 @@ void CSoftwareDriver::drawVertexPrimitiveList(const void* vertices, u32 vertexCo
 			break;
 		}
 	}
-}
 
+
+}
 
 //! draws a vertex primitive list
 void CSoftwareDriver::drawVertexPrimitiveList16(const void* vertices, u32 vertexCount, const u16* indexList, u32 primitiveCount, E_VERTEX_TYPE vType, scene::E_PRIMITIVE_TYPE pType)
@@ -473,6 +469,7 @@ void CSoftwareDriver::drawVertexPrimitiveList16(const void* vertices, u32 vertex
 			break;
 	}
 }
+
 
 
 template<class VERTEXTYPE>
@@ -665,7 +662,7 @@ void CSoftwareDriver::drawClippedIndexedTriangleListT(const VERTEXTYPE* vertices
 	const VERTEXTYPE* currentVertex = clippedVertices.pointer();
 	S2DVertex* tp = &TransformedPoints[0];
 
-	core::dimension2d<u32> textureSize(0,0);
+	core::dimension2d<s32> textureSize(0,0);
 	f32 zDiv;
 
 	if (Texture)
@@ -745,10 +742,10 @@ void CSoftwareDriver::clipTriangle(f32* transformedPos)
 
 //! Only used by the internal engine. Used to notify the driver that
 //! the window was resized.
-void CSoftwareDriver::OnResize(const core::dimension2d<u32>& size)
+void CSoftwareDriver::OnResize(const core::dimension2d<s32>& size)
 {
 	// make sure width and height are multiples of 2
-	core::dimension2d<u32> realSize(size);
+	core::dimension2d<s32> realSize(size);
 
 	if (realSize.Width % 2)
 		realSize.Width += 1;
@@ -758,11 +755,10 @@ void CSoftwareDriver::OnResize(const core::dimension2d<u32>& size)
 
 	if (ScreenSize != realSize)
 	{
-		if (ViewPort.getWidth() == (s32)ScreenSize.Width &&
-			ViewPort.getHeight() == (s32)ScreenSize.Height)
+		if (ViewPort.getWidth() == ScreenSize.Width &&
+			ViewPort.getHeight() == ScreenSize.Height)
 		{
-			ViewPort = core::rect<s32>(core::position2d<s32>(0,0),
-										core::dimension2di(realSize));
+			ViewPort = core::rect<s32>(core::position2d<s32>(0,0), realSize);
 		}
 
 		ScreenSize = realSize;
@@ -779,7 +775,7 @@ void CSoftwareDriver::OnResize(const core::dimension2d<u32>& size)
 }
 
 //! returns the current render target size
-const core::dimension2d<u32>& CSoftwareDriver::getCurrentRenderTargetSize() const
+const core::dimension2d<s32>& CSoftwareDriver::getCurrentRenderTargetSize() const
 {
 	return RenderTargetSize;
 }
@@ -801,10 +797,10 @@ void CSoftwareDriver::draw2DImage(const video::ITexture* texture, const core::po
 
 		if (useAlphaChannelOfTexture)
 			((CSoftwareTexture*)texture)->getImage()->copyToWithAlpha(
-				RenderTargetSurface, destPos, sourceRect, color, clipRect);
+				((CImage*)RenderTargetSurface), destPos, sourceRect, color, clipRect);
 		else
 			((CSoftwareTexture*)texture)->getImage()->copyTo(
-				RenderTargetSurface, destPos, sourceRect, clipRect);
+				((CImage*)RenderTargetSurface), destPos, sourceRect, clipRect);
 	}
 }
 
@@ -812,17 +808,16 @@ void CSoftwareDriver::draw2DImage(const video::ITexture* texture, const core::po
 
 //! Draws a 2d line.
 void CSoftwareDriver::draw2DLine(const core::position2d<s32>& start,
-				const core::position2d<s32>& end,
-				SColor color)
+								const core::position2d<s32>& end,
+								SColor color)
 {
-	RenderTargetSurface->drawLine(start, end, color );
+	((CImage*)RenderTargetSurface)->drawLine(start, end, color );
 }
-
 
 //! Draws a pixel
 void CSoftwareDriver::drawPixel(u32 x, u32 y, const SColor & color)
 {
-	BackBuffer->setPixel(x, y, color, true);
+	((CImage*)BackBuffer)->setPixel(x, y, color);
 }
 
 
@@ -839,14 +834,14 @@ void CSoftwareDriver::draw2DRectangle(SColor color, const core::rect<s32>& pos,
 		if(!p.isValid())
 			return;
 
-		RenderTargetSurface->drawRectangle(p, color);
+		((CImage*)RenderTargetSurface)->drawRectangle(p, color);
 	}
 	else
 	{
 		if(!pos.isValid())
 			return;
 
-		RenderTargetSurface->drawRectangle(pos, color);
+		((CImage*)RenderTargetSurface)->drawRectangle(pos, color);
 	}
 }
 
@@ -865,7 +860,7 @@ void CSoftwareDriver::draw2DRectangle(const core::rect<s32>& pos,
 //! driver, it would return "Direct3D8.1".
 const wchar_t* CSoftwareDriver::getName() const
 {
-	return L"Irrlicht Software Driver 1.0";
+	return L"Irrlicht Software Device 1.0";
 }
 
 
@@ -894,11 +889,11 @@ const core::matrix4& CSoftwareDriver::getTransform(E_TRANSFORMATION_STATE state)
 
 
 //! Creates a render target texture.
-ITexture* CSoftwareDriver::addRenderTargetTexture(const core::dimension2d<u32>& size,
-												  const io::path& name,
-												  const ECOLOR_FORMAT format)
+ITexture* CSoftwareDriver::addRenderTargetTexture(const core::dimension2d<s32>& size, const c8* name)
 {
 	CImage* img = new CImage(video::ECF_A1R5G5B5, size);
+	if (!name)
+		name="rt";
 	ITexture* tex = new CSoftwareTexture(img, name, true);
 	img->drop();
 	addTexture(tex);
@@ -919,11 +914,7 @@ void CSoftwareDriver::clearZBuffer()
 IImage* CSoftwareDriver::createScreenShot()
 {
 	if (BackBuffer)
-	{
-		CImage* tmp = new CImage(BackBuffer->getColorFormat(), BackBuffer->getDimension());
-		BackBuffer->copyTo(tmp);
-		return tmp;
-	}
+		return new CImage(BackBuffer->getColorFormat(), BackBuffer);
 	else
 		return 0;
 }
@@ -949,7 +940,7 @@ namespace video
 
 
 //! creates a video driver
-IVideoDriver* createSoftwareDriver(const core::dimension2d<u32>& windowSize, bool fullscreen, io::IFileSystem* io, video::IImagePresenter* presenter)
+IVideoDriver* createSoftwareDriver(const core::dimension2d<s32>& windowSize, bool fullscreen, io::IFileSystem* io, video::IImagePresenter* presenter)
 {
 	#ifdef _IRR_COMPILE_WITH_SOFTWARE_
 	return new CSoftwareDriver(windowSize, fullscreen, io, presenter);
@@ -961,4 +952,3 @@ IVideoDriver* createSoftwareDriver(const core::dimension2d<u32>& windowSize, boo
 
 } // end namespace video
 } // end namespace irr
-

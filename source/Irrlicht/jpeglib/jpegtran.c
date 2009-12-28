@@ -1,7 +1,7 @@
 /*
  * jpegtran.c
  *
- * Copyright (C) 1995-2001, Thomas G. Lane.
+ * Copyright (C) 1995-1997, Thomas G. Lane.
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -64,10 +64,8 @@ usage (void)
 #endif
 #if TRANSFORMS_SUPPORTED
   fprintf(stderr, "Switches for modifying the image:\n");
-  fprintf(stderr, "  -crop WxH+X+Y  Crop to a rectangular subarea\n");
   fprintf(stderr, "  -grayscale     Reduce to grayscale (omit color data)\n");
   fprintf(stderr, "  -flip [horizontal|vertical]  Mirror image (left-right or top-bottom)\n");
-  fprintf(stderr, "  -perfect       Fail if there is non-transformable edge blocks\n");
   fprintf(stderr, "  -rotate [90|180|270]         Rotate image (degrees clockwise)\n");
   fprintf(stderr, "  -transpose     Transpose image\n");
   fprintf(stderr, "  -transverse    Transverse transpose image\n");
@@ -135,9 +133,7 @@ parse_switches (j_compress_ptr cinfo, int argc, char **argv,
   copyoption = JCOPYOPT_DEFAULT;
   transformoption.transform = JXFORM_NONE;
   transformoption.trim = FALSE;
-  transformoption.perfect = FALSE;
   transformoption.force_grayscale = FALSE;
-  transformoption.crop = FALSE;
   cinfo->err->trace_level = 0;
 
   /* Scan command line options, adjust parameters */
@@ -164,7 +160,7 @@ parse_switches (j_compress_ptr cinfo, int argc, char **argv,
       exit(EXIT_FAILURE);
 #endif
 
-    } else if (keymatch(arg, "copy", 2)) {
+    } else if (keymatch(arg, "copy", 1)) {
       /* Select which extra markers to copy. */
       if (++argn >= argc)	/* advance to next argument */
 	usage();
@@ -176,20 +172,6 @@ parse_switches (j_compress_ptr cinfo, int argc, char **argv,
 	copyoption = JCOPYOPT_ALL;
       } else
 	usage();
-
-    } else if (keymatch(arg, "crop", 2)) {
-      /* Perform lossless cropping. */
-#if TRANSFORMS_SUPPORTED
-      if (++argn >= argc)	/* advance to next argument */
-	usage();
-      if (! jtransform_parse_crop_spec(&transformoption, argv[argn])) {
-	fprintf(stderr, "%s: bogus -crop argument '%s'\n",
-		progname, argv[argn]);
-	exit(EXIT_FAILURE);
-      }
-#else
-      select_transform(JXFORM_NONE);	/* force an error */
-#endif
 
     } else if (keymatch(arg, "debug", 1) || keymatch(arg, "verbose", 1)) {
       /* Enable debug printouts. */
@@ -251,12 +233,7 @@ parse_switches (j_compress_ptr cinfo, int argc, char **argv,
 	usage();
       outfilename = argv[argn];	/* save it away for later use */
 
-    } else if (keymatch(arg, "perfect", 2)) {
-      /* Fail if there is any partial edge MCUs that the transform can't
-       * handle. */
-      transformoption.perfect = TRUE;
-
-    } else if (keymatch(arg, "progressive", 2)) {
+    } else if (keymatch(arg, "progressive", 1)) {
       /* Select simple progressive mode. */
 #ifdef C_PROGRESSIVE_SUPPORTED
       simple_progressive = TRUE;
@@ -365,10 +342,8 @@ main (int argc, char **argv)
   jvirt_barray_ptr * src_coef_arrays;
   jvirt_barray_ptr * dst_coef_arrays;
   int file_index;
-  /* We assume all-in-memory processing and can therefore use only a
-   * single file pointer for sequential input and output operation. 
-   */
-  FILE * fp;
+  FILE * input_file;
+  FILE * output_file;
 
   /* On Mac, fetch a command line. */
 #ifdef USE_CCOMMAND
@@ -431,13 +406,24 @@ main (int argc, char **argv)
 
   /* Open the input file. */
   if (file_index < argc) {
-    if ((fp = fopen(argv[file_index], READ_BINARY)) == NULL) {
-      fprintf(stderr, "%s: can't open %s for reading\n", progname, argv[file_index]);
+    if ((input_file = fopen(argv[file_index], READ_BINARY)) == NULL) {
+      fprintf(stderr, "%s: can't open %s\n", progname, argv[file_index]);
       exit(EXIT_FAILURE);
     }
   } else {
     /* default input file is stdin */
-    fp = read_stdin();
+    input_file = read_stdin();
+  }
+
+  /* Open the output file. */
+  if (outfilename != NULL) {
+    if ((output_file = fopen(outfilename, WRITE_BINARY)) == NULL) {
+      fprintf(stderr, "%s: can't open %s\n", progname, outfilename);
+      exit(EXIT_FAILURE);
+    }
+  } else {
+    /* default output file is stdout */
+    output_file = write_stdout();
   }
 
 #ifdef PROGRESS_REPORT
@@ -445,7 +431,7 @@ main (int argc, char **argv)
 #endif
 
   /* Specify data source for decompression */
-  jpeg_stdio_src(&srcinfo, fp);
+  jpeg_stdio_src(&srcinfo, input_file);
 
   /* Enable saving of extra markers that we want to copy */
   jcopy_markers_setup(&srcinfo, copyoption);
@@ -457,15 +443,6 @@ main (int argc, char **argv)
    * jpeg_read_coefficients so that memory allocation will be done right.
    */
 #if TRANSFORMS_SUPPORTED
-  /* Fails right away if -perfect is given and transformation is not perfect.
-   */
-  if (transformoption.perfect &&
-      !jtransform_perfect_transform(srcinfo.image_width, srcinfo.image_height,
-      srcinfo.max_h_samp_factor * DCTSIZE, srcinfo.max_v_samp_factor * DCTSIZE,
-      transformoption.transform)) {
-    fprintf(stderr, "%s: transformation is not perfect\n", progname);
-    exit(EXIT_FAILURE);
-  }
   jtransform_request_workspace(&srcinfo, &transformoption);
 #endif
 
@@ -486,32 +463,11 @@ main (int argc, char **argv)
   dst_coef_arrays = src_coef_arrays;
 #endif
 
-  /* Close input file, if we opened it.
-   * Note: we assume that jpeg_read_coefficients consumed all input
-   * until JPEG_REACHED_EOI, and that jpeg_finish_decompress will
-   * only consume more while (! cinfo->inputctl->eoi_reached).
-   * We cannot call jpeg_finish_decompress here since we still need the
-   * virtual arrays allocated from the source object for processing.
-   */
-  if (fp != stdin)
-    fclose(fp);
-
-  /* Open the output file. */
-  if (outfilename != NULL) {
-    if ((fp = fopen(outfilename, WRITE_BINARY)) == NULL) {
-      fprintf(stderr, "%s: can't open %s for writing\n", progname, outfilename);
-      exit(EXIT_FAILURE);
-    }
-  } else {
-    /* default output file is stdout */
-    fp = write_stdout();
-  }
-
   /* Adjust default compression parameters by re-parsing the options */
   file_index = parse_switches(&dstinfo, argc, argv, 0, TRUE);
 
   /* Specify data destination for compression */
-  jpeg_stdio_dest(&dstinfo, fp);
+  jpeg_stdio_dest(&dstinfo, output_file);
 
   /* Start compressor (note no image data is actually written here) */
   jpeg_write_coefficients(&dstinfo, dst_coef_arrays);
@@ -532,9 +488,11 @@ main (int argc, char **argv)
   (void) jpeg_finish_decompress(&srcinfo);
   jpeg_destroy_decompress(&srcinfo);
 
-  /* Close output file, if we opened it */
-  if (fp != stdout)
-    fclose(fp);
+  /* Close files, if we opened them */
+  if (input_file != stdin)
+    fclose(input_file);
+  if (output_file != stdout)
+    fclose(output_file);
 
 #ifdef PROGRESS_REPORT
   end_progress_monitor((j_common_ptr) &dstinfo);

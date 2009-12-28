@@ -5,8 +5,6 @@
 #include "CGUIFileOpenDialog.h"
 #ifdef _IRR_COMPILE_WITH_GUI_
 
-#include <locale.h>
-
 #include "IGUISkin.h"
 #include "IGUIEnvironment.h"
 #include "IVideoDriver.h"
@@ -86,7 +84,7 @@ CGUIFileOpenDialog::CGUIFileOpenDialog(const wchar_t* title,
 	FileBox->setAlignment(EGUIA_UPPERLEFT, EGUIA_LOWERRIGHT, EGUIA_UPPERLEFT, EGUIA_LOWERRIGHT);
 	FileBox->grab();
 
-	FileNameText = Environment->addEditBox(0, core::rect<s32>(10, 30, RelativeRect.getWidth()-90, 50), true, this);
+	FileNameText = Environment->addStaticText(0, core::rect<s32>(10, 30, RelativeRect.getWidth()-90, 50), true, false, this);
 	FileNameText->setSubElement(true);
 	FileNameText->setAlignment(EGUIA_UPPERLEFT, EGUIA_LOWERRIGHT, EGUIA_UPPERLEFT, EGUIA_UPPERLEFT);
 	FileNameText->grab();
@@ -134,13 +132,6 @@ const wchar_t* CGUIFileOpenDialog::getFileName() const
 	return FileName.c_str();
 }
 
-//! Returns the directory of the selected file. Returns NULL, if no directory was selected.
-const io::path& CGUIFileOpenDialog::getDirectoryName()
-{
-	FileSystem->flattenFilename ( FileDirectory );
-	return FileDirectory;
-}
-
 
 //! called if an event happened.
 bool CGUIFileOpenDialog::OnEvent(const SEvent& event)
@@ -164,18 +155,11 @@ bool CGUIFileOpenDialog::OnEvent(const SEvent& event)
 					return true;
 				}
 				else
-				if (event.GUIEvent.Caller == OKButton )
+				if (event.GUIEvent.Caller == OKButton && FileName != L"")
 				{
-					if ( FileDirectory != L"" )
-					{
-						sendSelectedEvent( EGET_DIRECTORY_SELECTED );
-					}
-					if ( FileName != L"" )
-					{
-						sendSelectedEvent( EGET_FILE_SELECTED );
-						remove();
-						return true;
-					}
+					sendSelectedEvent();
+					remove();
+					return true;
 				}
 				break;
 
@@ -185,15 +169,9 @@ bool CGUIFileOpenDialog::OnEvent(const SEvent& event)
 					if (FileList && FileSystem)
 					{
 						if (FileList->isDirectory(selected))
-						{
 							FileName = L"";
-							FileDirectory = FileList->getFullFileName(selected);
-						}
 						else
-						{
-							FileDirectory = L"";
 							FileName = FileList->getFullFileName(selected);
-						}
 					}
 				}
 				break;
@@ -205,10 +183,9 @@ bool CGUIFileOpenDialog::OnEvent(const SEvent& event)
 					{
 						if (FileList->isDirectory(selected))
 						{
-							FileDirectory = FileList->getFullFileName(selected);
 							FileSystem->changeWorkingDirectoryTo(FileList->getFileName(selected));
 							fillListBox();
-							FileName = "";
+							FileName = L"";
 						}
 						else
 						{
@@ -218,18 +195,6 @@ bool CGUIFileOpenDialog::OnEvent(const SEvent& event)
 					}
 				}
 				break;
-			case EGET_EDITBOX_ENTER:
-				if (event.GUIEvent.Caller == FileNameText)
-				{
-					io::path dir( FileNameText->getText () );
-					if ( FileSystem->changeWorkingDirectoryTo( dir ) )
-					{
-						fillListBox();
-						FileName = L"";
-					}
-					return true;
-				}
-			break;
 			default:
 				break;
 			}
@@ -249,10 +214,6 @@ bool CGUIFileOpenDialog::OnEvent(const SEvent& event)
 				Dragging = false;
 				return true;
 			case EMIE_MOUSE_MOVED:
-
-				if ( !event.MouseInput.isLeftPressed () )
-					Dragging = false;
-
 				if (Dragging)
 				{
 					// gui window should not be dragged outside its parent
@@ -327,55 +288,28 @@ void CGUIFileOpenDialog::fillListBox()
 	FileList = FileSystem->createFileList();
 	core::stringw s;
 
-#if !defined(_IRR_WINDOWS_CE_PLATFORM_)
-	setlocale(LC_ALL,"");
-#endif
-
-	if (FileList)
+	for (u32 i=0; i<FileList->getFileCount(); ++i)
 	{
-		for (u32 i=0; i < FileList->getFileCount(); ++i)
-		{
-			#ifndef _IRR_WCHAR_FILESYSTEM
-			const c8 *cs = (const c8 *)FileList->getFileName(i).c_str();
-			wchar_t *ws = new wchar_t[strlen(cs) + 1];
-			int len = mbstowcs(ws,cs,strlen(cs));
-			ws[len] = 0;
-			s = ws;
-			delete [] ws;
-			#else
-			s = FileList->getFileName(i).c_str();
-			#endif
-			FileBox->addItem(s.c_str(), skin->getIcon(FileList->isDirectory(i) ? EGDI_DIRECTORY : EGDI_FILE));
-		}
+		s = FileList->getFileName(i);
+		FileBox->addItem(s.c_str(), skin->getIcon(FileList->isDirectory(i) ? EGDI_DIRECTORY : EGDI_FILE));
 	}
 
 	if (FileNameText)
 	{
-		#ifndef _IRR_WCHAR_FILESYSTEM
-		const c8 *cs = (const c8 *)FileSystem->getWorkingDirectory().c_str();
-		wchar_t *ws = new wchar_t[strlen(cs) + 1];
-		int len = mbstowcs(ws,cs,strlen(cs));
-		ws[len] = 0;
-		s = ws;
-		delete [] ws;
-		#else
 		s = FileSystem->getWorkingDirectory();
-		#endif
-
-		FileDirectory = s;
 		FileNameText->setText(s.c_str());
 	}
 }
 
 
 //! sends the event that the file has been selected.
-void CGUIFileOpenDialog::sendSelectedEvent( EGUI_EVENT_TYPE type)
+void CGUIFileOpenDialog::sendSelectedEvent()
 {
 	SEvent event;
 	event.EventType = EET_GUI_EVENT;
 	event.GUIEvent.Caller = this;
 	event.GUIEvent.Element = 0;
-	event.GUIEvent.EventType = type;
+	event.GUIEvent.EventType = EGET_FILE_SELECTED;
 	Parent->OnEvent(event);
 }
 

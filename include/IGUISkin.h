@@ -37,14 +37,11 @@ namespace gui
 		EGST_BURNING_SKIN,
 
 		//! An unknown skin, not serializable at present
-		EGST_UNKNOWN,
-
-		//! this value is not used, it only specifies the number of skin types
-		EGST_COUNT
+		EGST_UNKNOWN
 	};
 
 	//! Names for gui element types
-	const c8* const GUISkinTypeNames[EGST_COUNT+1] =
+	const c8* const GUISkinTypeNames[] =
 	{
 		"windowsClassic",
 		"windowsMetallic",
@@ -105,7 +102,7 @@ namespace gui
 	};
 
 	//! Names for default skin colors
-	const c8* const GUISkinColorNames[EGDC_COUNT+1] =
+	const c8* const GUISkinColorNames[] =
 	{
 		"3DDarkShadow",
 		"3DShadow",
@@ -142,9 +139,9 @@ namespace gui
 		EGDS_WINDOW_BUTTON_WIDTH,
 		//! width of a checkbox check
 		EGDS_CHECK_BOX_WIDTH,
-		//! deprecated
+		//! width of a messagebox
 		EGDS_MESSAGE_BOX_WIDTH,
-		//! deprecated
+		//! height of a messagebox
 		EGDS_MESSAGE_BOX_HEIGHT,
 		//! width of a default button
 		EGDS_BUTTON_WIDTH,
@@ -154,21 +151,6 @@ namespace gui
 		EGDS_TEXT_DISTANCE_X,
 		//! distance for text from background
 		EGDS_TEXT_DISTANCE_Y,
-		//! distance for text in the title bar, from the left of the window rect
-		EGDS_TITLEBARTEXT_DISTANCE_X,
-		//! distance for text in the title bar, from the top of the window rect
-		EGDS_TITLEBARTEXT_DISTANCE_Y,
-		//! free space in a messagebox between borders and contents on all sides
-		EGDS_MESSAGE_BOX_GAP_SPACE,
-		//! minimal space to reserve for messagebox text-width
-		EGDS_MESSAGE_BOX_MIN_TEXT_WIDTH,
-		//! maximal space to reserve for messagebox text-width
-		EGDS_MESSAGE_BOX_MAX_TEST_WIDTH,
-		//! minimal space to reserve for messagebox text-height
-		EGDS_MESSAGE_BOX_MIN_TEXT_HEIGHT,
-		//! maximal space to reserve for messagebox text-height
-		EGDS_MESSAGE_BOX_MAX_TEXT_HEIGHT,
-
 		//! this value is not used, it only specifies the amount of default sizes
 		//! available.
 		EGDS_COUNT
@@ -176,7 +158,7 @@ namespace gui
 
 
 	//! Names for default skin sizes
-	const c8* const GUISkinSizeNames[EGDS_COUNT+1] =
+	const c8* const GUISkinSizeNames[] =
 	{
 		"ScrollBarSize",
 		"MenuHeight",
@@ -188,14 +170,7 @@ namespace gui
 		"ButtonHeight",
 		"TextDistanceX",
 		"TextDistanceY",
-		"TitleBarTextX",
-		"TitleBarTextY",
-		"MessageBoxGapSpace",
-		"MessageBoxMinTextWidth",
-		"MessageBoxMaxTextWidth",
-		"MessageBoxMinTextHeight",
-		"MessageBoxMaxTextHeight",
-		0
+		0,
 	};
 
 
@@ -223,7 +198,7 @@ namespace gui
 	};
 
 	//! Names for default skin sizes
-	const c8* const GUISkinTextNames[EGDT_COUNT+1] =
+	const c8* const GUISkinTextNames[] =
 	{
 		"MessageBoxOkay",
 		"MessageBoxCancel",
@@ -233,7 +208,7 @@ namespace gui
 		"WindowButtonMaximize",
 		"WindowButtonMinimize",
 		"WindowButtonRestore",
-		0
+		0,
 	};
 
 	//! Customizable symbols for GUI
@@ -290,7 +265,7 @@ namespace gui
 		EGDI_COUNT
 	};
 
-	const c8* const GUISkinIconNames[EGDI_COUNT+1] =
+	const c8* const GUISkinIconNames[] =
 	{
 		"windowMaximize",
 		"windowRestore",
@@ -336,7 +311,7 @@ namespace gui
 		EGDF_COUNT
 	};
 
-	const c8* const GUISkinFontNames[EGDF_COUNT+1] =
+	const c8* const GUISkinFontNames[] =
 	{
 		"defaultFont",
 		"buttonFont",
@@ -448,16 +423,11 @@ namespace gui
 		\param drawTitleBar: True to enable title drawing.
 		\param rect: Defining area where to draw.
 		\param clip: Clip area.
-		\param checkClientArea: When set to non-null the function will not draw anything,
-		but will instead return the clientArea which can be used for drawing by the calling window.
-		That is the area without borders and without titlebar.
-		\return Returns rect where it would be good to draw title bar text. This will
-		work even when checkClientArea is set to a non-null value.*/
+		\return Returns rect where it would be good to draw title bar text. */
 		virtual core::rect<s32> draw3DWindowBackground(IGUIElement* element,
 			bool drawTitleBar, video::SColor titleBarColor,
 			const core::rect<s32>& rect,
-			const core::rect<s32>* clip=0,
-			core::rect<s32>* checkClientArea=0) = 0;
+			const core::rect<s32>* clip=0) = 0;
 
 		//! draws a standard 3d menu pane
 		/** Used for drawing for menus and context menus.

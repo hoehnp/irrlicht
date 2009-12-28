@@ -2,6 +2,8 @@
 // No rights reserved: this software is in the public domain.
 
 #include "testUtils.h"
+#include <float.h>
+#include <limits.h>
 
 using namespace irr;
 using namespace core;
@@ -174,3 +176,4 @@ bool fast_atof(void)
 
 	return true;
 }
+

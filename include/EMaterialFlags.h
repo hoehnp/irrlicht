@@ -14,48 +14,48 @@ namespace video
 	enum E_MATERIAL_FLAG
 	{
 		//! Draw as wireframe or filled triangles? Default: false
-		EMF_WIREFRAME = 0x1,
+		EMF_WIREFRAME = 0,
 
 		//! Draw as point cloud or filled triangles? Default: false
-		EMF_POINTCLOUD = 0x2,
+		EMF_POINTCLOUD,
 
 		//! Flat or Gouraud shading? Default: true
-		EMF_GOURAUD_SHADING = 0x4,
+		EMF_GOURAUD_SHADING,
 
 		//! Will this material be lighted? Default: true
-		EMF_LIGHTING = 0x8,
+		EMF_LIGHTING,
 
 		//! Is the ZBuffer enabled? Default: true
-		EMF_ZBUFFER = 0x10,
+		EMF_ZBUFFER,
 
 		//! May be written to the zbuffer or is it readonly. Default: true
 		/** This flag is ignored, if the material type is a transparent type. */
-		EMF_ZWRITE_ENABLE = 0x20,
+		EMF_ZWRITE_ENABLE,
 
 		//! Is backface culling enabled? Default: true
-		EMF_BACK_FACE_CULLING = 0x40,
+		EMF_BACK_FACE_CULLING,
 
 		//! Is frontface culling enabled? Default: false
 		/** Overrides EMF_BACK_FACE_CULLING if both are enabled. */
-		EMF_FRONT_FACE_CULLING = 0x80,
+		EMF_FRONT_FACE_CULLING,
 
 		//! Is bilinear filtering enabled? Default: true
-		EMF_BILINEAR_FILTER = 0x100,
+		EMF_BILINEAR_FILTER,
 
 		//! Is trilinear filtering enabled? Default: false
 		/** If the trilinear filter flag is enabled,
 		the bilinear filtering flag is ignored. */
-		EMF_TRILINEAR_FILTER = 0x200,
+		EMF_TRILINEAR_FILTER,
 
 		//! Is anisotropic filtering? Default: false
 		/** In Irrlicht you can use anisotropic texture filtering in
 		conjunction with bilinear or trilinear texture filtering
 		to improve rendering results. Primitives will look less
 		blurry with this flag switched on. */
-		EMF_ANISOTROPIC_FILTER = 0x400,
+		EMF_ANISOTROPIC_FILTER,
 
 		//! Is fog enabled? Default: false
-		EMF_FOG_ENABLE = 0x800,
+		EMF_FOG_ENABLE,
 
 		//! Normalizes normals. Default: false
 		/** You can enable this if you need to scale a dynamic lighted
@@ -63,19 +63,13 @@ namespace video
 		will get darker. If you enable the EMF_NORMALIZE_NORMALS flag,
 		the normals will be normalized again, and the model will look
 		as bright as it should. */
-		EMF_NORMALIZE_NORMALS = 0x1000,
+		EMF_NORMALIZE_NORMALS,
 
 		//! Access to all layers texture wrap settings. Overwrites separate layer settings.
-		EMF_TEXTURE_WRAP = 0x2000,
+		EMF_TEXTURE_WRAP,
 
-		//! AntiAliasing mode
-		EMF_ANTI_ALIASING = 0x4000,
-
-		//! ColorMask bits, for enabling the color planes
-		EMF_COLOR_MASK = 0x8000,
-
-		//! ColorMaterial enum for vertex color interpretation
-		EMF_COLOR_MATERIAL = 0x10000
+		//! This is not a flag, but a value indicating how much flags there are.
+		EMF_MATERIAL_FLAG_COUNT
 	};
 
 } // end namespace video

@@ -60,7 +60,7 @@ int main()
 	*/
 
 	IrrlichtDevice *device =
-		createDevice(driverType, core::dimension2d<u32>(640, 480),
+		createDevice(driverType, core::dimension2d<s32>(640, 480),
 		16, false, shadows);
 
 	if (device == 0)
@@ -104,7 +104,7 @@ int main()
 	want to.
 	*/
 
-	mesh = smgr->addHillPlaneMesh( "myHill",
+	mesh = smgr->addHillPlaneMesh("myHill",
 		core::dimension2d<f32>(20,20),
 		core::dimension2d<u32>(40,40), 0, 0,
 		core::dimension2d<f32>(0,0),

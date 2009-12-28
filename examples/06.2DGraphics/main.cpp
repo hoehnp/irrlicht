@@ -50,7 +50,7 @@ int main()
 	// create device
 
 	IrrlichtDevice *device = createDevice(driverType,
-		core::dimension2d<u32>(512, 384));
+		core::dimension2d<s32>(512, 384));
 
 	if (device == 0)
 		return 1; // could not create selected driver.
@@ -61,7 +61,7 @@ int main()
 
 	/*
 	All 2d graphics in this example are put together into one texture,
-	2ddemo.png. Because we want to draw colorkey based sprites, we need to
+	2ddemo.bmp. Because we want to draw colorkey based sprites, we need to
 	load this texture and tell the engine, which part of it should be
 	transparent based on a colorkey.
 
@@ -72,7 +72,7 @@ int main()
 	e.g. all black pixels transparent. Please note that
 	makeColorKeyTexture just creates an alpha channel based on the color.
 	*/
-	video::ITexture* images = driver->getTexture("../../media/2ddemo.png");
+	video::ITexture* images = driver->getTexture("../../media/2ddemo.bmp");
 	driver->makeColorKeyTexture(images, core::position2d<s32>(0,0));
 
 	/*

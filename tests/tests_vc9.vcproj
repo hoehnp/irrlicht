@@ -5,7 +5,7 @@
 	Name="tests"
 	ProjectGUID="{2A1DE18B-F678-4A94-A996-E848E20B2983}"
 	RootNamespace="tests"
-	TargetFrameworkVersion="131072"
+	TargetFrameworkVersion="196613"
 	>
 	<Platforms>
 		<Platform
@@ -61,8 +61,6 @@
 				AdditionalDependencies="..\lib\Win32-visualstudio\Irrlicht.lib"
 				OutputFile="..\bin\Win32-VisualStudio\$(ProjectName).exe"
 				GenerateDebugInformation="true"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -114,6 +112,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
+				AdditionalIncludeDirectories="..\include"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				WarningLevel="3"
@@ -135,8 +134,6 @@
 				GenerateDebugInformation="true"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -171,19 +168,11 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\archiveReader.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\b3dAnimation.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\burningsVideo.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\collisionResponseAnimator.cpp"
 				>
 			</File>
 			<File
@@ -203,10 +192,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\enumerateImageManipulators.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\exports.cpp"
 				>
 			</File>
@@ -219,35 +204,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\flyCircleAnimator.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\guiDisabledMenu.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\irrArray.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\irrCoreEquals.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\irrList.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\irrMap.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\irrString.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\lightMaps.cpp"
 				>
 			</File>
 			<File
@@ -263,19 +220,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\makeColorKeyTexture.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\matrixOps.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\md2Animation.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\meshLoaders.cpp"
 				>
 			</File>
 			<File
@@ -287,19 +232,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\renderTargetTexture.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\sceneCollisionManager.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\sceneNodeAnimator.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\serializeAttributes.cpp"
 				>
 			</File>
 			<File
@@ -315,10 +248,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\testGeometryCreator.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\testUtils.cpp"
 				>
 			</File>
@@ -331,27 +260,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\testXML.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\textureFeatures.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\textureRenderStates.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\transparentAlphaChannelRef.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\vectorPositionDimension2d.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\writeImageToFile.cpp"
 				>
 			</File>
 		</Filter>
@@ -364,6 +277,12 @@
 				RelativePath=".\testUtils.h"
 				>
 			</File>
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
+			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
+			>
 		</Filter>
 	</Files>
 	<Globals>

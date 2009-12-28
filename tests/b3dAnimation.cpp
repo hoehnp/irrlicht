@@ -15,7 +15,7 @@ using namespace gui;
 bool b3dAnimation(void)
 {
 	// Use EDT_BURNINGSVIDEO since it is not dependent on (e.g.) OpenGL driver versions.
-	IrrlichtDevice *device = createDevice( EDT_BURNINGSVIDEO, dimension2d<u32>(160, 120), 32);
+	IrrlichtDevice *device = createDevice( EDT_BURNINGSVIDEO, dimension2d<s32>(160, 120), 32);
 	assert(device);
 	if (!device)
 		return false;
@@ -24,12 +24,14 @@ bool b3dAnimation(void)
 	ISceneManager * smgr = device->getSceneManager();
 
 	IAnimatedMesh* mesh = smgr->getMesh("../media/ninja.b3d");
+	IAnimatedMeshSceneNode* node1;
+	IAnimatedMeshSceneNode* node2;
 	assert(mesh);
 
 	bool result = false;
 	if(mesh)
 	{
-		IAnimatedMeshSceneNode* node1 = smgr->addAnimatedMeshSceneNode(mesh);
+		node1 = smgr->addAnimatedMeshSceneNode(mesh);
 		assert(node1);
 
 		if(node1)
@@ -37,11 +39,9 @@ bool b3dAnimation(void)
 			node1->setPosition(vector3df(-3, -3, 10));
 			node1->setMaterialFlag(EMF_LIGHTING, false);
 			node1->setAnimationSpeed(0.f);
-			node1->setCurrentFrame(10.f);
-			node1->setDebugDataVisible(irr::scene::EDS_BBOX_BUFFERS);
 		}
 
-		IAnimatedMeshSceneNode* node2 = smgr->addAnimatedMeshSceneNode(mesh);
+		node2 = smgr->addAnimatedMeshSceneNode(mesh);
 		assert(node2);
 		if(node2)
 		{
@@ -49,14 +49,13 @@ bool b3dAnimation(void)
 			node2->setMaterialFlag(EMF_LIGHTING, false);
 			node2->setAnimationSpeed(0.f);
 			node2->setCurrentFrame(62.f);
-			node2->setDebugDataVisible(irr::scene::EDS_BBOX_BUFFERS);
 		}
 
 		(void)smgr->addCameraSceneNode();
 
 		// Just jump to the last frame since that's all we're interested in.
 		device->run();
-		driver->beginScene(true, true, SColor(255, 60, 60, 60));
+		driver->beginScene(true, true, SColor(255, 255, 255, 0));
 		smgr->drawAll();
 		driver->endScene();
 
@@ -67,3 +66,4 @@ bool b3dAnimation(void)
 
 	return result;
 }
+

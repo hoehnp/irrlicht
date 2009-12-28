@@ -18,7 +18,7 @@ using namespace irr;
 #pragma comment(lib, "Irrlicht.lib")
 #endif
 
-int main(int argc, char** argv)
+int main()
 {
 	// ask user for driver
 
@@ -46,7 +46,7 @@ int main(int argc, char** argv)
 	// create device and exit if creation failed
 
 	IrrlichtDevice* device =
-		createDevice(driverType, core::dimension2d<u32>(640, 480));
+		createDevice(driverType, core::dimension2d<s32>(640, 480));
 
 	if (device == 0)
 		return 1; // could not create selected driver.
@@ -68,10 +68,7 @@ int main(int argc, char** argv)
 	*/
 
 	// load the scene
-	if (argc>1)
-		smgr->loadScene(argv[1]);
-	else
-		smgr->loadScene("../../media/example.irr");
+	smgr->loadScene("../../media/example.irr");
 
 	/*
 	Now we'll create a camera, and give it a collision response animator
@@ -115,8 +112,8 @@ int main(int argc, char** argv)
 			selector = smgr->createTerrainTriangleSelector((scene::ITerrainSceneNode*)node);
 			break;
 
-		case scene::ESNT_OCTREE:
-			selector = smgr->createOctreeTriangleSelector(((scene::IMeshSceneNode*)node)->getMesh(), node);
+		case scene::ESNT_OCT_TREE:
+			selector = smgr->createOctTreeTriangleSelector(((scene::IMeshSceneNode*)node)->getMesh(), node);
 			break;
 
 		default:

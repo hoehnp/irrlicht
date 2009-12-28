@@ -18,11 +18,9 @@ namespace scene
 
 //! constructor
 CSkinnedMesh::CSkinnedMesh()
-: SkinningBuffers(0), AnimationFrames(0.f),
-	LastAnimatedFrame(0.f), LastSkinnedFrame(0.f),
-	InterpolationMode(EIM_LINEAR),
-	HasAnimation(false), PreparedForSkinning(false),
-	BoneControlUsed(false), AnimateNormals(true), HardwareSkinning(false)
+: SkinningBuffers(0), HasAnimation(0), PreparedForSkinning(0),
+	AnimationFrames(0.f), LastAnimatedFrame(0.f), LastSkinnedFrame(0.f),
+	BoneControlUsed(false), AnimateNormals(true), HardwareSkinning(0), InterpolationMode(EIM_LINEAR)
 {
 	#ifdef _DEBUG
 	setDebugName("CSkinnedMesh");
@@ -62,6 +60,7 @@ IMesh* CSkinnedMesh::getMesh(s32 frame, s32 detailLevel, s32 startFrameLoop, s32
 		return this;
 
 	animateMesh((f32)frame, 1.0f);
+	buildAll_LocalAnimatedMatrices();
 	skinMesh();
 	return this;
 }
@@ -116,17 +115,17 @@ void CSkinnedMesh::animateMesh(f32 frame, f32 blend)
 			joint->Animatedscale = core::lerp(oldScale, scale, blend);
 			joint->Animatedrotation.slerp(oldRotation, rotation, blend);
 		}
+
+		//Note:
+		//_LocalAnimatedMatrix needs to be built at some point, but this function may be called lots of times for
+		//one render (to play two animations at the same time) _LocalAnimatedMatrix only needs to be built once.
+		//a call to buildAllLocalAnimatedMatrices is needed before skinning the mesh, and before the user gets the joints to move
+
+		//----------------
+		// Temp!
+		buildAll_LocalAnimatedMatrices();
+		//-----------------
 	}
-
-	//Note:
-	//_LocalAnimatedMatrix needs to be built at some point, but this function may be called lots of times for
-	//one render (to play two animations at the same time) _LocalAnimatedMatrix only needs to be built once.
-	//a call to buildAllLocalAnimatedMatrices is needed before skinning the mesh, and before the user gets the joints to move
-
-	//----------------
-	// Temp!
-	buildAll_LocalAnimatedMatrices();
-	//-----------------
 
 	updateBoundingBox();
 }
@@ -460,8 +459,8 @@ void CSkinnedMesh::skinMesh()
 
 		for (i=0; i<SkinningBuffers->size(); ++i)
 			(*SkinningBuffers)[i]->setDirty(EBT_VERTEX);
+
 	}
-	updateBoundingBox();
 }
 
 
@@ -711,6 +710,8 @@ bool CSkinnedMesh::setHardwareSkinning(bool on)
 					LocalBuffers[buffer_id]->boundingBoxNeedsRecalculated();
 				}
 			}
+
+
 		}
 
 		HardwareSkinning=on;
@@ -1124,7 +1125,7 @@ void CSkinnedMesh::updateBoundingBox(void)
 }
 
 
-scene::SSkinMeshBuffer *CSkinnedMesh::addMeshBuffer()
+scene::SSkinMeshBuffer *CSkinnedMesh::createBuffer()
 {
 	scene::SSkinMeshBuffer *buffer=new scene::SSkinMeshBuffer();
 	LocalBuffers.push_back(buffer);
@@ -1132,7 +1133,7 @@ scene::SSkinMeshBuffer *CSkinnedMesh::addMeshBuffer()
 }
 
 
-CSkinnedMesh::SJoint *CSkinnedMesh::addJoint(SJoint *parent)
+CSkinnedMesh::SJoint *CSkinnedMesh::createJoint(SJoint *parent)
 {
 	SJoint *joint=new SJoint;
 
@@ -1151,7 +1152,7 @@ CSkinnedMesh::SJoint *CSkinnedMesh::addJoint(SJoint *parent)
 }
 
 
-CSkinnedMesh::SPositionKey *CSkinnedMesh::addPositionKey(SJoint *joint)
+CSkinnedMesh::SPositionKey *CSkinnedMesh::createPositionKey(SJoint *joint)
 {
 	if (!joint)
 		return 0;
@@ -1161,7 +1162,7 @@ CSkinnedMesh::SPositionKey *CSkinnedMesh::addPositionKey(SJoint *joint)
 }
 
 
-CSkinnedMesh::SScaleKey *CSkinnedMesh::addScaleKey(SJoint *joint)
+CSkinnedMesh::SScaleKey *CSkinnedMesh::createScaleKey(SJoint *joint)
 {
 	if (!joint)
 		return 0;
@@ -1171,7 +1172,7 @@ CSkinnedMesh::SScaleKey *CSkinnedMesh::addScaleKey(SJoint *joint)
 }
 
 
-CSkinnedMesh::SRotationKey *CSkinnedMesh::addRotationKey(SJoint *joint)
+CSkinnedMesh::SRotationKey *CSkinnedMesh::createRotationKey(SJoint *joint)
 {
 	if (!joint)
 		return 0;
@@ -1181,7 +1182,7 @@ CSkinnedMesh::SRotationKey *CSkinnedMesh::addRotationKey(SJoint *joint)
 }
 
 
-CSkinnedMesh::SWeight *CSkinnedMesh::addWeight(SJoint *joint)
+CSkinnedMesh::SWeight *CSkinnedMesh::createWeight(SJoint *joint)
 {
 	if (!joint)
 		return 0;
@@ -1363,7 +1364,7 @@ void CSkinnedMesh::convertMeshToTangents()
 	{
 		if (LocalBuffers[b])
 		{
-			LocalBuffers[b]->convertToTangents();
+			LocalBuffers[b]->MoveTo_Tangents();
 
 			const s32 idxCnt = LocalBuffers[b]->getIndexCount();
 
@@ -1446,6 +1447,12 @@ void CSkinnedMesh::calculateTangents(
 		binormal *= -1.0f;
 	}
 }
+
+
+
+
+
+
 
 
 } // end namespace scene

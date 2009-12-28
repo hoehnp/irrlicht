@@ -23,52 +23,15 @@ so you can assign Unicode to string<c8> and ASCII/Latin-1 to string<wchar_t>
 (and the other way round) if you want to.
 
 However, note that the conversation between both is not done using any encoding.
-This means that c8 strings are treated as ASCII/Latin-1, not UTF-8, and
-are simply expanded to the equivalent wchar_t, while Unicode/wchar_t
+This means that c8 strings are treated as ASCII/Latin-1, not UTF-8, and 
+are simply expanded to the equivalent wchar_t, while Unicode/wchar_t 
 characters are truncated to 8-bit ASCII/Latin-1 characters, discarding all
 other information in the wchar_t.
+
+Known bugs:
+Special characters like umlauts are ignored in the
+methods make_upper, make_lower and equals_ignore_case.
 */
-
-enum eLocaleID
-{
-	IRR_LOCALE_ANSI = 0,
-	IRR_LOCALE_GERMAN = 1
-};
-
-static eLocaleID locale_current = IRR_LOCALE_ANSI;
-static inline void locale_set ( eLocaleID id )
-{
-	locale_current = id;
-}
-
-//! Returns a character converted to lower case
-static inline u32 locale_lower ( u32 x )
-{
-	switch ( locale_current )
-	{
-		case IRR_LOCALE_GERMAN:
-		case IRR_LOCALE_ANSI:
-			break;
-	}
-	// ansi
-	return x >= 'A' && x <= 'Z' ? x + 0x20 : x;
-}
-
-//! Returns a character converted to upper case
-static inline u32 locale_upper ( u32 x )
-{
-	switch ( locale_current )
-	{
-		case IRR_LOCALE_GERMAN:
-		case IRR_LOCALE_ANSI:
-			break;
-	}
-
-	// ansi
-	return x >= 'a' && x <= 'z' ? x + ( 'A' - 'a' ) : x;
-}
-
-
 template <typename T, typename TAlloc = irrAllocator<T> >
 class string
 {
@@ -124,7 +87,8 @@ public:
 
 		// temporary buffer for 16 numbers
 
-		c8 tmpbuf[16]={0};
+		c8 tmpbuf[16];
+		tmpbuf[15] = 0;
 		u32 idx = 15;
 
 		// special case '0'
@@ -163,7 +127,8 @@ public:
 	{
 		// temporary buffer for 16 numbers
 
-		c8 tmpbuf[16]={0};
+		c8 tmpbuf[16];
+		tmpbuf[15] = 0;
 		u32 idx = 15;
 
 		// special case '0'
@@ -232,13 +197,9 @@ public:
 		if (this == &other)
 			return *this;
 
-		used = other.size()+1;
-		if (used>allocated)
-		{
-			allocator.deallocate(array); // delete [] array;
-			allocated = used;
-			array = allocator.allocate(used); //new T[used];
-		}
+		allocator.deallocate(array); // delete [] array;
+		allocated = used = other.size()+1;
+		array = allocator.allocate(used); //new T[used];
 
 		const T* p = other.c_str();
 		for (u32 i=0; i<used; ++i, ++p)
@@ -277,28 +238,24 @@ public:
 
 		u32 len = 0;
 		const B* p = c;
-		do
+		while(*p)
 		{
 			++len;
-		} while(*p++);
+			++p;
+		}
 
-		// we'll keep the old string for a while, because the new
+		// we'll take the old string for a while, because the new
 		// string could be a part of the current string.
 		T* oldArray = array;
 
-		used = len;
-		if (used>allocated)
-		{
-			allocated = used;
-			array = allocator.allocate(used); //new T[used];
-		}
+		++len;
+		allocated = used = len;
+		array = allocator.allocate(used); //new T[used];
 
 		for (u32 l = 0; l<len; ++l)
 			array[l] = (T)c[l];
 
-		if (oldArray != array)
-			allocator.deallocate(oldArray); // delete [] oldArray;
-
+		allocator.deallocate(oldArray); // delete [] oldArray;
 		return *this;
 	}
 
@@ -374,6 +331,10 @@ public:
 			s32 diff = array[i] - other.array[i];
 			if ( diff )
 				return diff < 0;
+/*
+			if (array[i] != other.array[i])
+				return (array[i] < other.array[i]);
+*/
 		}
 
 		return used < other.used;
@@ -394,9 +355,8 @@ public:
 	}
 
 
-	//! Returns length of the string's content
-	/** \return Length of the string's content in characters, excluding
-	the trailing NUL. */
+	//! Returns length of string
+	/** \return Length of the string in characters. */
 	u32 size() const
 	{
 		return used-1;
@@ -404,7 +364,7 @@ public:
 
 
 	//! Returns character string
-	/** \return pointer to C-style NUL terminated string. */
+	/** \return pointer to C-style zero terminated string. */
 	const T* c_str() const
 	{
 		return array;
@@ -415,15 +375,22 @@ public:
 	void make_lower()
 	{
 		for (u32 i=0; i<used; ++i)
-			array[i] = locale_lower ( array[i] );
+			array[i] = ansi_lower ( array[i] );
 	}
 
 
 	//! Makes the string upper case.
 	void make_upper()
 	{
+		const T a = (T)'a';
+		const T z = (T)'z';
+		const T diff = (T)'A' - a;
+
 		for (u32 i=0; i<used; ++i)
-			array[i] = locale_upper ( array[i] );
+		{
+			if (array[i]>=a && array[i]<=z)
+				array[i] += diff;
+		}
 	}
 
 
@@ -433,27 +400,10 @@ public:
 	bool equals_ignore_case(const string<T>& other) const
 	{
 		for(u32 i=0; array[i] && other[i]; ++i)
-			if (locale_lower( array[i]) != locale_lower(other[i]))
+			if (ansi_lower(array[i]) != ansi_lower(other[i]))
 				return false;
 
 		return used == other.used;
-	}
-
-	//! Compares the strings ignoring case.
-	/** \param other: Other string to compare.
-		\param sourcePos: where to start to compare in the string
-	\return True if the strings are equal ignoring case. */
-	bool equals_substring_ignore_case(const string<T>&other, const s32 sourcePos = 0 ) const
-	{
-		if ( (u32) sourcePos > used )
-			return false;
-
-		u32 i;
-		for( i=0; array[sourcePos + i] && other[i]; ++i)
-			if (locale_lower( array[sourcePos + i]) != locale_lower(other[i]))
-				return false;
-
-		return array[sourcePos + i] == 0 && other[i] == 0;
 	}
 
 
@@ -464,7 +414,7 @@ public:
 	{
 		for(u32 i=0; array[i] && other.array[i]; ++i)
 		{
-			s32 diff = (s32) locale_lower ( array[i] ) - (s32) locale_lower ( other.array[i] );
+			s32 diff = (s32) ansi_lower ( array[i] ) - (s32) ansi_lower ( other.array[i] );
 			if ( diff )
 				return diff < 0;
 		}
@@ -476,7 +426,7 @@ public:
 	//! compares the first n characters of the strings
 	/** \param other Other string to compare.
 	\param n Number of characters to compare
-	\return True if the n first characters of both strings are equal. */
+	\return True if the n first characters of this string are smaller. */
 	bool equalsn(const string<T>& other, u32 n) const
 	{
 		u32 i;
@@ -493,7 +443,7 @@ public:
 	//! compares the first n characters of the strings
 	/** \param str Other string to compare.
 	\param n Number of characters to compare
-	\return True if the n first characters of both strings are equal. */
+	\return True if the n first characters of this string are smaller. */
 	bool equalsn(const T* const str, u32 n) const
 	{
 		if (!str)
@@ -740,11 +690,10 @@ public:
 
 	//! finds another string in this string
 	/** \param str: Another string
-	\param start: Start position of the search
 	\return Positions where the string has been found,
 	or -1 if not found. */
 	template <class B>
-	s32 find(const B* const str, const u32 start = 0) const
+	s32 find(const B* const str) const
 	{
 		if (str && *str)
 		{
@@ -756,7 +705,7 @@ public:
 			if (len > used-1)
 				return -1;
 
-			for (u32 i=start; i<used-len; ++i)
+			for (u32 i=0; i<used-len; ++i)
 			{
 				u32 j=0;
 
@@ -890,89 +839,8 @@ public:
 	}
 
 
-	//! Removes characters from a string.
-	/** \param c: Character to remove. */
-	void remove(T c)
-	{
-		u32 pos = 0;
-		u32 found = 0;
-		for (u32 i=0; i<used; ++i)
-		{
-			if (array[i] == c)
-			{
-				++found;
-				continue;
-			}
-
-			array[pos++] = array[i];
-		}
-		used -= found;
-		array[used] = 0;
-	}
-
-
-	//! Removes a string from the string.
-	/** \param toRemove: String to remove. */
-	void remove(const string<T> toRemove)
-	{
-		u32 size = toRemove.size();
-		u32 pos = 0;
-		u32 found = 0;
-		for (u32 i=0; i<used; ++i)
-		{
-			u32 j = 0;
-			while (j < size)
-			{
-				if (array[i + j] != toRemove[j])
-					break;
-				++j;
-			}
-			if (j == size)
-			{
-				found += size;
-				i += size - 1;
-				continue;
-			}
-
-			array[pos++] = array[i];
-		}
-		used -= found;
-		array[used] = 0;
-	}
-
-
-	//! Removes characters from a string.
-	/** \param characters: Characters to remove. */
-	void removeChars(const string<T> & characters)
-	{
-		u32 pos = 0;
-		u32 found = 0;
-		for (u32 i=0; i<used; ++i)
-		{
-			// Don't use characters.findFirst as it finds the \0,
-			// causing used to become incorrect.
-			bool docontinue = false;
-			for (u32 j=0; j<characters.size(); ++j)
-			{
-				if (characters[j] == array[i])
-				{
-					++found;
-					docontinue = true;
-					break;
-				}
-			}
-			if (docontinue)
-				continue;
-
-			array[pos++] = array[i];
-		}
-		used -= found;
-		array[used] = 0;
-	}
-
-
 	//! Trims the string.
-	/** Removes the specified characters (by default, Latin-1 whitespace)
+	/** Removes the specified characters (by default, Latin-1 whitespace) 
 	from the begining and the end of the string. */
 	string<T>& trim(const string<T> & whitespace = " \t\n\r")
 	{
@@ -1001,87 +869,22 @@ public:
 		--used;
 	}
 
-	//! verify the existing string.
-	void validate()
-	{
-		// terminate on existing null
-		for (u32 i=0; i<allocated; ++i)
-		{
-			if (array[i] == 0)
-			{
-				used = i + 1;
-				return;
-			}
-		}
-
-		// terminate
-		if ( allocated > 0 )
-		{
-			used = allocated - 1;
-			array[used] = 0;
-		}
-		else
-		{
-			used = 0;
-		}
-	}
-
-	//! gets the last char of a string or null
-	T lastChar() const
-	{
-		return used > 1 ? array[used-2] : 0;
-	}
-
-	//! split string into parts.
-	/** This method will split a string at certain delimiter characters
-	into the container passed in as reference. The type of the container
-	has to be given as template parameter. It must provide a push_back and
-	a size method.
-	\param ret The result container
-	\param c C-style string of delimiter characters
-	\param count Number of delimiter characters
-	\param ignoreEmptyTokens Flag to avoid empty substrings in the result
-	container. If two delimiters occur without a character in between, an
-	empty substring would be placed in the result. If this flag is set,
-	only non-empty strings are stored.
-	\param keepSeparators Flag which allows to add the separator to the
-	result string. If this flag is true, the concatenation of the
-	substrings results in the original string. Otherwise, only the
-	characters between the delimiters are returned.
-	\return The number of resulting substrings
-	*/
-	template<class container>
-	u32 split(container& ret, const T* const c, u32 count=1, bool ignoreEmptyTokens=true, bool keepSeparators=false) const
-	{
-		if (!c)
-			return 0;
-
-		const u32 oldSize=ret.size();
-		u32 lastpos = 0;
-		bool lastWasSeparator = false;
-		for (u32 i=0; i<used; ++i)
-		{
-			bool foundSeparator = false;
-			for (u32 j=0; j<count; ++j)
-			{
-				if (array[i] == c[j])
-				{
-					if ((!ignoreEmptyTokens || i - lastpos != 0) &&
-							!lastWasSeparator)
-						ret.push_back(string<T>(&array[lastpos], i - lastpos));
-					foundSeparator = true;
-					lastpos = (keepSeparators ? i : i + 1);
-					break;
-				}
-			}
-			lastWasSeparator = foundSeparator;
-		}
-		if ((used - 1) > lastpos)
-			ret.push_back(string<T>(&array[lastpos], (used - 1) - lastpos));
-		return ret.size()-oldSize;
-	}
-
 private:
+/*
+	T toLower(const T& t) const
+	{
+		if (t>=(T)'A' && t<=(T)'Z')
+			return t + ((T)'a' - (T)'A');
+		else
+			return t;
+	}
+*/
+	//! Returns a character converted to lower case
+	inline T ansi_lower ( u32 x ) const
+	{
+		return x >= 'A' && x <= 'Z' ? (T) x + 0x20 : (T) x;
+	}
+
 
 	//! Reallocate the array, make it bigger or smaller
 	void reallocate(u32 new_size)
@@ -1101,6 +904,7 @@ private:
 		allocator.deallocate(old_array); // delete [] old_array;
 	}
 
+
 	//--- member variables
 
 	T* array;
@@ -1115,7 +919,6 @@ typedef string<c8> stringc;
 
 //! Typedef for wide character strings
 typedef string<wchar_t> stringw;
-
 
 } // end namespace core
 } // end namespace irr

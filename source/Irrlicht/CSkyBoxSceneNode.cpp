@@ -38,11 +38,9 @@ CSkyBoxSceneNode::CSkyBoxSceneNode(video::ITexture* top, video::ITexture* bottom
 
 	video::SMaterial mat;
 	mat.Lighting = false;
-	mat.ZBuffer = video::ECFN_NEVER;
+	mat.ZBuffer = false;
 	mat.ZWriteEnable = false;
-	mat.AntiAliasing=0;
-	mat.TextureLayer[0].TextureWrapU = video::ETC_CLAMP_TO_EDGE;
-	mat.TextureLayer[0].TextureWrapV = video::ETC_CLAMP_TO_EDGE;
+	mat.TextureLayer[0].TextureWrap = video::ETC_CLAMP;
 
 	/* Hey, I am no artist, but look at that
 	   cool ASCII art I made! ;)
@@ -142,7 +140,7 @@ void CSkyBoxSceneNode::render()
 
 		core::matrix4 translate(AbsoluteTransformation);
 		translate.setTranslation(camera->getAbsolutePosition());
-
+	
 		// Draw the sky box between the near and far clip plane
 		const f32 viewDistance = (camera->getNearValue() + camera->getFarValue()) * 0.5f;
 		core::matrix4 scale;
@@ -192,10 +190,8 @@ void CSkyBoxSceneNode::render()
 
 		if ( tex )
 		{
-			core::rect<s32> rctDest(core::position2d<s32>(-1,0),
-									core::dimension2di(driver->getCurrentRenderTargetSize()));
-			core::rect<s32> rctSrc(core::position2d<s32>(0,0),
-									core::dimension2di(tex->getSize()));
+			core::rect<s32> rctDest(core::position2d<s32>(-1,0), driver->getCurrentRenderTargetSize());
+			core::rect<s32> rctSrc(core::position2d<s32>(0,0), tex->getSize());
 
 			driver->draw2DImage(tex, rctDest, rctSrc);
 		}
@@ -244,7 +240,7 @@ ISceneNode* CSkyBoxSceneNode::clone(ISceneNode* newParent, ISceneManager* newMan
 	if (!newParent) newParent = Parent;
 	if (!newManager) newManager = SceneManager;
 
-	CSkyBoxSceneNode* nb = new CSkyBoxSceneNode(0,0,0,0,0,0, newParent,
+	CSkyBoxSceneNode* nb = new CSkyBoxSceneNode(0,0,0,0,0,0, newParent, 
 		newManager, ID);
 
 	nb->cloneMembers(this, newManager);

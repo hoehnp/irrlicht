@@ -26,17 +26,18 @@ namespace irr
 		}
 
 
-		void CParticleScaleAffector::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options) const
+		void CParticleScaleAffector::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteOptions* options)
 		{
 			out->addFloat("ScaleToWidth", ScaleTo.Width);
 			out->addFloat("ScaleToHeight", ScaleTo.Height);
 		}
 
 
-		void CParticleScaleAffector::deserializeAttributes(io::IAttributes* in, io::SAttributeReadWriteOptions* options)
+		s32 CParticleScaleAffector::deserializeAttributes(s32 startIndex, io::IAttributes* in, io::SAttributeReadWriteOptions* options)
 		{
 			ScaleTo.Width = in->getAttributeAsFloat("ScaleToWidth");
 			ScaleTo.Height = in->getAttributeAsFloat("ScaleToHeight");
+			return 0;
 		}
 
 

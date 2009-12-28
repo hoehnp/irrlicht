@@ -31,20 +31,10 @@ namespace gui
 		//! change selection
 		virtual void setSelectedElement(IGUIElement *sel);
 
-		//! get draggable
-		virtual bool isDraggable() const;
-
-		//! get draggable
-		virtual void setDraggable(bool draggable);
-
 		// not used
 		virtual IGUIButton* getCloseButton() const;
 		virtual IGUIButton* getMinimizeButton() const;
 		virtual IGUIButton* getMaximizeButton() const;
-        virtual void setDrawBackground(bool draw)  { }
-		virtual bool getDrawBackground() const { return true; }
-		virtual void setDrawTitlebar(bool draw) { }
-		virtual bool getDrawTitlebar() const { return true; }
 
 		CGUIAttributeEditor* getAttributeEditor() const;
 		CGUIAttributeEditor* getOptionEditor() const;
@@ -58,7 +48,6 @@ namespace gui
 
 		// for dragging the window
 		bool                    Dragging;
-		bool                    IsDraggable;
 		bool                    Resizing;
 		core::position2d<s32>   DragStart;
 

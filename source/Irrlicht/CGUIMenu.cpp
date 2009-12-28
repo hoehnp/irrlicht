@@ -9,7 +9,6 @@
 #include "IGUIEnvironment.h"
 #include "IVideoDriver.h"
 #include "IGUIFont.h"
-#include "IGUIWindow.h"
 
 #include "os.h"
 
@@ -147,32 +146,32 @@ bool CGUIMenu::OnEvent(const SEvent& event)
 				highlight(core::position2d<s32>(event.MouseInput.X,	event.MouseInput.Y), true);
 				if ( shouldCloseSubMenu )
 				{
-                    Environment->removeFocus(this);
+					Environment->removeFocus(this);
 				}
 
 				return true;
 			}
-			case EMIE_LMOUSE_LEFT_UP:
-			{
+            case EMIE_LMOUSE_LEFT_UP:
+            {
                 core::position2d<s32> p(event.MouseInput.X, event.MouseInput.Y);
-				if (!AbsoluteClippingRect.isPointInside(p))
-				{
-					s32 t = sendClick(p);
-					if ((t==0 || t==1) && Environment->hasFocus(this))
-						Environment->removeFocus(this);
-				}
+                if (!AbsoluteClippingRect.isPointInside(p))
+                {
+                    s32 t = sendClick(p);
+                    if ((t==0 || t==1) && Environment->hasFocus(this))
+                        Environment->removeFocus(this);
+                }
 
-			    return true;
-			}
+                return true;
+            }
 			case EMIE_MOUSE_MOVED:
-				if (Environment->hasFocus(this) && HighLighted >= 0)
-				{
-				    s32 oldHighLighted = HighLighted;
-					highlight(core::position2d<s32>(event.MouseInput.X, event.MouseInput.Y), true);
-					if ( HighLighted < 0 )
-                        HighLighted = oldHighLighted;   // keep last hightlight active when moving outside the area
-				}
-				return true;
+            if (Environment->hasFocus(this) && HighLighted >= 0)
+            {
+                s32 oldHighLighted = HighLighted;
+                highlight(core::position2d<s32>(event.MouseInput.X, event.MouseInput.Y), true);
+                if ( HighLighted < 0 )
+                    HighLighted = oldHighLighted;   // keep last hightlight active when moving outside the area
+            }
+            return true;
 			default:
 				break;
 			}
@@ -185,41 +184,28 @@ bool CGUIMenu::OnEvent(const SEvent& event)
 	return IGUIElement::OnEvent(event);
 }
 
+
 void CGUIMenu::recalculateSize()
 {
-	core::rect<s32> clientRect; // client rect of parent
-	if ( Parent && Parent->hasType(EGUIET_WINDOW) )
-	{
-		clientRect = static_cast<IGUIWindow*>(Parent)->getClientRect();
-	}
-	else if ( Parent )
-	{
-		clientRect = core::rect<s32>(0,0, Parent->getAbsolutePosition().getWidth(),
-					Parent->getAbsolutePosition().getHeight());
-	}
-	else
-	{
-		clientRect = RelativeRect;
-	}
-
-
 	IGUISkin* skin = Environment->getSkin();
 	IGUIFont* font = skin->getFont(EGDF_MENU);
 
 	if (!font)
 	{
 		if (Parent && skin)
-			RelativeRect = core::rect<s32>(clientRect.UpperLeftCorner.X, clientRect.UpperLeftCorner.Y,
-					clientRect.LowerRightCorner.X, clientRect.UpperLeftCorner.Y+skin->getSize(EGDS_MENU_HEIGHT));
+			RelativeRect = core::rect<s32>(0,0,
+					Parent->getAbsolutePosition().LowerRightCorner.X,
+					skin->getSize(EGDS_MENU_HEIGHT));
 		return;
 	}
 
 	core::rect<s32> rect;
-	rect.UpperLeftCorner = clientRect.UpperLeftCorner;
+	rect.UpperLeftCorner.X = 0;
+	rect.UpperLeftCorner.Y = 0;
 	s32 height = font->getDimension(L"A").Height + 5;
 	//if (skin && height < skin->getSize ( EGDS_MENU_HEIGHT ))
 	//	height = skin->getSize(EGDS_MENU_HEIGHT);
-	s32 width = rect.UpperLeftCorner.X;
+	s32 width = 0;
 	s32 i;
 
 	for (i=0; i<(s32)Items.size(); ++i)
@@ -239,10 +225,11 @@ void CGUIMenu::recalculateSize()
 		width += Items[i].Dim.Width;
 	}
 
-	width = clientRect.getWidth();
+	if (Parent)
+		width = Parent->getAbsolutePosition().getWidth();
 
-	rect.LowerRightCorner.X = rect.UpperLeftCorner.X + width;
-	rect.LowerRightCorner.Y = rect.UpperLeftCorner.Y + height;
+	rect.LowerRightCorner.X = width;
+	rect.LowerRightCorner.Y = height;
 
 	setRelativePosition(rect);
 

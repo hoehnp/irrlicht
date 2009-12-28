@@ -34,13 +34,13 @@ class CGUIFont : public IGUIFontBitmap
 public:
 
 	//! constructor
-	CGUIFont(IGUIEnvironment* env, const io::path& filename);
+	CGUIFont(IGUIEnvironment* env, const c8* filename);
 
 	//! destructor
 	virtual ~CGUIFont();
 
 	//! loads a font from a texture file
-	bool load(const io::path& filename);
+	bool load(const c8* filename);
 
 	//! loads a font from a texture file
 	bool load(io::IReadFile* file);
@@ -49,12 +49,12 @@ public:
 	bool load(io::IXMLReader* xml);
 
 	//! draws an text and clips it to the specified rectangle if wanted
-	virtual void draw(const core::stringw& text, const core::rect<s32>& position,
+	virtual void draw(const wchar_t* text, const core::rect<s32>& position,
 			video::SColor color, bool hcenter=false,
 			bool vcenter=false, const core::rect<s32>* clip=0);
 
 	//! returns the dimension of a text
-	virtual core::dimension2d<u32> getDimension(const wchar_t* text) const;
+	virtual core::dimension2d<s32> getDimension(const wchar_t* text) const;
 
 	//! Calculates the index of the character in the text which is on a specific position.
 	virtual s32 getCharacterFromPos(const wchar_t* text, s32 pixel_x) const;
@@ -76,8 +76,6 @@ public:
 	//! returns the sprite number from a given character
 	virtual u32 getSpriteNoFromChar(const wchar_t *c) const;
 
-	virtual void setInvisibleCharacters( const wchar_t *s );
-
 private:
 
 	struct SFontArea
@@ -90,9 +88,10 @@ private:
 	};
 
 	//! load & prepare font from ITexture
-	bool loadTexture(video::IImage * image, const io::path& name);
+	bool loadTexture(video::IImage * image, const c8* name);
 
-	void readPositions(video::IImage* texture, s32& lowerRightPositions);
+	void readPositions16bit(video::IImage* texture, s32& lowerRightPositions);
+	void readPositions32bit(video::IImage* texture, s32& lowerRightPositions);
 
 	s32 getAreaFromCharacter (const wchar_t c) const;
 	void setMaxHeight();
@@ -105,8 +104,6 @@ private:
 	u32				WrongCharacter;
 	s32				MaxHeight;
 	s32				GlobalKerningWidth, GlobalKerningHeight;
-
-	core::stringw Invisible;
 };
 
 } // end namespace gui

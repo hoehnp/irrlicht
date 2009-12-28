@@ -2,6 +2,8 @@
 // No rights reserved: this software is in the public domain.
 
 #include "testUtils.h"
+#include "irrlicht.h"
+#include <assert.h>
 
 using namespace irr;
 using namespace core;
@@ -46,10 +48,10 @@ static bool transformPlane(const vector3df & point, const vector3df & normal,
 }
 
 
-static bool drawScaledOctree(void)
+static bool drawScaledOctTree(void)
 {
 	bool result = false;
-	IrrlichtDevice *device = createDevice(video::EDT_BURNINGSVIDEO, dimension2d<u32>(160, 120), 32);
+	IrrlichtDevice *device = createDevice(video::EDT_BURNINGSVIDEO, dimension2d<s32>(160, 120), 32);
 	if (!device)
 		return false;
 
@@ -61,7 +63,7 @@ static bool drawScaledOctree(void)
 
 	if(added)
 	{
-		ISceneNode * node = smgr->addOctreeSceneNode(smgr->getMesh("20kdm2.bsp")->getMesh(0), 0, -1, 1024);
+		ISceneNode * node = smgr->addOctTreeSceneNode(smgr->getMesh("20kdm2.bsp")->getMesh(0), 0, -1, 1024);
 		assert(node);
 
 		if (node)
@@ -228,7 +230,7 @@ bool planeMatrix(void)
 	success &= transformPlane(vector3df(0, 1, 0), vector3df(-1, 1, 0), matrix, plane3df(vector3df(-0.707f,-0.000f,0.354f), -1.768f));
 	success &= transformPlane(vector3df(0, 1, 0), vector3df(1, -1, 0), matrix, plane3df(vector3df(0.707f,0.000f,-0.354f), 1.768f));
 
-	success &= drawScaledOctree();
+	success &= drawScaledOctTree();
 
 	return success;
 }

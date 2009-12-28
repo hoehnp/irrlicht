@@ -28,9 +28,9 @@ CImageWriterBMP::CImageWriterBMP()
 #endif
 }
 
-bool CImageWriterBMP::isAWriteableFileExtension(const io::path& filename) const
+bool CImageWriterBMP::isAWriteableFileExtension(const c8* fileName) const
 {
-	return core::hasFileExtension ( filename, "bmp" );
+	return strstr(fileName, ".bmp") != 0;
 }
 
 bool CImageWriterBMP::writeImage(io::IWriteFile* file, IImage* image, u32 param) const

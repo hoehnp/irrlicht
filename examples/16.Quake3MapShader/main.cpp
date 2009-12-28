@@ -146,10 +146,10 @@ int IRRCALLCONV main(int argc, char* argv[])
 		case 'e': driverType = video::EDT_BURNINGSVIDEO;break;
 		case 'f': driverType = video::EDT_NULL;     break;
 		default: return 1;
-	}
+	}	
 
 	// create device and exit if creation failed
-	const core::dimension2du videoDim ( 800,600 );
+	const core::dimension2di videoDim ( 800,600 );
 
 	IrrlichtDevice *device = createDevice(driverType, videoDim, 32, false );
 
@@ -191,21 +191,18 @@ int IRRCALLCONV main(int argc, char* argv[])
 
 
 
-	// Quake3 Shader controls Z-Writing
-	smgr->getParameters()->setAttribute(scene::ALLOW_ZWRITE_ON_TRANSPARENT, true);
-
 	/*
 	Now we can load the mesh by calling getMesh(). We get a pointer returned
 	to a IAnimatedMesh. As you know, Quake 3 maps are not really animated,
 	they are only a huge chunk of static geometry with some materials
 	attached. Hence the IAnimated mesh consists of only one frame,
 	so we get the "first frame" of the "animation", which is our quake level
-	and create an Octree scene node with it, using addOctreeSceneNode().
-	The Octree optimizes the scene a little bit, trying to draw only geometry
-	which is currently visible. An alternative to the Octree would be a
+	and create an OctTree scene node with it, using addOctTreeSceneNode().
+	The OctTree optimizes the scene a little bit, trying to draw only geometry
+	which is currently visible. An alternative to the OctTree would be a
 	AnimatedMeshSceneNode, which would draw always the complete geometry of
 	the mesh, without optimization. Try it out: Write addAnimatedMeshSceneNode
-	instead of addOctreeSceneNode and compare the primitives drawed by the
+	instead of addOctTreeSceneNode and compare the primitives drawed by the
 	video driver. (There is a getPrimitiveCountDrawed() method in the
 	IVideoDriver class). Note that this optimization with the Octree is only
 	useful when drawing huge meshes consisting of lots of geometry.
@@ -222,7 +219,7 @@ int IRRCALLCONV main(int argc, char* argv[])
 	{
 		scene::IMesh *geometry = mesh->getMesh(quake3::E_Q3_MESH_GEOMETRY);
 //		node = smgr->addMeshSceneNode ( geometry );
-		node = smgr->addOctreeSceneNode(geometry, 0, -1, 1024);
+		node = smgr->addOctTreeSceneNode(geometry, 0, -1, 1024);
 	}
 
 	// create an event receiver for making screenshots
@@ -254,7 +251,7 @@ int IRRCALLCONV main(int argc, char* argv[])
 			s32 shaderIndex = (s32) material.MaterialTypeParam2;
 
 			// the meshbuffer can be rendered without additional support, or it has no shader
-			const quake3::IShader *shader = mesh->getShader ( shaderIndex );
+			const quake3::SShader *shader = mesh->getShader ( shaderIndex );
 			if ( 0 == shader )
 			{
 				continue;
@@ -269,6 +266,18 @@ int IRRCALLCONV main(int argc, char* argv[])
 #ifndef SHOW_SHADER_NAME
 			smgr->addQuake3SceneNode ( meshBuffer, shader );
 #else
+			// Now add the MeshBuffer(s) with the current Shader to the Manager
+#if 0
+			if (	shader->name != "textures/cf/window-decal"
+				)
+				continue;
+#endif
+			if ( 0 == count )
+			{
+				core::stringc s;
+				//quake3::dumpShader ( s, shader );
+				printf ( s.c_str () );
+			}
 			count += 1;
 
 			node = smgr->addQuake3SceneNode ( meshBuffer, shader );
@@ -285,6 +294,8 @@ int IRRCALLCONV main(int argc, char* argv[])
 		}
 
 
+		// original mesh is not needed anymore
+		mesh->releaseMesh ( quake3::E_Q3_MESH_ITEMS );
 	}
 
 	/*
@@ -305,16 +316,16 @@ int IRRCALLCONV main(int argc, char* argv[])
 		we can ask the Quake3 Loader for all entities with class_name
 		"info_player_deathmatch"
 		we choose a random launch
-
+		
 	*/
 	if ( mesh )
 	{
-		quake3::tQ3EntityList &entityList = mesh->getEntityList ();
+		const quake3::tQ3EntityList &entityList = mesh->getEntityList ();
 
-		quake3::IEntity search;
+		quake3::SEntity search;
 		search.name = "info_player_deathmatch";
 
-		s32 index = entityList.binary_search ( search );
+		s32 index = entityList.binary_search_const ( search );
 		if ( index >= 0 )
 		{
 			const quake3::SVarGroup *group;
@@ -411,12 +422,6 @@ int IRRCALLCONV main(int argc, char* argv[])
 			str += calls;
 			str += "/";
 			str += culled;
-			str += " Draw: ";
-			str += attr->getAttributeAsInt ( "drawn_solid" );
-			str += "/";
-			str += attr->getAttributeAsInt ( "drawn_transparent" );
-			str += "/";
-			str += attr->getAttributeAsInt ( "drawn_transparent_effect" );
 
 			device->setWindowCaption(str.c_str());
 			lastFPS = fps;
@@ -427,7 +432,7 @@ int IRRCALLCONV main(int argc, char* argv[])
 	In the end, delete the Irrlicht device.
 	*/
 	device->drop();
-
+	
 	return 0;
 }
 

@@ -2,6 +2,8 @@
 // No rights reserved: this software is in the public domain.
 
 #include "testUtils.h"
+#include "irrlicht.h"
+#include <assert.h>
 
 using namespace irr;
 using namespace core;
@@ -24,7 +26,7 @@ class CustomAnimator : public ISceneNodeAnimator
  * http://irrlicht.sourceforge.net/phpBB2/viewtopic.php?t=32271 */
 bool removeCustomAnimator(void)
 {
-	IrrlichtDevice * device = irr::createDevice(video::EDT_NULL, dimension2du(160, 120));
+	IrrlichtDevice * device = irr::createDevice(video::EDT_NULL, dimension2d<s32>(160, 120));
 	assert(device);
 	if(!device)
 		return false;

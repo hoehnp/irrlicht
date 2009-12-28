@@ -66,14 +66,14 @@ public:
 		// set clip matrix
 
 		core::matrix4 worldViewProj;
-		worldViewProj = driver->getTransform(video::ETS_PROJECTION);
+		worldViewProj = driver->getTransform(video::ETS_PROJECTION);			
 		worldViewProj *= driver->getTransform(video::ETS_VIEW);
 		worldViewProj *= driver->getTransform(video::ETS_WORLD);
 
 		if (UseHighLevelShaders)
 			services->setVertexShaderConstant("mWorldViewProj", worldViewProj.pointer(), 16);
 		else
-			services->setVertexShaderConstant(worldViewProj.pointer(), 4, 4);
+			services->setVertexShaderConstant(worldViewProj.pointer(), 4, 4);		
 
 		// set camera position
 
@@ -96,7 +96,7 @@ public:
 			services->setVertexShaderConstant(reinterpret_cast<f32*>(&col), 9, 1);
 
 		// set transposed world matrix
-
+			
 		core::matrix4 world = driver->getTransform(video::ETS_WORLD);
 		world = world.getTransposed();
 
@@ -135,7 +135,7 @@ int main()
 		case 'e': driverType = video::EDT_BURNINGSVIDEO;break;
 		case 'f': driverType = video::EDT_NULL;     break;
 		default: return 1;
-	}
+	}	
 
 	// ask the user if we should use high level shaders for this example
 	if (driverType == video::EDT_DIRECT3D9 ||
@@ -149,7 +149,7 @@ int main()
 
 	// create device
 
-	device = createDevice(driverType, core::dimension2d<u32>(640, 480));
+	device = createDevice(driverType, core::dimension2d<s32>(640, 480));
 
 	if (device == 0)
 		return 1; // could not create selected driver.
@@ -170,9 +170,9 @@ int main()
 	the shaders directly as strings into the cpp source file, and use later
 	addShaderMaterial() instead of addShaderMaterialFromFiles().
 	*/
-
-	io::path vsFileName; // filename for the vertex shader
-	io::path psFileName; // filename for the pixel shader
+	
+	const c8* vsFileName = 0; // filename for the vertex shader
+	const c8* psFileName = 0; // filename for the pixel shader
 
 	switch(driverType)
 	{
@@ -225,15 +225,15 @@ int main()
 	{
 		device->getLogger()->log("WARNING: Pixel shaders disabled "\
 			"because of missing driver/hardware support.");
-		psFileName = "";
+		psFileName = 0;
 	}
-
+	
 	if (!driver->queryFeature(video::EVDF_VERTEX_SHADER_1_1) &&
 		!driver->queryFeature(video::EVDF_ARB_VERTEX_PROGRAM_1))
 	{
 		device->getLogger()->log("WARNING: Vertex shaders disabled "\
 			"because of missing driver/hardware support.");
-		vsFileName = "";
+		vsFileName = 0;
 	}
 
 	/*
@@ -380,7 +380,7 @@ int main()
 
 	// add a camera and disable the mouse cursor
 
-	scene::ICameraSceneNode* cam = smgr->addCameraSceneNodeFPS();
+	scene::ICameraSceneNode* cam = smgr->addCameraSceneNodeFPS(0, 100.0f, .1f);
 	cam->setPosition(core::vector3df(-100,50,100));
 	cam->setTarget(core::vector3df(0,0,0));
 	device->getCursorControl()->setVisible(false);
@@ -413,7 +413,7 @@ int main()
 	}
 
 	device->drop();
-
+	
 	return 0;
 }
 

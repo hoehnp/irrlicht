@@ -80,7 +80,7 @@ private:
 
 /*
 The start of the main function starts like in most other example. We ask the user
-for the desired renderer and start it up. This time with the advanced parameter handling.
+for the desired renderer and start it up.
 */
 int main()
 {
@@ -107,12 +107,10 @@ int main()
 		default: return 1;
 	}	
 
-	// create device with full flexibility over creation parameters
-	// you can add more parameters if desired, check irr::SIrrlichtCreationParameters
-	irr::SIrrlichtCreationParameters params;
-	params.DriverType=driverType;
-	params.WindowSize=core::dimension2d<u32>(640, 480);
-	IrrlichtDevice* device = createDeviceEx(params);
+	// create device
+
+	IrrlichtDevice* device = createDevice(driverType,
+			core::dimension2d<s32>(640, 480));
 
 	if (device == 0)
 		return 1; // could not create selected driver.

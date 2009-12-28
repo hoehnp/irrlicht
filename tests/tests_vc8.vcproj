@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="tests"
 	ProjectGUID="{2A1DE18B-F678-4A94-A996-E848E20B2983}"
 	RootNamespace="tests"
@@ -42,7 +42,7 @@
 				AdditionalIncludeDirectories="..\include"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				WarningLevel="3"
 				DebugInformationFormat="4"
 			/>
@@ -58,7 +58,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				OutputFile="..\bin\Win32-VisualStudio\$(ProjectName).exe"
-				AdditionalLibraryDirectories="..\lib\Win32-visualstudio"
 				GenerateDebugInformation="true"
 				TargetMachine="1"
 			/>
@@ -114,8 +113,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="..\include"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				WarningLevel="3"
 				DebugInformationFormat="3"
@@ -132,7 +130,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				OutputFile="..\bin\Win32-VisualStudio\$(ProjectName).exe"
-				AdditionalLibraryDirectories="..\lib\Win32-visualstudio"
 				GenerateDebugInformation="true"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -181,10 +178,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\collisionResponseAnimator.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\cursorSetVisible.cpp"
 				>
 			</File>
@@ -197,14 +190,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\drawRectOutline.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\enumerateImageManipulators.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\exports.cpp"
 				>
 			</File>
@@ -213,23 +198,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\filesystem.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\flyCircleAnimator.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\guiDisabledMenu.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\irrCoreEquals.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\lightMaps.cpp"
 				>
 			</File>
 			<File
@@ -238,14 +207,6 @@
 			</File>
 			<File
 				RelativePath=".\main.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\makeColorKeyTexture.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\matrixOps.cpp"
 				>
 			</File>
 			<File
@@ -265,10 +226,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\sceneNodeAnimator.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\softwareDevice.cpp"
 				>
 			</File>
@@ -278,10 +235,6 @@
 			</File>
 			<File
 				RelativePath=".\testDimension2d.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\testGeometryCreator.cpp"
 				>
 			</File>
 			<File
@@ -305,15 +258,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\vectorPositionDimension2d.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\writeImageToFile.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\zipReader.cpp"
+				RelativePath=".\drawRectOutline.cpp"
 				>
 			</File>
 		</Filter>

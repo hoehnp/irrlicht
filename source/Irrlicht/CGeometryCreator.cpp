@@ -16,63 +16,12 @@ namespace irr
 namespace scene
 {
 
-IMesh* CGeometryCreator::createCubeMesh(const core::vector3df& size) const
-{
-	SMeshBuffer* buffer = new SMeshBuffer();
-
-	// Create indices
-	const u16 u[36] = {   0,2,1,   0,3,2,   1,5,4,   1,2,5,   4,6,7,   4,5,6, 
-            7,3,0,   7,6,3,   9,5,2,   9,8,5,   0,11,10,   0,10,7};
-
-	buffer->Indices.set_used(36);
-
-	for (u32 i=0; i<36; ++i)
-		buffer->Indices[i] = u[i];
-
-
-	// Create vertices
-	video::SColor clr(255,255,255,255);
-
-	buffer->Vertices.reallocate(12);
-
-	buffer->Vertices.push_back(video::S3DVertex(0,0,0, -1,-1,-1, clr, 0, 1));
-	buffer->Vertices.push_back(video::S3DVertex(1,0,0,  1,-1,-1, clr, 1, 1));
-	buffer->Vertices.push_back(video::S3DVertex(1,1,0,  1, 1,-1, clr, 1, 0));
-	buffer->Vertices.push_back(video::S3DVertex(0,1,0, -1, 1,-1, clr, 0, 0));
-	buffer->Vertices.push_back(video::S3DVertex(1,0,1,  1,-1, 1, clr, 0, 1));
-	buffer->Vertices.push_back(video::S3DVertex(1,1,1,  1, 1, 1, clr, 0, 0));
-	buffer->Vertices.push_back(video::S3DVertex(0,1,1, -1, 1, 1, clr, 1, 0));
-	buffer->Vertices.push_back(video::S3DVertex(0,0,1, -1,-1, 1, clr, 1, 1));
-	buffer->Vertices.push_back(video::S3DVertex(0,1,1, -1, 1, 1, clr, 0, 1));
-	buffer->Vertices.push_back(video::S3DVertex(0,1,0, -1, 1,-1, clr, 1, 1));
-	buffer->Vertices.push_back(video::S3DVertex(1,0,1,  1,-1, 1, clr, 1, 0));
-	buffer->Vertices.push_back(video::S3DVertex(1,0,0,  1,-1,-1, clr, 0, 0));
-
-	// Recalculate bounding box
-	buffer->BoundingBox.reset(0,0,0);
-
-	for (u32 i=0; i<12; ++i)
-	{
-		buffer->Vertices[i].Pos -= core::vector3df(0.5f, 0.5f, 0.5f);
-		buffer->Vertices[i].Pos *= size;
-		buffer->BoundingBox.addInternalPoint(buffer->Vertices[i].Pos);
-	}
-
-	SMesh* mesh = new SMesh;
-	mesh->addMeshBuffer(buffer);
-	buffer->drop();
-
-	mesh->recalculateBoundingBox();
-	return mesh;
-}
-
-
 // creates a hill plane
 IMesh* CGeometryCreator::createHillPlaneMesh(
 		const core::dimension2d<f32>& tileSize,
 		const core::dimension2d<u32>& tc, video::SMaterial* material,
 		f32 hillHeight, const core::dimension2d<f32>& ch,
-		const core::dimension2d<f32>& textureRepeatCount) const
+		const core::dimension2d<f32>& textureRepeatCount)
 {
 	core::dimension2d<u32> tileCount = tc;
 	core::dimension2d<f32> countHills = ch;
@@ -170,8 +119,8 @@ IMesh* CGeometryCreator::createHillPlaneMesh(
 IMesh* CGeometryCreator::createTerrainMesh(video::IImage* texture,
 		video::IImage* heightmap, const core::dimension2d<f32>& stretchSize,
 		f32 maxHeight, video::IVideoDriver* driver,
-		const core::dimension2d<u32>& maxVtxBlockSize,
-		bool debugBorders) const
+		const core::dimension2d<s32>& maxVtxBlockSize,
+		bool debugBorders)
 {
 	if (!texture || !heightmap)
 		return 0;
@@ -185,17 +134,17 @@ IMesh* CGeometryCreator::createTerrainMesh(video::IImage* texture,
 	SMesh* mesh = new SMesh();
 
 	const u32 tm = os::Timer::getRealTime()/1000;
-	const core::dimension2d<u32> hMapSize= heightmap->getDimension();
-	const core::dimension2d<u32> tMapSize= texture->getDimension();
+	const core::dimension2d<s32> hMapSize= heightmap->getDimension();
+	const core::dimension2d<s32> tMapSize= texture->getDimension();
 	const core::position2d<f32> thRel(static_cast<f32>(tMapSize.Width) / hMapSize.Width, static_cast<f32>(tMapSize.Height) / hMapSize.Height);
 	maxHeight /= 255.0f; // height step per color value
 
-	core::position2d<u32> processed(0,0);
+	core::position2d<s32> processed(0,0);
 	while (processed.Y<hMapSize.Height)
 	{
 		while(processed.X<hMapSize.Width)
 		{
-			core::dimension2d<u32> blockSize = maxVtxBlockSize;
+			core::dimension2d<s32> blockSize = maxVtxBlockSize;
 			if (processed.X + blockSize.Width > hMapSize.Width)
 				blockSize.Width = hMapSize.Width - processed.X;
 			if (processed.Y + blockSize.Height > hMapSize.Height)
@@ -205,7 +154,7 @@ IMesh* CGeometryCreator::createTerrainMesh(video::IImage* texture,
 			buffer->setHardwareMappingHint(scene::EHM_STATIC);
 			buffer->Vertices.reallocate(blockSize.getArea());
 			// add vertices of vertex block
-			u32 y;
+			s32 y;
 			core::vector2df pos(0.f, processed.Y*stretchSize.Height);
 			const core::vector2df bs(1.f/blockSize.Width, 1.f/blockSize.Height);
 			core::vector2df tc(0.f, 0.5f*bs.Y);
@@ -213,7 +162,7 @@ IMesh* CGeometryCreator::createTerrainMesh(video::IImage* texture,
 			{
 				pos.X=processed.X*stretchSize.Width;
 				tc.X=0.5f*bs.X;
-				for (u32 x=0; x<blockSize.Width; ++x)
+				for (s32 x=0; x<blockSize.Width; ++x)
 				{
 					const f32 height = heightmap->getPixel(x+processed.X, y+processed.Y).getAverage() * maxHeight;
 
@@ -232,7 +181,7 @@ IMesh* CGeometryCreator::createTerrainMesh(video::IImage* texture,
 			s32 c1 = 0;
 			for (y=0; y<blockSize.Height-1; ++y)
 			{
-				for (u32 x=0; x<blockSize.Width-1; ++x)
+				for (s32 x=0; x<blockSize.Width-1; ++x)
 				{
 					const s32 c = c1 + x;
 
@@ -264,10 +213,9 @@ IMesh* CGeometryCreator::createTerrainMesh(video::IImage* texture,
 			{
 				c8 textureName[64];
 				// create texture for this block
-				video::IImage* img = new video::CImage(texture->getColorFormat(), texture->getDimension());
-				texture->copyTo(img, core::position2di(0,0), core::recti(
+				video::IImage* img = new video::CImage(texture,
 					core::position2d<s32>(core::floor32(processed.X*thRel.X), core::floor32(processed.Y*thRel.Y)),
-					core::dimension2d<u32>(core::floor32(blockSize.Width*thRel.X), core::floor32(blockSize.Height*thRel.Y))), 0);
+					core::dimension2d<s32>(core::floor32(blockSize.Width*thRel.X), core::floor32(blockSize.Height*thRel.Y)));
 
 				sprintf(textureName, "terrain%u_%u", tm, mesh->getMeshBufferCount());
 
@@ -317,7 +265,7 @@ IMesh* CGeometryCreator::createArrowMesh(const u32 tesselationCylinder,
 						const f32 width0,
 						const f32 width1,
 						const video::SColor vtxColor0,
-						const video::SColor vtxColor1) const
+						const video::SColor vtxColor1)
 {
 	SMesh* mesh = (SMesh*)createCylinderMesh(width0, cylinderHeight, tesselationCylinder, vtxColor0, false);
 
@@ -336,8 +284,10 @@ IMesh* CGeometryCreator::createArrowMesh(const u32 tesselationCylinder,
 
 
 /* A sphere with proper normals and texture coords */
-IMesh* CGeometryCreator::createSphereMesh(f32 radius, u32 polyCountX, u32 polyCountY) const
+IMesh* CGeometryCreator::createSphereMesh(f32 radius, u32 polyCountX, u32 polyCountY)
 {
+	SMeshBuffer* buffer = new SMeshBuffer();
+
 	// thanks to Alfaz93 who made his code available for Irrlicht on which
 	// this one is based!
 
@@ -347,20 +297,21 @@ IMesh* CGeometryCreator::createSphereMesh(f32 radius, u32 polyCountX, u32 polyCo
 		polyCountX = 2;
 	if (polyCountY < 2)
 		polyCountY = 2;
-	while (polyCountX * polyCountY > 32767) // prevent u16 overflow
+	if (polyCountX * polyCountY > 32767) // prevent u16 overflow
 	{
-		polyCountX /= 2;
-		polyCountY /= 2;
+		if (polyCountX > polyCountY) // prevent u16 overflow
+			polyCountX = 32767/polyCountY-1;
+		else
+			polyCountY = 32767/(polyCountX+1);
 	}
 
-	const u32 polyCountXPitch = polyCountX+1; // get to same vertex on next level
-
-	SMeshBuffer* buffer = new SMeshBuffer();
-
-	buffer->Indices.reallocate((polyCountX * polyCountY) * 6);
+	u32 polyCountXPitch = polyCountX+1; // get to same vertex on next level
+	buffer->Vertices.set_used((polyCountXPitch * polyCountY) + 2);
+	buffer->Indices.set_used((polyCountX * polyCountY) * 6);
 
 	const video::SColor clr(100, 255,255,255);
 
+	u32 i=0;
 	u32 level = 0;
 
 	for (u32 p1 = 0; p1 < polyCountY-1; ++p1)
@@ -369,22 +320,25 @@ IMesh* CGeometryCreator::createSphereMesh(f32 radius, u32 polyCountX, u32 polyCo
 		for (u32 p2 = 0; p2 < polyCountX - 1; ++p2)
 		{
 			const u32 curr = level + p2;
-			buffer->Indices.push_back(curr + polyCountXPitch);
-			buffer->Indices.push_back(curr);
-			buffer->Indices.push_back(curr + 1);
-			buffer->Indices.push_back(curr + polyCountXPitch);
-			buffer->Indices.push_back(curr+1);
-			buffer->Indices.push_back(curr + 1 + polyCountXPitch);
+			buffer->Indices[i] = curr + polyCountXPitch;
+			buffer->Indices[++i] = curr;
+			buffer->Indices[++i] = curr + 1;
+			buffer->Indices[++i] = curr + polyCountXPitch;
+			buffer->Indices[++i] = curr+1;
+			buffer->Indices[++i] = curr + 1 + polyCountXPitch;
+			++i;
 		}
 
 		// the connectors from front to end
-		buffer->Indices.push_back(level + polyCountX - 1 + polyCountXPitch);
-		buffer->Indices.push_back(level + polyCountX - 1);
-		buffer->Indices.push_back(level + polyCountX);
+		buffer->Indices[i] = level + polyCountX - 1 + polyCountXPitch;
+		buffer->Indices[++i] = level + polyCountX - 1;
+		buffer->Indices[++i] = level + polyCountX;
+		++i;
 
-		buffer->Indices.push_back(level + polyCountX - 1 + polyCountXPitch);
-		buffer->Indices.push_back(level + polyCountX);
-		buffer->Indices.push_back(level + polyCountX + polyCountXPitch);
+		buffer->Indices[i] = level + polyCountX - 1 + polyCountXPitch;
+		buffer->Indices[++i] = level + polyCountX;
+		buffer->Indices[++i] = level + polyCountX + polyCountXPitch;
+		++i;
 		level += polyCountXPitch;
 	}
 
@@ -396,41 +350,43 @@ IMesh* CGeometryCreator::createSphereMesh(f32 radius, u32 polyCountX, u32 polyCo
 	{
 		// create triangles which are at the top of the sphere
 
-		buffer->Indices.push_back(polyCountSq);
-		buffer->Indices.push_back(p2 + 1);
-		buffer->Indices.push_back(p2);
+		buffer->Indices[i] = polyCountSq;
+		buffer->Indices[++i] = p2 + 1;
+		buffer->Indices[++i] = p2;
+		++i;
 
 		// create triangles which are at the bottom of the sphere
 
-		buffer->Indices.push_back(polyCountSqM1 + p2);
-		buffer->Indices.push_back(polyCountSqM1 + p2 + 1);
-		buffer->Indices.push_back(polyCountSq1);
+		buffer->Indices[i] = polyCountSqM1 + p2;
+		buffer->Indices[++i] = polyCountSqM1 + p2 + 1;
+		buffer->Indices[++i] = polyCountSq1;
+		++i;
 	}
 
 	// create final triangle which is at the top of the sphere
 
-	buffer->Indices.push_back(polyCountSq);
-	buffer->Indices.push_back(polyCountX);
-	buffer->Indices.push_back(polyCountX-1);
+	buffer->Indices[i] = polyCountSq;
+	buffer->Indices[++i] = polyCountX;
+	buffer->Indices[++i] = polyCountX-1;
+	++i;
 
 	// create final triangle which is at the bottom of the sphere
 
-	buffer->Indices.push_back(polyCountSqM1 + polyCountX - 1);
-	buffer->Indices.push_back(polyCountSqM1);
-	buffer->Indices.push_back(polyCountSq1);
+	buffer->Indices[i] = polyCountSqM1 + polyCountX - 1;
+	buffer->Indices[++i] = polyCountSqM1;
+	buffer->Indices[++i] = polyCountSq1;
 
 	// calculate the angle which separates all points in a circle
 	const f64 AngleX = 2 * core::PI / polyCountX;
 	const f64 AngleY = core::PI / polyCountY;
 
-	u32 i=0;
+	i = 0;
 	f64 axz;
 
 	// we don't start at 0.
 
 	f64 ay = 0;//AngleY / 2;
 
-	buffer->Vertices.set_used((polyCountXPitch * polyCountY) + 2);
 	for (u32 y = 0; y < polyCountY; ++y)
 	{
 		ay += AngleY;
@@ -500,9 +456,7 @@ IMesh* CGeometryCreator::createSphereMesh(f32 radius, u32 polyCountX, u32 polyCo
 
 
 /* A cylinder with proper normals and texture coords */
-IMesh* CGeometryCreator::createCylinderMesh(f32 radius, f32 length, 
-			u32 tesselation, const video::SColor& color, 
-			bool closeTop, f32 oblique) const
+IMesh* CGeometryCreator::createCylinderMesh(f32 radius, f32 length, u32 tesselation, const video::SColor& color, bool closeTop, f32 oblique)
 {
 	SMeshBuffer* buffer = new SMeshBuffer();
 
@@ -514,10 +468,10 @@ IMesh* CGeometryCreator::createCylinderMesh(f32 radius, f32 length,
 	u32 i;
 	video::S3DVertex v;
 	v.Color = color;
-	buffer->Vertices.reallocate(tesselation*4+4+(closeTop?2:1));
-	buffer->Indices.reallocate((tesselation*2+1)*(closeTop?12:9));
+	buffer->Vertices.reallocate(tesselation*4+(closeTop?2:1));
+	buffer->Indices.reallocate((tesselation*2)*(closeTop?12:9));
 	f32 tcx = 0.f;
-	for ( i = 0; i <= tesselation; ++i )
+	for ( i = 0; i != tesselation; ++i )
 	{
 		const f32 angle = angleStep * i;
 		v.Pos.X = radius * cosf(angle);
@@ -554,27 +508,25 @@ IMesh* CGeometryCreator::createCylinderMesh(f32 radius, f32 length,
 		tcx += recTesselation;
 	}
 
-	// indices for the main hull part
-	const u32 nonWrappedSize = tesselation* 4;
-	for (i=0; i != nonWrappedSize; i += 2)
+	const u32 nonWrappedSize = ( tesselation* 4 ) - 2;
+	for ( i = 0; i != nonWrappedSize; i += 2 )
 	{
-		buffer->Indices.push_back(i + 2);
-		buffer->Indices.push_back(i + 0);
-		buffer->Indices.push_back(i + 1);
+		buffer->Indices.push_back ( i + 2 );
+		buffer->Indices.push_back ( i + 0 );
+		buffer->Indices.push_back ( i + 1 );
 
-		buffer->Indices.push_back(i + 2);
-		buffer->Indices.push_back(i + 1);
-		buffer->Indices.push_back(i + 3);
+		buffer->Indices.push_back ( i + 2 );
+		buffer->Indices.push_back ( i + 1 );
+		buffer->Indices.push_back ( i + 3 );
 	}
 
-	// two closing quads between end and start
-	buffer->Indices.push_back(0);
-	buffer->Indices.push_back(i + 0);
-	buffer->Indices.push_back(i + 1);
+	buffer->Indices.push_back ( 0 );
+	buffer->Indices.push_back ( i + 0 );
+	buffer->Indices.push_back ( i + 1 );
 
-	buffer->Indices.push_back(0);
-	buffer->Indices.push_back(i + 1);
-	buffer->Indices.push_back(1);
+	buffer->Indices.push_back ( 0 );
+	buffer->Indices.push_back ( i + 1 );
+	buffer->Indices.push_back ( 1 );
 
 	// close down
 	v.Pos.X = 0.f;
@@ -585,20 +537,20 @@ IMesh* CGeometryCreator::createCylinderMesh(f32 radius, f32 length,
 	v.Normal.Z = 0.f;
 	v.TCoords.X = 1.f;
 	v.TCoords.Y = 1.f;
-	buffer->Vertices.push_back(v);
+	buffer->Vertices.push_back ( v );
 
-	u32 index = buffer->Vertices.size() - 1;
+	u32 index = buffer->Vertices.size () - 1;
 
 	for ( i = 0; i != nonWrappedSize; i += 2 )
 	{
-		buffer->Indices.push_back(index);
-		buffer->Indices.push_back(i + 0);
-		buffer->Indices.push_back(i + 2);
+		buffer->Indices.push_back ( index );
+		buffer->Indices.push_back ( i + 0 );
+		buffer->Indices.push_back ( i + 2 );
 	}
 
-	buffer->Indices.push_back(index);
-	buffer->Indices.push_back(i + 0);
-	buffer->Indices.push_back(0);
+	buffer->Indices.push_back ( index );
+	buffer->Indices.push_back ( i + 0 );
+	buffer->Indices.push_back ( 0 );
 
 	if (closeTop)
 	{
@@ -611,20 +563,20 @@ IMesh* CGeometryCreator::createCylinderMesh(f32 radius, f32 length,
 		v.Normal.Z = 0.f;
 		v.TCoords.X = 0.f;
 		v.TCoords.Y = 0.f;
-		buffer->Vertices.push_back(v);
+		buffer->Vertices.push_back ( v );
 
-		index = buffer->Vertices.size() - 1;
+		index = buffer->Vertices.size () - 1;
 
 		for ( i = 0; i != nonWrappedSize; i += 2 )
 		{
-			buffer->Indices.push_back(i + 1);
-			buffer->Indices.push_back(index);
-			buffer->Indices.push_back(i + 3);
+			buffer->Indices.push_back ( i + 1 );
+			buffer->Indices.push_back ( index );
+			buffer->Indices.push_back ( i + 3 );
 		}
 
-		buffer->Indices.push_back(i + 1);
-		buffer->Indices.push_back(index);
-		buffer->Indices.push_back(1);
+		buffer->Indices.push_back ( i + 1 );
+		buffer->Indices.push_back ( index );
+		buffer->Indices.push_back ( 1 );
 	}
 
 	buffer->recalculateBoundingBox();
@@ -637,10 +589,7 @@ IMesh* CGeometryCreator::createCylinderMesh(f32 radius, f32 length,
 
 
 /* A cone with proper normals and texture coords */
-IMesh* CGeometryCreator::createConeMesh(f32 radius, f32 length, u32 tesselation,
-					const video::SColor& colorTop, 
-					const video::SColor& colorBottom,
-					f32 oblique) const
+IMesh* CGeometryCreator::createConeMesh(f32 radius, f32 length, u32 tesselation, const video::SColor& colorTop, const video::SColor& colorBottom, f32 oblique)
 {
 	SMeshBuffer* buffer = new SMeshBuffer();
 
@@ -685,9 +634,9 @@ IMesh* CGeometryCreator::createConeMesh(f32 radius, f32 length, u32 tesselation,
 
 	for ( i = 0; i != nonWrappedSize; i += 1 )
 	{
-		buffer->Indices.push_back(i + 0);
-		buffer->Indices.push_back(index);
-		buffer->Indices.push_back(i + 1);
+		buffer->Indices.push_back ( i + 0 );
+		buffer->Indices.push_back ( index );
+		buffer->Indices.push_back ( i + 1 );
 	}
 
 	buffer->Indices.push_back(i + 0);
@@ -721,159 +670,6 @@ IMesh* CGeometryCreator::createConeMesh(f32 radius, f32 length, u32 tesselation,
 	SMesh* mesh = new SMesh();
 	mesh->addMeshBuffer(buffer);
 	buffer->drop();
-
-	mesh->recalculateBoundingBox();
-	return mesh;
-}
-
-
-void CGeometryCreator::addToBuffer(const video::S3DVertex& v, SMeshBuffer* Buffer) const
-{
-	const s32 tnidx = Buffer->Vertices.linear_reverse_search(v);
-	const bool alreadyIn = (tnidx != -1);
-	u16 nidx = (u16)tnidx;
-	if (!alreadyIn)
-	{
-		nidx = (u16)Buffer->Vertices.size();
-		Buffer->Indices.push_back(nidx);
-		Buffer->Vertices.push_back(v);
-	}
-	else
-		Buffer->Indices.push_back(nidx);
-}
-
-
-IMesh* CGeometryCreator::createVolumeLightMesh(
-		const u32 subdivideU, const u32 subdivideV,
-		const video::SColor footColor, const video::SColor tailColor,
-		const f32 lpDistance, const core::vector3df& lightDim) const
-{
-	SMeshBuffer* Buffer = new SMeshBuffer();
-	Buffer->setHardwareMappingHint(EHM_STATIC);
-
-	const core::vector3df lightPoint(0, -(lpDistance*lightDim.Y), 0);
-	const f32 ax = lightDim.X * 0.5f; // X Axis
-	const f32 az = lightDim.Z * 0.5f; // Z Axis
-
-	Buffer->Vertices.clear();
-	Buffer->Vertices.reallocate(6+12*(subdivideU+subdivideV));
-	Buffer->Indices.clear();
-	Buffer->Indices.reallocate(6+12*(subdivideU+subdivideV));
-	//draw the bottom foot.. the glowing region
-	addToBuffer(video::S3DVertex(-ax, 0, az,  0,0,0, footColor, 0, 1),Buffer);
-	addToBuffer(video::S3DVertex( ax, 0, az,  0,0,0, footColor, 1, 1),Buffer);
-	addToBuffer(video::S3DVertex( ax, 0,-az,  0,0,0, footColor, 1, 0),Buffer);
-
-	addToBuffer(video::S3DVertex( ax, 0,-az,  0,0,0, footColor, 1, 0),Buffer);
-	addToBuffer(video::S3DVertex(-ax, 0,-az,  0,0,0, footColor, 0, 0),Buffer);
-	addToBuffer(video::S3DVertex(-ax, 0, az,  0,0,0, footColor, 0, 1),Buffer);
-
-	f32 tu = 0.f;
-	const f32 tuStep = 1.f/subdivideU;
-	f32 bx = -ax;
-	const f32 bxStep = lightDim.X * tuStep;
-	// Slices in X/U space
-	for (u32 i = 0; i <= subdivideU; ++i)
-	{
-		// These are the two endpoints for a slice at the foot
-		core::vector3df end1(bx, 0.0f, -az);
-		core::vector3df end2(bx, 0.0f, az);
-
-		end1 -= lightPoint;		// get a vector from point to lightsource
-		end1.normalize();		// normalize vector
-		end1 *= lightDim.Y;	// multiply it out by shootlength
-
-		end1.X += bx;			// Add the original point location to the vector
-		end1.Z -= az;
-
-		// Do it again for the other point.
-		end2 -= lightPoint;
-		end2.normalize();
-		end2 *= lightDim.Y;
-
-		end2.X += bx;
-		end2.Z += az;
-
-		addToBuffer(video::S3DVertex(bx , 0,  az,  0,0,0, footColor, tu, 1),Buffer);
-		addToBuffer(video::S3DVertex(bx , 0, -az,  0,0,0, footColor, tu, 0),Buffer);
-		addToBuffer(video::S3DVertex(end2.X , end2.Y, end2.Z,  0,0,0, tailColor, tu, 1),Buffer);
-
-		addToBuffer(video::S3DVertex(bx , 0, -az,  0,0,0, footColor, tu, 0),Buffer);
-		addToBuffer(video::S3DVertex(end1.X , end1.Y, end1.Z,  0,0,0, tailColor, tu, 0),Buffer);
-		addToBuffer(video::S3DVertex(end2.X , end2.Y, end2.Z,  0,0,0, tailColor, tu, 1),Buffer);
-
-		//back side
-		addToBuffer(video::S3DVertex(-end2.X , end2.Y, -end2.Z,  0,0,0, tailColor, tu, 1),Buffer);
-		addToBuffer(video::S3DVertex(-bx , 0,  -az,  0,0,0, footColor, tu, 1),Buffer);
-		addToBuffer(video::S3DVertex(-bx , 0, az,  0,0,0, footColor, tu, 0),Buffer);
-
-		addToBuffer(video::S3DVertex(-bx , 0, az,  0,0,0, footColor, tu, 0),Buffer);
-		addToBuffer(video::S3DVertex(-end1.X , end1.Y, -end1.Z,  0,0,0, tailColor, tu, 0),Buffer);
-		addToBuffer(video::S3DVertex(-end2.X , end2.Y, -end2.Z,  0,0,0, tailColor, tu, 1),Buffer);
-		tu += tuStep;
-		bx += bxStep;
-	}
-
-	f32 tv = 0.f;
-	const f32 tvStep = 1.f/subdivideV;
-	f32 bz = -az;
-	const f32 bzStep = lightDim.Z * tvStep;
-	// Slices in Z/V space
-	for(u32 i = 0; i <= subdivideV; ++i)
-	{
-		// These are the two endpoints for a slice at the foot
-		core::vector3df end1(-ax, 0.0f, bz);
-		core::vector3df end2(ax, 0.0f, bz);
-
-		end1 -= lightPoint;		// get a vector from point to lightsource
-		end1.normalize();		// normalize vector
-		end1 *= lightDim.Y;	// multiply it out by shootlength
-
-		end1.X -= ax;			// Add the original point location to the vector
-		end1.Z += bz;
-
-		// Do it again for the other point.
-		end2 -= lightPoint;
-		end2.normalize();
-		end2 *= lightDim.Y;
-
-		end2.X += ax;
-		end2.Z += bz;
-
-		addToBuffer(video::S3DVertex(-ax , 0, bz,  0,0,0, footColor, 0, tv),Buffer);
-		addToBuffer(video::S3DVertex(ax , 0,  bz,  0,0,0, footColor, 1, tv),Buffer);
-		addToBuffer(video::S3DVertex(end2.X , end2.Y, end2.Z,  0,0,0, tailColor, 1, tv),Buffer);
-
-		addToBuffer(video::S3DVertex(end2.X , end2.Y, end2.Z,  0,0,0, tailColor, 1, tv),Buffer);
-		addToBuffer(video::S3DVertex(end1.X , end1.Y, end1.Z,  0,0,0, tailColor, 0, tv),Buffer);
-		addToBuffer(video::S3DVertex(-ax , 0, bz,  0,0,0, footColor, 0, tv),Buffer);
-
-		//back side
-		addToBuffer(video::S3DVertex(ax , 0, -bz,  0,0,0, footColor, 0, tv),Buffer);
-		addToBuffer(video::S3DVertex(-ax , 0,  -bz,  0,0,0, footColor, 1, tv),Buffer);
-		addToBuffer(video::S3DVertex(-end2.X , end2.Y, -end2.Z,  0,0,0, tailColor, 1, tv),Buffer);
-
-		addToBuffer(video::S3DVertex(-end2.X , end2.Y, -end2.Z,  0,0,0, tailColor, 1, tv),Buffer);
-		addToBuffer(video::S3DVertex(-end1.X , end1.Y, -end1.Z,  0,0,0, tailColor, 0, tv),Buffer);
-		addToBuffer(video::S3DVertex(ax , 0, -bz,  0,0,0, footColor, 0, tv),Buffer);
-		tv += tvStep;
-		bz += bzStep;
-	}
-
-	Buffer->recalculateBoundingBox();
-
-	Buffer->Material.MaterialType = video::EMT_ONETEXTURE_BLEND;
-	Buffer->Material.MaterialTypeParam = pack_texureBlendFunc( video::EBF_SRC_COLOR, video::EBF_SRC_ALPHA, video::EMFN_MODULATE_1X );
-
-	Buffer->Material.Lighting = false;
-	Buffer->Material.ZWriteEnable = false;
-
-	Buffer->setDirty(EBT_VERTEX_AND_INDEX);
-
-	Buffer->recalculateBoundingBox();
-	SMesh* mesh = new SMesh();
-	mesh->addMeshBuffer(Buffer);
-	Buffer->drop();
 
 	mesh->recalculateBoundingBox();
 	return mesh;

@@ -15,6 +15,7 @@
 #include "IGUISpriteBank.h"
 #include "IFileList.h"
 #include "os.h"
+#include "SoftwareDriver2_helper.h"
 #include "CImage.h"
 
 namespace irr
@@ -97,8 +98,8 @@ CGUIColorSelectDialog::CGUIColorSelectDialog(const wchar_t* title, IGUIEnvironme
 	ColorRing.Texture = driver->getTexture ( "#colorring" );
 	if ( 0 == ColorRing.Texture )
 	{
-		buildColorRing(core::dimension2d<u32>(128, 128), 1,
-			Environment->getSkin()->getColor(EGDC_3D_SHADOW));
+		buildColorRing(core::dimension2d<s32>(128, 128), 1,
+			Environment->getSkin()->getColor(EGDC_3D_SHADOW).color);
 	}
 
 	core::rect<s32> r(20,20, 0,0);
@@ -185,12 +186,15 @@ CGUIColorSelectDialog::~CGUIColorSelectDialog()
 
 
 //! renders a antialiased, colored ring
-void CGUIColorSelectDialog::buildColorRing( const core::dimension2d<u32> & dim, s32 supersample, const video::SColor& borderColor )
+void CGUIColorSelectDialog::buildColorRing( const core::dimension2d<s32> & dim, s32 supersample, const u32 borderColor )
 {
-	const core::dimension2d<u32> d(dim.Width * supersample, dim.Height * supersample);
+	const core::dimension2d<s32> d(dim.Width * supersample, dim.Height * supersample);
 	video::CImage *RawTexture = new video::CImage(video::ECF_A8R8G8B8, d);
 
 	RawTexture->fill ( 0x00808080 );
+
+	u8 * data= (u8*) RawTexture->lock();
+	const u32 pitch = RawTexture->getPitch();
 
 	const s32 radiusOut = ( d.Width / 2 ) - 4;
 	const s32 fullR2 = radiusOut * radiusOut;
@@ -201,11 +205,14 @@ void CGUIColorSelectDialog::buildColorRing( const core::dimension2d<u32> & dim, 
 	hsl.Saturation = 1.f;
 
 	core::position2d<s32> p;
+	u32 *dst;
 	for ( p.Y = -radiusOut;  p.Y <= radiusOut;  p.Y += 1  )
 	{
 		s32 y2 = p.Y * p.Y;
 
-		for (p.X = -radiusOut; p.X <= radiusOut; p.X += 1)
+		dst = (u32*) ( (u8* ) data + ( ( 4 + p.Y + radiusOut ) * pitch ) + (4 << 2 ) );
+
+		for (	p.X = -radiusOut; p.X <= radiusOut; p.X += 1, dst += 1 )
 		{
 			s32 r2 = y2 + ( p.X * p.X );
 
@@ -219,7 +226,7 @@ void CGUIColorSelectDialog::buildColorRing( const core::dimension2d<u32> & dim, 
 				const f32 r = sqrtf((f32) r2);
 
 				// normalize, dotproduct = xnorm
-				const f32 xn = r == 0.f ? 0.f : -p.X * core::reciprocal(r);
+				const f32 xn = -p.X * core::reciprocal(r);
 
 				hsl.Hue = acosf(xn);
 				if ( p.Y > 0 )
@@ -268,20 +275,20 @@ void CGUIColorSelectDialog::buildColorRing( const core::dimension2d<u32> & dim, 
 					hsl.Luminance = 0.5f;
 					hsl.Saturation = 1.f;
 					hsl.toRGB(rgb);
+					*dst = rgb.color;
+				}
 
-					if ( rTest <= 0.55f )
-					{
-						const u32 alpha = (u32) ( (rTest - 0.5f ) * ( 255.f / 0.05f ) );
-						rgb.setAlpha(alpha);
-					} 
-					else if ( rTest >= 0.95f )
-					{
-						const u32 alpha = (u32) ( (rTest - 0.95f ) * ( 255.f / 0.05f ) );
-						rgb.setAlpha(255-alpha);
-					}
-					else
-						rgb.setAlpha(255);
-					RawTexture->setPixel(4+p.X+radiusOut, 4+p.Y+radiusOut, rgb);
+				if ( rTest >= 0.5f && rTest <= 0.55f )
+				{
+					u32 alpha = (s32) ( (rTest - 0.5f ) * ( 255.f / 0.05f ) );
+					*dst = (*dst & 0x00ffffff) | (alpha << 24);
+				}
+
+				if ( rTest >= 0.95f )
+				{
+					u32 alpha = (s32) ( (rTest - 0.95f ) * ( 255.f / 0.05f ) );
+					alpha = 255 - alpha;
+					*dst = (*dst & 0x00ffffff) | (alpha << 24);
 				}
 			}
 		}
@@ -292,7 +299,7 @@ void CGUIColorSelectDialog::buildColorRing( const core::dimension2d<u32> & dim, 
 	if ( supersample > 1 )
 	{
 		video::CImage * filter = new video::CImage(video::ECF_A8R8G8B8, dim );
-		RawTexture->copyToScalingBoxFilter(filter);
+		RawTexture->copyToScalingBoxFilter(filter, 0);
 		RawTexture->drop();
 		RawTexture = filter;
 	}
@@ -302,7 +309,7 @@ void CGUIColorSelectDialog::buildColorRing( const core::dimension2d<u32> & dim, 
 	bool generateMipLevels = driver->getTextureCreationFlag(video::ETCF_CREATE_MIP_MAPS);
 	driver->setTextureCreationFlag( video::ETCF_CREATE_MIP_MAPS, false);
 
-	ColorRing.Texture = driver->addTexture ( L"#colorring", RawTexture);
+	ColorRing.Texture = driver->addTexture ("#colorring", RawTexture);
 	RawTexture->drop();
 
 	driver->setTextureCreationFlag(video::ETCF_CREATE_MIP_MAPS, generateMipLevels);

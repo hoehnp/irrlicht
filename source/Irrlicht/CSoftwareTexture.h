@@ -21,23 +21,22 @@ class CSoftwareTexture : public ITexture
 public:
 
 	//! constructor
-	CSoftwareTexture(IImage* surface, const io::path& name,
-			bool renderTarget=false, void* mipmapData=0);
+	CSoftwareTexture(IImage* surface, const char* name, bool renderTarget=false);
 
 	//! destructor
 	virtual ~CSoftwareTexture();
 
 	//! lock function
-	virtual void* lock(bool readOnly = false, u32 mipmapLevel=0);
+	virtual void* lock(bool readOnly = false);
 
 	//! unlock function
 	virtual void unlock();
 
 	//! Returns original size of the texture.
-	virtual const core::dimension2d<u32>& getOriginalSize() const;
+	virtual const core::dimension2d<s32>& getOriginalSize() const;
 
 	//! Returns (=size) of the texture.
-	virtual const core::dimension2d<u32>& getSize() const;
+	virtual const core::dimension2d<s32>& getSize() const;
 
 	//! returns unoptimized surface
 	virtual CImage* getImage();
@@ -54,17 +53,21 @@ public:
 	//! returns pitch of texture (in bytes)
 	virtual u32 getPitch() const;
 
-	//! Regenerates the mip map levels of the texture. Useful after locking and
+	//! Regenerates the mip map levels of the texture. Useful after locking and 
 	//! modifying the texture
-	virtual void regenerateMipMapLevels(void* mipmapData=0);
+	virtual void regenerateMipMapLevels();
 
 	//! is it a render target?
 	virtual bool isRenderTarget() const;
 
 private:
+
+	//! returns the size of a texture which would be the optimize size for rendering it
+	inline s32 getTextureSizeFromSurfaceSize(s32 size) const;
+
 	CImage* Image;
 	CImage* Texture;
-	core::dimension2d<u32> OrigSize;
+	core::dimension2d<s32> OrigSize;
 	bool IsRenderTarget;
 };
 

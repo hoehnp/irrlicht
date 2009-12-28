@@ -123,12 +123,13 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="3"
+				WholeProgramOptimization="true"
 				AdditionalIncludeDirectories="..\..\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="false"
+				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -144,7 +145,6 @@
 				Name="VCLinkerTool"
 				OutputFile="../../bin/Win32-visualstudio/GUIEditor.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="../../lib/Win32-Visualstudio"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				OptimizeReferences="2"

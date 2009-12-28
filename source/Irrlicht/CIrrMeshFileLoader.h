@@ -11,7 +11,6 @@
 #include "irrString.h"
 #include "SMesh.h"
 #include "SMeshBuffer.h"
-#include "CDynamicMeshBuffer.h"
 #include "ISceneManager.h"
 
 namespace irr
@@ -30,7 +29,7 @@ public:
 
 	//! returns true if the file maybe is able to be loaded by this class
 	//! based on the file extension (e.g. ".cob")
-	virtual bool isALoadableFileExtension(const io::path& filename) const;
+	virtual bool isALoadableFileExtension(const c8* fileName) const;
 
 	//! creates/loads an animated mesh from the file.
 	//! \return Pointer to the created mesh. Returns 0 if loading failed.
@@ -69,11 +68,13 @@ private:
 	//! reads floats from inside of xml element until end of xml element
 	void readFloatsInsideElement(io::IXMLReader* reader, f32* floats, u32 count);
 
-	//! read the mesh buffers
-	void readMeshBuffer(io::IXMLReader* reader, int vertexCount, CDynamicMeshBuffer* sbuffer);
+	//! read all 3 types of mesh buffers
+	void readMeshBuffer(io::IXMLReader* reader, int vertexCount, SMeshBuffer* sbuffer);
+	void readMeshBuffer(io::IXMLReader* reader, int vertexCount, SMeshBufferLightMap* sbuffer);
+	void readMeshBuffer(io::IXMLReader* reader, int vertexCount, SMeshBufferTangents* sbuffer);
 
 	//! read indices
-	void readIndices(io::IXMLReader* reader, int indexCount, IIndexBuffer& indices);
+	void readIndices(io::IXMLReader* reader, int indexCount, core::array<u16>& indices);
 
 
 	// member variables

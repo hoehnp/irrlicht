@@ -7,7 +7,7 @@
 #include "IrrCompileConfig.h"
 #include "irrMath.h"
 
-#if defined(_IRR_COMPILE_WITH_SDL_DEVICE_)
+#if defined(_IRR_USE_SDL_DEVICE_)
 	#include <SDL/SDL_endian.h>
 	#define bswap_16(X) SDL_Swap16(X)
 	#define bswap_32(X) SDL_Swap32(X)
@@ -19,7 +19,7 @@
 	#include <libkern/OSByteOrder.h>
 	#define bswap_16(X) OSReadSwapInt16(&X,0)
 	#define bswap_32(X) OSReadSwapInt32(&X,0)
-#elif defined(__FreeBSD__) || defined(__OpenBSD__)
+#elif defined(__FreeBSD__)
 	#include <sys/endian.h>
 	#define bswap_16(X) bswap16(X)
 	#define bswap_32(X) bswap32(X)
@@ -38,10 +38,7 @@ namespace os
 	s16 Byteswap::byteswap(s16 num) {return bswap_16(num);}
 	u32 Byteswap::byteswap(u32 num) {return bswap_32(num);}
 	s32 Byteswap::byteswap(s32 num) {return bswap_32(num);}
-	f32 Byteswap::byteswap(f32 num) {u32 tmp=IR(num); tmp=bswap_32(tmp); return (FR(tmp));}
-	// prevent accidental byte swapping of chars
-	u8  Byteswap::byteswap(u8 num)  {return num;}
-	c8  Byteswap::byteswap(c8 num)  {return num;}
+	f32 Byteswap::byteswap(f32 num) {u32 tmp=bswap_32(*((u32*)&num)); return *((f32*)&tmp);}
 }
 }
 
@@ -64,13 +61,9 @@ namespace os
 	//! prints a debuginfo string
 	void Printer::print(const c8* message)
 	{
-#if defined (_WIN32_WCE )
-		core::stringw tmp(message);
-		tmp += L"\n";
-		OutputDebugStringW(tmp.c_str());
-#else
-		OutputDebugStringA(message);
-		OutputDebugStringA("\n");
+#if !defined (_WIN32_WCE )
+		OutputDebugString(message);
+		OutputDebugString("\n");
 		printf("%s\n", message);
 #endif
 	}
@@ -81,11 +74,11 @@ namespace os
 
 	void Timer::initTimer()
 	{
-#if !defined(_WIN32_WCE) && !defined (_IRR_XBOX_PLATFORM_)
+#if !defined(_WIN32_WCE)
 		// disable hires timer on multiple core systems, bios bugs result in bad hires timers.
 		SYSTEM_INFO sysinfo;
 		GetSystemInfo(&sysinfo);
-		MultiCore = (sysinfo.dwNumberOfProcessors > 1);
+		MultiCore = (sysinfo.dwNumberOfProcessors > 1);	
 #endif
 		HighPerformanceTimerSupport = QueryPerformanceFrequency(&HighPerformanceFreq);
 		initVirtualTimer();
@@ -95,17 +88,17 @@ namespace os
 	{
 		if (HighPerformanceTimerSupport)
 		{
-#if !defined(_WIN32_WCE) && !defined (_IRR_XBOX_PLATFORM_)
-			// Avoid potential timing inaccuracies across multiple cores by
+#if !defined(_WIN32_WCE)
+			// Avoid potential timing inaccuracies across multiple cores by 
 			// temporarily setting the affinity of this process to one core.
 			DWORD_PTR affinityMask;
 			if(MultiCore)
-				affinityMask = SetThreadAffinityMask(GetCurrentThread(), 1);
+				affinityMask = SetThreadAffinityMask(GetCurrentThread(), 1); 
 #endif
 			LARGE_INTEGER nTime;
 			BOOL queriedOK = QueryPerformanceCounter(&nTime);
 
-#if !defined(_WIN32_WCE)  && !defined (_IRR_XBOX_PLATFORM_)
+#if !defined(_WIN32_WCE)
 			// Restore the true affinity.
 			if(MultiCore)
 				(void)SetThreadAffinityMask(GetCurrentThread(), affinityMask);
@@ -169,23 +162,20 @@ namespace os
 			Logger->log(message, ll);
 	}
 
+	void Printer::log(const c8* message, const c8* hint, ELOG_LEVEL ll)
+	{
+		if (!Logger)
+			return;
+
+		Logger->log(message, hint, ll);
+	}
+
 	void Printer::log(const wchar_t* message, ELOG_LEVEL ll)
 	{
 		if (Logger)
 			Logger->log(message, ll);
 	}
 
-	void Printer::log(const c8* message, const c8* hint, ELOG_LEVEL ll)
-	{
-		if (Logger)
-			Logger->log(message, hint, ll);
-	}
-
-	void Printer::log(const c8* message, const io::path& hint, ELOG_LEVEL ll)
-	{
-		if (Logger)
-			Logger->log(message, hint.c_str(), ll);
-	}
 
 	// our Randomizer is not really os specific, so we
 	// code one for all, which should work on every platform the same,

@@ -12,6 +12,8 @@ namespace irr
 namespace scene
 {
 
+	// TODO: It seems that we have to overwrite setMesh as it should replace
+	// OriginalMesh
 	class CWaterSurfaceSceneNode : public CMeshSceneNode
 	{
 	public:
@@ -26,14 +28,8 @@ namespace scene
 		//! destructor
 		virtual ~CWaterSurfaceSceneNode();
 
-		//! frame registration
+		//! frame
 		virtual void OnRegisterSceneNode();
-
-		//! animated update
-		virtual void OnAnimate(u32 timeMs);
-
-		//! Update mesh
-		virtual void setMesh(IMesh* mesh);
 
 		//! Returns type of the scene node
 		virtual ESCENE_NODE_TYPE getType() const { return ESNT_WATER_SURFACE; }
@@ -46,7 +42,13 @@ namespace scene
 
 	private:
 
-		inline f32 addWave(const core::vector3df &source, f32 time) const;
+		void animateWaterSurface();
+		void addWave(core::vector3df& dest, const core::vector3df source, f32 time)
+		{
+			dest.Y = source.Y +
+			(sinf(((source.X/WaveLength) + time)) * WaveHeight) +
+			(cosf(((source.Z/WaveLength) + time)) * WaveHeight);
+		}
 
 		f32 WaveLength;
 		f32 WaveSpeed;

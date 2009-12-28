@@ -70,24 +70,14 @@ public:
 	See IReferenceCounted::drop() for more information. */
 	virtual IGUISkin* createSkin(EGUI_SKIN_TYPE type);
 
-	//! Creates the image list from the given texture.
-	virtual IGUIImageList* createImageList( video::ITexture* texture,
-					core::dimension2d<s32> imageSize, bool useAlphaChannel );
-
 	//! returns the font
-	virtual IGUIFont* getFont(const io::path& filename);
-
-	//! add an externally loaded font
-	virtual IGUIFont* addFont(const io::path& name, IGUIFont* font);
-
-	//! returns default font
-	virtual IGUIFont* getBuiltInFont() const;
+	virtual IGUIFont* getFont(const c8* filename);
 
 	//! returns the sprite bank
-	virtual IGUISpriteBank* getSpriteBank(const io::path& filename);
+	virtual IGUISpriteBank* getSpriteBank(const c8* filename);
 
 	//! returns the sprite bank
-	virtual IGUISpriteBank* addEmptySpriteBank(const io::path& name);
+	virtual IGUISpriteBank* addEmptySpriteBank(const c8* name);
 
 	//! adds an button. The returned pointer must not be dropped.
 	virtual IGUIButton* addButton(const core::rect<s32>& rectangle, IGUIElement* parent=0, s32 id=-1, const wchar_t* text=0,const wchar_t* tooltiptext = 0);
@@ -101,11 +91,10 @@ public:
 
 	//! Adds a message box.
 	virtual IGUIWindow* addMessageBox(const wchar_t* caption, const wchar_t* text=0,
-		bool modal = true, s32 flag = EMBF_OK, IGUIElement* parent=0, s32 id=-1, video::ITexture* image=0);
+		bool modal = true, s32 flag = EMBF_OK, IGUIElement* parent=0, s32 id=-1);
 
 	//! adds a scrollbar. The returned pointer must not be dropped.
-	virtual IGUIScrollBar* addScrollBar(bool horizontal, const core::rect<s32>& rectangle,
-		IGUIElement* parent=0, s32 id=-1);
+	virtual IGUIScrollBar* addScrollBar(bool horizontal, const core::rect<s32>& rectangle, IGUIElement* parent=0, s32 id=-1);
 
 	//! Adds an image element.
 	virtual IGUIImage* addImage(video::ITexture* image, core::position2d<s32> pos,
@@ -121,11 +110,6 @@ public:
 	//! adds a list box
 	virtual IGUIListBox* addListBox(const core::rect<s32>& rectangle,
 		IGUIElement* parent=0, s32 id=-1, bool drawBackground=false);
-
-	//! adds a tree view
-	virtual IGUITreeView* addTreeView(const core::rect<s32>& rectangle,
-		IGUIElement* parent=0, s32 id=-1, bool drawBackground=false,
-		bool scrollBarVertical = true, bool scrollBarHorizontal = false);
 
 	//! adds an mesh viewer. The returned pointer must not be dropped.
 	virtual IGUIMeshViewer* addMeshViewer(const core::rect<s32>& rectangle, IGUIElement* parent=0, s32 id=-1, const wchar_t* text=0);
@@ -146,7 +130,7 @@ public:
 
 	//! Adds a spin box to the environment
 	virtual IGUISpinBox* addSpinBox(const wchar_t* text, const core::rect<s32>& rectangle,
-		bool border=false,IGUIElement* parent=0, s32 id=-1);
+		IGUIElement* parent=0, s32 id=-1);
 
 	//! Adds a tab control to the environment.
 	virtual IGUITabControl* addTabControl(const core::rect<s32>& rectangle,
@@ -187,6 +171,9 @@ public:
 	//! Returns the element with the focus
 	virtual IGUIElement* getFocus() const;
 
+	//! returns default font
+	virtual IGUIFont* getBuiltInFont() const;
+
 	//! Adds an element for fading in or out.
 	virtual IGUIInOutFader* addInOutFader(const core::rect<s32>* rectangle=0, IGUIElement* parent=0, s32 id=-1);
 
@@ -216,7 +203,7 @@ public:
 	/** \param filename: Name of the file.
 	\param start: The element to start saving from.
 	if not specified, the root element will be used */
-	virtual bool saveGUI( const io::path& filename, IGUIElement* start=0);
+	virtual bool saveGUI(const c8* filename, IGUIElement* start=0);
 
 	//! Saves the current gui into a file.
 	/** \param file: The file to save the GUI to.
@@ -228,7 +215,7 @@ public:
 	/** \param filename: Name of the file.
 	\param parent: The parent of all loaded GUI elements,
 	if not specified, the root element will be used */
-	virtual bool loadGUI(const io::path& filename, IGUIElement* parent=0);
+	virtual bool loadGUI(const c8* filename, IGUIElement* parent=0);
 
 	//! Loads the gui. Note that the current gui is not cleared before.
 	/** \param file: IReadFile to load the GUI from
@@ -246,7 +233,7 @@ public:
 	virtual void writeGUIElement(io::IXMLWriter* writer, IGUIElement* node);
 
 	//! reads an element
-	virtual void readGUIElement(io::IXMLReader* reader, IGUIElement* node);
+	virtual void readGUIElement(io::IXMLReader* reader, IGUIElement* parent);
 
 private:
 
@@ -258,23 +245,23 @@ private:
 
 	struct SFont
 	{
-		io::SNamedPath NamedPath;
+		core::stringc Filename;
 		IGUIFont* Font;
 
 		bool operator < (const SFont& other) const
 		{
-			return (NamedPath < other.NamedPath);
+			return (Filename < other.Filename);
 		}
 	};
 
 	struct SSpriteBank
 	{
-		io::SNamedPath NamedPath;
+		core::stringc Filename;
 		IGUISpriteBank* Bank;
 
 		bool operator < (const SSpriteBank& other) const
 		{
-			return (NamedPath < other.NamedPath);
+			return (Filename < other.Filename);
 		}
 	};
 

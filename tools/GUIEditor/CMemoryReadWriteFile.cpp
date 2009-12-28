@@ -7,7 +7,7 @@
 using namespace irr;
 using namespace io;
 
-CMemoryReadWriteFile::CMemoryReadWriteFile(const c8* filename)
+CMemoryReadWriteFile::CMemoryReadWriteFile(const c8* filename) 
 :  Data(), FileName(filename), Pos(0)
 {
 }
@@ -29,7 +29,7 @@ s32 CMemoryReadWriteFile::write(const void* buffer, u32 sizeToWrite)
 	Pos += sizeToWrite;
 
 	return sizeToWrite;
-
+	
 }
 
 bool CMemoryReadWriteFile::seek(long finalPos, bool relativeMovement)
@@ -53,9 +53,9 @@ bool CMemoryReadWriteFile::seek(long finalPos, bool relativeMovement)
 
 }
 
-const io::path& CMemoryReadWriteFile::getFileName() const
+const c8* CMemoryReadWriteFile::getFileName() const
 {
-	return FileName;
+	return FileName.c_str();
 }
 
 long CMemoryReadWriteFile::getPos() const
@@ -87,7 +87,7 @@ s32 CMemoryReadWriteFile::read(void* buffer, u32 sizeToRead)
 
 	// copy data
 	memcpy( buffer, (void*) &Data[Pos], (size_t) sizeToRead);
-
+	
 	Pos += sizeToRead;
 
 	return sizeToRead;

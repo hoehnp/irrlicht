@@ -62,35 +62,23 @@ struct STriangleList
 		if (core::line2df(a,b).getPointOrientation(c) < 0)
 			{ core::vector2df tmp=a; a=b; b=tmp; }
 
-		u32 ia=0xffffffff, ib=0xffffffff, ic=0xffffffff;
+		u32 ia=-1, ib=-1, ic=-1;
 		// Find each vertex
 		for (u32 i=0; i < positions.size() && (ia==(u32)-1||ib==(u32)-1||ic==(u32)-1) ; ++i)
 		{
-			if (positions[i] == a)
-				ia = i;
-			if (positions[i] == b)
-				ib = i;
-			if (positions[i] == c)
-				ic = i;
+			if (positions[i] == a) ia = i;
+			if (positions[i] == b) ib = i;
+			if (positions[i] == c) ic = i;
 		}
 
-		if (ia==0xffffffff)
-		{
-			return false;
-		}
-		if (ib==0xffffffff)
-		{
-			return false;
-		}
-		if (ic==0xffffffff)
-		{
-			return false;
-		}
+		if (ia==-1) {return false;}
+		if (ib==-1) {return false;}
+		if (ic==-1) {return false;}
 
 		for (u32 i=0; i<indexes.size(); i+=3)
-			if ( (indexes[i] == ia && indexes[i+1] == ib && indexes[i+2] == ic) ||
-				(indexes[i] == ic && indexes[i+1] == ia && indexes[i+2] == ib) ||
-				(indexes[i] == ib && indexes[i+1] == ic && indexes[i+2] == ia) )
+			if ( (indexes[i]   == ia && indexes[i+1] == ib && indexes[i+2] == ic) ||
+				(indexes[i]   == ic && indexes[i+1] == ia && indexes[i+2] == ib) ||
+				(indexes[i]   == ib && indexes[i+1] == ic && indexes[i+2] == ia) )
 					return true;
 
 		return false;
@@ -105,35 +93,26 @@ struct STriangleList
 			core::vector2df tmp=a; a=b; b=tmp;
 		}
 
-		u32 ia=0xffffffff, ib=0xffffffff, ic=0xffffffff;
+		u32 ia=-1, ib=-1, ic=-1;
 		// no duplicate vertex positions allowed...
 		for (u32 i=0; i < positions.size() && (ia==-1||ib==-1||ic==-1) ; ++i)
 		{
-			if (positions[i] == a)
-				ia = i;
-			if (positions[i] == b)
-				ib = i;
-			if (positions[i] == c)
-				ic = i;
+			if (positions[i] == a) ia = i;
+			if (positions[i] == b) ib = i;
+			if (positions[i] == c) ic = i;
 		}
 		bool found=true;
-		if (ia==0xffffffff)
+		if (ia==-1)
 		{
-			ia = positions.size();
-			positions.push_back(a);
-			found=false;
+			ia = positions.size(); positions.push_back(a); found=false;
 		}
-		if (ib==0xffffffff)
+		if (ib==-1)
 		{
-			ib = positions.size();
-			positions.push_back(b);
-			found=false;
+			ib = positions.size(); positions.push_back(b); found=false;
 		}
-		if (ic==0xffffffff)
+		if (ic==-1)
 		{
-			ic = positions.size();
-			positions.push_back(c);
-			found=false;
+			ic = positions.size(); positions.push_back(c); found=false;
 		}
 
 		// no duplicate triangles allowed
@@ -142,9 +121,9 @@ struct STriangleList
 			found=false;
 			for (u32 i=0; i<indexes.size(); i+=3)
 			{
-				if ( (indexes[i] == ia && indexes[i+1] == ib && indexes[i+2] == ic) ||
-					(indexes[i] == ic && indexes[i+1] == ia && indexes[i+2] == ib) ||
-					(indexes[i] == ib && indexes[i+1] == ic && indexes[i+2] == ia) )
+				if ( (indexes[i]   == ia && indexes[i+1] == ib && indexes[i+2] == ic) ||
+					(indexes[i]   == ic && indexes[i+1] == ia && indexes[i+2] == ib) ||
+					(indexes[i]   == ib && indexes[i+1] == ic && indexes[i+2] == ia) )
 				{
 					found=true;
 					break;
@@ -280,26 +259,26 @@ public:
 
 				core::vector2df out;
 				//if (la.intersectWith(l2,out))
-				//	if (out != la.start && out != la.end &&
-				//		out != l2.start && out != l2.end)
+				//	if ( out != la.start && out != la.end &&
+				//		out != l2.start && out != l2.end  )
 				//		return true;
 				if (lb.intersectWith(l2,out))
 					if (!out.equals(lb.start) && !out.equals(lb.end) &&
-						!out.equals(l2.start) && !out.equals(l2.end))
+						!out.equals(l2.start) && !out.equals(l2.end)  )
 						return true;
 				if (lc.intersectWith(l2,out))
 					if (!out.equals(lc.start) && !out.equals(lc.end) &&
-						!out.equals(l2.start) && !out.equals(l2.end))
+						!out.equals(l2.start) && !out.equals(l2.end)  )
 						return true;
 
 				// my shit intersection code only works with lines in certain directions :(
 				if (l2.intersectWith(lb,out))
 					if (!out.equals(lb.start) && !out.equals(lb.end) &&
-						!out.equals(l2.start) && !out.equals(l2.end))
+						!out.equals(l2.start) && !out.equals(l2.end)  )
 						return true;
 				if (l2.intersectWith(lc,out))
 					if (!out.equals(lc.start) && !out.equals(lc.end) &&
-						!out.equals(l2.start) && !out.equals(l2.end))
+						!out.equals(l2.start) && !out.equals(l2.end)  )
 						return true;
 
 
@@ -341,7 +320,7 @@ public:
 
 		void drawTriangle( core::line2df line, core::vector2df point)
 		{
-			//const u32 endt = Device->getTimer()->getTime() + t;
+			//u32 endt = Device->getTimer()->getTime() + t;
 			f32 scale = 5;
 
 
@@ -354,14 +333,14 @@ public:
 				{
 					core::line2df &currentline = ll[v].lines[h];
 					core::position2di st = core::position2di((s32)(currentline.start.X*scale)+50, (s32)(currentline.start.Y*scale)+50);
-					core::position2di en = core::position2di((s32)(currentline.end.X*scale)+50, (s32)(currentline.end.Y*scale)+50);
+					core::position2di en = core::position2di((s32)(currentline.end.X*scale)+50,   (s32)(currentline.end.Y*scale)+50);
 
 					Device->getVideoDriver()->draw2DLine(st,en, SColor(255,255,255,255));
 				}
 				// draw this triangle
-				const core::position2di st((s32)(line.start.X*scale)+50, (s32)(line.start.Y*scale)+50);
-				const core::position2di en((s32)(line.end.X*scale)+50, (s32)(line.end.Y*scale)+50);
-				const core::position2di p((s32)(point.X*scale)+50, (s32)(point.Y*scale)+50);
+				core::position2di st = core::position2di((s32)(line.start.X*scale)+50, (s32)(line.start.Y*scale)+50);
+				core::position2di en = core::position2di((s32)(line.end.X*scale)+50,   (s32)(line.end.Y*scale)+50);
+				core::position2di p  = core::position2di((s32)(point.X*scale)+50, (s32)(point.Y*scale)+50);
 				Device->getVideoDriver()->draw2DLine(st,en, SColor(255,255,0,0));
 				Device->getVideoDriver()->draw2DLine(en,p, SColor(255,0,255,0));
 				Device->getVideoDriver()->draw2DLine(p,st, SColor(255,0,0,255));
@@ -393,7 +372,7 @@ public:
 
 					core::line2df &currentLine = ll[i].lines[cl];
 					f32 bestScore = -10.0f;
-					s32 bestEdge = -1;
+					s32 bestEdge  = -1;
 					s32 bestPoint = -1;
 					// find the best scoring point to join to this line
 					for (u32 k=0; k<ll.size(); ++k)
@@ -508,12 +487,12 @@ public:
 				core::position2di &p = pixels[i];
 				s32 &x=p.X, &y=p.Y;
 				bool ul = isMember(p.X-1,p.Y-1);
-				bool u = isMember(p.X,p.Y-1);
+				bool u  = isMember(p.X,p.Y-1);
 				bool ur = isMember(p.X+1,p.Y-1);
-				bool l = isMember(p.X-1,p.Y);
-				bool r = isMember(p.X+1,p.Y);
+				bool l  = isMember(p.X-1,p.Y);
+				bool r  = isMember(p.X+1,p.Y);
 				bool bl = isMember(p.X-1,p.Y+1);
-				bool b = isMember(p.X,p.Y+1);
+				bool b  = isMember(p.X,p.Y+1);
 				bool br = isMember(p.X+1,p.Y+1);
 
 				// walls already added?
@@ -689,12 +668,12 @@ public:
 
 	void drawEdges(IrrlichtDevice *device, u32 t, s32 scale)
 	{
-		const u32 stt = device->getTimer()->getTime();
-		const u32 endt = stt + t;
+		u32 stt  = device->getTimer()->getTime();
+		u32 endt = stt + t;
 
 		while(device->getTimer()->getTime() < endt )
 		{
-			const f32 phase = f32((device->getTimer()->getTime()-stt) % 500) / 500.0f;
+			f32 phase = f32((device->getTimer()->getTime()-stt) % 500) / 500.0f;
 
 			device->run();
 			device->getVideoDriver()->beginScene(true,true,video::SColor(0,0,0,0));
@@ -715,12 +694,12 @@ public:
 
 	void drawTriangles(IrrlichtDevice *device, u32 t, s32 scale)
 	{
-		const u32 stt = device->getTimer()->getTime();
-		const u32 endt = stt + t;
+		u32 stt  = device->getTimer()->getTime();
+		u32 endt = stt + t;
 
 		while(device->getTimer()->getTime() < endt )
 		{
-			const f32 phase = f32((device->getTimer()->getTime()-stt) % 500) / 500.0f;
+			f32 phase = f32((device->getTimer()->getTime()-stt) % 500) / 500.0f;
 
 			device->run();
 			device->getVideoDriver()->beginScene(true,true,video::SColor(0,0,0,0));
@@ -728,8 +707,9 @@ public:
 			for (u32 v=0;v<groups[g].triangles.indexes.size()*phase; v+=3)
 			{
 				STriangleList &t = groups[g].triangles;
-				core::position2di st((s32)(t.positions[t.indexes[v+0]].X*scale)+50,(s32)(t.positions[t.indexes[v+0]].Y*scale)+50);
-				core::position2di en((s32)(t.positions[t.indexes[v+1]].X*scale)+50,(s32)(t.positions[t.indexes[v+1]].Y*scale)+50);
+				core::position2di st, en;
+				st = core::position2di((s32)(t.positions[t.indexes[v+0]].X*scale)+50,(s32)(t.positions[t.indexes[v+0]].Y*scale)+50);
+				en = core::position2di((s32)(t.positions[t.indexes[v+1]].X*scale)+50,(s32)(t.positions[t.indexes[v+1]].Y*scale)+50);
 				device->getVideoDriver()->draw2DLine(st,en, SColor(255,255,0,0));
 				st = core::position2di((s32)(t.positions[t.indexes[v+1]].X*scale)+50,(s32)(t.positions[t.indexes[v+1]].Y*scale)+50);
 				en = core::position2di((s32)(t.positions[t.indexes[v+2]].X*scale)+50,(s32)(t.positions[t.indexes[v+2]].Y*scale)+50);
@@ -744,7 +724,7 @@ public:
 
 	void drawTriLines(IrrlichtDevice *device, u32 t, s32 scale)
 	{
-		const u32 endt = device->getTimer()->getTime() + t;
+		u32 endt = device->getTimer()->getTime() + t;
 
 		while(device->getTimer()->getTime() < endt )
 		{
@@ -755,8 +735,8 @@ public:
 			for (u32 h=0;h<groups[g].ll[v].lines.size(); ++h)
 			{
 				core::line2df &currentline = groups[g].ll[v].lines[h];
-				const core::position2di st((s32)(currentline.start.X*scale)+50, (s32)(currentline.start.Y*scale)+50);
-				const core::position2di en((s32)(currentline.end.X*scale)+50, (s32)(currentline.end.Y*scale)+50);
+				core::position2di st = core::position2di((s32)(currentline.start.X*scale)+50, (s32)(currentline.start.Y*scale)+50);
+				core::position2di en = core::position2di((s32)(currentline.end.X*scale)+50,   (s32)(currentline.end.Y*scale)+50);
 				device->getVideoDriver()->draw2DLine(st,en, SColor(255,255,0,0));
 			}
 
@@ -772,9 +752,8 @@ public:
 			verts.clear();
 			for(u32 v=0; v< t.positions.size(); ++v)
 			{
-				verts.push_back(S3DVertex(
-							-t.positions[v].X, -t.positions[v].Y, -100,
-							0,0,1,SColor(255,255,255,255),0,0));
+				verts.push_back(S3DVertex(	-t.positions[v].X, -t.positions[v].Y, -100,
+											0,0,1,SColor(255,255,255,255),0,0)    );
 			}
 
 			device->getVideoDriver()->drawIndexedTriangleList(verts.pointer(),verts.size(),t.indexes.pointer(), t.indexes.size()/3 );
@@ -821,7 +800,8 @@ public:
 	void processPixel(s32 x, s32 y)
 	{
 		// solid?
-		if (getPixel(x,y))
+		bool pix = getPixel(x,y);
+		if (pix)
 		{
 			s32 g=0, grp=0;
 
@@ -951,8 +931,7 @@ public:
 		}
 
 		// number of verts is one more than number of pixels because it's a grid of squares
-		letterWidth++;
-		letterHeight++;
+		letterWidth++;	letterHeight++;
 
 		// create image memory
 		imagedata.set_used(letterWidth*letterHeight);
@@ -960,7 +939,6 @@ public:
 		// create vertex list, set position etc
 		verts.set_used(letterWidth*letterHeight);
 		for (s32 y=0; y<letterHeight; ++y)
-		{
 			for (s32 x=0; x<letterWidth; ++x)
 			{
 				S3DVertex &v = getVert(x,y);
@@ -970,7 +948,6 @@ public:
 				v.Normal = core::vector3df(0,0,-1);
 				v.Color = SColor(255,255,255,255);
 			}
-		}
 		// clear index list
 		inds.clear();
 
@@ -991,11 +968,11 @@ public:
 
 	void addChar(wchar_t thischar)
 	{
-		const s32 area = FontTool->CharMap[thischar];
-		const CFontTool::SFontArea &fa = FontTool->Areas[area];
+		s32 area = FontTool->CharMap[thischar];
+		CFontTool::SFontArea &fa = FontTool->Areas[area];
 
-		const s32 img = fa.sourceimage;
-		const core::rect<s32>& r = fa.rectangle;
+		s32 img = fa.sourceimage;
+		core::rect<s32> r = fa.rectangle;
 
 		// init image memory
 		IImage *image = FontTool->currentImages[img];
@@ -1082,7 +1059,7 @@ public:
 				c[0] = chars[n];
 				c[1] = L'\0';
 				core::stringw area, under, over;
-				area = core::stringw(fa.rectangle.LowerRightCorner.X-
+				area  = core::stringw(fa.rectangle.LowerRightCorner.X-
 						fa.rectangle.UpperLeftCorner.X);
 				area += L", ";
 				area += fa.rectangle.LowerRightCorner.Y-
@@ -1127,7 +1104,7 @@ public:
 
 			// write vertex data
 			core::stringw data, count;
-			data = L"";
+			data  = L"";
 			count = core::stringw(triangles.positions.size());
 			for (u32 i=0; i<triangles.positions.size(); ++i)
 			{
@@ -1141,7 +1118,7 @@ public:
 			writer->writeLineBreak();
 
 			// write index list
-			data = L"";
+			data  = L"";
 			count = core::stringw(triangles.indexes.size());
 			for (u32 i=0; i<triangles.indexes.size(); i+=3)
 			{
