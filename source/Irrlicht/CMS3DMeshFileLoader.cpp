@@ -473,8 +473,6 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 
 		jnt->LocalMatrix.setTranslation(
 			core::vector3df(pJoint->Translation[0], pJoint->Translation[1], -pJoint->Translation[2]) );
-		jnt->Animatedposition.set(jnt->LocalMatrix.getTranslation());
-		jnt->Animatedrotation.set(jnt->LocalMatrix.getRotationDegrees());
 
 		parentNames.push_back( (c8*)pJoint->ParentName );
 
@@ -548,7 +546,6 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 	}
 
 	core::array<MS3DVertexWeights> vertexWeights;
-	f32 weightFactor=0;
 
 	if ((pHeader->Version == 4) && (pPtr < buffer+fileSize))
 	{
@@ -597,10 +594,6 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 #ifdef __BIG_ENDIAN__
 			subVersion = os::Byteswap::byteswap(subVersion);
 #endif
-			if (subVersion==1)
-				weightFactor=1.f/255.f;
-			else
-				weightFactor=1.f/100.f;
 			pPtr += sizeof(s32);
 
 #ifdef _IRR_DEBUG_MS3D_LOADER_
@@ -737,7 +730,7 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 					{
 						ISkinnedMesh::SWeight *w=AnimatedMesh->addWeight(AnimatedMesh->getAllJoints()[boneid]);
 						w->buffer_id = matidx;
-						sum -= (w->strength = vertexWeights[vertidx].weights[0]*weightFactor);
+						sum -= (w->strength = vertexWeights[vertidx].weights[0]/100.f);
 						w->vertex_id = index;
 					}
 					boneid = vertexWeights[vertidx].boneIds[0];
@@ -745,7 +738,7 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 					{
 						ISkinnedMesh::SWeight *w=AnimatedMesh->addWeight(AnimatedMesh->getAllJoints()[boneid]);
 						w->buffer_id = matidx;
-						sum -= (w->strength = vertexWeights[vertidx].weights[1]*weightFactor);
+						sum -= (w->strength = vertexWeights[vertidx].weights[1]/100.f);
 						w->vertex_id = index;
 					}
 					boneid = vertexWeights[vertidx].boneIds[1];
@@ -753,7 +746,7 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 					{
 						ISkinnedMesh::SWeight *w=AnimatedMesh->addWeight(AnimatedMesh->getAllJoints()[boneid]);
 						w->buffer_id = matidx;
-						sum -= (w->strength = vertexWeights[vertidx].weights[2]*weightFactor);
+						sum -= (w->strength = vertexWeights[vertidx].weights[2]/100.f);
 						w->vertex_id = index;
 					}
 					boneid = vertexWeights[vertidx].boneIds[2];

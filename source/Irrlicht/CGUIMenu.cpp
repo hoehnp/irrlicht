@@ -100,7 +100,7 @@ void CGUIMenu::draw()
 //! called if an event happened.
 bool CGUIMenu::OnEvent(const SEvent& event)
 {
-	if (isEnabled())
+	if (IsEnabled)
 	{
 
 		switch(event.EventType)

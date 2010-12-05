@@ -252,8 +252,7 @@ ISceneNode* CSkyBoxSceneNode::clone(ISceneNode* newParent, ISceneManager* newMan
 	for (u32 i=0; i<6; ++i)
 		nb->Material[i] = Material[i];
 
-	if ( newParent )
-		nb->drop();
+	nb->drop();
 	return nb;
 }
 

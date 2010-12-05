@@ -40,9 +40,6 @@
 			<Add library="Irrlicht" />
 			<Add directory="..\lib\gcc" />
 		</Linker>
-		<Unit filename="2dmaterial.cpp" />
-		<Unit filename="anti-aliasing.cpp" />
-		<Unit filename="archiveReader.cpp" />
 		<Unit filename="b3dAnimation.cpp" />
 		<Unit filename="burningsVideo.cpp" />
 		<Unit filename="collisionResponseAnimator.cpp" />
@@ -63,9 +60,6 @@
 		<Unit filename="makeColorKeyTexture.cpp" />
 		<Unit filename="matrixOps.cpp" />
 		<Unit filename="md2Animation.cpp" />
-		<Unit filename="meshLoaders.cpp" />
-		<Unit filename="meshTransform.cpp" />
-		<Unit filename="mrt.cpp" />
 		<Unit filename="planeMatrix.cpp" />
 		<Unit filename="removeCustomAnimator.cpp" />
 		<Unit filename="sceneCollisionManager.cpp" />
@@ -78,9 +72,8 @@
 		<Unit filename="testVector2d.cpp" />
 		<Unit filename="testVector3d.cpp" />
 		<Unit filename="textureRenderStates.cpp" />
-		<Unit filename="transparentMaterials.cpp" />
+		<Unit filename="transparentAlphaChannelRef.cpp" />
 		<Unit filename="vectorPositionDimension2d.cpp" />
-		<Unit filename="videoDriver.cpp" />
 		<Unit filename="writeImageToFile.cpp" />
 		<Unit filename="zipReader.cpp" />
 		<Extensions>

@@ -84,8 +84,6 @@ bool b3dAnimation(void)
 
 	result &= takeScreenshotAndCompareAgainstReference(driver, "-b3dJointPosition.png");
 
-	device->closeDevice();
-	device->run();
 	device->drop();
 
 	return result;

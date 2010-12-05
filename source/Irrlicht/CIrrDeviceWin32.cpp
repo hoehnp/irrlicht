@@ -15,7 +15,6 @@
 #include "irrString.h"
 #include "COSOperator.h"
 #include "dimension2d.h"
-#include "IGUISpriteBank.h"
 #include <winuser.h>
 
 namespace irr
@@ -25,13 +24,13 @@ namespace irr
 		#ifdef _IRR_COMPILE_WITH_DIRECT3D_8_
 		IVideoDriver* createDirectX8Driver(const core::dimension2d<u32>& screenSize, HWND window,
 			u32 bits, bool fullscreen, bool stencilbuffer, io::IFileSystem* io,
-			bool pureSoftware, bool highPrecisionFPU, bool vsync, u8 antiAlias, u32 displayAdapter);
+			bool pureSoftware, bool highPrecisionFPU, bool vsync, u8 antiAlias);
 		#endif
 
 		#ifdef _IRR_COMPILE_WITH_DIRECT3D_9_
 		IVideoDriver* createDirectX9Driver(const core::dimension2d<u32>& screenSize, HWND window,
 			u32 bits, bool fullscreen, bool stencilbuffer, io::IFileSystem* io,
-			bool pureSoftware, bool highPrecisionFPU, bool vsync, u8 antiAlias, u32 displayAdapter);
+			bool pureSoftware, bool highPrecisionFPU, bool vsync, u8 antiAlias);
 		#endif
 
 		#ifdef _IRR_COMPILE_WITH_OPENGL_
@@ -41,7 +40,7 @@ namespace irr
 	}
 } // end namespace irr
 
-// Get the codepage from the locale language id
+// Get the codepage from the locale language id 
 // Based on the table from http://www.science.co.il/Language/Locale-Codes.asp?s=decimal
 static unsigned int LocaleIdToCodepage(unsigned int lcid)
 {
@@ -199,7 +198,7 @@ static unsigned int LocaleIdToCodepage(unsigned int lcid)
             return 1258;
     }
     return 65001;   // utf-8
-}
+} 
 
 namespace
 {
@@ -211,7 +210,7 @@ namespace
 	irr::core::list<SEnvMapper> EnvMap;
 
 	HKL KEYBOARD_INPUT_HKL=0;
-	unsigned int KEYBOARD_INPUT_CODEPAGE = 1252;
+	unsigned int KEYBOARD_INPUT_CODEPAGE = 1252; 
 };
 
 SEnvMapper* getEnvMapperFromHWnd(HWND hWnd)
@@ -413,7 +412,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 						sizeof(keyChars),
 						(WCHAR*)&unicodeChar,
 						1 );
-				event.KeyInput.Char = unicodeChar;
+				event.KeyInput.Char = unicodeChar; 
 			}
 			else
 				event.KeyInput.Char = 0;
@@ -448,11 +447,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_SYSCOMMAND:
 		// prevent screensaver or monitor powersave mode from starting
 		if ((wParam & 0xFFF0) == SC_SCREENSAVE ||
-			(wParam & 0xFFF0) == SC_MONITORPOWER ||
-			(wParam & 0xFFF0) == SC_KEYMENU
-			)
+			(wParam & 0xFFF0) == SC_MONITORPOWER)
 			return 0;
-
 		break;
 
 	case WM_ACTIVATE:
@@ -482,17 +478,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		// because Windows forgot about that in the meantime
 		dev = getDeviceFromHWnd(hWnd);
 		if (dev)
-		{
-			dev->getCursorControl()->setActiveIcon( dev->getCursorControl()->getActiveIcon() );
 			dev->getCursorControl()->setVisible( dev->getCursorControl()->isVisible() );
-		}
 		break;
 
 	case WM_INPUTLANGCHANGE:
         // get the new codepage used for keyboard input
         KEYBOARD_INPUT_HKL = GetKeyboardLayout(0);
         KEYBOARD_INPUT_CODEPAGE = LocaleIdToCodepage( LOWORD(KEYBOARD_INPUT_HKL) );
-        return 0;
+        return 0; 
 	}
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
@@ -534,7 +527,7 @@ CIrrDeviceWin32::CIrrDeviceWin32(const SIrrlichtCreationParameters& params)
 		wcex.cbWndExtra		= 0;
 		wcex.hInstance		= hInstance;
 		wcex.hIcon			= NULL;
-		wcex.hCursor		= 0; // LoadCursor(NULL, IDC_ARROW);
+		wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
 		wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW+1);
 		wcex.lpszMenuName	= 0;
 		wcex.lpszClassName	= ClassName;
@@ -582,17 +575,15 @@ CIrrDeviceWin32::CIrrDeviceWin32(const SIrrlichtCreationParameters& params)
 		HWnd = CreateWindow( ClassName, __TEXT(""), style, windowLeft, windowTop,
 					realWidth, realHeight, NULL, NULL, hInstance, NULL);
 		CreationParams.WindowId = HWnd;
-//		CreationParams.WindowSize.Width = realWidth;
-//		CreationParams.WindowSize.Height = realHeight;
 
-		ShowWindow(HWnd, SW_SHOWNORMAL);
+		ShowWindow(HWnd, SW_SHOW);
 		UpdateWindow(HWnd);
 
 		// fix ugly ATI driver bugs. Thanks to ariaci
 		MoveWindow(HWnd, windowLeft, windowTop, realWidth, realHeight, TRUE);
 
 		// make sure everything gets updated to the real sizes
-		Resized = true;
+		Resized = true;	
 	}
 	else if (CreationParams.WindowId)
 	{
@@ -608,7 +599,7 @@ CIrrDeviceWin32::CIrrDeviceWin32(const SIrrlichtCreationParameters& params)
 
 	// create cursor control
 
-	Win32CursorControl = new CCursorControl(this, CreationParams.WindowSize, HWnd, CreationParams.Fullscreen);
+	Win32CursorControl = new CCursorControl(CreationParams.WindowSize, HWnd, CreationParams.Fullscreen);
 	CursorControl = Win32CursorControl;
 
 	// initialize doubleclicks with system values
@@ -629,15 +620,12 @@ CIrrDeviceWin32::CIrrDeviceWin32(const SIrrlichtCreationParameters& params)
 	EnvMap.push_back(em);
 
 	// set this as active window
-	if ( HWnd )
-	{
-		SetActiveWindow(HWnd);
-		SetForegroundWindow(HWnd);
-	}
+	SetActiveWindow(HWnd);
+	SetForegroundWindow(HWnd);
 
 	// get the codepage used for keyboard input
-	KEYBOARD_INPUT_HKL = GetKeyboardLayout(0);
-	KEYBOARD_INPUT_CODEPAGE = LocaleIdToCodepage( LOWORD(KEYBOARD_INPUT_HKL) );
+    KEYBOARD_INPUT_HKL = GetKeyboardLayout(0);
+    KEYBOARD_INPUT_CODEPAGE = LocaleIdToCodepage( LOWORD(KEYBOARD_INPUT_HKL) ); 
 }
 
 
@@ -671,7 +659,7 @@ void CIrrDeviceWin32::createDriver()
 		VideoDriver = video::createDirectX8Driver(CreationParams.WindowSize, HWnd,
 			CreationParams.Bits, CreationParams.Fullscreen, CreationParams.Stencilbuffer,
 			FileSystem, false, CreationParams.HighPrecisionFPU, CreationParams.Vsync,
-			CreationParams.AntiAlias, CreationParams.DisplayAdapter);
+			CreationParams.AntiAlias);
 
 		if (!VideoDriver)
 		{
@@ -689,7 +677,7 @@ void CIrrDeviceWin32::createDriver()
 		VideoDriver = video::createDirectX9Driver(CreationParams.WindowSize, HWnd,
 			CreationParams.Bits, CreationParams.Fullscreen, CreationParams.Stencilbuffer,
 			FileSystem, false, CreationParams.HighPrecisionFPU, CreationParams.Vsync,
-			CreationParams.AntiAlias, CreationParams.DisplayAdapter);
+			CreationParams.AntiAlias);
 
 		if (!VideoDriver)
 		{
@@ -732,7 +720,7 @@ void CIrrDeviceWin32::createDriver()
 		#ifdef _IRR_COMPILE_WITH_BURNINGSVIDEO_
 		switchToFullScreen();
 
-		VideoDriver = video::createBurningVideoDriver(CreationParams, FileSystem, this);
+		VideoDriver = video::createSoftwareDriver2(CreationParams.WindowSize, CreationParams.Fullscreen, FileSystem, this);
 		#else
 		os::Printer::log("Burning's Video driver was not compiled in.", ELL_ERROR);
 		#endif
@@ -754,8 +742,6 @@ void CIrrDeviceWin32::createDriver()
 bool CIrrDeviceWin32::run()
 {
 	os::Timer::tick();
-
-    static_cast<CCursorControl*>(CursorControl)->update();
 
 	MSG msg;
 
@@ -917,13 +903,7 @@ void CIrrDeviceWin32::closeDevice()
 	PeekMessage(&msg, NULL, WM_QUIT, WM_QUIT, PM_REMOVE);
 	PostQuitMessage(0);
 	PeekMessage(&msg, NULL, WM_QUIT, WM_QUIT, PM_REMOVE);
-	if (!ExternalWindow)
-	{
-		DestroyWindow(HWnd);
-		const fschar_t* ClassName = __TEXT("CIrrDeviceWin32");
-		HINSTANCE hInstance = GetModuleHandle(0);
-		UnregisterClass(ClassName, hInstance);
-	}
+	DestroyWindow(HWnd);
 	Close=true;
 }
 
@@ -1053,215 +1033,132 @@ video::IVideoModeList* CIrrDeviceWin32::getVideoModeList()
 	return &VideoModeList;
 }
 
-typedef BOOL (WINAPI *PGPI)(DWORD, DWORD, DWORD, DWORD, PDWORD);
-// Needed for old windows apis
-#define PRODUCT_ULTIMATE                            0x00000001
-#define PRODUCT_HOME_BASIC                          0x00000002
-#define PRODUCT_HOME_PREMIUM                        0x00000003
-#define PRODUCT_ENTERPRISE                          0x00000004
-#define PRODUCT_HOME_BASIC_N                        0x00000005
-#define PRODUCT_BUSINESS                            0x00000006
-#define PRODUCT_STARTER                             0x0000000B
-#define PRODUCT_BUSINESS_N                          0x00000010
-#define PRODUCT_HOME_PREMIUM_N                      0x0000001A
-#define PRODUCT_ENTERPRISE_N                        0x0000001B
-#define PRODUCT_ULTIMATE_N                          0x0000001C
-#define PRODUCT_STARTER_N                           0x0000002F
-#define PRODUCT_PROFESSIONAL                        0x00000030
-#define PRODUCT_PROFESSIONAL_N                      0x00000031
-#define PRODUCT_STARTER_E                           0x00000042
-#define PRODUCT_HOME_BASIC_E                        0x00000043
-#define PRODUCT_HOME_PREMIUM_E                      0x00000044
-#define PRODUCT_PROFESSIONAL_E                      0x00000045
-#define PRODUCT_ENTERPRISE_E                        0x00000046
-#define PRODUCT_ULTIMATE_E                          0x00000047
 
 void CIrrDeviceWin32::getWindowsVersion(core::stringc& out)
 {
-    OSVERSIONINFOEX osvi;
-    PGPI pGPI;
-    BOOL bOsVersionInfoEx;
+	OSVERSIONINFOEX osvi;
+	BOOL bOsVersionInfoEx;
 
-    ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
-    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+	ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
+	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
 
-    bOsVersionInfoEx = GetVersionEx((OSVERSIONINFO*) &osvi);
-    if (!bOsVersionInfoEx)
-    {
-        osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-        if (! GetVersionEx((OSVERSIONINFO *) &osvi))
-            return;
-    }
+	bOsVersionInfoEx = GetVersionEx((OSVERSIONINFO*) &osvi);
+	if (!bOsVersionInfoEx)
+	{
+		osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+		if (! GetVersionEx((OSVERSIONINFO *) &osvi))
+			return;
+	}
 
-    switch (osvi.dwPlatformId)
-    {
-    case VER_PLATFORM_WIN32_NT:
-        if (osvi.dwMajorVersion <= 4)
-            out.append("Microsoft Windows NT ");
-        else
-        if (osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 0)
-            out.append("Microsoft Windows 2000 ");
-        else
-        if (osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 1)
-            out.append("Microsoft Windows XP ");
-        else
-        if (osvi.dwMajorVersion == 6 )
-        {
-            if (osvi.dwMinorVersion == 0)
-            {
-                if (osvi.wProductType == VER_NT_WORKSTATION)
-                    out.append("Microsoft Windows Vista ");
-                else
-                    out.append("Microsoft Windows Server 2008 ");
-            }
-            else if (osvi.dwMinorVersion == 1)
-            {
-                if (osvi.wProductType == VER_NT_WORKSTATION)
-                    out.append("Microsoft Windows 7 ");
-                else
-                    out.append("Microsoft Windows Server 2008 R2 ");
-            }
-        }
+	switch (osvi.dwPlatformId)
+	{
+	case VER_PLATFORM_WIN32_NT:
+		if (osvi.dwMajorVersion <= 4)
+			out.append("Microsoft Windows NT ");
+		else
+		if (osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 0)
+			out.append("Microsoft Windows 2000 ");
+		else
+		if (osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 1)
+			out.append("Microsoft Windows XP ");
+		else
+		if (osvi.dwMajorVersion == 6 && osvi.dwMinorVersion == 0)
+			out.append("Microsoft Windows Vista ");
 
-        if (bOsVersionInfoEx)
-        {
-            if (osvi.dwMajorVersion == 6)
-            {
-                DWORD dwType;
-                pGPI = (PGPI)GetProcAddress(GetModuleHandle(TEXT("kernel32.dll")), "GetProductInfo");
-                pGPI(osvi.dwMajorVersion, osvi.dwMinorVersion, 0, 0, &dwType);
-
-                switch (dwType)
-                {
-                case PRODUCT_ULTIMATE:
-                case PRODUCT_ULTIMATE_E:
-                case PRODUCT_ULTIMATE_N:
-                    out.append("Ultimate Edition ");
-                    break;
-                case PRODUCT_PROFESSIONAL:
-                case PRODUCT_PROFESSIONAL_E:
-                case PRODUCT_PROFESSIONAL_N:
-                    out.append("Professional Edition ");
-                    break;
-                case PRODUCT_HOME_BASIC:
-                case PRODUCT_HOME_BASIC_E:
-                case PRODUCT_HOME_BASIC_N:
-                    out.append("Home Basic Edition ");
-                    break;
-                case PRODUCT_HOME_PREMIUM:
-                case PRODUCT_HOME_PREMIUM_E:
-                case PRODUCT_HOME_PREMIUM_N:
-                    out.append("Home Premium Edition ");
-                    break;
-                case PRODUCT_ENTERPRISE:
-                case PRODUCT_ENTERPRISE_E:
-                case PRODUCT_ENTERPRISE_N:
-                    out.append("Enterprise Edition ");
-                    break;
-                case PRODUCT_BUSINESS:
-                case PRODUCT_BUSINESS_N:
-                    out.append("Business Edition ");
-                    break;
-                case PRODUCT_STARTER:
-                case PRODUCT_STARTER_E:
-                case PRODUCT_STARTER_N:
-                    out.append("Starter Edition ");
-                    break;
-                }
-            }
-#ifdef VER_SUITE_ENTERPRISE
-            else
-            if (osvi.wProductType == VER_NT_WORKSTATION)
-            {
+		if (bOsVersionInfoEx)
+		{
+			#ifdef VER_SUITE_ENTERPRISE
+			if (osvi.wProductType == VER_NT_WORKSTATION)
+			{
 #ifndef __BORLANDC__
-                if( osvi.wSuiteMask & VER_SUITE_PERSONAL )
-                    out.append("Personal ");
-                else
-                    out.append("Professional ");
+				if( osvi.wSuiteMask & VER_SUITE_PERSONAL )
+					out.append("Personal ");
+				else
+					out.append("Professional ");
 #endif
-            }
-            else if (osvi.wProductType == VER_NT_SERVER)
-            {
-                if( osvi.wSuiteMask & VER_SUITE_DATACENTER )
-                    out.append("DataCenter Server ");
-                else if( osvi.wSuiteMask & VER_SUITE_ENTERPRISE )
-                    out.append("Advanced Server ");
-                else
-                    out.append("Server ");
-            }
-#endif
-        }
-        else
-        {
-            HKEY hKey;
-            char szProductType[80];
-            DWORD dwBufLen;
+			}
+			else if (osvi.wProductType == VER_NT_SERVER)
+			{
+				if( osvi.wSuiteMask & VER_SUITE_DATACENTER )
+					out.append("DataCenter Server ");
+				else if( osvi.wSuiteMask & VER_SUITE_ENTERPRISE )
+					out.append("Advanced Server ");
+				else
+					out.append("Server ");
+			}
+			#endif
+		}
+		else
+		{
+			HKEY hKey;
+			char szProductType[80];
+			DWORD dwBufLen;
 
-            RegOpenKeyEx( HKEY_LOCAL_MACHINE,
-                    __TEXT("SYSTEM\\CurrentControlSet\\Control\\ProductOptions"),
-                    0, KEY_QUERY_VALUE, &hKey );
-            RegQueryValueEx( hKey, __TEXT("ProductType"), NULL, NULL,
-                    (LPBYTE) szProductType, &dwBufLen);
-            RegCloseKey( hKey );
+			RegOpenKeyEx( HKEY_LOCAL_MACHINE,
+				__TEXT("SYSTEM\\CurrentControlSet\\Control\\ProductOptions"),
+				0, KEY_QUERY_VALUE, &hKey );
+			RegQueryValueEx( hKey, __TEXT("ProductType"), NULL, NULL,
+				(LPBYTE) szProductType, &dwBufLen);
+			RegCloseKey( hKey );
 
-            if (_strcmpi( "WINNT", szProductType) == 0 )
-                out.append("Professional ");
-            if (_strcmpi( "LANMANNT", szProductType) == 0)
-                out.append("Server ");
-            if (_strcmpi( "SERVERNT", szProductType) == 0)
-                out.append("Advanced Server ");
-        }
+			if (_strcmpi( "WINNT", szProductType) == 0 )
+				out.append("Professional ");
+			if (_strcmpi( "LANMANNT", szProductType) == 0)
+				out.append("Server ");
+			if (_strcmpi( "SERVERNT", szProductType) == 0)
+				out.append("Advanced Server ");
+		}
 
-        // Display version, service pack (if any), and build number.
+		// Display version, service pack (if any), and build number.
 
-        char tmp[255];
+		char tmp[255];
 
-        if (osvi.dwMajorVersion <= 4 )
-        {
-            sprintf(tmp, "version %ld.%ld %s (Build %ld)",
-                    osvi.dwMajorVersion,
-                    osvi.dwMinorVersion,
-                    osvi.szCSDVersion,
-                    osvi.dwBuildNumber & 0xFFFF);
-        }
-        else
-        {
-            sprintf(tmp, "%s (Build %ld)", osvi.szCSDVersion,
-            osvi.dwBuildNumber & 0xFFFF);
-        }
+		if (osvi.dwMajorVersion <= 4 )
+		{
+			sprintf(tmp, "version %ld.%ld %s (Build %ld)",
+				osvi.dwMajorVersion,
+				osvi.dwMinorVersion,
+				osvi.szCSDVersion,
+				osvi.dwBuildNumber & 0xFFFF);
+		}
+		else
+		{
+			sprintf(tmp, "%s (Build %ld)", osvi.szCSDVersion,
+				osvi.dwBuildNumber & 0xFFFF);
+		}
 
-        out.append(tmp);
-        break;
+		out.append(tmp);
+		break;
 
-    case VER_PLATFORM_WIN32_WINDOWS:
+	case VER_PLATFORM_WIN32_WINDOWS:
 
-        IsNonNTWindows = true;
+		IsNonNTWindows = true;
 
-        if (osvi.dwMajorVersion == 4 && osvi.dwMinorVersion == 0)
-        {
-            out.append("Microsoft Windows 95 ");
-            if ( osvi.szCSDVersion[1] == 'C' || osvi.szCSDVersion[1] == 'B' )
-                out.append("OSR2 " );
-        }
+		if (osvi.dwMajorVersion == 4 && osvi.dwMinorVersion == 0)
+		{
+			out.append("Microsoft Windows 95 ");
+			if ( osvi.szCSDVersion[1] == 'C' || osvi.szCSDVersion[1] == 'B' )
+				out.append("OSR2 " );
+		}
 
-        if (osvi.dwMajorVersion == 4 && osvi.dwMinorVersion == 10)
-        {
-            out.append("Microsoft Windows 98 ");
-            if ( osvi.szCSDVersion[1] == 'A' )
-                out.append( "SE " );
-        }
+		if (osvi.dwMajorVersion == 4 && osvi.dwMinorVersion == 10)
+		{
+			out.append("Microsoft Windows 98 ");
+			if ( osvi.szCSDVersion[1] == 'A' )
+				out.append( "SE " );
+		}
 
-        if (osvi.dwMajorVersion == 4 && osvi.dwMinorVersion == 90)
-            out.append("Microsoft Windows Me ");
+		if (osvi.dwMajorVersion == 4 && osvi.dwMinorVersion == 90)
+			out.append("Microsoft Windows Me ");
 
-        break;
+		break;
 
-    case VER_PLATFORM_WIN32s:
+	case VER_PLATFORM_WIN32s:
 
-        IsNonNTWindows = true;
-        out.append("Microsoft Win32s ");
-        break;
-    }
+		IsNonNTWindows = true;
+		out.append("Microsoft Win32s ");
+		break;
+	}
 }
 
 //! Notifies the device, that it has been resized
@@ -1420,7 +1317,7 @@ void CIrrDeviceWin32::pollJoysticks()
 
 			event.EventType = irr::EET_JOYSTICK_INPUT_EVENT;
 			event.JoystickEvent.Joystick = (u8)joystick;
-
+ 
 			event.JoystickEvent.POV = (u16)info.dwPOV;
 			// set to undefined if no POV value was returned or the value
 			// is out of range
@@ -1552,217 +1449,6 @@ void CIrrDeviceWin32::ReportLastWinApiError()
 		}
 	}
 }
-
-// Convert an Irrlicht texture to a Windows cursor
-// Based on http://www.codeguru.com/cpp/w-p/win32/cursors/article.php/c4529/
-HCURSOR CIrrDeviceWin32::TextureToCursor(HWND hwnd, irr::video::ITexture * tex, const core::rect<s32>& sourceRect, const core::position2d<s32> &hotspot)
-{
-	//
-	// create the bitmaps needed for cursors from the texture
-
-	HDC dc = GetDC(hwnd);
-	HDC andDc = CreateCompatibleDC(dc);
-	HDC xorDc = CreateCompatibleDC(dc);
-	HBITMAP andBitmap = CreateCompatibleBitmap(dc, sourceRect.getWidth(), sourceRect.getHeight());
-	HBITMAP xorBitmap = CreateCompatibleBitmap(dc, sourceRect.getWidth(), sourceRect.getHeight());
-
-	HBITMAP oldAndBitmap = (HBITMAP)SelectObject(andDc, andBitmap);
-	HBITMAP oldXorBitmap = (HBITMAP)SelectObject(xorDc, xorBitmap);
-
-
-	video::ECOLOR_FORMAT format = tex->getColorFormat();
-	u32 bytesPerPixel = video::IImage::getBitsPerPixelFromFormat(format) / 8;
-	u32 bytesLeftGap = sourceRect.UpperLeftCorner.X * bytesPerPixel;
-	u32 bytesRightGap = tex->getPitch() - sourceRect.LowerRightCorner.X * bytesPerPixel;
-	const u8* data = (const u8*)tex->lock(true, 0);
-	data += sourceRect.UpperLeftCorner.Y*tex->getPitch();
-	for ( s32 y = 0; y < sourceRect.getHeight(); ++y )
-	{
-		data += bytesLeftGap;
-		for ( s32 x = 0; x < sourceRect.getWidth(); ++x )
-        {
-			video::SColor pixelCol;
-			pixelCol.setData((const void*)data, format);
-			data += bytesPerPixel;
-
-			if ( pixelCol.getAlpha() == 0 )	// transparent
-			{
-				SetPixel(andDc, x, y, RGB(255,255,255));
-				SetPixel(xorDc, x, y, RGB(0,0,0));
-			}
-			else	// color
-			{
-				SetPixel(andDc, x, y, RGB(0,0,0));
-				SetPixel(xorDc, x, y, RGB(pixelCol.getRed(), pixelCol.getGreen(), pixelCol.getBlue()));
-			}
-		}
-		data += bytesRightGap;
-	}
-	tex->unlock();
-
-	SelectObject(andDc, oldAndBitmap);
-	SelectObject(xorDc, oldXorBitmap);
-
-	DeleteDC(xorDc);
-	DeleteDC(andDc);
-
-	ReleaseDC(hwnd, dc);
-
-
-	//
-	// create the cursor
-
-	ICONINFO iconinfo;
-	iconinfo.fIcon = false;	// type is cursor not icon
-	iconinfo.xHotspot = hotspot.X;
-	iconinfo.yHotspot = hotspot.Y;
-	iconinfo.hbmMask = andBitmap;
-	iconinfo.hbmColor = xorBitmap;
-
-	HCURSOR cursor = CreateIconIndirect(&iconinfo);
-
-    DeleteObject(andBitmap);
-    DeleteObject(xorBitmap);
-
-	return cursor;
-}
-
-
-CIrrDeviceWin32::CCursorControl::CCursorControl(CIrrDeviceWin32* device, const core::dimension2d<u32>& wsize, HWND hwnd, bool fullscreen)
-    : Device(device), WindowSize(wsize), InvWindowSize(0.0f, 0.0f),
-        HWnd(hwnd), BorderX(0), BorderY(0),
-        UseReferenceRect(false), IsVisible(true)
-        , ActiveIcon(gui::ECI_NORMAL), ActiveIconStartTime(0)
-{
-    if (WindowSize.Width!=0)
-        InvWindowSize.Width = 1.0f / WindowSize.Width;
-
-    if (WindowSize.Height!=0)
-        InvWindowSize.Height = 1.0f / WindowSize.Height;
-
-    updateBorderSize(fullscreen, false);
-    initCursors();
-}
-
-CIrrDeviceWin32::CCursorControl::~CCursorControl()
-{
-	for ( u32 i=0; i < Cursors.size(); ++i )
-	{
-		for ( u32 f=0; f < Cursors[i].Frames.size(); ++f )
-		{
-			DestroyCursor(Cursors[i].Frames[f].IconHW);
-		}
-	}
-}
-
-
-void CIrrDeviceWin32::CCursorControl::initCursors()
-{
-    Cursors.push_back( CursorW32(LoadCursor(NULL, IDC_ARROW)) );
-    Cursors.push_back( CursorW32(LoadCursor(NULL, IDC_CROSS)) );
-    Cursors.push_back( CursorW32(LoadCursor(NULL, IDC_HAND)) );
-    Cursors.push_back( CursorW32(LoadCursor(NULL, IDC_HELP)) );
-    Cursors.push_back( CursorW32(LoadCursor(NULL, IDC_IBEAM)) );
-    Cursors.push_back( CursorW32(LoadCursor(NULL, IDC_NO)) );
-    Cursors.push_back( CursorW32(LoadCursor(NULL, IDC_WAIT)) );
-    Cursors.push_back( CursorW32(LoadCursor(NULL, IDC_SIZEALL)) );
-    Cursors.push_back( CursorW32(LoadCursor(NULL, IDC_SIZENESW)) );
-    Cursors.push_back( CursorW32(LoadCursor(NULL, IDC_SIZENWSE)) );
-    Cursors.push_back( CursorW32(LoadCursor(NULL, IDC_SIZENS)) );
-    Cursors.push_back( CursorW32(LoadCursor(NULL, IDC_SIZEWE)) );
-    Cursors.push_back( CursorW32(LoadCursor(NULL, IDC_UPARROW)) );
-}
-
-
-void CIrrDeviceWin32::CCursorControl::update()
-{
-	if ( !Cursors[ActiveIcon].Frames.empty() && Cursors[ActiveIcon].FrameTime )
-	{
-		// update animated cursors. This could also be done by X11 in case someone wants to figure that out (this way was just easier to implement)
-		u32 now = Device->getTimer()->getRealTime();
-		u32 frame = ((now - ActiveIconStartTime) / Cursors[ActiveIcon].FrameTime) % Cursors[ActiveIcon].Frames.size();
-		SetCursor( Cursors[ActiveIcon].Frames[frame].IconHW );
-	}
-}
-
-//! Sets the active cursor icon
-void CIrrDeviceWin32::CCursorControl::setActiveIcon(gui::ECURSOR_ICON iconId)
-{
-    if ( iconId >= (s32)Cursors.size() )
-        return;
-
-    ActiveIcon = iconId;
-    ActiveIconStartTime = Device->getTimer()->getRealTime();
-    if ( Cursors[ActiveIcon].Frames.size() )
-        SetCursor( Cursors[ActiveIcon].Frames[0].IconHW );
-}
-
-
-//! Add a custom sprite as cursor icon.
-gui::ECURSOR_ICON CIrrDeviceWin32::CCursorControl::addIcon(const gui::SCursorSprite& icon)
-{
-	if ( icon.SpriteId >= 0 )
-	{
-	    CursorW32 cW32;
-		cW32.FrameTime = icon.SpriteBank->getSprites()[icon.SpriteId].frameTime;
-
-		for ( u32 i=0; i < icon.SpriteBank->getSprites()[icon.SpriteId].Frames.size(); ++i )
-		{
-			irr::u32 texId = icon.SpriteBank->getSprites()[icon.SpriteId].Frames[i].textureNumber;
-			irr::u32 rectId = icon.SpriteBank->getSprites()[icon.SpriteId].Frames[i].rectNumber;
-			irr::core::rect<s32> rectIcon = icon.SpriteBank->getPositions()[rectId];
-
-            HCURSOR hc = Device->TextureToCursor(HWnd, icon.SpriteBank->getTexture(texId), rectIcon, icon.HotSpot);
-			cW32.Frames.push_back( CursorFrameW32(hc) );
-		}
-
-		Cursors.push_back( cW32 );
-		return (gui::ECURSOR_ICON)(Cursors.size() - 1);
-	}
-	return gui::ECI_NORMAL;
-}
-
-
-//! replace the given cursor icon.
-void CIrrDeviceWin32::CCursorControl::changeIcon(gui::ECURSOR_ICON iconId, const gui::SCursorSprite& icon)
-{
-	if ( iconId >= (s32)Cursors.size() )
-		return;
-
-	for ( u32 i=0; i < Cursors[iconId].Frames.size(); ++i )
-		DestroyCursor(Cursors[iconId].Frames[i].IconHW);
-
-	if ( icon.SpriteId >= 0 )
-	{
-		CursorW32 cW32;
-		cW32.FrameTime = icon.SpriteBank->getSprites()[icon.SpriteId].frameTime;
-		for ( u32 i=0; i < icon.SpriteBank->getSprites()[icon.SpriteId].Frames.size(); ++i )
-		{
-			irr::u32 texId = icon.SpriteBank->getSprites()[icon.SpriteId].Frames[i].textureNumber;
-			irr::u32 rectId = icon.SpriteBank->getSprites()[icon.SpriteId].Frames[i].rectNumber;
-			irr::core::rect<s32> rectIcon = icon.SpriteBank->getPositions()[rectId];
-
-			HCURSOR hc = Device->TextureToCursor(HWnd, icon.SpriteBank->getTexture(texId), rectIcon, icon.HotSpot);
-			cW32.Frames.push_back( CursorFrameW32(hc) );
-		}
-
-		Cursors[iconId] = cW32;
-	}
-}
-
-
-//! Return a system-specific size which is supported for cursors. Larger icons will fail, smaller icons might work.
-core::dimension2di CIrrDeviceWin32::CCursorControl::getSupportedIconSize() const
-{
-    core::dimension2di result;
-
-    result.Width = GetSystemMetrics(SM_CXCURSOR);
-    result.Height = GetSystemMetrics(SM_CYCURSOR);
-
-    return result;
-}
-
-
 
 } // end namespace
 

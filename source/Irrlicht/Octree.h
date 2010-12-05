@@ -243,8 +243,8 @@ private:
 						}
 					}
 
-					(*indices)[i].Indices.set_used(keepIndices.size());
 					memcpy( (*indices)[i].Indices.pointer(), keepIndices.pointer(), keepIndices.size()*sizeof(u16));
+					(*indices)[i].Indices.set_used(keepIndices.size());
 					keepIndices.set_used(0);
 				}
 
@@ -319,21 +319,33 @@ private:
 			if ( parentTest != 2 )
 #endif
 			{
-#if defined (OCTREE_PARENTTEST )
-				parentTest = 2;
-#endif
+				core::vector3df edges[8];
+				Box.getEdges(edges);
+
 				for (i=0; i!=scene::SViewFrustum::VF_PLANE_COUNT; ++i)
 				{
-					core::EIntersectionRelation3D r = Box.classifyPlaneRelation(frustum.planes[i]);
-					if ( r == core::ISREL3D_FRONT )
+					u32 boxInFrustum=0;
+
+					for (u32 j=0; j!=8; ++j)
+					{
+						if (frustum.planes[i].classifyPointRelation(edges[j]) != core::ISREL3D_FRONT)
+						{
+							boxInFrustum += 1;
+#if !defined (OCTREE_PARENTTEST )
+							break;
+#endif
+						}
+					}
+
+					if ( 0  == boxInFrustum) // all edges outside
 						return;
+
 #if defined (OCTREE_PARENTTEST )
-					if ( r == core::ISREL3D_CLIPPED )
-						parentTest = 1;	// must still check children
+					if ( 8  == boxInFrustum) // all edges in, all children in
+						parentTest = 2;
 #endif
 				}
 			}
-
 
 			const u32 cnt = IndexData->size();
 

@@ -6,6 +6,7 @@
 #define __I_EVENT_RECEIVER_H_INCLUDED__
 
 #include "ILogger.h"
+#include "position2d.h"
 #include "Keycodes.h"
 #include "irrString.h"
 
@@ -160,11 +161,9 @@ namespace irr
 			EGET_ELEMENT_FOCUSED,
 
 			//! The mouse cursor hovered over a gui element.
-			/** If an element has sub-elements you also get this message for the subelements */
 			EGET_ELEMENT_HOVERED,
 
 			//! The mouse cursor left the hovered element.
-			/** If an element has sub-elements you also get this message for the subelements */
 			EGET_ELEMENT_LEFT,
 
 			//! An element would like to close.
@@ -245,11 +244,8 @@ namespace irr
 			//! A tree view node was expanded. See IGUITreeView::getLastEventNode().
 			EGET_TREEVIEW_NODE_EXPAND,
 
-			//! deprecated - use EGET_TREEVIEW_NODE_COLLAPSE instead
-			EGET_TREEVIEW_NODE_COLLAPS,
-
 			//! A tree view node was collapsed. See IGUITreeView::getLastEventNode().
-			EGET_TREEVIEW_NODE_COLLAPSE = EGET_TREEVIEW_NODE_COLLAPS,
+			EGET_TREEVIEW_NODE_COLLAPS,
 
 			//! No real event. Just for convenience to get number of events
 			EGET_COUNT

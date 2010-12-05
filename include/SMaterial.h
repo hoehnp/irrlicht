@@ -197,7 +197,7 @@ namespace video
 			ZBuffer(ECFN_LESSEQUAL), AntiAliasing(EAAM_SIMPLE), ColorMask(ECP_ALL),
 			ColorMaterial(ECM_DIFFUSE),
 			Wireframe(false), PointCloud(false), GouraudShading(true), Lighting(true), ZWriteEnable(true),
-			BackfaceCulling(true), FrontfaceCulling(false), FogEnable(false), NormalizeNormals(false), UseMipMaps(true)
+			BackfaceCulling(true), FrontfaceCulling(false), FogEnable(false), NormalizeNormals(false)
 		{ }
 
 		//! Copy constructor
@@ -246,7 +246,6 @@ namespace video
 			AntiAliasing = other.AntiAliasing;
 			ColorMask = other.ColorMask;
 			ColorMaterial = other.ColorMaterial;
-			UseMipMaps = other.UseMipMaps;
 
 			return *this;
 		}
@@ -378,10 +377,6 @@ namespace video
 		/** Always use this if the mesh lit and scaled. Default: false */
 		bool NormalizeNormals:1;
 
-		//! Shall mipmaps be used if available
-		/** Sometimes, disabling mipmap usage can be useful. Default: true */
-		bool UseMipMaps:1;
-
 		//! Gets the texture transformation matrix for level i
 		/** \param i The desired level. Must not be larger than MATERIAL_MAX_TEXTURES.
 		\return Texture matrix for texture level i. */
@@ -497,8 +492,6 @@ namespace video
 				case EMF_COLOR_MATERIAL:
 					ColorMaterial = value?ECM_DIFFUSE:ECM_NONE;
 					break;
-				case EMF_USE_MIP_MAPS:
-					UseMipMaps = value;
 				default:
 					break;
 			}
@@ -552,8 +545,6 @@ namespace video
 					return (ColorMask!=ECP_NONE);
 				case EMF_COLOR_MATERIAL:
 					return (ColorMaterial != ECM_NONE);
-				case EMF_USE_MIP_MAPS:
-					return UseMipMaps;
 			}
 
 			return false;
@@ -586,8 +577,7 @@ namespace video
 				NormalizeNormals != b.NormalizeNormals ||
 				AntiAliasing != b.AntiAliasing ||
 				ColorMask != b.ColorMask ||
-				ColorMaterial != b.ColorMaterial ||
-				UseMipMaps != b.UseMipMaps;
+				ColorMaterial != b.ColorMaterial;
 			for (u32 i=0; (i<MATERIAL_MAX_TEXTURES) && !different; ++i)
 			{
 				different |= (TextureLayer[i] != b.TextureLayer[i]);

@@ -79,7 +79,7 @@ class CTRTextureVertexAlpha2 : public IBurningShader
 public:
 
 	//! constructor
-	CTRTextureVertexAlpha2(CBurningVideoDriver* driver);
+	CTRTextureVertexAlpha2(IDepthBuffer* zbuffer);
 
 	//! draws an indexed triangle list
 	virtual void drawTriangle ( const s4DVertex *a,const s4DVertex *b,const s4DVertex *c );
@@ -93,8 +93,8 @@ private:
 };
 
 //! constructor
-CTRTextureVertexAlpha2::CTRTextureVertexAlpha2(CBurningVideoDriver* driver)
-: IBurningShader(driver)
+CTRTextureVertexAlpha2::CTRTextureVertexAlpha2(IDepthBuffer* zbuffer)
+: IBurningShader(zbuffer)
 {
 	#ifdef _DEBUG
 	setDebugName("CTRTextureVertexAlpha2");
@@ -673,10 +673,10 @@ namespace video
 {
 
 //! creates a flat triangle renderer
-IBurningShader* createTriangleRendererTextureVertexAlpha2(CBurningVideoDriver* driver)
+IBurningShader* createTriangleRendererTextureVertexAlpha2(IDepthBuffer* zbuffer)
 {
 	#ifdef _IRR_COMPILE_WITH_BURNINGSVIDEO_
-	return new CTRTextureVertexAlpha2(driver);
+	return new CTRTextureVertexAlpha2(zbuffer);
 	#else
 	return 0;
 	#endif // _IRR_COMPILE_WITH_BURNINGSVIDEO_

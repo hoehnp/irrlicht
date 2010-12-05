@@ -16,9 +16,6 @@
 
 #include "CNullDriver.h"
 #include "IMaterialRendererServices.h"
-#if defined(__BORLANDC__) || defined (__BCPLUSPLUS__)
-#include "irrMath.h"    // needed by borland for sqrtf define
-#endif
 #include <d3d9.h>
 
 namespace irr
@@ -119,30 +116,6 @@ namespace video
 		//! Draw hardware buffer
 		virtual void drawHardwareBuffer(SHWBufferLink *HWBuffer);
 
-		//! Create occlusion query.
-		/** Use node for identification and mesh for occlusion test. */
-		virtual void createOcclusionQuery(scene::ISceneNode* node,
-				const scene::IMesh* mesh=0);
-
-		//! Remove occlusion query.
-		virtual void removeOcclusionQuery(scene::ISceneNode* node);
-
-		//! Run occlusion query. Draws mesh stored in query.
-		/** If the mesh shall not be rendered visible, use
-		overrideMaterial to disable the color and depth buffer. */
-		virtual void runOcclusionQuery(scene::ISceneNode* node, bool visible=false);
-
-		//! Update occlusion query. Retrieves results from GPU.
-		/** If the query shall not block, set the flag to false.
-		Update might not occur in this case, though */
-		virtual void updateOcclusionQuery(scene::ISceneNode* node, bool block=true);
-
-		//! Return query result.
-		/** Return value is the number of visible pixels/fragments.
-		The value is a safe approximation, i.e. can be larger then the
-		actual value of pixels. */
-		virtual u32 getOcclusionQueryResult(scene::ISceneNode* node) const;
-
 		//! draws a vertex primitive list
 		virtual void drawVertexPrimitiveList(const void* vertices, u32 vertexCount,
 				const void* indexList, u32 primitiveCount,
@@ -193,7 +166,7 @@ namespace video
 		//! initialises the Direct3D API
 		bool initDriver(const core::dimension2d<u32>& screenSize, HWND hwnd,
 				u32 bits, bool fullScreen, bool pureSoftware,
-				bool highPrecisionFPU, bool vsync, u8 antiAlias, u32 displayAdapter);
+				bool highPrecisionFPU, bool vsync, u8 antiAlias);
 
 		//! \return Returns the name of the video driver. Example: In case of the DIRECT3D8
 		//! driver, it would return "Direct3D8.1".
@@ -442,8 +415,6 @@ namespace video
 
 		u32 MaxTextureUnits;
 		u32 MaxUserClipPlanes;
-		u32 MaxMRTs;
-		u32 NumSetMRTs;
 		f32 MaxLightDistance;
 		s32 LastSetLight;
 
@@ -461,10 +432,7 @@ namespace video
 		bool DeviceLost;
 		bool Fullscreen;
 		bool DriverWasReset;
-		bool OcclusionQuerySupport;
 		bool AlphaToCoverageSupport;
-
-		u32 DisplayAdapter;
 	};
 
 

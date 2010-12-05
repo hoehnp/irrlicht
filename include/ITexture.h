@@ -22,7 +22,7 @@ namespace video
 enum E_TEXTURE_CREATION_FLAG
 {
 	/** Forces the driver to create 16 bit textures always, independent of
-	which format the file on disk has. When choosing this you may lose
+	which format the file on disk has. When choosing this you may loose
 	some color detail, but gain much speed and memory. 16 bit textures can
 	be transferred twice as fast as 32 bit textures and only use half of
 	the space in memory.
@@ -94,11 +94,7 @@ public:
 	pixels. After lock() has been called and all operations on the pixels
 	are done, you must call unlock().
 	Locks are not accumulating, hence one unlock will do for an arbitrary
-	number of previous locks. You should avoid locking different levels without
-	unlocking inbetween, though, because only the last level locked will be
-	unlocked.
-	The size of the i-th mipmap level is defined as max(getSize().Width>>i,1)
-	and max(getSize().Height>>i,1)
+	number of previous locks.
 	\param readOnly Specifies that no changes to the locked texture are
 	made. Unspecified behavior will arise if still write access happens.
 	\param mipmapLevel Number of the mipmapLevel to lock. 0 is main texture.
@@ -109,8 +105,7 @@ public:
 	virtual void* lock(bool readOnly = false, u32 mipmapLevel=0) = 0;
 
 	//! Unlock function. Must be called after a lock() to the texture.
-	/** One should avoid to call unlock more than once before another lock.
-	The last locked mip level will be unlocked. */
+	/** One should avoid to call unlock more than once before another lock. */
 	virtual void unlock() = 0;
 
 	//! Get original size of the texture.
@@ -138,7 +133,7 @@ public:
 	/** \return The color format of texture. */
 	virtual ECOLOR_FORMAT getColorFormat() const = 0;
 
-	//! Get pitch of the main texture (in bytes).
+	//! Get pitch of texture (in bytes).
 	/** The pitch is the amount of bytes used for a row of pixels in a
 	texture.
 	\return Pitch of texture in bytes. */
@@ -154,19 +149,11 @@ public:
 	}
 
 	//! Regenerates the mip map levels of the texture.
-	/** Required after modifying the texture, usually after calling unlock().
-	\param mipmapData Optional parameter to pass in image data which will be
-	used instead of the previously stored or automatically generated mipmap
-	data. The data has to be a continuous pixel data for all mipmaps until
-	1x1 pixel. Each mipmap has to be half the width and height of the previous
-	level. At least one pixel will be always kept.*/
+	/** Required after modifying the texture, usually after calling unlock(). */
 	virtual void regenerateMipMapLevels(void* mipmapData=0) = 0;
 
 	//! Check whether the texture is a render target
-	/** Render targets can be set as such in the video driver, in order to
-	render a scene into the texture. Once unbound as render target, they can
-	be used just as usual textures again.
-	\return True if this is a render target, otherwise false. */
+	/** \return True if this is a render target, otherwise false. */
 	virtual bool isRenderTarget() const { return false; }
 
 	//! Get name of texture (in most cases this is the filename)

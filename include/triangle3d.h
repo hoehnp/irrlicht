@@ -204,7 +204,7 @@ namespace core
 		//! Get the area of the triangle
 		T getArea() const
 		{
-			return (pointB - pointA).crossProduct(pointC - pointA).getLength() * 0.5f;
+			return (pointB - pointA).crossProduct(pointC - pointA).getLength() * 0.5;
 
 		}
 

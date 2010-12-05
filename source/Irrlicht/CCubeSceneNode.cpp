@@ -24,7 +24,7 @@ namespace scene
         |  /      |  /
         |/        | /
         0------11,1/
-       000       100
+       000       100       
 	*/
 
 //! constructor
@@ -64,11 +64,14 @@ void CCubeSceneNode::render()
 	driver->setTransform(video::ETS_WORLD, AbsoluteTransformation);
 
 	// for debug purposes only:
+	bool renderMeshes = true;
 	video::SMaterial mat = Mesh->getMeshBuffer(0)->getMaterial();
 
 	// overwrite half transparency
 	if (DebugDataVisible & scene::EDS_HALF_TRANSPARENCY)
 		mat.MaterialType = video::EMT_TRANSPARENT_ADD_COLOR;
+	else
+		driver->setMaterial(Mesh->getMeshBuffer(0)->getMaterial());
 	driver->setMaterial(mat);
 	driver->drawMeshBuffer(Mesh->getMeshBuffer(0));
 
@@ -187,14 +190,13 @@ ISceneNode* CCubeSceneNode::clone(ISceneNode* newParent, ISceneManager* newManag
 	if (!newManager)
 		newManager = SceneManager;
 
-	CCubeSceneNode* nb = new CCubeSceneNode(Size, newParent,
+	CCubeSceneNode* nb = new CCubeSceneNode(Size, newParent, 
 		newManager, ID, RelativeTranslation);
 
 	nb->cloneMembers(this, newManager);
 	nb->getMaterial(0) = getMaterial(0);
 
-	if ( newParent )
-		nb->drop();
+	nb->drop();
 	return nb;
 }
 

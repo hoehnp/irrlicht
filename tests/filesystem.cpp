@@ -151,10 +151,6 @@ bool filesystem(void)
 
 	result &= testFlattenFilename(fs);
 	result &= testgetAbsoluteFilename(fs);
-
-
-	device->drop();
-
 	return result;
 }
 

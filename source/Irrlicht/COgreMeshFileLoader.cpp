@@ -778,14 +778,11 @@ void COgreMeshFileLoader::composeObject(void)
 			{
 				for (u32 k=0; k<Meshes[i].SubMeshes[j].BoneAssignments.size(); ++k)
 				{
-					const OgreBoneAssignment& ba = Meshes[i].SubMeshes[j].BoneAssignments[k];
-					if (ba.BoneID<m->getJointCount())
-					{
-						ISkinnedMesh::SWeight* w = m->addWeight(m->getAllJoints()[ba.BoneID]);
-						w->strength=ba.Weight;
-						w->vertex_id=ba.VertexID;
-						w->buffer_id=bufCount;
-					}
+					OgreBoneAssignment& ba = Meshes[i].SubMeshes[j].BoneAssignments[k];
+					ISkinnedMesh::SWeight* w = m->addWeight(m->getAllJoints()[ba.BoneID]);
+					w->strength=ba.Weight;
+					w->vertex_id=ba.VertexID;
+					w->buffer_id=bufCount;
 				}
 				++bufCount;
 			}
@@ -929,8 +926,6 @@ void COgreMeshFileLoader::readPass(io::IReadFile* file, OgreTechnique& technique
 		getMaterialToken(file, token); //open brace
 
 	getMaterialToken(file, token);
-	if (token == "}")
-		return;
 	u32 inBlocks=1;
 	u32 textureUnit=0;
 	while(inBlocks)

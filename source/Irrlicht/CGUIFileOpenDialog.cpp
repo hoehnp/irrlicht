@@ -145,7 +145,7 @@ const io::path& CGUIFileOpenDialog::getDirectoryName()
 //! called if an event happened.
 bool CGUIFileOpenDialog::OnEvent(const SEvent& event)
 {
-	if (isEnabled())
+	if (IsEnabled)
 	{
 		switch(event.EventType)
 		{

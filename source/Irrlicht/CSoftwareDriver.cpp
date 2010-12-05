@@ -38,11 +38,6 @@ CSoftwareDriver::CSoftwareDriver(const core::dimension2d<u32>& windowSize, bool 
 		ZBuffer = video::createZBuffer(BackBuffer->getDimension());
 	}
 
-	DriverAttributes->setAttribute("MaxTextures", 1);
-	DriverAttributes->setAttribute("MaxIndices", 1<<16);
-	DriverAttributes->setAttribute("MaxTextureSize", 1024);
-	DriverAttributes->setAttribute("Version", 1);
-
 	// create triangle renderers
 
 	TriangleRenderers[ETR_FLAT] = createTriangleRendererFlat(ZBuffer);

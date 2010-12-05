@@ -44,10 +44,8 @@ static bool runTestWithDriver(E_DRIVER_TYPE driverType)
 
 	driver->endScene();
 
-	bool result = takeScreenshotAndCompareAgainstReference(driver, "-drawPixel.png", 98.81f);
+	bool result = takeScreenshotAndCompareAgainstReference(driver, "-drawPixel.png");
 
-	device->closeDevice();
-	device->run();
 	device->drop();
 
 	return result;

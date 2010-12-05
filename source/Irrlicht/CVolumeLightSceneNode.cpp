@@ -191,8 +191,7 @@ ISceneNode* CVolumeLightSceneNode::clone(ISceneNode* newParent, ISceneManager* n
 	nb->cloneMembers(this, newManager);
 	nb->getMaterial(0) = Mesh->getMeshBuffer(0)->getMaterial();
 
-	if ( newParent )
-		nb->drop();
+	nb->drop();
 	return nb;
 }
 

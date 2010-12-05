@@ -29,12 +29,15 @@ CGUIWindow::CGUIWindow(IGUIEnvironment* environment, IGUIElement* parent, s32 id
 	if (environment)
 		skin = environment->getSkin();
 
-	CurrentIconColor = video::SColor(255,255,255,255);
+	IGUISpriteBank* sprites = 0;
+	video::SColor color(255,255,255,255);
 
 	s32 buttonw = 15;
 	if (skin)
 	{
 		buttonw = skin->getSize(EGDS_WINDOW_BUTTON_WIDTH);
+		sprites = skin->getSpriteBank();
+		color = skin->getColor(EGDC_WINDOW_SYMBOL);
 	}
 	s32 posx = RelativeRect.getWidth() - buttonw - 4;
 
@@ -43,6 +46,12 @@ CGUIWindow::CGUIWindow(IGUIEnvironment* environment, IGUIElement* parent, s32 id
 	CloseButton->setSubElement(true);
 	CloseButton->setTabStop(false);
 	CloseButton->setAlignment(EGUIA_LOWERRIGHT, EGUIA_LOWERRIGHT, EGUIA_UPPERLEFT, EGUIA_UPPERLEFT);
+	if (sprites)
+	{
+		CloseButton->setSpriteBank(sprites);
+		CloseButton->setSprite(EGBS_BUTTON_UP, skin->getIcon(EGDI_WINDOW_CLOSE), color);
+		CloseButton->setSprite(EGBS_BUTTON_DOWN, skin->getIcon(EGDI_WINDOW_CLOSE), color);
+	}
 	posx -= buttonw + 2;
 
 	RestoreButton = Environment->addButton(core::rect<s32>(posx, 3, posx + buttonw, 3 + buttonw), this, -1,
@@ -51,6 +60,12 @@ CGUIWindow::CGUIWindow(IGUIEnvironment* environment, IGUIElement* parent, s32 id
 	RestoreButton->setSubElement(true);
 	RestoreButton->setTabStop(false);
 	RestoreButton->setAlignment(EGUIA_LOWERRIGHT, EGUIA_LOWERRIGHT, EGUIA_UPPERLEFT, EGUIA_UPPERLEFT);
+	if (sprites)
+	{
+		RestoreButton->setSpriteBank(sprites);
+		RestoreButton->setSprite(EGBS_BUTTON_UP, skin->getIcon(EGDI_WINDOW_RESTORE), color);
+		RestoreButton->setSprite(EGBS_BUTTON_DOWN, skin->getIcon(EGDI_WINDOW_RESTORE), color);
+	}
 	posx -= buttonw + 2;
 
 	MinButton = Environment->addButton(core::rect<s32>(posx, 3, posx + buttonw, 3 + buttonw), this, -1,
@@ -59,6 +74,12 @@ CGUIWindow::CGUIWindow(IGUIEnvironment* environment, IGUIElement* parent, s32 id
 	MinButton->setSubElement(true);
 	MinButton->setTabStop(false);
 	MinButton->setAlignment(EGUIA_LOWERRIGHT, EGUIA_LOWERRIGHT, EGUIA_UPPERLEFT, EGUIA_UPPERLEFT);
+	if (sprites)
+	{
+		MinButton->setSpriteBank(sprites);
+		MinButton->setSprite(EGBS_BUTTON_UP, skin->getIcon(EGDI_WINDOW_MINIMIZE), color);
+		MinButton->setSprite(EGBS_BUTTON_DOWN, skin->getIcon(EGDI_WINDOW_MINIMIZE), color);
+	}
 
 	MinButton->grab();
 	RestoreButton->grab();
@@ -69,7 +90,6 @@ CGUIWindow::CGUIWindow(IGUIEnvironment* environment, IGUIElement* parent, s32 id
 	setTabStop(true);
 	setTabOrder(-1);
 
-	refreshSprites();
 	updateClientRect();
 }
 
@@ -87,40 +107,11 @@ CGUIWindow::~CGUIWindow()
 		CloseButton->drop();
 }
 
-void CGUIWindow::refreshSprites()
-{
-	if (!Environment)
-		return;
-	IGUISkin* skin  = Environment->getSkin();
-	if ( !skin )
-		return;
-
-	IGUISpriteBank* sprites = skin->getSpriteBank();
-	if ( !sprites )
-		return;
-
-	CurrentIconColor = skin->getColor(isEnabled() ? EGDC_WINDOW_SYMBOL : EGDC_GRAY_WINDOW_SYMBOL);
-
-	if (sprites)
-	{
-		CloseButton->setSpriteBank(sprites);
-		CloseButton->setSprite(EGBS_BUTTON_UP, skin->getIcon(EGDI_WINDOW_CLOSE), CurrentIconColor);
-		CloseButton->setSprite(EGBS_BUTTON_DOWN, skin->getIcon(EGDI_WINDOW_CLOSE), CurrentIconColor);
-
-		RestoreButton->setSpriteBank(sprites);
-		RestoreButton->setSprite(EGBS_BUTTON_UP, skin->getIcon(EGDI_WINDOW_RESTORE), CurrentIconColor);
-		RestoreButton->setSprite(EGBS_BUTTON_DOWN, skin->getIcon(EGDI_WINDOW_RESTORE), CurrentIconColor);
-
-		MinButton->setSpriteBank(sprites);
-		MinButton->setSprite(EGBS_BUTTON_UP, skin->getIcon(EGDI_WINDOW_MINIMIZE), CurrentIconColor);
-		MinButton->setSprite(EGBS_BUTTON_DOWN, skin->getIcon(EGDI_WINDOW_MINIMIZE), CurrentIconColor);
-	}
-}
 
 //! called if an event happened.
 bool CGUIWindow::OnEvent(const SEvent& event)
 {
-	if (isEnabled())
+	if (IsEnabled)
 	{
 
 		switch(event.EventType)
@@ -232,12 +223,8 @@ void CGUIWindow::draw()
 	{
 		IGUISkin* skin = Environment->getSkin();
 
-
 		// update each time because the skin is allowed to change this always.
 		updateClientRect();
-
-		if ( CurrentIconColor != skin->getColor(isEnabled() ? EGDC_WINDOW_SYMBOL : EGDC_GRAY_WINDOW_SYMBOL) )
-			refreshSprites();
 
 		core::rect<s32> rect = AbsoluteRect;
 
