@@ -30,7 +30,6 @@ bool testArchive(IFileSystem* fs, const io::path& archiveName)
 	if ( !fs->addFileArchive(archiveName, /*bool ignoreCase=*/true, /*bool ignorePaths=*/false) )
 	{
 		logTestString("Mounting a second time failed\n");
-		fs->removeFileArchive(fs->getFileArchiveCount()-1);
 		return false;
 	}
 
@@ -38,36 +37,9 @@ bool testArchive(IFileSystem* fs, const io::path& archiveName)
 	if ( fs->getFileArchiveCount() != 1 )
 	{
 		logTestString("Duplicate mount not recognized\n");
-		while (fs->getFileArchiveCount())
-			fs->removeFileArchive(fs->getFileArchiveCount()-1);
 		return false;
 	}
-	if (fs->getFileArchive(0)->getType()==io::EFAT_FOLDER)
-	{
-		// mount again with different path end symbol (either with slash or without)
-		core::stringc newArchiveName=archiveName;
-		if (archiveName.lastChar()=='/')
-			newArchiveName.erase(newArchiveName.size()-1);
-		else
-			newArchiveName.append('/');
-		if ( !fs->addFileArchive(newArchiveName, /*bool ignoreCase=*/true, /*bool ignorePaths=*/false) )
-		{
-			logTestString("Mounting a second time with different name failed\n");
-			fs->removeFileArchive(fs->getFileArchiveCount()-1);
-			return false;
-		}
 
-		// make sure there is exactly one archive mounted
-		if ( fs->getFileArchiveCount() != 1 )
-		{
-			logTestString("Duplicate mount with different filename not recognized\n");
-			while (fs->getFileArchiveCount())
-				fs->removeFileArchive(fs->getFileArchiveCount()-1);
-			return false;
-		}
-	}
-
-#if 0
 	// log what we got
 	io::IFileArchive* archive = fs->getFileArchive(fs->getFileArchiveCount()-1);
 	const io::IFileList* fileList = archive->getFileList();
@@ -75,16 +47,12 @@ bool testArchive(IFileSystem* fs, const io::path& archiveName)
 	{
 		logTestString("File name: %s\n", fileList->getFileName(f).c_str());
 		logTestString("Full path: %s\n", fileList->getFullFileName(f).c_str());
-		logTestString("ID: %d\n", fileList->getID(f));
 	}
-#endif
-
+	
 	io::path filename("mypath/mypath/myfile.txt");
 	if (!fs->existFile(filename))
 	{
 		logTestString("existFile with deep path failed\n");
-		while (fs->getFileArchiveCount())
-			fs->removeFileArchive(fs->getFileArchiveCount()-1);
 		return false;
 	}
 
@@ -92,8 +60,6 @@ bool testArchive(IFileSystem* fs, const io::path& archiveName)
 	if (!fs->existFile(filename))
 	{
 		logTestString("existFile failed\n");
-		while (fs->getFileArchiveCount())
-			fs->removeFileArchive(fs->getFileArchiveCount()-1);
 		return false;
 	}
 
@@ -101,25 +67,14 @@ bool testArchive(IFileSystem* fs, const io::path& archiveName)
 	if ( !readFile )
 	{
 		logTestString("createAndOpenFile failed\n");
-		while (fs->getFileArchiveCount())
-			fs->removeFileArchive(fs->getFileArchiveCount()-1);
 		return false;
 	}
 
-	if (fs->getFileBasename(readFile->getFileName()) != "test.txt")
-	{
-		logTestString("Wrong filename, file list seems to be corrupt\n");
-		while (fs->getFileArchiveCount())
-			fs->removeFileArchive(fs->getFileArchiveCount()-1);
-		return false;
-	}
 	char tmp[13] = {'\0'};
 	readFile->read(tmp, 12);
 	if (strncmp(tmp, "Hello world!", 12))
 	{
 		logTestString("Read bad data from archive: %s\n", tmp);
-		while (fs->getFileArchiveCount())
-			fs->removeFileArchive(fs->getFileArchiveCount()-1);
 		return false;
 	}
 	if (!fs->removeFileArchive(fs->getFileArchiveCount()-1))
@@ -131,8 +86,6 @@ bool testArchive(IFileSystem* fs, const io::path& archiveName)
 	// make sure there is no archive mounted
 	if ( fs->getFileArchiveCount() )
 		return false;
-
-	readFile->drop();
 
 	return true;
 }
@@ -225,8 +178,6 @@ bool testEncryptedZip(IFileSystem* fs)
 	if ( fs->getFileArchiveCount() )
 		return false;
 
-	readFile->drop();
-
 	return true;
 }
 
@@ -242,10 +193,6 @@ bool archiveReader()
 		return false;
 	
 	bool ret = true;
-	logTestString("Testing mount file.\n");
-	ret &= testArchive(fs, "media/file_with_path");
-	logTestString("Testing mount file.\n");
-	ret &= testArchive(fs, "media/file_with_path/");
 	logTestString("Testing zip files.\n");
 	ret &= testArchive(fs, "media/file_with_path.zip");
 	logTestString("Testing pak files.\n");
@@ -254,11 +201,6 @@ bool archiveReader()
 	ret &= testArchive(fs, "media/file_with_path.npk");
 	logTestString("Testing encrypted zip files.\n");
 	ret &= testEncryptedZip(fs);
-
-	device->closeDevice();
-	device->run();
-	device->drop();
-
 	return ret;
 }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2009 Nikolaus Gebhardt
+// Copyright (C) 2002-2010 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -37,8 +37,6 @@ namespace irr
 			EventReceiver(0),
 			WindowId(0),
 			LoggingLevel(ELL_INFORMATION),
-			DisplayAdapter(0),
-			UsePerformanceTimer(true),
 			SDK_version_do_not_use(IRRLICHT_SDK_VERSION)
 		{
 		}
@@ -66,8 +64,6 @@ namespace irr
 			EventReceiver = other.EventReceiver;
 			WindowId = other.WindowId;
 			LoggingLevel = other.LoggingLevel;
-			DisplayAdapter = other.DisplayAdapter;
-			UsePerformanceTimer = other.UsePerformanceTimer;
 			return *this;
 		}
 
@@ -242,17 +238,6 @@ namespace irr
 		then you have to change it here.
 		*/
 		ELOG_LEVEL LoggingLevel;
-
-		//! Allows to select which graphic card is used for rendering when more than one card is in the system.
-		/** So far only supported on D3D */
-		u32 DisplayAdapter;
-
-		//! Enables use of high performance timers on Windows platform.
-		/** When performance timers are not used, standard GetTickCount()
-		is used instead which usually has worse resolution, but also less
-		problems with speed stepping and other techniques.
-		*/
-		bool UsePerformanceTimer;
 
 		//! Don't use or change this parameter.
 		/** Always set it to IRRLICHT_SDK_VERSION, which is done by default.

@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2009 Nikolaus Gebhardt / Thomas Alten
+// Copyright (C) 2002-2010 Nikolaus Gebhardt / Thomas Alten
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -80,7 +80,7 @@ class CTRTextureGouraudAddNoZ2 : public IBurningShader
 public:
 
 	//! constructor
-	CTRTextureGouraudAddNoZ2(CBurningVideoDriver* driver);
+	CTRTextureGouraudAddNoZ2(IDepthBuffer* zbuffer);
 
 	//! draws an indexed triangle list
 	virtual void drawTriangle ( const s4DVertex *a,const s4DVertex *b,const s4DVertex *c );
@@ -94,8 +94,8 @@ private:
 };
 
 //! constructor
-CTRTextureGouraudAddNoZ2::CTRTextureGouraudAddNoZ2(CBurningVideoDriver* driver)
-: IBurningShader(driver)
+CTRTextureGouraudAddNoZ2::CTRTextureGouraudAddNoZ2(IDepthBuffer* zbuffer)
+: IBurningShader(zbuffer)
 {
 	#ifdef _DEBUG
 	setDebugName("CTRTextureGouraudAddNoZ2");
@@ -199,6 +199,8 @@ void CTRTextureGouraudAddNoZ2::scanline_bilinear ()
 
 	tFixPoint r0, g0, b0;
 	tFixPoint r1, g1, b1;
+	tFixPoint r2, g2, b2;
+
 
 	for ( s32 i = 0; i <= dx; ++i )
 	{
@@ -223,10 +225,12 @@ void CTRTextureGouraudAddNoZ2::scanline_bilinear ()
 
 			color_to_fix ( r1, g1, b1, dst[i] );
 
-			dst[i] = fix_to_color ( clampfix_maxcolor ( r1 + (r0 >> 1 ) ),
-									clampfix_maxcolor ( g1 + (g0 >> 1 ) ),
-									clampfix_maxcolor ( b1 + (b0 >> 1) )
-								);
+			r2 = clampfix_maxcolor ( r1 + r0 );
+			g2 = clampfix_maxcolor ( g1 + g0 );
+			b2 = clampfix_maxcolor ( b1 + b0 );
+
+
+			dst[i] = fix_to_color ( r2, g2, b2 );
 
 #ifdef WRITE_Z
 			z[i] = line.z[0];
@@ -629,10 +633,10 @@ namespace video
 {
 
 //! creates a flat triangle renderer
-IBurningShader* createTRTextureGouraudAddNoZ2(CBurningVideoDriver* driver)
+IBurningShader* createTRTextureGouraudAddNoZ2(IDepthBuffer* zbuffer)
 {
 	#ifdef _IRR_COMPILE_WITH_BURNINGSVIDEO_
-	return new CTRTextureGouraudAddNoZ2(driver);
+	return new CTRTextureGouraudAddNoZ2(zbuffer);
 	#else
 	return 0;
 	#endif // _IRR_COMPILE_WITH_BURNINGSVIDEO_

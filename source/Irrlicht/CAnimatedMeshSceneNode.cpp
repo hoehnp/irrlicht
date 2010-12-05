@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2009 Nikolaus Gebhardt
+// Copyright (C) 2002-2010 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -195,9 +195,7 @@ IMesh * CAnimatedMeshSceneNode::getMeshForCurrentFrame()
 {
 	if(Mesh->getMeshType() != EAMT_SKINNED)
 	{
-		s32 frameNr = (s32) getFrameNr();
-		s32 frameBlend = (s32) (core::fract ( getFrameNr() ) * 1000.f);
-		return Mesh->getMesh(frameNr, frameBlend, StartFrame, EndFrame);
+		return Mesh->getMesh((s32)getFrameNr(), 255, StartFrame, EndFrame);
 	}
 	else
 	{
@@ -559,17 +557,17 @@ u32 CAnimatedMeshSceneNode::getMaterialCount() const
 
 //! Creates shadow volume scene node as child of this node
 //! and returns a pointer to it.
-IShadowVolumeSceneNode* CAnimatedMeshSceneNode::addShadowVolumeSceneNode(
-		const IMesh* shadowMesh, s32 id, bool zfailmethod, f32 infinity)
+IShadowVolumeSceneNode* CAnimatedMeshSceneNode::addShadowVolumeSceneNode(const IMesh* shadowMesh,
+						 s32 id, bool zfailmethod, f32 infinity)
 {
 	if (!SceneManager->getVideoDriver()->queryFeature(video::EVDF_STENCIL_BUFFER))
 		return 0;
 
+	if (Shadow)
+		return Shadow;
+
 	if (!shadowMesh)
 		shadowMesh = Mesh; // if null is given, use the mesh of node
-
-	if (Shadow)
-		Shadow->drop();
 
 	Shadow = new CShadowVolumeSceneNode(shadowMesh, this, SceneManager, id,  zfailmethod, infinity);
 	return Shadow;
@@ -594,7 +592,7 @@ IBoneSceneNode* CAnimatedMeshSceneNode::getJointNode(const c8* jointName)
 
 	if (number == -1)
 	{
-		os::Printer::log("Joint with specified name not found in skinned mesh.", jointName, ELL_DEBUG);
+		os::Printer::log("Joint with specified name not found in skinned mesh.", jointName, ELL_WARNING);
 		return 0;
 	}
 

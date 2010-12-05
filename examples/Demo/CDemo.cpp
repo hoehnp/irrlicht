@@ -359,7 +359,7 @@ void CDemo::loadSceneData()
 		core::matrix4 m;
 		m.setTranslation(core::vector3df(-1300,-70,-1249));
 
-		for ( i = 0; i != scene::quake3::E_Q3_MESH_SIZE; ++i )
+		for ( i = 0; i!= scene::quake3::E_Q3_MESH_SIZE; ++i )
 			sm->getMeshManipulator()->transform(quakeLevelMesh->getMesh(i), m);
 
 		quakeLevelNode = sm->addOctreeSceneNode(
@@ -620,7 +620,7 @@ void CDemo::shoot()
 	core::line3d<f32> line(start, end);
 
 	// get intersection point with map
-	scene::ISceneNode* hitNode;
+	const scene::ISceneNode* hitNode;
 	if (sm->getSceneCollisionManager()->getCollisionPoint(
 		line, mapSelector, end, triangle, hitNode))
 	{

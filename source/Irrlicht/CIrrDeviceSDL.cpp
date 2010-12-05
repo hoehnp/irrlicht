@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2009 Nikolaus Gebhardt
+// Copyright (C) 2002-2010 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -32,13 +32,13 @@ namespace irr
 		#ifdef _IRR_COMPILE_WITH_DIRECT3D_8_
 		IVideoDriver* createDirectX8Driver(const core::dimension2d<u32>& screenSize, HWND window,
 			u32 bits, bool fullscreen, bool stencilbuffer, io::IFileSystem* io,
-			bool pureSoftware, bool highPrecisionFPU, bool vsync, u8 antiAlias, u32 displayAdapter);
+			bool pureSoftware, bool highPrecisionFPU, bool vsync, u8 antiAlias);
 		#endif
 
 		#ifdef _IRR_COMPILE_WITH_DIRECT3D_9_
 		IVideoDriver* createDirectX9Driver(const core::dimension2d<u32>& screenSize, HWND window,
 			u32 bits, bool fullscreen, bool stencilbuffer, io::IFileSystem* io,
-			bool pureSoftware, bool highPrecisionFPU, bool vsync, u8 antiAlias, u32 displayAdapter);
+			bool pureSoftware, bool highPrecisionFPU, bool vsync, u8 antiAlias);
 		#endif
 
 		#ifdef _IRR_COMPILE_WITH_OPENGL_
@@ -226,7 +226,7 @@ void CIrrDeviceSDL::createDriver()
 		VideoDriver = video::createDirectX8Driver(CreationParams.WindowSize, Info.window,
 			CreationParams.Bits, CreationParams.Fullscreen, CreationParams.Stencilbuffer,
 			FileSystem, false, CreationParams.HighPrecisionFPU, CreationParams.Vsync,
-			CreationParams.AntiAlias, CreationParams.DisplayAdapter);
+			CreationParams.AntiAlias);
 
 		if (!VideoDriver)
 		{
@@ -244,7 +244,7 @@ void CIrrDeviceSDL::createDriver()
 		VideoDriver = video::createDirectX9Driver(CreationParams.WindowSize, Info.window,
 			CreationParams.Bits, CreationParams.Fullscreen, CreationParams.Stencilbuffer,
 			FileSystem, false, CreationParams.HighPrecisionFPU, CreationParams.Vsync,
-			CreationParams.AntiAlias, CreationParams.DisplayAdapter);
+			CreationParams.AntiAlias);
 
 		if (!VideoDriver)
 		{
@@ -266,7 +266,7 @@ void CIrrDeviceSDL::createDriver()
 
 	case video::EDT_BURNINGSVIDEO:
 		#ifdef _IRR_COMPILE_WITH_BURNINGSVIDEO_
-		VideoDriver = video::createBurningVideoDriver(CreationParams, FileSystem, this);
+		VideoDriver = video::createSoftwareDriver2(CreationParams.WindowSize, CreationParams.Fullscreen, FileSystem, this);
 		#else
 		os::Printer::log("Burning's video driver was not compiled in.", ELL_ERROR);
 		#endif

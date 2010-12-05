@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2009 Nikolaus Gebhardt
+// Copyright (C) 2002-2010 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -46,14 +46,19 @@ namespace scene
 
 	private:
 
-		typedef core::array<core::vector3df> SShadowVolume;
+		struct SShadowVolume
+		{
+			core::vector3df* vertices;
+			u32 count;
+			u32 size;
+		};
 
 		void createShadowVolume(const core::vector3df& pos);
 		void createZPassVolume(s32 faceCount, u32& numEdges, core::vector3df light, SShadowVolume* svp, bool caps);
 		void createZFailVolume(s32 faceCount, u32& numEdges, const core::vector3df& light, SShadowVolume* svp);
 
 		//! Generates adjacency information based on mesh indices.
-		void calculateAdjacency();
+		void calculateAdjacency(f32 epsilon=0.0001f);
 
 		core::aabbox3d<f32> Box;
 
@@ -83,3 +88,4 @@ namespace scene
 } // end namespace irr
 
 #endif
+

@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2009 Nikolaus Gebhardt
+// Copyright (C) 2002-2010 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -59,7 +59,7 @@ CGUIScrollBar::~CGUIScrollBar()
 //! called if an event happened.
 bool CGUIScrollBar::OnEvent(const SEvent& event)
 {
-	if (isEnabled())
+	if (IsEnabled)
 	{
 
 		switch(event.EventType)
@@ -280,7 +280,7 @@ void CGUIScrollBar::draw()
 		return;
 
 
-	video::SColor iconColor = skin->getColor(isEnabled() ? EGDC_WINDOW_SYMBOL : EGDC_GRAY_WINDOW_SYMBOL);
+	video::SColor iconColor = skin->getColor(EGDC_WINDOW_SYMBOL);
 	if ( iconColor != CurrentIconColor )
 	{
 		refreshControls();
@@ -451,7 +451,7 @@ void CGUIScrollBar::refreshControls()
 	if (skin)
 	{
 		sprites = skin->getSpriteBank();
-		CurrentIconColor = skin->getColor(isEnabled() ? EGDC_WINDOW_SYMBOL : EGDC_GRAY_WINDOW_SYMBOL);
+		CurrentIconColor = skin->getColor(EGDC_WINDOW_SYMBOL);
 	}
 
 	if (Horizontal)

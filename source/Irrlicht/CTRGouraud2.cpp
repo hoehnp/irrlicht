@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2009 Nikolaus Gebhardt / Thomas Alten
+// Copyright (C) 2002-2010 Nikolaus Gebhardt / Thomas Alten
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -80,7 +80,7 @@ class CTRGouraud2 : public IBurningShader
 public:
 
 	//! constructor
-	CTRGouraud2(CBurningVideoDriver* driver);
+	CTRGouraud2(IDepthBuffer* zbuffer);
 
 	//! draws an indexed triangle list
 	virtual void drawTriangle ( const s4DVertex *a,const s4DVertex *b,const s4DVertex *c );
@@ -94,8 +94,8 @@ private:
 };
 
 //! constructor
-CTRGouraud2::CTRGouraud2(CBurningVideoDriver* driver)
-: IBurningShader(driver)
+CTRGouraud2::CTRGouraud2(IDepthBuffer* zbuffer)
+: IBurningShader(zbuffer)
 {
 	#ifdef _DEBUG
 	setDebugName("CTRGouraud2");
@@ -132,7 +132,10 @@ void CTRGouraud2::scanline_bilinear ()
 	sVec4 slopeC;
 #endif
 #ifdef IPOL_T0
-	sVec2 slopeT[BURNING_MATERIAL_MAX_TEXTURES];
+	sVec2 slopeT[0];
+#endif
+#ifdef IPOL_T1
+	sVec2 slopeT[1];
 #endif
 
 	// apply top-left fill-convention, left
@@ -628,10 +631,10 @@ namespace video
 {
 
 //! creates a flat triangle renderer
-IBurningShader* createTriangleRendererGouraud2(CBurningVideoDriver* driver)
+IBurningShader* createTriangleRendererGouraud2(IDepthBuffer* zbuffer)
 {
 	#ifdef _IRR_COMPILE_WITH_BURNINGSVIDEO_
-	return new CTRGouraud2(driver);
+	return new CTRGouraud2(zbuffer);
 	#else
 	return 0;
 	#endif // _IRR_COMPILE_WITH_BURNINGSVIDEO_

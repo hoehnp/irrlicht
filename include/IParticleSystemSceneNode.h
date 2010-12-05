@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2009 Nikolaus Gebhardt
+// Copyright (C) 2002-2010 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -90,10 +90,6 @@ public:
 	work.
 	\param affector: New affector. */
 	virtual void addAffector(IParticleAffector* affector) = 0;
-
-	//! Get a list of all particle affectors.
-	/** \return The list of particle affectors attached to this node. */
-	virtual const core::list<IParticleAffector*>& getAffectors() const = 0;
 
 	//! Removes all particle affectors in the particle system.
 	virtual void removeAllAffectors() = 0;

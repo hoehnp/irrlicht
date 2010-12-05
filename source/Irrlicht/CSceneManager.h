@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2009 Nikolaus Gebhardt
+// Copyright (C) 2002-2010 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -216,9 +216,8 @@ namespace scene
 
 		//! Adds a terrain mesh to the mesh pool.
 		virtual IAnimatedMesh* addTerrainMesh(const io::path& meshname,	video::IImage* texture, video::IImage* heightmap,
-			const core::dimension2d<f32>& stretchSize = core::dimension2d<f32>(10.0f,10.0f),
-			f32 maxHeight=200.0f,
-			const core::dimension2d<u32>& defaultVertexBlockSize = core::dimension2d<u32>(64,64));
+			const core::dimension2d<f32>& stretchSize,
+			f32 maxHeight, const core::dimension2d<u32>& defaultVertexBlockSize);
 
 		//! Add a arrow mesh to the mesh pool
 		virtual IAnimatedMesh* addArrowMesh(const io::path& name,

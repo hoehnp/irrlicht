@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2009 Nikolaus Gebhardt / Thomas Alten
+// Copyright (C) 2002-2010 Nikolaus Gebhardt / Thomas Alten
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -81,7 +81,7 @@ class CTRTextureGouraudAdd2 : public IBurningShader
 public:
 
 	//! constructor
-	CTRTextureGouraudAdd2(CBurningVideoDriver* driver);
+	CTRTextureGouraudAdd2(IDepthBuffer* zbuffer);
 
 	//! draws an indexed triangle list
 	virtual void drawTriangle ( const s4DVertex *a,const s4DVertex *b,const s4DVertex *c );
@@ -94,8 +94,8 @@ private:
 };
 
 //! constructor
-CTRTextureGouraudAdd2::CTRTextureGouraudAdd2(CBurningVideoDriver* driver)
-: IBurningShader(driver)
+CTRTextureGouraudAdd2::CTRTextureGouraudAdd2(IDepthBuffer* zbuffer)
+: IBurningShader(zbuffer)
 {
 	#ifdef _DEBUG
 	setDebugName("CTRTextureGouraudAdd2");
@@ -663,10 +663,10 @@ namespace video
 {
 
 //! creates a flat triangle renderer
-IBurningShader* createTRTextureGouraudAdd2(CBurningVideoDriver* driver)
+IBurningShader* createTRTextureGouraudAdd2(IDepthBuffer* zbuffer)
 {
 	#ifdef _IRR_COMPILE_WITH_BURNINGSVIDEO_
-	return new CTRTextureGouraudAdd2(driver);
+	return new CTRTextureGouraudAdd2(zbuffer);
 	#else
 	return 0;
 	#endif // _IRR_COMPILE_WITH_BURNINGSVIDEO_

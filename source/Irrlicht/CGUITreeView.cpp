@@ -34,7 +34,7 @@ CGUITreeViewNode::~CGUITreeViewNode()
 		setSelected( false );
 	}
 
-	clearChildren();
+	clearChilds();
 
 	if( Data2 )
 	{
@@ -62,15 +62,15 @@ void CGUITreeViewNode::setIcon( const wchar_t* icon )
 	Icon = icon;
 }
 
-void CGUITreeViewNode::clearChildren()
+void CGUITreeViewNode::clearChilds()
 {
 	core::list<CGUITreeViewNode*>::Iterator	it;
 
-	for( it = Children.begin(); it != Children.end(); it++ )
+	for( it = Childs.begin(); it != Childs.end(); it++ )
 	{
 		( *it )->drop();
 	}
-	Children.clear();
+	Childs.clear();
 }
 
 IGUITreeViewNode* CGUITreeViewNode::addChildBack(
@@ -83,7 +83,7 @@ IGUITreeViewNode* CGUITreeViewNode::addChildBack(
 {
 	CGUITreeViewNode*	newChild = new CGUITreeViewNode( Owner, this );
 
-	Children.push_back( newChild );
+	Childs.push_back( newChild );
 	newChild->Text = text;
 	newChild->Icon = icon;
 	newChild->ImageIndex = imageIndex;
@@ -107,7 +107,7 @@ IGUITreeViewNode* CGUITreeViewNode::addChildFront(
 {
 	CGUITreeViewNode*	newChild = new CGUITreeViewNode( Owner, this );
 
-	Children.push_front( newChild );
+	Childs.push_front( newChild );
 	newChild->Text = text;
 	newChild->Icon = icon;
 	newChild->ImageIndex = imageIndex;
@@ -133,7 +133,7 @@ IGUITreeViewNode* CGUITreeViewNode::insertChildAfter(
 	core::list<CGUITreeViewNode*>::Iterator	itOther;
 	CGUITreeViewNode*									newChild = 0;
 
-	for( itOther = Children.begin(); itOther != Children.end(); itOther++ )
+	for( itOther = Childs.begin(); itOther != Childs.end(); itOther++ )
 	{
 		if( other == *itOther )
 		{
@@ -148,7 +148,7 @@ IGUITreeViewNode* CGUITreeViewNode::insertChildAfter(
 			{
 				data2->grab();
 			}
-			Children.insert_after( itOther, newChild );
+			Childs.insert_after( itOther, newChild );
 			break;
 		}
 	}
@@ -167,7 +167,7 @@ IGUITreeViewNode* CGUITreeViewNode::insertChildBefore(
 	core::list<CGUITreeViewNode*>::Iterator	itOther;
 	CGUITreeViewNode*									newChild = 0;
 
-	for( itOther = Children.begin(); itOther != Children.end(); itOther++ )
+	for( itOther = Childs.begin(); itOther != Childs.end(); itOther++ )
 	{
 		if( other == *itOther )
 		{
@@ -182,7 +182,7 @@ IGUITreeViewNode* CGUITreeViewNode::insertChildBefore(
 			{
 				data2->grab();
 			}
-			Children.insert_before( itOther, newChild );
+			Childs.insert_before( itOther, newChild );
 			break;
 		}
 	}
@@ -191,25 +191,25 @@ IGUITreeViewNode* CGUITreeViewNode::insertChildBefore(
 
 IGUITreeViewNode* CGUITreeViewNode::getFirstChild() const
 {
-	if( Children.empty() )
+	if( Childs.empty() )
 	{
 		return 0;
 	}
 	else
 	{
-		return *( Children.begin() );
+		return *( Childs.begin() );
 	}
 }
 
 IGUITreeViewNode* CGUITreeViewNode::getLastChild() const
 {
-	if( Children.empty() )
+	if( Childs.empty() )
 	{
 		return 0;
 	}
 	else
 	{
-		return *( Children.getLast() );
+		return *( Childs.getLast() );
 	}
 }
 
@@ -221,11 +221,11 @@ IGUITreeViewNode* CGUITreeViewNode::getPrevSibling() const
 
 	if( Parent )
 	{
-		for( itThis = Parent->Children.begin(); itThis != Parent->Children.end(); itThis++ )
+		for( itThis = Parent->Childs.begin(); itThis != Parent->Childs.end(); itThis++ )
 		{
 			if( this == *itThis )
 			{
-				if( itThis != Parent->Children.begin() )
+				if( itThis != Parent->Childs.begin() )
 				{
 					other = *itOther;
 				}
@@ -244,11 +244,11 @@ IGUITreeViewNode* CGUITreeViewNode::getNextSibling() const
 
 	if( Parent )
 	{
-		for( itThis = Parent->Children.begin(); itThis != Parent->Children.end(); itThis++ )
+		for( itThis = Parent->Childs.begin(); itThis != Parent->Childs.end(); itThis++ )
 		{
 			if( this == *itThis )
 			{
-				if( itThis != Parent->Children.getLast() )
+				if( itThis != Parent->Childs.getLast() )
 				{
 					other = *( ++itThis );
 				}
@@ -266,7 +266,7 @@ IGUITreeViewNode* CGUITreeViewNode::getNextVisible() const
 
 	node = const_cast<CGUITreeViewNode*>( this );
 
-	if( node->getExpanded() && node->hasChildren() )
+	if( node->getExpanded() && node->hasChilds() )
 	{
 		next = node->getFirstChild();
 	}
@@ -291,12 +291,12 @@ bool CGUITreeViewNode::deleteChild( IGUITreeViewNode* child )
 	core::list<CGUITreeViewNode*>::Iterator	itChild;
 	bool	deleted = false;
 
-	for( itChild = Children.begin(); itChild != Children.end(); itChild++ )
+	for( itChild = Childs.begin(); itChild != Childs.end(); itChild++ )
 	{
 		if( child == *itChild )
 		{
 			child->drop();
-			Children.erase( itChild );
+			Childs.erase( itChild );
 			deleted = true;
 			break;
 		}
@@ -311,11 +311,11 @@ bool CGUITreeViewNode::moveChildUp( IGUITreeViewNode* child )
 	CGUITreeViewNode*									nodeTmp;
 	bool													moved = false;
 
-	for( itChild = Children.begin(); itChild != Children.end(); itChild++ )
+	for( itChild = Childs.begin(); itChild != Childs.end(); itChild++ )
 	{
 		if( child == *itChild )
 		{
-			if( itChild != Children.begin() )
+			if( itChild != Childs.begin() )
 			{
 				nodeTmp = *itChild;
 				*itChild = *itOther;
@@ -336,11 +336,11 @@ bool CGUITreeViewNode::moveChildDown( IGUITreeViewNode* child )
 	CGUITreeViewNode*									nodeTmp;
 	bool													moved = false;
 
-	for( itChild = Children.begin(); itChild != Children.end(); itChild++ )
+	for( itChild = Childs.begin(); itChild != Childs.end(); itChild++ )
 	{
 		if( child == *itChild )
 		{
-			if( itChild != Children.getLast() )
+			if( itChild != Childs.getLast() )
 			{
 				itOther = itChild;
 				++itOther;
@@ -736,7 +736,7 @@ void CGUITreeView::mouseAction( s32 xpos, s32 ypos, bool onlyHover /*= false*/ )
 	if( hitNode && !onlyHover
 		&& xpos < hitNode->getLevel() * IndentWidth
 		&& xpos > ( hitNode->getLevel() - 1 ) * IndentWidth
-		&& hitNode->hasChildren() )
+		&& hitNode->hasChilds() )
 	{
 		hitNode->setExpanded( !hitNode->getExpanded() );
 
@@ -878,7 +878,7 @@ void CGUITreeView::draw()
 				driver->draw2DRectangle( skin->getColor( EGDC_HIGH_LIGHT ), frameRect, &clientClip );
 			}
 
-			if( node->hasChildren() )
+			if( node->hasChilds() )
 			{
 				core::rect<s32> rc;
 				core::rect<s32> expanderRect;
@@ -993,7 +993,7 @@ void CGUITreeView::draw()
 				// horizontal line
 				rc.UpperLeftCorner.X = frameRect.UpperLeftCorner.X - IndentWidth - ( IndentWidth >> 1 ) - 1;
 				rc.UpperLeftCorner.Y = frameRect.UpperLeftCorner.Y + ( ( frameRect.getHeight() ) >> 1 );
-				if( node->hasChildren() )
+				if( node->hasChilds() )
 				{
 					rc.LowerRightCorner.X = frameRect.UpperLeftCorner.X - IndentWidth;
 				}

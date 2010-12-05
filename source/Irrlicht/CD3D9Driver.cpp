@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2009 Nikolaus Gebhardt
+// Copyright (C) 2002-2010 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -32,11 +32,10 @@ CD3D9Driver::CD3D9Driver(const core::dimension2d<u32>& screenSize, HWND window,
 	D3DLibrary(0), pID3D(0), pID3DDevice(0), PrevRenderTarget(0),
 	WindowId(0), SceneSourceRect(0),
 	LastVertexType((video::E_VERTEX_TYPE)-1), VendorID(0),
-	MaxTextureUnits(0), MaxUserClipPlanes(0), MaxMRTs(1), NumSetMRTs(1),
+	MaxTextureUnits(0), MaxUserClipPlanes(0),
 	MaxLightDistance(0.f), LastSetLight(-1), Cached2DModeSignature(0),
 	ColorFormat(ECF_A8R8G8B8), DeviceLost(false),
-	Fullscreen(fullscreen), DriverWasReset(true), OcclusionQuerySupport(false),
-	AlphaToCoverageSupport(false), DisplayAdapter(0)
+	Fullscreen(fullscreen), DriverWasReset(true), AlphaToCoverageSupport(false)
 {
 	#ifdef _DEBUG
 	setDebugName("CD3D9Driver");
@@ -73,13 +72,10 @@ CD3D9Driver::~CD3D9Driver()
 {
 	deleteMaterialRenders();
 	deleteAllTextures();
-	removeAllOcclusionQueries();
-	removeAllHardwareBuffers();
-	for (u32 i=0; i<DepthBuffers.size(); ++i)
-	{
-		DepthBuffers[i]->drop();
-	}
-	DepthBuffers.clear();
+
+	// drop the main depth buffer
+	if (DepthBuffers.size())
+		DepthBuffers[0]->drop();
 
 	// drop d3d9
 
@@ -160,12 +156,11 @@ void CD3D9Driver::createMaterialRenderers()
 //! initialises the Direct3D API
 bool CD3D9Driver::initDriver(const core::dimension2d<u32>& screenSize,
 		HWND hwnd, u32 bits, bool fullScreen, bool pureSoftware,
-		bool highPrecisionFPU, bool vsync, u8 antiAlias, u32 displayAdapter)
+		bool highPrecisionFPU, bool vsync, u8 antiAlias)
 {
 	HRESULT hr;
 	Fullscreen = fullScreen;
 	CurrentDepthBufferSize = screenSize;
-	DisplayAdapter = displayAdapter;
 
 	if (!pID3D)
 	{
@@ -198,7 +193,7 @@ bool CD3D9Driver::initDriver(const core::dimension2d<u32>& screenSize,
 
 	// print device information
 	D3DADAPTER_IDENTIFIER9 dai;
-	if (!FAILED(pID3D->GetAdapterIdentifier(DisplayAdapter, 0, &dai)))
+	if (!FAILED(pID3D->GetAdapterIdentifier(D3DADAPTER_DEFAULT, 0, &dai)))
 	{
 		char tmp[512];
 
@@ -226,7 +221,7 @@ bool CD3D9Driver::initDriver(const core::dimension2d<u32>& screenSize,
 	}
 
 	D3DDISPLAYMODE d3ddm;
-	hr = pID3D->GetAdapterDisplayMode(DisplayAdapter, &d3ddm);
+	hr = pID3D->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &d3ddm);
 	if (FAILED(hr))
 	{
 		os::Printer::log("Error: Could not get Adapter Display mode.", ELL_ERROR);
@@ -262,7 +257,7 @@ bool CD3D9Driver::initDriver(const core::dimension2d<u32>& screenSize,
 		present.Windowed		= TRUE;
 	}
 
-	UINT adapter = DisplayAdapter;
+	UINT adapter = D3DADAPTER_DEFAULT;
 	D3DDEVTYPE devtype = D3DDEVTYPE_HAL;
 	#ifndef _IRR_D3D_NO_SHADER_DEBUGGING
 	devtype = D3DDEVTYPE_REF;
@@ -370,7 +365,7 @@ bool CD3D9Driver::initDriver(const core::dimension2d<u32>& screenSize,
 	DWORD fpuPrecision = highPrecisionFPU ? D3DCREATE_FPU_PRESERVE : 0;
 	if (pureSoftware)
 	{
-		hr = pID3D->CreateDevice(DisplayAdapter, D3DDEVTYPE_REF, hwnd,
+		hr = pID3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_REF, hwnd,
 				fpuPrecision | D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present, &pID3DDevice);
 
 		if (FAILED(hr))
@@ -430,32 +425,18 @@ bool CD3D9Driver::initDriver(const core::dimension2d<u32>& screenSize,
 
 	MaxTextureUnits = core::min_((u32)Caps.MaxSimultaneousTextures, MATERIAL_MAX_TEXTURES);
 	MaxUserClipPlanes = (u32)Caps.MaxUserClipPlanes;
-	MaxMRTs = (s32)Caps.NumSimultaneousRTs;
-	OcclusionQuerySupport=(pID3DDevice->CreateQuery(D3DQUERYTYPE_OCCLUSION, NULL) == S_OK);
 
 	if (VendorID==0x10DE)//NVidia
-		AlphaToCoverageSupport = (pID3D->CheckDeviceFormat(DisplayAdapter, D3DDEVTYPE_HAL,
+		AlphaToCoverageSupport = (pID3D->CheckDeviceFormat(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
 				D3DFMT_X8R8G8B8, 0,D3DRTYPE_SURFACE,
 				(D3DFORMAT)MAKEFOURCC('A', 'T', 'O', 'C')) == S_OK);
 	else if (VendorID==0x1002)//ATI
 		AlphaToCoverageSupport = true; // TODO: Check unknown
 #if 0
-		AlphaToCoverageSupport = (pID3D->CheckDeviceFormat(DisplayAdapter, D3DDEVTYPE_HAL,
+		AlphaToCoverageSupport = (pID3D->CheckDeviceFormat(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
 				D3DFMT_X8R8G8B8, 0,D3DRTYPE_SURFACE,
 				(D3DFORMAT)MAKEFOURCC('A','2','M','1')) == S_OK);
 #endif
-
-	DriverAttributes->setAttribute("MaxTextures", (s32)MaxTextureUnits);
-	DriverAttributes->setAttribute("MaxSupportedTextures", (s32)Caps.MaxSimultaneousTextures);
-	DriverAttributes->setAttribute("MaxAnisotropy", (s32)Caps.MaxAnisotropy);
-	DriverAttributes->setAttribute("MaxUserClipPlanes", (s32)Caps.MaxUserClipPlanes);
-	DriverAttributes->setAttribute("MaxMultipleRenderTargets", (s32)Caps.NumSimultaneousRTs);
-	DriverAttributes->setAttribute("MaxIndices", (s32)Caps.MaxVertexIndex);
-	DriverAttributes->setAttribute("MaxTextureSize", (s32)core::min_(Caps.MaxTextureHeight,Caps.MaxTextureWidth));
-	DriverAttributes->setAttribute("MaxTextureLODBias", 16);
-	DriverAttributes->setAttribute("Version", 901);
-	DriverAttributes->setAttribute("ShaderLanguageVersion", (s32)Caps.VertexShaderVersion*100);
-
 	// set the renderstates
 	setRenderStates3DMode();
 
@@ -656,8 +637,6 @@ bool CD3D9Driver::queryFeature(E_VIDEO_DRIVER_FEATURE feature) const
 		return (Caps.PrimitiveMiscCaps & D3DPMISCCAPS_INDEPENDENTWRITEMASKS) != 0;
 	case EVDF_MRT_BLEND:
 		return (Caps.PrimitiveMiscCaps & D3DPMISCCAPS_MRTPOSTPIXELSHADERBLENDING) != 0;
-	case EVDF_OCCLUSION_QUERY:
-		return OcclusionQuerySupport;
 	default:
 		return false;
 	};
@@ -788,11 +767,6 @@ bool CD3D9Driver::setRenderTarget(video::ITexture* texture,
 
 	bool ret = true;
 
-	for(u32 i = 1; i < NumSetMRTs; i++)
-	{
-		// First texture handled elsewhere
-		pID3DDevice->SetRenderTarget(i, NULL);
-	}
 	if (tex == 0)
 	{
 		if (PrevRenderTarget)
@@ -866,7 +840,7 @@ bool CD3D9Driver::setRenderTarget(const core::array<video::IRenderTarget>& targe
 	if (targets.size()==0)
 		return setRenderTarget(0, clearBackBuffer, clearZBuffer, color);
 
-	u32 maxMultipleRTTs = core::min_(MaxMRTs, targets.size());
+	u32 maxMultipleRTTs = core::min_(4u, targets.size());
 
 	for (u32 i = 0; i < maxMultipleRTTs; ++i)
 	{
@@ -930,7 +904,6 @@ bool CD3D9Driver::setRenderTarget(const core::array<video::IRenderTarget>& targe
 
 	// set new render target
 
-	// In d3d9 we have at most 4 MRTs, so the following is enough
 	D3DRENDERSTATETYPE colorWrite[4]={D3DRS_COLORWRITEENABLE, D3DRS_COLORWRITEENABLE1, D3DRS_COLORWRITEENABLE2, D3DRS_COLORWRITEENABLE3};
 	for (u32 i = 0; i < maxMultipleRTTs; ++i)
 	{
@@ -949,11 +922,6 @@ bool CD3D9Driver::setRenderTarget(const core::array<video::IRenderTarget>& targe
 			pID3DDevice->SetRenderState(colorWrite[i], flag);
 		}
 	}
-	for(u32 i = maxMultipleRTTs; i < NumSetMRTs; i++)
-	{
-		pID3DDevice->SetRenderTarget(i, NULL);
-	}
-	NumSetMRTs=maxMultipleRTTs;
 
 	CurrentRendertargetSize = tex->getSize();
 
@@ -1258,98 +1226,6 @@ void CD3D9Driver::drawHardwareBuffer(SHWBufferLink *_HWBuffer)
 		pID3DDevice->SetStreamSource(0, 0, 0, 0);
 	if (HWBuffer->indexBuffer)
 		pID3DDevice->SetIndices(0);
-}
-
-
-//! Create occlusion query.
-/** Use node for identification and mesh for occlusion test. */
-void CD3D9Driver::createOcclusionQuery(scene::ISceneNode* node,
-		const scene::IMesh* mesh)
-{
-	if (!queryFeature(EVDF_OCCLUSION_QUERY))
-		return;
-	CNullDriver::createOcclusionQuery(node, mesh);
-	const s32 index = OcclusionQueries.linear_search(SOccQuery(node));
-	if ((index != -1) && (OcclusionQueries[index].PID == 0))
-		pID3DDevice->CreateQuery(D3DQUERYTYPE_OCCLUSION, reinterpret_cast<IDirect3DQuery9**>(&OcclusionQueries[index].PID));
-}
-
-
-//! Remove occlusion query.
-void CD3D9Driver::removeOcclusionQuery(scene::ISceneNode* node)
-{
-	const s32 index = OcclusionQueries.linear_search(SOccQuery(node));
-	if (index != -1)
-	{
-		if (OcclusionQueries[index].PID != 0)
-			reinterpret_cast<IDirect3DQuery9*>(OcclusionQueries[index].PID)->Release();
-		CNullDriver::removeOcclusionQuery(node);
-	}
-}
-
-
-//! Run occlusion query. Draws mesh stored in query.
-/** If the mesh shall not be rendered visible, use
-overrideMaterial to disable the color and depth buffer. */
-void CD3D9Driver::runOcclusionQuery(scene::ISceneNode* node, bool visible)
-{
-	if (!node)
-		return;
-
-	const s32 index = OcclusionQueries.linear_search(SOccQuery(node));
-	if (index != -1)
-	{
-		if (OcclusionQueries[index].PID)
-			reinterpret_cast<IDirect3DQuery9*>(OcclusionQueries[index].PID)->Issue(D3DISSUE_BEGIN);
-		CNullDriver::runOcclusionQuery(node,visible);
-		if (OcclusionQueries[index].PID)
-			reinterpret_cast<IDirect3DQuery9*>(OcclusionQueries[index].PID)->Issue(D3DISSUE_END);
-	}
-}
-
-
-//! Update occlusion query. Retrieves results from GPU.
-/** If the query shall not block, set the flag to false.
-Update might not occur in this case, though */
-void CD3D9Driver::updateOcclusionQuery(scene::ISceneNode* node, bool block)
-{
-	const s32 index = OcclusionQueries.linear_search(SOccQuery(node));
-	if (index != -1)
-	{
-		// not yet started
-		if (OcclusionQueries[index].Run==u32(~0))
-			return;
-		bool available = block?true:false;
-		int tmp=0;
-		if (!block)
-			available=(reinterpret_cast<IDirect3DQuery9*>(OcclusionQueries[index].PID)->GetData(&tmp, sizeof(DWORD), 0)==S_OK);
-		else
-		{
-			do
-			{
-				HRESULT hr = reinterpret_cast<IDirect3DQuery9*>(OcclusionQueries[index].PID)->GetData(&tmp, sizeof(DWORD), D3DGETDATA_FLUSH);
-				available = (hr == S_OK);
-				if (hr!=S_FALSE)
-					break;
-			} while (!available);
-		}
-		if (available)
-			OcclusionQueries[index].Result = tmp;
-	}
-}
-
-
-//! Return query result.
-/** Return value is the number of visible pixels/fragments.
-The value is a safe approximation, i.e. can be larger than the
-actual value of pixels. */
-u32 CD3D9Driver::getOcclusionQueryResult(scene::ISceneNode* node) const
-{
-	const s32 index = OcclusionQueries.linear_search(SOccQuery(node));
-	if (index != -1)
-		return OcclusionQueries[index].Result;
-	else
-		return ~0;
 }
 
 
@@ -2304,8 +2180,7 @@ void CD3D9Driver::setBasicRenderStates(const SMaterial& material, const SMateria
 		if (resetAllRenderstates ||
 			lastmaterial.TextureLayer[st].BilinearFilter != material.TextureLayer[st].BilinearFilter ||
 			lastmaterial.TextureLayer[st].TrilinearFilter != material.TextureLayer[st].TrilinearFilter ||
-			lastmaterial.TextureLayer[st].AnisotropicFilter != material.TextureLayer[st].AnisotropicFilter ||
-			lastmaterial.UseMipMaps != material.UseMipMaps)
+			lastmaterial.TextureLayer[st].AnisotropicFilter != material.TextureLayer[st].AnisotropicFilter)
 		{
 			if (material.TextureLayer[st].BilinearFilter || material.TextureLayer[st].TrilinearFilter || material.TextureLayer[st].AnisotropicFilter)
 			{
@@ -2313,7 +2188,7 @@ void CD3D9Driver::setBasicRenderStates(const SMaterial& material, const SMateria
 						material.TextureLayer[st].AnisotropicFilter) ? D3DTEXF_ANISOTROPIC : D3DTEXF_LINEAR;
 				D3DTEXTUREFILTERTYPE tftMin = ((Caps.TextureFilterCaps & D3DPTFILTERCAPS_MINFANISOTROPIC) &&
 						material.TextureLayer[st].AnisotropicFilter) ? D3DTEXF_ANISOTROPIC : D3DTEXF_LINEAR;
-				D3DTEXTUREFILTERTYPE tftMip = material.UseMipMaps? (material.TextureLayer[st].TrilinearFilter ? D3DTEXF_LINEAR : D3DTEXF_POINT) : D3DTEXF_NONE;
+				D3DTEXTUREFILTERTYPE tftMip = material.TextureLayer[st].TrilinearFilter ? D3DTEXF_LINEAR : D3DTEXF_POINT;
 
 				if (tftMag==D3DTEXF_ANISOTROPIC || tftMin == D3DTEXF_ANISOTROPIC)
 					pID3DDevice->SetSamplerState(st, D3DSAMP_MAXANISOTROPY, core::min_((DWORD)material.TextureLayer[st].AnisotropicFilter, Caps.MaxAnisotropy));
@@ -2381,11 +2256,10 @@ void CD3D9Driver::setRenderStatesStencilShadowMode(bool zfail)
 		// USE THE ZPASS METHOD
 
 		pID3DDevice->SetRenderState( D3DRS_STENCILFUNC, D3DCMP_ALWAYS );
-		pID3DDevice->SetRenderState( D3DRS_STENCILFAIL, D3DSTENCILOP_KEEP );
 		pID3DDevice->SetRenderState( D3DRS_STENCILZFAIL, D3DSTENCILOP_KEEP );
-		pID3DDevice->SetRenderState( D3DRS_STENCILPASS, D3DSTENCILOP_INCR );
+		pID3DDevice->SetRenderState( D3DRS_STENCILFAIL, D3DSTENCILOP_KEEP );
 
-		pID3DDevice->SetRenderState( D3DRS_STENCILREF, 0x0 );
+		pID3DDevice->SetRenderState( D3DRS_STENCILREF, 0x1 );
 		pID3DDevice->SetRenderState( D3DRS_STENCILMASK, 0xffffffff );
 		pID3DDevice->SetRenderState( D3DRS_STENCILWRITEMASK, 0xffffffff );
 
@@ -2399,8 +2273,8 @@ void CD3D9Driver::setRenderStatesStencilShadowMode(bool zfail)
 		// USE THE ZFAIL METHOD
 
 		pID3DDevice->SetRenderState( D3DRS_STENCILFUNC, D3DCMP_ALWAYS );
+		pID3DDevice->SetRenderState( D3DRS_STENCILZFAIL, D3DSTENCILOP_KEEP );
 		pID3DDevice->SetRenderState( D3DRS_STENCILFAIL, D3DSTENCILOP_KEEP );
-		pID3DDevice->SetRenderState( D3DRS_STENCILZFAIL, D3DSTENCILOP_INCR );
 		pID3DDevice->SetRenderState( D3DRS_STENCILPASS, D3DSTENCILOP_KEEP );
 
 		pID3DDevice->SetRenderState( D3DRS_STENCILREF, 0x0 );
@@ -2440,9 +2314,8 @@ void CD3D9Driver::setRenderStatesStencilFillMode(bool alpha)
 		pID3DDevice->SetRenderState(D3DRS_STENCILREF, 0x1);
 		pID3DDevice->SetRenderState(D3DRS_STENCILFUNC, D3DCMP_LESSEQUAL);
 		//pID3DDevice->SetRenderState(D3DRS_STENCILFUNC, D3DCMP_GREATEREQUAL);
-		pID3DDevice->SetRenderState(D3DRS_STENCILFAIL, D3DSTENCILOP_KEEP );
-		pID3DDevice->SetRenderState(D3DRS_STENCILZFAIL, D3DSTENCILOP_KEEP );
 		pID3DDevice->SetRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_KEEP );
+		pID3DDevice->SetRenderState(D3DRS_STENCILZFAIL, D3DSTENCILOP_KEEP );
 		pID3DDevice->SetRenderState(D3DRS_STENCILMASK, 0xffffffff );
 		pID3DDevice->SetRenderState(D3DRS_STENCILWRITEMASK, 0xffffffff );
 
@@ -2728,13 +2601,13 @@ void CD3D9Driver::drawStencilShadowVolume(const core::vector3df* triangles, s32 
 		// ZPASS Method
 
 		// Draw front-side of shadow volume in stencil/z only
-		pID3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
-		pID3DDevice->SetRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_INCR);
+		pID3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW );
+		pID3DDevice->SetRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_INCRSAT);
 		pID3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLELIST, count / 3, triangles, sizeof(core::vector3df));
 
 		// Now reverse cull order so front sides of shadow volume are written.
-		pID3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
-		pID3DDevice->SetRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_DECR);
+		pID3DDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CW );
+		pID3DDevice->SetRenderState( D3DRS_STENCILPASS, D3DSTENCILOP_DECRSAT);
 		pID3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLELIST, count / 3, triangles, sizeof(core::vector3df));
 	}
 	else
@@ -2742,13 +2615,13 @@ void CD3D9Driver::drawStencilShadowVolume(const core::vector3df* triangles, s32 
 		// ZFAIL Method
 
 		// Draw front-side of shadow volume in stencil/z only
-		pID3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
-		pID3DDevice->SetRenderState(D3DRS_STENCILZFAIL, D3DSTENCILOP_INCR);
+		pID3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW );
+		pID3DDevice->SetRenderState(D3DRS_STENCILZFAIL, D3DSTENCILOP_INCRSAT );
 		pID3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLELIST, count / 3, triangles, sizeof(core::vector3df));
 
 		// Now reverse cull order so front sides of shadow volume are written.
-		pID3DDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CCW);
-		pID3DDevice->SetRenderState( D3DRS_STENCILZFAIL, D3DSTENCILOP_DECR);
+		pID3DDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CCW );
+		pID3DDevice->SetRenderState( D3DRS_STENCILZFAIL, D3DSTENCILOP_DECRSAT );
 		pID3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLELIST, count / 3, triangles, sizeof(core::vector3df));
 	}
 }
@@ -2859,16 +2732,8 @@ bool CD3D9Driver::reset()
 	}
 	for (i=0; i<DepthBuffers.size(); ++i)
 	{
-		if (DepthBuffers[i]->Surface)
+		if(DepthBuffers[i]->Surface)
 			DepthBuffers[i]->Surface->Release();
-	}
-	for (i=0; i<OcclusionQueries.size(); ++i)
-	{
-		if (OcclusionQueries[i].PID)
-		{
-			reinterpret_cast<IDirect3DQuery9*>(OcclusionQueries[i].PID)->Release();
-			OcclusionQueries[i].PID=0;
-		}
 	}
 	// this does not require a restore in the reset method, it's updated
 	// automatically in the next render cycle.
@@ -2914,10 +2779,6 @@ bool CD3D9Driver::reset()
 				TRUE,
 				&(DepthBuffers[i]->Surface),
 				NULL);
-	}
-	for (i=0; i<OcclusionQueries.size(); ++i)
-	{
-		pID3DDevice->CreateQuery(D3DQUERYTYPE_OCCLUSION, reinterpret_cast<IDirect3DQuery9**>(&OcclusionQueries[i].PID));
 	}
 
 	if (FAILED(hr))
@@ -3448,10 +3309,10 @@ namespace video
 IVideoDriver* createDirectX9Driver(const core::dimension2d<u32>& screenSize,
 		HWND window, u32 bits, bool fullscreen, bool stencilbuffer,
 		io::IFileSystem* io, bool pureSoftware, bool highPrecisionFPU,
-		bool vsync, u8 antiAlias, u32 displayAdapter)
+		bool vsync, u8 antiAlias)
 {
 	CD3D9Driver* dx9 = new CD3D9Driver(screenSize, window, fullscreen, stencilbuffer, io, pureSoftware);
-	if (!dx9->initDriver(screenSize, window, bits, fullscreen, pureSoftware, highPrecisionFPU, vsync, antiAlias, displayAdapter))
+	if (!dx9->initDriver(screenSize, window, bits, fullscreen, pureSoftware, highPrecisionFPU, vsync, antiAlias))
 	{
 		dx9->drop();
 		dx9 = 0;

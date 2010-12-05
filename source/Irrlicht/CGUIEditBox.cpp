@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2009 Nikolaus Gebhardt
+// Copyright (C) 2002-2010 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -109,12 +109,6 @@ void CGUIEditBox::setOverrideColor(video::SColor color)
 }
 
 
-video::SColor const& CGUIEditBox::getOverrideColor() const
-{
-	return OverrideColor;
-}
-
-
 //! Turns the border on or off
 void CGUIEditBox::setDrawBorder(bool border)
 {
@@ -128,11 +122,6 @@ void CGUIEditBox::enableOverrideColor(bool enable)
 	OverrideColorEnabled = enable;
 }
 
-bool CGUIEditBox::isOverrideColorEnabled() const
-{
-	_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
-	return OverrideColorEnabled;
-}
 
 //! Enables or disables word wrap
 void CGUIEditBox::setWordWrap(bool enable)
@@ -207,7 +196,7 @@ void CGUIEditBox::setTextAlignment(EGUI_ALIGNMENT horizontal, EGUI_ALIGNMENT ver
 //! called if an event happened.
 bool CGUIEditBox::OnEvent(const SEvent& event)
 {
-	if (isEnabled())
+	if (IsEnabled)
 	{
 
 		switch(event.EventType)
@@ -290,7 +279,7 @@ bool CGUIEditBox::processKey(const SEvent& event)
 				sc = Text.subString(realmbgn, realmend - realmbgn).c_str();
 				Operator->copyToClipboard(sc.c_str());
 
-				if (isEnabled())
+				if (IsEnabled)
 				{
 					// delete
 					core::stringw s;
@@ -306,7 +295,7 @@ bool CGUIEditBox::processKey(const SEvent& event)
 			}
 			break;
 		case KEY_KEY_V:
-			if ( !isEnabled() )
+			if ( !IsEnabled )
 				break;
 
 			// paste from the clipboard
@@ -562,7 +551,7 @@ bool CGUIEditBox::processKey(const SEvent& event)
 		break;
 
 	case KEY_BACK:
-		if ( !isEnabled() )
+		if ( !this->IsEnabled )
 			break;
 
 		if (Text.size())
@@ -602,7 +591,7 @@ bool CGUIEditBox::processKey(const SEvent& event)
 		}
 		break;
 	case KEY_DELETE:
-		if ( !isEnabled() )
+		if ( !this->IsEnabled )
 			break;
 
 		if (Text.size() != 0)
@@ -708,10 +697,7 @@ void CGUIEditBox::draw()
 
 	if (Border)
 	{
-		EGUI_DEFAULT_COLOR col = EGDC_GRAY_EDITABLE;
-		if ( isEnabled() )
-			col = focus ? EGDC_FOCUSED_EDITABLE : EGDC_EDITABLE;
-		skin->draw3DSunkenPane(this, skin->getColor(col),
+		skin->draw3DSunkenPane(this, skin->getColor(EGDC_WINDOW),
 			false, true, FrameRect, &AbsoluteClippingRect);
 
 		FrameRect.UpperLeftCorner.X += skin->getSize(EGDS_TEXT_DISTANCE_X)+1;
@@ -760,7 +746,7 @@ void CGUIEditBox::draw()
 
 		if (Text.size())
 		{
-			if (!isEnabled() && !OverrideColorEnabled)
+			if (!IsEnabled && !OverrideColorEnabled)
 			{
 				OverrideColorEnabled = true;
 				OverrideColor = skin->getColor(EGDC_GRAY_TEXT);
@@ -1273,7 +1259,7 @@ s32 CGUIEditBox::getLineFromPos(s32 pos)
 
 void CGUIEditBox::inputChar(wchar_t c)
 {
-	if (!isEnabled())
+	if (!IsEnabled)
 		return;
 
 	if (c != 0)

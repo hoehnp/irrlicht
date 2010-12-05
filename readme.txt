@@ -1,5 +1,5 @@
 ==========================================================================
-The Irrlicht Engine SDK version 1.8
+The Irrlicht Engine SDK version 1.7
 ==========================================================================
 
   Welcome the Irrlicht Engine SDK.
@@ -80,9 +80,10 @@ The Irrlicht Engine SDK version 1.8
   * gcc 3.4
   * gcc 4.x
   * Visual Studio.NET 2003 (7.1)
-  * Visual Studio 2005(8.0)-2010(10.0)
+  * Visual Studio 2005 (8.0)
+  * Visual Studio 2008 (9.0)
   * Code::Blocks 1.0 (& gcc or visual studio toolkit)
-  * DevC++ 5.0 & gcc (project files included, please use Code::Blocks instead)
+  * DevC++ 5.0 & gcc (project files included)
 
   If you ever want to (re)compile the engine yourself (which means you don't
   want to use the precompiled version) you need the following:
@@ -134,7 +135,7 @@ The Irrlicht Engine SDK version 1.8
   The Irrlicht Engine License
   ===========================
 
-  Copyright (C) 2002-2009 Nikolaus Gebhardt
+  Copyright (C) 2002-2010 Nikolaus Gebhardt
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages

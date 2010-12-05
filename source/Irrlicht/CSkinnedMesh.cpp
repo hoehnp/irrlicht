@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2009 Nikolaus Gebhardt
+// Copyright (C) 2002-2010 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -1204,18 +1204,17 @@ void CSkinnedMesh::normalizeWeights()
 	// Normalise the weights on bones....
 
 	u32 i,j;
-	core::array< core::array<f32> > verticesTotalWeight;
+	core::array< core::array<f32> > Vertices_TotalWeight;
 
-	verticesTotalWeight.reallocate(LocalBuffers.size());
 	for (i=0; i<LocalBuffers.size(); ++i)
 	{
-		verticesTotalWeight.push_back(core::array<f32>());
-		verticesTotalWeight[i].set_used(LocalBuffers[i]->getVertexCount());
+		Vertices_TotalWeight.push_back(core::array<f32>());
+		Vertices_TotalWeight[i].set_used(LocalBuffers[i]->getVertexCount());
 	}
 
-	for (i=0; i<verticesTotalWeight.size(); ++i)
-		for (j=0; j<verticesTotalWeight[i].size(); ++j)
-			verticesTotalWeight[i][j] = 0;
+	for (i=0; i<Vertices_TotalWeight.size(); ++i)
+		for (j=0; j<Vertices_TotalWeight[i].size(); ++j)
+			Vertices_TotalWeight[i][j] = 0;
 
 	for (i=0; i<AllJoints.size(); ++i)
 	{
@@ -1229,7 +1228,7 @@ void CSkinnedMesh::normalizeWeights()
 			}
 			else
 			{
-				verticesTotalWeight[joint->Weights[j].buffer_id] [joint->Weights[j].vertex_id] += joint->Weights[j].strength;
+				Vertices_TotalWeight[ joint->Weights[j].buffer_id ] [ joint->Weights[j].vertex_id ] += joint->Weights[j].strength;
 			}
 		}
 	}
@@ -1239,7 +1238,7 @@ void CSkinnedMesh::normalizeWeights()
 		SJoint *joint=AllJoints[i];
 		for (j=0; j< joint->Weights.size(); ++j)
 		{
-			const f32 total = verticesTotalWeight[joint->Weights[j].buffer_id] [joint->Weights[j].vertex_id];
+			const f32 total = Vertices_TotalWeight[ joint->Weights[j].buffer_id ] [ joint->Weights[j].vertex_id ];
 			if (total != 0 && total != 1)
 				joint->Weights[j].strength /= total;
 		}

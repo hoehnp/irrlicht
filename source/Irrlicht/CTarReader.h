@@ -1,4 +1,4 @@
-// Copyright (C) 2009 Gaz Davidson
+// Copyright (C) 2009-2010 Gaz Davidson
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -136,6 +136,9 @@ namespace io
 		u32 populateFileList();
 
 		IReadFile* File;
+
+		//! Contains offsets of the files from the start of the archive file
+		core::array<u32> Offsets;
 	};
 
 } // end namespace io

@@ -16,7 +16,7 @@ You can download the Quake III Arena demo ( copyright id software )
 at the following location:
 ftp://ftp.idsoftware.com/idstuff/quake3/win32/q3ademo.exe
 
-Copyright 2006-2009 Burningwater, Thomas Alten
+This file is copyright 2006-2010 Burningwater, Thomas Alten
 */
 
 #include "q3factory.h"
@@ -805,7 +805,7 @@ void CQuake3EventHandler::CreateGUI()
 	gui.SceneTree = env->addTreeView(	rect<s32>( dim.Width - 400, dim.Height - 380, dim.Width - 5, dim.Height - 40 ),
 									gui.Window, -1, true, true, false );
 	gui.SceneTree->setToolTipText ( L"Show the current Scenegraph" );
-	gui.SceneTree->getRoot()->clearChildren();
+	gui.SceneTree->getRoot()->clearChilds();
 	addSceneTreeItem ( Game->Device->getSceneManager()->getRootSceneNode(), gui.SceneTree->getRoot() );
 
 
@@ -1288,7 +1288,7 @@ void CQuake3EventHandler::SetGUIActive( s32 command)
 			gui.SceneTree && Game->Device->getGUIEnvironment()->getFocus() != gui.SceneTree
 		)
 	{
-		gui.SceneTree->getRoot()->clearChildren();
+		gui.SceneTree->getRoot()->clearChilds();
 		addSceneTreeItem ( Game->Device->getSceneManager()->getRootSceneNode(), gui.SceneTree->getRoot() );
 	}
 
@@ -1733,7 +1733,7 @@ void CQuake3EventHandler::useItem( Q3Player * player)
 	line3d<f32> line(start, end);
 
 	// get intersection point with map
-	scene::ISceneNode* hitNode;
+	const scene::ISceneNode* hitNode;
 	if (smgr->getSceneCollisionManager()->getCollisionPoint(
 		line, Meta, end, triangle,hitNode))
 	{

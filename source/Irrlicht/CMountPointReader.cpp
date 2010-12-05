@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2009 Nikolaus Gebhardt
+// Copyright (C) 2002-2010 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -27,20 +27,15 @@ CArchiveLoaderMount::CArchiveLoaderMount( io::IFileSystem* fs)
 //! returns true if the file maybe is able to be loaded by this class
 bool CArchiveLoaderMount::isALoadableFileFormat(const io::path& filename) const
 {
+	bool ret = false;
 	io::path fname(filename);
 	deletePathFromFilename(fname);
 
 	if (!fname.size())
-		return true;
-	IFileList* list = FileSystem->createFileList();
-	bool ret = false;
-	if (list)
 	{
-		// check if name is found as directory
-		if (list->findFile(filename, true))
-			ret=true;
-		list->drop();
+		ret = true;
 	}
+
 	return ret;
 }
 
@@ -63,11 +58,11 @@ IFileArchive* CArchiveLoaderMount::createArchive(const io::path& filename, bool 
 
 	EFileSystemType current = FileSystem->setFileListSystem(FILESYSTEM_NATIVE);
 
-	const io::path save = FileSystem->getWorkingDirectory();
+	io::path save = FileSystem->getWorkingDirectory();
 	io::path fullPath = FileSystem->getAbsolutePath(filename);
 	FileSystem->flattenFilename(fullPath);
 
-	if (FileSystem->changeWorkingDirectoryTo(fullPath))
+	if ( FileSystem->changeWorkingDirectoryTo ( fullPath ) )
 	{
 		archive = new CMountPointReader(FileSystem, fullPath, ignoreCase, ignorePaths);
 	}
@@ -123,7 +118,7 @@ void CMountPointReader::buildDirectory()
 
 		if (!list->isDirectory(i))
 		{
-			addItem(full, list->getFileOffset(i), list->getFileSize(i), false, RealFileNames.size());
+			addItem(full, list->getFileSize(i), false, RealFileNames.size());
 			RealFileNames.push_back(list->getFullFileName(i));
 		}
 		else
@@ -136,7 +131,7 @@ void CMountPointReader::buildDirectory()
 
 			if ( rel != "." && rel != ".." )
 			{
-				addItem(full, 0, 0, true, 0);
+				addItem(full, 0, true, 0);
 				Parent->changeWorkingDirectoryTo(pwd);
 				buildDirectory();
 				Parent->changeWorkingDirectoryTo("..");

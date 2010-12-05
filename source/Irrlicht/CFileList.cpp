@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2009 Nikolaus Gebhardt
+// Copyright (C) 2002-2010 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -60,12 +60,11 @@ const io::path& CFileList::getFullFileName(u32 index) const
 }
 
 //! adds a file or folder
-u32 CFileList::addItem(const io::path& fullPath, u32 offset, u32 size, bool isDirectory, u32 id)
+u32 CFileList::addItem(const io::path& fullPath, u32 size, bool isDirectory, u32 id)
 {
 	SFileListEntry entry;
-	entry.ID   = id ? id : Files.size();
-	entry.Offset = offset;
 	entry.Size = size;
+	entry.ID   = id;
 	entry.Name = fullPath;
 	entry.Name.replace('\\', '/');
 	entry.IsDirectory = isDirectory;
@@ -115,12 +114,6 @@ bool CFileList::isDirectory(u32 index) const
 u32 CFileList::getFileSize(u32 index) const
 {
 	return index < Files.size() ? Files[index].Size : 0;
-}
-
-//! Returns the size of a file
-u32 CFileList::getFileOffset(u32 index) const
-{
-	return index < Files.size() ? Files[index].Offset : 0;
 }
 
 

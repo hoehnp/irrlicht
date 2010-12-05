@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2009 Nikolaus Gebhardt
+// Copyright (C) 2002-2010 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -10,7 +10,6 @@
 #include "irrString.h"
 #include "path.h"
 #include "ILogger.h"
-#include "ITimer.h"
 
 namespace irr
 {
@@ -68,11 +67,8 @@ namespace os
 		//! returns the current time in milliseconds
 		static u32 getTime();
 
-		//! get current time and date in calendar form
-		static ITimer::RealTimeDate getRealTimeAndDate();
-
 		//! initializes the real timer
-		static void initTimer(bool usePerformanceTimer=true);
+		static void initTimer();
 
 		//! sets the current virtual (game) time
 		static void setTime(u32 time);

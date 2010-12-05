@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2009 Nikolaus Gebhardt
+// Copyright (C) 2002-2010 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -44,7 +44,7 @@ COpenGLSLMaterialRenderer::COpenGLSLMaterialRenderer(video::COpenGLDriver* drive
 		video::IMaterialRenderer* baseMaterial,
 		s32 userData)
 	: Driver(driver), CallBack(callback), BaseMaterial(baseMaterial),
-		Program(0), Program2(0), UserData(userData)
+		Program(0), UserData(userData)
 {
 	#ifdef _DEBUG
 	setDebugName("COpenGLSLMaterialRenderer");
@@ -73,7 +73,7 @@ COpenGLSLMaterialRenderer::COpenGLSLMaterialRenderer(COpenGLDriver* driver,
 					IShaderConstantSetCallBack* callback,
 					IMaterialRenderer* baseMaterial, s32 userData)
 : Driver(driver), CallBack(callback), BaseMaterial(baseMaterial),
-		Program(0), Program2(0), UserData(userData)
+		Program(0), UserData(userData)
 {
 	if (BaseMaterial)
 		BaseMaterial->grab();
@@ -98,17 +98,6 @@ COpenGLSLMaterialRenderer::~COpenGLSLMaterialRenderer()
 			Driver->extGlDeleteObject(shaders[i]);
 		Driver->extGlDeleteObject(Program);
 		Program = 0;
-	}
-
-	if (Program2)
-	{
-		GLuint shaders[8];
-		GLint count;
-		Driver->extGlGetAttachedShaders(Program2, 8, &count, shaders);
-		for (GLint i=0; i<count; ++i)
-			Driver->extGlDeleteShader(shaders[i]);
-		Driver->extGlDeleteProgram(Program2);
-		Program2 = 0;
 	}
 
 	UniformInfo.clear();
@@ -146,24 +135,12 @@ void COpenGLSLMaterialRenderer::init(s32& outMaterialTypeNr,
 		if (!createShader(GL_GEOMETRY_SHADER_EXT, geometryShaderProgram))
 			return;
 #if defined(GL_ARB_geometry_shader4) || defined(GL_EXT_geometry_shader4) || defined(GL_NV_geometry_shader4)
-		if (Program2)
-		{
-			Driver->extGlProgramParameteri(Program2, GL_GEOMETRY_INPUT_TYPE_EXT, Driver->primitiveTypeToGL(inType));
-			Driver->extGlProgramParameteri(Program2, GL_GEOMETRY_OUTPUT_TYPE_EXT, Driver->primitiveTypeToGL(outType));
-			if (verticesOut==0)
-				Driver->extGlProgramParameteri(Program2, GL_GEOMETRY_VERTICES_OUT_EXT, Driver->MaxGeometryVerticesOut);
-			else
-				Driver->extGlProgramParameteri(Program2, GL_GEOMETRY_VERTICES_OUT_EXT, core::min_(verticesOut, Driver->MaxGeometryVerticesOut));
-		}
+		Driver->extGlProgramParameteri((GLuint)Program, GL_GEOMETRY_INPUT_TYPE_EXT, Driver->primitiveTypeToGL(inType));
+		Driver->extGlProgramParameteri((GLuint)Program, GL_GEOMETRY_OUTPUT_TYPE_EXT, Driver->primitiveTypeToGL(outType));
+		if (verticesOut==0)
+			Driver->extGlProgramParameteri((GLuint)Program, GL_GEOMETRY_VERTICES_OUT_EXT, Driver->MaxGeometryVerticesOut);
 		else
-		{
-			Driver->extGlProgramParameteri((GLuint)Program, GL_GEOMETRY_INPUT_TYPE_EXT, Driver->primitiveTypeToGL(inType));
-			Driver->extGlProgramParameteri((GLuint)Program, GL_GEOMETRY_OUTPUT_TYPE_EXT, Driver->primitiveTypeToGL(outType));
-			if (verticesOut==0)
-				Driver->extGlProgramParameteri((GLuint)Program, GL_GEOMETRY_VERTICES_OUT_EXT, Driver->MaxGeometryVerticesOut);
-			else
-				Driver->extGlProgramParameteri((GLuint)Program, GL_GEOMETRY_VERTICES_OUT_EXT, core::min_(verticesOut, Driver->MaxGeometryVerticesOut));
-		}
+			Driver->extGlProgramParameteri((GLuint)Program, GL_GEOMETRY_VERTICES_OUT_EXT, core::min_(verticesOut, Driver->MaxGeometryVerticesOut));
 #elif defined(GL_NV_geometry_program4)
 		if (verticesOut==0)
 			Driver->extGlProgramVertexLimit(GL_GEOMETRY_PROGRAM_NV, Driver->MaxGeometryVerticesOut);
@@ -185,7 +162,7 @@ bool COpenGLSLMaterialRenderer::OnRender(IMaterialRendererServices* service,
 					E_VERTEX_TYPE vtxtype)
 {
 	// call callback to set shader constants
-	if (CallBack && (Program||Program2))
+	if (CallBack && Program)
 		CallBack->OnSetConstants(this, UserData);
 
 	return true;
@@ -199,9 +176,7 @@ void COpenGLSLMaterialRenderer::OnSetMaterial(const video::SMaterial& material,
 {
 	if (material.MaterialType != lastMaterial.MaterialType || resetAllRenderstates)
 	{
-		if (Program2)
-			Driver->extGlUseProgram(Program2);
-		else if (Program)
+		if (Program)
 			Driver->extGlUseProgramObject(Program);
 
 		if (BaseMaterial)
@@ -220,10 +195,7 @@ void COpenGLSLMaterialRenderer::OnSetMaterial(const video::SMaterial& material,
 
 void COpenGLSLMaterialRenderer::OnUnsetMaterial()
 {
-	if (Program)
-		Driver->extGlUseProgramObject(0);
-	if (Program2)
-		Driver->extGlUseProgram(0);
+	Driver->extGlUseProgramObject(0);
 
 	if (BaseMaterial)
 		BaseMaterial->OnUnsetMaterial();
@@ -239,244 +211,120 @@ bool COpenGLSLMaterialRenderer::isTransparent() const
 
 bool COpenGLSLMaterialRenderer::createProgram()
 {
-	if (Driver->Version>=200)
-		Program2 = Driver->extGlCreateProgram();
-	else
-		Program = Driver->extGlCreateProgramObject();
+	Program = Driver->extGlCreateProgramObject();
 	return true;
 }
 
 
 bool COpenGLSLMaterialRenderer::createShader(GLenum shaderType, const char* shader)
 {
-	if (Program2)
-	{
-		GLuint shaderHandle = Driver->extGlCreateShader(shaderType);
-		Driver->extGlShaderSource(shaderHandle, 1, &shader, NULL);
-		Driver->extGlCompileShader(shaderHandle);
+	GLhandleARB shaderHandle = Driver->extGlCreateShaderObject(shaderType);
 
-		GLint status = 0;
+	Driver->extGlShaderSourceARB(shaderHandle, 1, &shader, NULL);
+	Driver->extGlCompileShaderARB(shaderHandle);
 
-#ifdef GL_VERSION_2_0
-		Driver->extGlGetShaderiv(shaderHandle, GL_COMPILE_STATUS, &status);
-#endif
-
-		if (status != GL_TRUE)
-		{
-			os::Printer::log("GLSL shader failed to compile", ELL_ERROR);
-			// check error message and log it
-			GLint maxLength=0;
-			GLint length;
-#ifdef GL_VERSION_2_0
-			Driver->extGlGetShaderiv(shaderHandle, GL_INFO_LOG_LENGTH,
-					&maxLength);
-#endif
-			if (maxLength)
-			{
-				GLchar *infoLog = new GLchar[maxLength];
-				Driver->extGlGetShaderInfoLog(shaderHandle, maxLength, &length, infoLog);
-				os::Printer::log(reinterpret_cast<const c8*>(infoLog), ELL_ERROR);
-				delete [] infoLog;
-			}
-
-			return false;
-		}
-
-		Driver->extGlAttachShader(Program2, shaderHandle);
-	}
-	else
-	{
-		GLhandleARB shaderHandle = Driver->extGlCreateShaderObject(shaderType);
-
-		Driver->extGlShaderSourceARB(shaderHandle, 1, &shader, NULL);
-		Driver->extGlCompileShaderARB(shaderHandle);
-
-		GLint status = 0;
+	GLint status = 0;
 
 #ifdef GL_ARB_shader_objects
-		Driver->extGlGetObjectParameteriv(shaderHandle, GL_OBJECT_COMPILE_STATUS_ARB, &status);
+	Driver->extGlGetObjectParameteriv(shaderHandle, GL_OBJECT_COMPILE_STATUS_ARB, &status);
 #endif
 
-		if (!status)
-		{
-			os::Printer::log("GLSL shader failed to compile", ELL_ERROR);
-			// check error message and log it
-			GLint maxLength=0;
-			GLsizei length;
+	if (!status)
+	{
+		os::Printer::log("GLSL shader failed to compile", ELL_ERROR);
+		// check error message and log it
+		GLint maxLength=0;
+		GLsizei length;
 #ifdef GL_ARB_shader_objects
-			Driver->extGlGetObjectParameteriv(shaderHandle,
-					GL_OBJECT_INFO_LOG_LENGTH_ARB, &maxLength);
+		Driver->extGlGetObjectParameteriv(shaderHandle,
+				GL_OBJECT_INFO_LOG_LENGTH_ARB, &maxLength);
 #endif
-			if (maxLength)
-			{
-				GLcharARB *infoLog = new GLcharARB[maxLength];
-				Driver->extGlGetInfoLog(shaderHandle, maxLength, &length, infoLog);
-				os::Printer::log(reinterpret_cast<const c8*>(infoLog), ELL_ERROR);
-				delete [] infoLog;
-			}
+		GLcharARB *infoLog = new GLcharARB[maxLength];
+		Driver->extGlGetInfoLog(shaderHandle, maxLength, &length, infoLog);
+		os::Printer::log(reinterpret_cast<const c8*>(infoLog), ELL_ERROR);
+		delete [] infoLog;
 
-			return false;
-		}
-
-		Driver->extGlAttachObject(Program, shaderHandle);
+		return false;
 	}
+
+	Driver->extGlAttachObject(Program, shaderHandle);
+
 	return true;
 }
 
 
 bool COpenGLSLMaterialRenderer::linkProgram()
 {
-	if (Program2)
-	{
-		Driver->extGlLinkProgram(Program2);
+	Driver->extGlLinkProgramARB(Program);
 
-		GLint status = 0;
-
-#ifdef GL_VERSION_2_0
-		Driver->extGlGetProgramiv(Program2, GL_LINK_STATUS, &status);
-#endif
-
-		if (!status)
-		{
-			os::Printer::log("GLSL shader program failed to link", ELL_ERROR);
-			// check error message and log it
-			GLint maxLength=0;
-			GLsizei length;
-#ifdef GL_VERSION_2_0
-			Driver->extGlGetProgramiv(Program2, GL_INFO_LOG_LENGTH, &maxLength);
-#endif
-			if (maxLength)
-			{
-				GLchar *infoLog = new GLchar[maxLength];
-				Driver->extGlGetProgramInfoLog(Program2, maxLength, &length, infoLog);
-				os::Printer::log(reinterpret_cast<const c8*>(infoLog), ELL_ERROR);
-				delete [] infoLog;
-			}
-
-			return false;
-		}
-
-		// get uniforms information
-
-		GLint num = 0;
-#ifdef GL_VERSION_2_0
-		Driver->extGlGetProgramiv(Program2, GL_ACTIVE_UNIFORMS, &num);
-#endif
-
-		if (num == 0)
-		{
-			// no uniforms
-			return true;
-		}
-
-		GLint maxlen = 0;
-#ifdef GL_VERSION_2_0
-		Driver->extGlGetProgramiv(Program2, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxlen);
-#endif
-
-		if (maxlen == 0)
-		{
-			os::Printer::log("GLSL: failed to retrieve uniform information", ELL_ERROR);
-			return false;
-		}
-
-		// seems that some implementations use an extra null terminator
-		++maxlen;
-		c8 *buf = new c8[maxlen];
-
-		UniformInfo.clear();
-		UniformInfo.reallocate(num);
-
-		for (GLint i=0; i < num; ++i)
-		{
-			SUniformInfo ui;
-			memset(buf, 0, maxlen);
-
-			GLint size;
-			Driver->extGlGetActiveUniform(Program2, i, maxlen, 0, &size, &ui.type, reinterpret_cast<GLchar*>(buf));
-			ui.name = buf;
-
-			UniformInfo.push_back(ui);
-		}
-
-		delete [] buf;
-	}
-	else
-	{
-		Driver->extGlLinkProgramARB(Program);
-
-		GLint status = 0;
+	GLint status = 0;
 
 #ifdef GL_ARB_shader_objects
-		Driver->extGlGetObjectParameteriv(Program, GL_OBJECT_LINK_STATUS_ARB, &status);
+	Driver->extGlGetObjectParameteriv(Program, GL_OBJECT_LINK_STATUS_ARB, &status);
 #endif
 
-		if (!status)
-		{
-			os::Printer::log("GLSL shader program failed to link", ELL_ERROR);
-			// check error message and log it
-			GLint maxLength=0;
-			GLsizei length;
+	if (!status)
+	{
+		os::Printer::log("GLSL shader program failed to link", ELL_ERROR);
+		// check error message and log it
+		GLint maxLength=0;
+		GLsizei length;
 #ifdef GL_ARB_shader_objects
-			Driver->extGlGetObjectParameteriv(Program,
-					GL_OBJECT_INFO_LOG_LENGTH_ARB, &maxLength);
+		Driver->extGlGetObjectParameteriv(Program,
+				GL_OBJECT_INFO_LOG_LENGTH_ARB, &maxLength);
 #endif
-			if (maxLength)
-			{
-				GLcharARB *infoLog = new GLcharARB[maxLength];
-				Driver->extGlGetInfoLog(Program, maxLength, &length, infoLog);
-				os::Printer::log(reinterpret_cast<const c8*>(infoLog), ELL_ERROR);
-				delete [] infoLog;
-			}
+		GLcharARB *infoLog = new GLcharARB[maxLength];
+		Driver->extGlGetInfoLog(Program, maxLength, &length, infoLog);
+		os::Printer::log(reinterpret_cast<const c8*>(infoLog), ELL_ERROR);
+		delete [] infoLog;
 
-			return false;
-		}
-
-		// get uniforms information
-
-		GLint num = 0;
-	#ifdef GL_ARB_shader_objects
-		Driver->extGlGetObjectParameteriv(Program, GL_OBJECT_ACTIVE_UNIFORMS_ARB, &num);
-	#endif
-
-		if (num == 0)
-		{
-			// no uniforms
-			return true;
-		}
-
-		GLint maxlen = 0;
-	#ifdef GL_ARB_shader_objects
-		Driver->extGlGetObjectParameteriv(Program, GL_OBJECT_ACTIVE_UNIFORM_MAX_LENGTH_ARB, &maxlen);
-	#endif
-
-		if (maxlen == 0)
-		{
-			os::Printer::log("GLSL: failed to retrieve uniform information", ELL_ERROR);
-			return false;
-		}
-
-		// seems that some implementations use an extra null terminator
-		++maxlen;
-		c8 *buf = new c8[maxlen];
-
-		UniformInfo.clear();
-		UniformInfo.reallocate(num);
-
-		for (int i=0; i < num; ++i)
-		{
-			SUniformInfo ui;
-			memset(buf, 0, maxlen);
-
-			GLint size;
-			Driver->extGlGetActiveUniformARB(Program, i, maxlen, 0, &size, &ui.type, reinterpret_cast<GLcharARB*>(buf));
-			ui.name = buf;
-
-			UniformInfo.push_back(ui);
-		}
-
-		delete [] buf;
+		return false;
 	}
+
+	// get uniforms information
+
+	GLint num = 0;
+#ifdef GL_ARB_shader_objects
+	Driver->extGlGetObjectParameteriv(Program, GL_OBJECT_ACTIVE_UNIFORMS_ARB, &num);
+#endif
+
+	if (num == 0)
+	{
+		// no uniforms
+		return true;
+	}
+
+	GLint maxlen = 0;
+#ifdef GL_ARB_shader_objects
+	Driver->extGlGetObjectParameteriv(Program, GL_OBJECT_ACTIVE_UNIFORM_MAX_LENGTH_ARB, &maxlen);
+#endif
+
+	if (maxlen == 0)
+	{
+		os::Printer::log("GLSL: failed to retrieve uniform information", ELL_ERROR);
+		return false;
+	}
+
+	// seems that some implementations use an extra null terminator
+	++maxlen;
+	c8 *buf = new c8[maxlen];
+
+	UniformInfo.clear();
+	UniformInfo.reallocate(num);
+
+	for (int i=0; i < num; ++i)
+	{
+		SUniformInfo ui;
+		memset(buf, 0, maxlen);
+
+		GLint size;
+		Driver->extGlGetActiveUniformARB(Program, i, maxlen, 0, &size, &ui.type, reinterpret_cast<GLcharARB*>(buf));
+		ui.name = buf;
+
+		UniformInfo.push_back(ui);
+	}
+
+	delete [] buf;
 
 	return true;
 }
@@ -516,12 +364,8 @@ bool COpenGLSLMaterialRenderer::setPixelShaderConstant(const c8* name, const f32
 	if (i == num)
 		return false;
 
-#if defined(GL_VERSION_2_0)||defined(GL_ARB_shader_objects)
-	GLint Location=0;
-	if (Program2)
-		Location=Driver->extGlGetUniformLocation(Program2,name);
-	else
-		Location=Driver->extGlGetUniformLocationARB(Program,name);
+#ifdef GL_ARB_shader_objects
+	GLint Location=Driver->extGlGetUniformLocationARB(Program,name);
 
 	switch (UniformInfo[i].type)
 	{
@@ -554,6 +398,7 @@ bool COpenGLSLMaterialRenderer::setPixelShaderConstant(const c8* name, const f32
 #else
 	return false;
 #endif
+
 }
 
 
