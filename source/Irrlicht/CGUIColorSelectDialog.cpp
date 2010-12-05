@@ -15,6 +15,7 @@
 #include "IGUISpriteBank.h"
 #include "IFileList.h"
 #include "os.h"
+#include "SoftwareDriver2_helper.h"
 #include "CImage.h"
 
 namespace irr
@@ -219,7 +220,7 @@ void CGUIColorSelectDialog::buildColorRing( const core::dimension2d<u32> & dim, 
 				const f32 r = sqrtf((f32) r2);
 
 				// normalize, dotproduct = xnorm
-				const f32 xn = r == 0.f ? 0.f : -p.X * core::reciprocal(r);
+				const f32 xn = -p.X * core::reciprocal(r);
 
 				hsl.Hue = acosf(xn);
 				if ( p.Y > 0 )
@@ -273,7 +274,7 @@ void CGUIColorSelectDialog::buildColorRing( const core::dimension2d<u32> & dim, 
 					{
 						const u32 alpha = (u32) ( (rTest - 0.5f ) * ( 255.f / 0.05f ) );
 						rgb.setAlpha(alpha);
-					}
+					} 
 					else if ( rTest >= 0.95f )
 					{
 						const u32 alpha = (u32) ( (rTest - 0.95f ) * ( 255.f / 0.05f ) );
@@ -302,7 +303,7 @@ void CGUIColorSelectDialog::buildColorRing( const core::dimension2d<u32> & dim, 
 	bool generateMipLevels = driver->getTextureCreationFlag(video::ETCF_CREATE_MIP_MAPS);
 	driver->setTextureCreationFlag( video::ETCF_CREATE_MIP_MAPS, false);
 
-	ColorRing.Texture = driver->addTexture ( "#colorring", RawTexture);
+	ColorRing.Texture = driver->addTexture ( L"#colorring", RawTexture);
 	RawTexture->drop();
 
 	driver->setTextureCreationFlag(video::ETCF_CREATE_MIP_MAPS, generateMipLevels);
@@ -312,7 +313,7 @@ void CGUIColorSelectDialog::buildColorRing( const core::dimension2d<u32> & dim, 
 //! called if an event happened.
 bool CGUIColorSelectDialog::OnEvent(const SEvent& event)
 {
-	if (isEnabled())
+	if (IsEnabled)
 	{
 		switch(event.EventType)
 		{

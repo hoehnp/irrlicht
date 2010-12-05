@@ -38,11 +38,6 @@ CSoftwareDriver::CSoftwareDriver(const core::dimension2d<u32>& windowSize, bool 
 		ZBuffer = video::createZBuffer(BackBuffer->getDimension());
 	}
 
-	DriverAttributes->setAttribute("MaxTextures", 1);
-	DriverAttributes->setAttribute("MaxIndices", 1<<16);
-	DriverAttributes->setAttribute("MaxTextureSize", 1024);
-	DriverAttributes->setAttribute("Version", 1);
-
 	// create triangle renderers
 
 	TriangleRenderers[ETR_FLAT] = createTriangleRendererFlat(ZBuffer);
@@ -219,10 +214,10 @@ void CSoftwareDriver::setMaterial(const SMaterial& material)
 
 //! clears the zbuffer
 bool CSoftwareDriver::beginScene(bool backBuffer, bool zBuffer, SColor color,
-		const SExposedVideoData& videoData, core::rect<s32>* sourceRect)
+		void* windowId, core::rect<s32>* sourceRect)
 {
-	CNullDriver::beginScene(backBuffer, zBuffer, color, videoData, sourceRect);
-	WindowId=videoData.D3D9.HWnd;
+	CNullDriver::beginScene(backBuffer, zBuffer, color, windowId, sourceRect);
+	WindowId=windowId;
 	SceneSourceRect = sourceRect;
 
 	if (backBuffer && BackBuffer)
@@ -246,9 +241,9 @@ bool CSoftwareDriver::endScene()
 
 //! returns a device dependent texture from a software surface (IImage)
 //! THIS METHOD HAS TO BE OVERRIDDEN BY DERIVED DRIVERS WITH OWN TEXTURES
-ITexture* CSoftwareDriver::createDeviceDependentTexture(IImage* surface, const io::path& name, void* mipmapData)
+ITexture* CSoftwareDriver::createDeviceDependentTexture(IImage* surface, const io::path& name)
 {
-	return new CSoftwareTexture(surface, name, false, mipmapData);
+	return new CSoftwareTexture(surface, name);
 }
 
 
@@ -924,11 +919,7 @@ void CSoftwareDriver::clearZBuffer()
 IImage* CSoftwareDriver::createScreenShot()
 {
 	if (BackBuffer)
-	{
-		CImage* tmp = new CImage(BackBuffer->getColorFormat(), BackBuffer->getDimension());
-		BackBuffer->copyTo(tmp);
-		return tmp;
-	}
+		return new CImage(BackBuffer->getColorFormat(), BackBuffer);
 	else
 		return 0;
 }

@@ -10,9 +10,7 @@
 #include "CZipReader.h"
 #include "CMountPointReader.h"
 #include "CPakReader.h"
-#include "CNPKReader.h"
 #include "CTarReader.h"
-#include "CWADReader.h"
 #include "CFileList.h"
 #include "CXMLReader.h"
 #include "CXMLWriter.h"
@@ -22,11 +20,11 @@
 #include "CMemoryFile.h"
 #include "CLimitReadFile.h"
 
+
 #if defined (_IRR_WINDOWS_API_)
 	#if !defined ( _WIN32_WCE )
 		#include <direct.h> // for _chdir
 		#include <io.h> // for _access
-		#include <tchar.h>
 	#endif
 #else
 	#if (defined(_IRR_POSIX_API_) || defined(_IRR_OSX_PLATFORM_))
@@ -69,18 +67,9 @@ CFileSystem::CFileSystem()
 	ArchiveLoader.push_back(new CArchiveLoaderPAK(this));
 #endif
 
-#ifdef __IRR_COMPILE_WITH_NPK_ARCHIVE_LOADER_
-	ArchiveLoader.push_back(new CArchiveLoaderNPK(this));
-#endif
-
 #ifdef __IRR_COMPILE_WITH_TAR_ARCHIVE_LOADER_
 	ArchiveLoader.push_back(new CArchiveLoaderTAR(this));
 #endif
-
-#ifdef __IRR_COMPILE_WITH_WAD_ARCHIVE_LOADER_
-	ArchiveLoader.push_back(new CArchiveLoaderWAD(this));
-#endif
-
 }
 
 
@@ -196,8 +185,7 @@ bool CFileSystem::moveFileArchive(u32 sourceIndex, s32 relative)
 
 //! Adds an archive to the file system.
 bool CFileSystem::addFileArchive(const io::path& filename, bool ignoreCase,
-			  bool ignorePaths, E_FILE_ARCHIVE_TYPE archiveType,
-			  const core::stringc& password)
+									  bool ignorePaths, E_FILE_ARCHIVE_TYPE archiveType)
 {
 	IFileArchive* archive = 0;
 	bool ret = false;
@@ -206,16 +194,8 @@ bool CFileSystem::addFileArchive(const io::path& filename, bool ignoreCase,
 	// check if the archive was already loaded
 	for (i = 0; i < FileArchives.size(); ++i)
 	{
-		// TODO: This should go into a path normalization method
-		// We need to check for directory names with trailing slash and without
-		const core::stringc absPath = getAbsolutePath(filename);
-		const core::stringc arcPath = FileArchives[i]->getFileList()->getPath();
-		if ((absPath == arcPath) || ((absPath+"/") == arcPath))
-		{
-			if (password.size())
-				FileArchives[i]->Password=password;
+		if (filename == FileArchives[i]->getFileList()->getPath())
 			return true;
-		}
 	}
 
 	// do we know what type it should be?
@@ -296,8 +276,6 @@ bool CFileSystem::addFileArchive(const io::path& filename, bool ignoreCase,
 	if (archive)
 	{
 		FileArchives.push_back(archive);
-		if (password.size())
-			archive->Password=password;
 		ret = true;
 	}
 	else
@@ -363,25 +341,23 @@ const io::path& CFileSystem::getWorkingDirectory()
 	else
 	{
 		#if defined(_IRR_WINDOWS_CE_PLATFORM_)
-		// does not need this
+
 		#elif defined(_IRR_WINDOWS_API_)
-			fschar_t tmp[_MAX_PATH];
 			#if defined(_IRR_WCHAR_FILESYSTEM )
+				wchar_t tmp[_MAX_PATH];
 				_wgetcwd(tmp, _MAX_PATH);
-				WorkingDirectory[FILESYSTEM_NATIVE] = tmp;
-				WorkingDirectory[FILESYSTEM_NATIVE].replace(L'\\', L'/');
 			#else
+				c8 tmp[_MAX_PATH];
 				_getcwd(tmp, _MAX_PATH);
-				WorkingDirectory[FILESYSTEM_NATIVE] = tmp;
-				WorkingDirectory[FILESYSTEM_NATIVE].replace('\\', '/');
 			#endif
+			WorkingDirectory[FILESYSTEM_NATIVE] = tmp;
 		#endif
 
 		#if (defined(_IRR_POSIX_API_) || defined(_IRR_OSX_PLATFORM_))
 
-			// getting the CWD is rather complex as we do not know the size
-			// so try it until the call was successful
-			// Note that neither the first nor the second parameter may be 0 according to POSIX
+			//! getting the CWD is rather complex as we do not know the size
+			//! so try it until the call was successful
+			//! Note that neither the first nor the second parameter may be 0 according to POSIX
 
 			#if defined(_IRR_WCHAR_FILESYSTEM )
 				u32 pathSize=256;
@@ -428,7 +404,7 @@ bool CFileSystem::changeWorkingDirectoryTo(const io::path& newDirectory)
 
 	if (FileSystemType != FILESYSTEM_NATIVE)
 	{
-		WorkingDirectory[FILESYSTEM_VIRTUAL] = newDirectory;
+		WorkingDirectory[FILESYSTEM_VIRTUAL].append(newDirectory);
 		flattenFilename(WorkingDirectory[FILESYSTEM_VIRTUAL], "");
 		success = 1;
 	}
@@ -455,44 +431,46 @@ bool CFileSystem::changeWorkingDirectoryTo(const io::path& newDirectory)
 
 io::path CFileSystem::getAbsolutePath(const io::path& filename) const
 {
+	fschar_t *p=0;
+
 #if defined(_IRR_WINDOWS_CE_PLATFORM_)
 	return filename;
 #elif defined(_IRR_WINDOWS_API_)
-	fschar_t *p=0;
-	fschar_t fpath[_MAX_PATH];
+
 	#if defined(_IRR_WCHAR_FILESYSTEM )
+		wchar_t fpath[_MAX_PATH];
 		p = _wfullpath(fpath, filename.c_str(), _MAX_PATH);
 		core::stringw tmp(p);
 		tmp.replace(L'\\', L'/');
 	#else
+		c8 fpath[_MAX_PATH];
 		p = _fullpath(fpath, filename.c_str(), _MAX_PATH);
 		core::stringc tmp(p);
 		tmp.replace('\\', '/');
 	#endif
 	return tmp;
 #elif (defined(_IRR_POSIX_API_) || defined(_IRR_OSX_PLATFORM_))
-	c8* p=0;
 	c8 fpath[4096];
 	fpath[0]=0;
 	p = realpath(filename.c_str(), fpath);
 	if (!p)
 	{
-		// content in fpath is unclear at this point
-		if (!fpath[0]) // seems like fpath wasn't altered, use our best guess
+		// content in fpath is undefined at this point
+		if (!fpath[0]) // seems like fpath wasn't altered
 		{
-			io::path tmp(filename);
-			return flattenFilename(tmp);
+			// at least remove a ./ prefix
+			if ('.'==filename[0] && '/'==filename[1])
+				return filename.subString(2, filename.size()-2);
+			else
+				return filename;
 		}
 		else
 			return io::path(fpath);
 	}
-	if (filename[filename.size()-1]=='/')
-		return io::path(p)+"/";
-	else
-		return io::path(p);
-#else
-	return io::path(filename);
+
 #endif
+
+	return io::path(p);
 }
 
 
@@ -544,7 +522,7 @@ io::path CFileSystem::getFileBasename(const io::path& filename, bool keepExtensi
 }
 
 
-//! flatten a path and file name for example: "/you/me/../." becomes "/you"
+//! flaten a path and file name for example: "/you/me/../." becomes "/you"
 io::path& CFileSystem::flattenFilename(io::path& directory, const io::path& root) const
 {
 	directory.replace('\\', '/');
@@ -556,7 +534,6 @@ io::path& CFileSystem::flattenFilename(io::path& directory, const io::path& root
 
 	s32 lastpos = 0;
 	s32 pos = 0;
-	bool lastWasRealDir=false;
 
 	while ((pos = directory.findNext('/', lastpos)) >= 0)
 	{
@@ -564,16 +541,7 @@ io::path& CFileSystem::flattenFilename(io::path& directory, const io::path& root
 
 		if (subdir == "../")
 		{
-			if (lastWasRealDir)
-			{
-				deletePathFromPath(dir, 2);
-				lastWasRealDir=(dir.size()!=0);
-			}
-			else
-			{
-				dir.append(subdir);
-				lastWasRealDir=false;
-			}
+			deletePathFromPath(dir, 2);
 		}
 		else if (subdir == "/")
 		{
@@ -582,7 +550,6 @@ io::path& CFileSystem::flattenFilename(io::path& directory, const io::path& root
 		else if (subdir != "./" )
 		{
 			dir.append(subdir);
-			lastWasRealDir=true;
 		}
 
 		lastpos = pos + 1;
@@ -592,7 +559,7 @@ io::path& CFileSystem::flattenFilename(io::path& directory, const io::path& root
 }
 
 
-//! Sets the current file systen type
+//! Creates a list of files and directories in the current working directory
 EFileSystemType CFileSystem::setFileListSystem(EFileSystemType listType)
 {
 	EFileSystemType current = FileSystemType;
@@ -613,6 +580,7 @@ IFileList* CFileSystem::createFileList()
 	//! Construct from native filesystem
 	if (FileSystemType == FILESYSTEM_NATIVE)
 	{
+		io::path fullPath;
 		// --------------------------------------------
 		//! Windows version
 		#ifdef _IRR_WINDOWS_API_
@@ -620,16 +588,18 @@ IFileList* CFileSystem::createFileList()
 
 		r = new CFileList(Path, true, false);
 
-		struct _tfinddata_t c_file;
+		struct _finddata_t c_file;
 		long hFile;
 
-		if( (hFile = _tfindfirst( _T("*"), &c_file )) != -1L )
+		if( (hFile = _findfirst( "*", &c_file )) != -1L )
 		{
 			do
 			{
-				r->addItem(Path + c_file.name, 0, c_file.size, (_A_SUBDIR & c_file.attrib) != 0, 0);
+				fullPath = Path + c_file.name;
+
+				r->addItem(fullPath, c_file.size, (_A_SUBDIR & c_file.attrib) != 0, 0);
 			}
-			while( _tfindnext( hFile, &c_file ) == 0 );
+			while( _findnext( hFile, &c_file ) == 0 );
 
 			_findclose( hFile );
 		}
@@ -648,7 +618,7 @@ IFileList* CFileSystem::createFileList()
 
 		r = new CFileList(Path, false, false);
 
-		r->addItem(Path + "..", 0, 0, true, 0);
+		r->addItem(Path + "..", 0, true, 0);
 
 		//! We use the POSIX compliant methods instead of scandir
 		DIR* dirHandle=opendir(Path.c_str());
@@ -659,6 +629,7 @@ IFileList* CFileSystem::createFileList()
 			{
 				u32 size = 0;
 				bool isDirectory = false;
+				fullPath = Path + dirEntry->d_name;
 
 				if((strcmp(dirEntry->d_name, ".")==0) ||
 				   (strcmp(dirEntry->d_name, "..")==0))
@@ -679,7 +650,7 @@ IFileList* CFileSystem::createFileList()
 				}
 				#endif
 
-				r->addItem(Path + dirEntry->d_name, 0, size, isDirectory, 0);
+				r->addItem(fullPath, size, isDirectory, 0);
 			}
 			closedir(dirHandle);
 		}
@@ -695,10 +666,10 @@ IFileList* CFileSystem::createFileList()
 		SFileListEntry e3;
 
 		//! PWD
-		r->addItem(Path + ".", 0, 0, true, 0);
+		r->addItem(Path + ".", 0, true, 0);
 
 		//! parent
-		r->addItem(Path + "..", 0, 0, true, 0);
+		r->addItem(Path + "..", 0, true, 0);
 
 		//! merge archives
 		for (u32 i=0; i < FileArchives.size(); ++i)
@@ -709,10 +680,12 @@ IFileList* CFileSystem::createFileList()
 			{
 				if (core::isInSameDirectory(Path, merge->getFullFileName(j)) == 0)
 				{
-					r->addItem(merge->getFullFileName(j), merge->getFileOffset(j), merge->getFileSize(j), merge->isDirectory(j), 0);
+					io::path fullPath = merge->getFullFileName(j);
+					r->addItem(fullPath, merge->getFileSize(j), merge->isDirectory(j), 0);
 				}
 			}
 		}
+
 	}
 
 	if (r)
@@ -738,7 +711,7 @@ bool CFileSystem::existFile(const io::path& filename) const
 #if defined(_IRR_WCHAR_FILESYSTEM)
 	HANDLE hFile = CreateFileW(filename.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 #else
-	HANDLE hFile = CreateFileW(core::stringw(filename).c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+	HANDLE hFile = CreateFileA(filename.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 #endif
 	if (hFile == INVALID_HANDLE_VALUE)
 		return false;
@@ -755,10 +728,8 @@ bool CFileSystem::existFile(const io::path& filename) const
 #else
 	return (_access(filename.c_str(), 0) != -1);
 #endif
-#elif defined(F_OK)
-	return (access(filename.c_str(), F_OK) != -1);
 #else
-    return (access(filename.c_str(), 0) != -1);
+	return (access(filename.c_str(), F_OK) != -1);
 #endif
 #endif
 }

@@ -13,8 +13,7 @@ namespace irr
 {
 namespace gui
 {
-	//! A tab-page, onto which other gui elements could be added.
-	/** IGUITab refers to the page itself, not to the tab in the tabbar of an IGUITabControl. */
+	//! A tab, onto which other gui elements could be added.
 	class IGUITab : public IGUIElement
 	{
 	public:
@@ -75,7 +74,7 @@ namespace gui
 		//! Brings a tab to front.
 		/** \param tab: pointer to the tab.
 		\return Returns true if successful. */
-		virtual bool setActiveTab(IGUITab *tab) = 0;
+		virtual bool setActiveTab(IGUIElement *tab) = 0;
 
 		//! Returns which tab is currently active
 		virtual s32 getActiveTab() const = 0;
@@ -89,10 +88,10 @@ namespace gui
 
 		//! set the maximal width of a tab. Per default width is 0 which means "no width restriction".
 		virtual void setTabMaxWidth(s32 width ) = 0;
-
+			
 		//! get the maximal width of a tab
 		virtual s32 getTabMaxWidth() const = 0;
-
+		
 		//! Set the alignment of the tabs
 		/** Use EGUIA_UPPERLEFT or EGUIA_LOWERRIGHT */
 		virtual void setTabVerticalAlignment( gui::EGUI_ALIGNMENT alignment ) = 0;

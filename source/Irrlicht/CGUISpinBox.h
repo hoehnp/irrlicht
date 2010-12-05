@@ -62,9 +62,6 @@ namespace gui
 		//! called if an event happened.
 		virtual bool OnEvent(const SEvent& event);
 
-		//! Draws the element and its children.
-		virtual void draw();
-
 		//! Sets the new caption of the element
 		virtual void setText(const wchar_t* text);
 
@@ -83,12 +80,10 @@ namespace gui
 
 	protected:
 		virtual void verifyValueRange();
-		void refreshSprites();
 
 		IGUIEditBox * EditBox;
 		IGUIButton * ButtonSpinUp;
 		IGUIButton * ButtonSpinDown;
-		video::SColor CurrentIconColor;
 		f32 StepSize;
 		f32 RangeMin;
 		f32 RangeMax;

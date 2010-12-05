@@ -32,13 +32,13 @@ namespace irr
 		#ifdef _IRR_COMPILE_WITH_DIRECT3D_8_
 		IVideoDriver* createDirectX8Driver(const core::dimension2d<u32>& screenSize, HWND window,
 			u32 bits, bool fullscreen, bool stencilbuffer, io::IFileSystem* io,
-			bool pureSoftware, bool highPrecisionFPU, bool vsync, u8 antiAlias, u32 displayAdapter);
+			bool pureSoftware, bool highPrecisionFPU, bool vsync, u8 antiAlias);
 		#endif
 
 		#ifdef _IRR_COMPILE_WITH_DIRECT3D_9_
 		IVideoDriver* createDirectX9Driver(const core::dimension2d<u32>& screenSize, HWND window,
 			u32 bits, bool fullscreen, bool stencilbuffer, io::IFileSystem* io,
-			bool pureSoftware, bool highPrecisionFPU, bool vsync, u8 antiAlias, u32 displayAdapter);
+			bool pureSoftware, bool highPrecisionFPU, bool vsync, u8 antiAlias);
 		#endif
 
 		#ifdef _IRR_COMPILE_WITH_OPENGL_
@@ -226,7 +226,7 @@ void CIrrDeviceSDL::createDriver()
 		VideoDriver = video::createDirectX8Driver(CreationParams.WindowSize, Info.window,
 			CreationParams.Bits, CreationParams.Fullscreen, CreationParams.Stencilbuffer,
 			FileSystem, false, CreationParams.HighPrecisionFPU, CreationParams.Vsync,
-			CreationParams.AntiAlias, CreationParams.DisplayAdapter);
+			CreationParams.AntiAlias);
 
 		if (!VideoDriver)
 		{
@@ -244,7 +244,7 @@ void CIrrDeviceSDL::createDriver()
 		VideoDriver = video::createDirectX9Driver(CreationParams.WindowSize, Info.window,
 			CreationParams.Bits, CreationParams.Fullscreen, CreationParams.Stencilbuffer,
 			FileSystem, false, CreationParams.HighPrecisionFPU, CreationParams.Vsync,
-			CreationParams.AntiAlias, CreationParams.DisplayAdapter);
+			CreationParams.AntiAlias);
 
 		if (!VideoDriver)
 		{
@@ -266,7 +266,7 @@ void CIrrDeviceSDL::createDriver()
 
 	case video::EDT_BURNINGSVIDEO:
 		#ifdef _IRR_COMPILE_WITH_BURNINGSVIDEO_
-		VideoDriver = video::createBurningVideoDriver(CreationParams, FileSystem, this);
+		VideoDriver = video::createSoftwareDriver2(CreationParams.WindowSize, CreationParams.Fullscreen, FileSystem, this);
 		#else
 		os::Printer::log("Burning's video driver was not compiled in.", ELL_ERROR);
 		#endif
@@ -380,17 +380,17 @@ bool CIrrDeviceSDL::run()
 			{
 				postEventFromUser(irrevent);
 
-				if ( irrevent.MouseInput.Event >= EMIE_LMOUSE_PRESSED_DOWN && irrevent.MouseInput.Event <= EMIE_MMOUSE_PRESSED_DOWN )
+				if ( irrevent.MouseInput.Event == EMIE_LMOUSE_PRESSED_DOWN )
 				{
-					u32 clicks = checkSuccessiveClicks(irrevent.MouseInput.X, irrevent.MouseInput.Y, irrevent.MouseInput.Event);
+					u32 clicks = checkSuccessiveClicks(irrevent.MouseInput.X, irrevent.MouseInput.Y);
 					if ( clicks == 2 )
 					{
-						irrevent.MouseInput.Event = (EMOUSE_INPUT_EVENT)(EMIE_LMOUSE_DOUBLE_CLICK + irrevent.MouseInput.Event-EMIE_LMOUSE_PRESSED_DOWN);
+						irrevent.MouseInput.Event = EMIE_MOUSE_DOUBLE_CLICK;
 						postEventFromUser(irrevent);
 					}
 					else if ( clicks == 3 )
 					{
-						irrevent.MouseInput.Event = (EMOUSE_INPUT_EVENT)(EMIE_LMOUSE_TRIPLE_CLICK + irrevent.MouseInput.Event-EMIE_LMOUSE_PRESSED_DOWN);
+						irrevent.MouseInput.Event = EMIE_MOUSE_TRIPLE_CLICK;
 						postEventFromUser(irrevent);
 					}
 				}

@@ -48,9 +48,9 @@ public:
 	}
 
 	void setNextExpectedCollision(ISceneNode* target,
-					const vector3df& expectedPoint,
-					const vector3df& expectedPosition,
-					bool consume)
+									const vector3df& expectedPoint,
+									const vector3df& expectedPosition,
+									bool consume)
 	{
 		ExpectedTarget = target;
 		ExpectedCollisionPoint = expectedPoint;
@@ -188,11 +188,11 @@ bool collisionResponseAnimator(void)
 		result = false;
 	}
 
-	device->closeDevice();
-	device->run();
+
 	device->drop();
 
 	result &= expectedCollisionCallbackPositions;
 	return result;
 }
+
 

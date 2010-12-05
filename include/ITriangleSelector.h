@@ -60,8 +60,8 @@ public:
 	an IMetaTriangleSelector) this this function may be called multiple
 	times to retrieve all triangles.
 
-	This method will return at least the triangles that intersect the box,
-	but may return other triangles as well.
+	Please note that unoptimized triangle selectors also may return
+	triangles which are not in the specified box at all.
 	\param triangles: Array where the resulting triangles will be written
 	to.
 	\param arraySize: Size of the target array.
@@ -83,7 +83,7 @@ public:
 	selector.  If there is more than one scene node associated (e.g. for
 	an IMetaTriangleSelector) this this function may be called multiple
 	times to retrieve all triangles.
-
+	
 	Please note that unoptimized triangle selectors also may return
 	triangles which are not in contact at all with the 3d line.
 	\param triangles: Array where the resulting triangles will be written
@@ -110,7 +110,7 @@ public:
 	the associated scene node.
 	\return The scene node associated with that triangle.
 	*/
-	virtual ISceneNode* getSceneNodeForTriangle(u32 triangleIndex) const = 0;
+	virtual const ISceneNode* getSceneNodeForTriangle(u32 triangleIndex) const = 0;
 
 };
 

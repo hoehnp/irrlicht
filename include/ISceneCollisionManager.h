@@ -25,14 +25,14 @@ namespace scene
 	{
 	public:
 
-		//! Finds the nearest collision point of a line and lots of triangles, if there is one.
-		/** \param ray: Line with which collisions are tested.
+		//! Finds the collision point of a line and lots of triangles, if there is one.
+		/** \param ray: Line with witch collisions are tested.
 		\param selector: TriangleSelector containing the triangles. It
 		can be created for example using
 		ISceneManager::createTriangleSelector() or
-		ISceneManager::createTriangleOctreeSelector().
+		ISceneManager::createTriangleOctTreeSelector().
 		\param outCollisionPoint: If a collision is detected, this will
-		contain the position of the nearest collision to the line-start.
+		contain the position of the nearest collision.
 		\param outTriangle: If a collision is detected, this will
 		contain the triangle with which the ray collided.
 		\param outNode: If a collision is detected, this will contain
@@ -40,7 +40,7 @@ namespace scene
 		\return True if a collision was detected and false if not. */
 		virtual bool getCollisionPoint(const core::line3d<f32>& ray,
 				ITriangleSelector* selector, core::vector3df& outCollisionPoint,
-				core::triangle3df& outTriangle, ISceneNode*& outNode) =0;
+				core::triangle3df& outTriangle, const ISceneNode*& outNode) =0;
 
 		//! Collides a moving ellipsoid with a 3d world with gravity and returns the resulting new position of the ellipsoid.
 		/** This can be used for moving a character in a 3d world: The
@@ -51,7 +51,7 @@ namespace scene
 		\param selector: TriangleSelector containing the triangles of
 		the world. It can be created for example using
 		ISceneManager::createTriangleSelector() or
-		ISceneManager::createTriangleOctreeSelector().
+		ISceneManager::createTriangleOctTreeSelector().
 		\param ellipsoidPosition: Position of the ellipsoid.
 		\param ellipsoidRadius: Radius of the ellipsoid.
 		\param ellipsoidDirectionAndSpeed: Direction and speed of the
@@ -73,7 +73,7 @@ namespace scene
 			core::triangle3df& triout,
 			core::vector3df& hitPosition,
 			bool& outFalling,
-			ISceneNode*& outNode,
+			const ISceneNode*& outNode,
 			f32 slidingSpeed = 0.0005f,
 			const core::vector3df& gravityDirectionAndSpeed
 			= core::vector3df(0.0f, 0.0f, 0.0f)) = 0;
@@ -86,7 +86,7 @@ namespace scene
 		at a length of the far value of the camera at a position which
 		would be behind the 2d screen coodinates. */
 		virtual core::line3d<f32> getRayFromScreenCoordinates(
-			const core::position2d<s32>& pos, ICameraSceneNode* camera = 0) = 0;
+			const core::position2d<s32> & pos, ICameraSceneNode* camera = 0) = 0;
 
 		//! Calculates 2d screen position from a 3d position.
 		/** \param pos: 3D position in world space to be transformed
@@ -95,12 +95,12 @@ namespace scene
 		camera is used.
 		\return 2d screen coordinates which a object in the 3d world
 		would have if it would be rendered to the screen. If the 3d
-		position is behind the camera, it is set to (-1000,-1000). In
+		position is behind the camera, it is set to (-10000,-10000). In
 		most cases you can ignore this fact, because if you use this
 		method for drawing a decorator over a 3d object, it will be
 		clipped by the screen borders. */
 		virtual core::position2d<s32> getScreenCoordinatesFrom3DPosition(
-			const core::vector3df& pos, ICameraSceneNode* camera=0) = 0;
+			const core::vector3df & pos, ICameraSceneNode* camera=0) = 0;
 
 		//! Gets the scene node, which is currently visible under the given screencoordinates, viewed from the currently active camera.
 		/** The collision tests are done using a bounding box for each
@@ -143,8 +143,8 @@ namespace scene
 		against this ray. The collision tests are done using a bounding
 		box for each scene node.
 		\param camera: Camera from which the ray is casted.
-		\param idBitMask: Only scene nodes with an id which matches at least one of the
-		bits contained in this mask will be tested. However, if this parameter is 0, then
+		\param idBitMask: Only scene nodes with an id which matches at least one of the 
+		bits contained in this mask will be tested. However, if this parameter is 0, then 
 		all nodes are checked.
 		feature is disabled.
 		Please note that the default node id of -1 will match with
@@ -158,33 +158,33 @@ namespace scene
 			s32 idBitMask=0, bool bNoDebugObjects = false) = 0;
 
 		//! Perform a ray/box and ray/triangle collision check on a heirarchy of scene nodes.
-		/** This checks all scene nodes under the specified one, first by ray/bounding
+		/** This checks all scene nodes under the specified one, first by ray/bounding 
 		box, and then by accurate ray/triangle collision, finding the nearest collision,
-		and the scene node containg it.  It returns the node hit, and (via output
+		and the scene node containg it.  It returns the node hit, and (via output 
 		parameters) the position of the collision, and the triangle that was hit.
 
 		All scene nodes in the hierarchy tree under the specified node are checked. Only
-		nodes that are visible, with an ID that matches at least one bit in the supplied
+		notes that are visible, with an ID that matches at least one bit in the supplied 
 		bitmask, and which have a triangle selector are considered as candidates for being hit.
-		You do not have to build a meta triangle selector; the individual triangle selectors
+		You do not have to build a meta triangle selector; the individual triangle selectors 
 		of each candidate scene node are used automatically.
-
+		
 		\param ray: Line with which collisions are tested.
 		\param outCollisionPoint: If a collision is detected, this will contain the
 		position of the nearest collision.
 		\param outTriangle: If a collision is detected, this will contain the triangle
 		with which the ray collided.
-		\param idBitMask: Only scene nodes with an id which matches at least one of the
-		bits contained in this mask will be tested. However, if this parameter is 0, then
+		\param idBitMask: Only scene nodes with an id which matches at least one of the 
+		bits contained in this mask will be tested. However, if this parameter is 0, then 
 		all nodes are checked.
 		\param collisionRootNode: the scene node at which to begin checking. Only this
-		node and its children will be checked. If you want to check the entire scene,
+		node and its children will be checked. If you want to check the entire scene, 
 		pass 0, and the root scene node will be used (this is the default).
 		\param noDebugObjects: when true, debug objects are not considered viable targets.
 		Debug objects are scene nodes with IsDebugObject() = true.
 		\return Returns the scene node containing the hit triangle nearest to ray.start.
 		If no collision is detected, then 0 is returned. */
-		virtual ISceneNode* getSceneNodeAndCollisionPointFromRay(
+		virtual ISceneNode* getSceneNodeAndCollisionPointFromRay(								
 								core::line3df ray,
 								core::vector3df & outCollisionPoint,
 								core::triangle3df & outTriangle,

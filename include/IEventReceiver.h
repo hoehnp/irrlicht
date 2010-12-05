@@ -6,6 +6,7 @@
 #define __I_EVENT_RECEIVER_H_INCLUDED__
 
 #include "ILogger.h"
+#include "position2d.h"
 #include "Keycodes.h"
 #include "irrString.h"
 
@@ -98,29 +99,13 @@ namespace irr
 		//! in what direction and how fast.
 		EMIE_MOUSE_WHEEL,
 
-		//! Left mouse button double click.
+		//! Mouse double click.
 		//! This event is generated after the second EMIE_LMOUSE_PRESSED_DOWN event.
-		EMIE_LMOUSE_DOUBLE_CLICK,
+		EMIE_MOUSE_DOUBLE_CLICK,
 
-		//! Right mouse button double click.
-		//! This event is generated after the second EMIE_RMOUSE_PRESSED_DOWN event.
-		EMIE_RMOUSE_DOUBLE_CLICK,
-
-		//! Middle mouse button double click.
-		//! This event is generated after the second EMIE_MMOUSE_PRESSED_DOWN event.
-		EMIE_MMOUSE_DOUBLE_CLICK,
-
-		//! Left mouse button triple click.
+		//! Mouse triple click.
 		//! This event is generated after the third EMIE_LMOUSE_PRESSED_DOWN event.
-		EMIE_LMOUSE_TRIPLE_CLICK,
-
-		//! Right mouse button triple click.
-		//! This event is generated after the third EMIE_RMOUSE_PRESSED_DOWN event.
-		EMIE_RMOUSE_TRIPLE_CLICK,
-
-		//! Middle mouse button triple click.
-		//! This event is generated after the third EMIE_MMOUSE_PRESSED_DOWN event.
-		EMIE_MMOUSE_TRIPLE_CLICK,
+		EMIE_MOUSE_TRIPLE_CLICK,
 
 		//! No real event. Just for convenience to get number of events
 		EMIE_COUNT
@@ -160,11 +145,9 @@ namespace irr
 			EGET_ELEMENT_FOCUSED,
 
 			//! The mouse cursor hovered over a gui element.
-			/** If an element has sub-elements you also get this message for the subelements */
 			EGET_ELEMENT_HOVERED,
 
 			//! The mouse cursor left the hovered element.
-			/** If an element has sub-elements you also get this message for the subelements */
 			EGET_ELEMENT_LEFT,
 
 			//! An element would like to close.
@@ -181,12 +164,10 @@ namespace irr
 			//! A checkbox has changed its check state.
 			EGET_CHECKBOX_CHANGED,
 
-			//! A new item in a listbox was selected.
-			/** NOTE: You also get this event currently when the same item was clicked again after more than 500 ms. */
+			//! A new item in a listbox was seleted.
 			EGET_LISTBOX_CHANGED,
 
 			//! An item in the listbox was selected, which was already selected.
-			/** NOTE: You get the event currently only if the item was clicked again within 500 ms or selected by "enter" or "space". */
 			EGET_LISTBOX_SELECTED_AGAIN,
 
 			//! A file has been selected in the file dialog
@@ -245,11 +226,8 @@ namespace irr
 			//! A tree view node was expanded. See IGUITreeView::getLastEventNode().
 			EGET_TREEVIEW_NODE_EXPAND,
 
-			//! deprecated - use EGET_TREEVIEW_NODE_COLLAPSE instead
-			EGET_TREEVIEW_NODE_COLLAPS,
-
 			//! A tree view node was collapsed. See IGUITreeView::getLastEventNode().
-			EGET_TREEVIEW_NODE_COLLAPSE = EGET_TREEVIEW_NODE_COLLAPS,
+			EGET_TREEVIEW_NODE_COLLAPS,
 
 			//! No real event. Just for convenience to get number of events
 			EGET_COUNT
@@ -437,11 +415,7 @@ public:
 	virtual ~IEventReceiver() {}
 
 	//! Called if an event happened.
-	/** Please take care that you should only return 'true' when you want to _prevent_ Irrlicht
-	* from processing the event any further. So 'true' does mean that an event is completely done.
-	* Therefore your return value for all unprocessed events should be 'false'.
-	\return True if the event was processed.
-	*/
+	/** \return True if the event was processed. */
 	virtual bool OnEvent(const SEvent& event) = 0;
 };
 

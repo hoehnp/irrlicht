@@ -12,6 +12,7 @@
 #include "IVideoDriver.h"
 #include "ISceneManager.h"
 #include "ICameraSceneNode.h"
+#include "SMeshBufferLightMap.h"
 #include "SViewFrustum.h"
 #include "irrMath.h"
 #include "os.h"
@@ -20,8 +21,6 @@
 #include "IReadFile.h"
 #include "ITextSceneNode.h"
 #include "IAnimatedMesh.h"
-#include "SMesh.h"
-#include "CDynamicMeshBuffer.h"
 
 namespace irr
 {
@@ -48,7 +47,6 @@ namespace scene
 		setDebugName("CTerrainSceneNode");
 		#endif
 
-		Mesh = new SMesh();
 		RenderBuffer = new CDynamicMeshBuffer(video::EVT_2TCOORDS, video::EIT_16BIT);
 		RenderBuffer->setHardwareMappingHint(scene::EHM_STATIC, scene::EBT_VERTEX);
 		RenderBuffer->setHardwareMappingHint(scene::EHM_DYNAMIC, scene::EBT_INDEX);
@@ -68,9 +66,6 @@ namespace scene
 		if (FileSystem)
 			FileSystem->drop();
 
-		if (Mesh)
-			Mesh->drop();
-
 		if (RenderBuffer)
 			RenderBuffer->drop();
 	}
@@ -83,7 +78,7 @@ namespace scene
 		if (!file)
 			return false;
 
-		Mesh->MeshBuffers.clear();
+		Mesh.MeshBuffers.clear();
 		const u32 startTime = os::Timer::getRealTime();
 		video::IImage* heightMap = SceneManager->getVideoDriver()->createImageFromFile(file);
 
@@ -134,6 +129,8 @@ namespace scene
 
 		// --- Generate vertex data from heightmap ----
 		// resize the vertex array for the mesh buffer one time (makes loading faster)
+		//SMeshBufferLightMap* mb = new SMeshBufferLightMap();
+
 		scene::CDynamicMeshBuffer *mb=0;
 
 		const u32 numVertices = TerrainData.Size * TerrainData.Size;
@@ -190,7 +187,7 @@ namespace scene
 		calculateNormals(mb);
 
 		// add the MeshBuffer to the mesh
-		Mesh->addMeshBuffer(mb);
+		Mesh.addMeshBuffer(mb);
 
 		// We copy the data to the renderBuffer, after the normals have been calculated.
 		RenderBuffer->getVertexBuffer().set_used(numVertices);
@@ -250,7 +247,7 @@ namespace scene
 		// start reading
 		const u32 startTime = os::Timer::getTime();
 
-		Mesh->MeshBuffers.clear();
+		Mesh.MeshBuffers.clear();
 
 		const s32 bytesPerPixel = bitsPerPixel / 8;
 
@@ -428,7 +425,7 @@ namespace scene
 		calculateNormals(mb);
 
 		// add the MeshBuffer to the mesh
-		Mesh->addMeshBuffer(mb);
+		Mesh.addMeshBuffer(mb);
 		const u32 vertexCount = mb->getVertexCount();
 
 		// We copy the data to the renderBuffer, after the normals have been calculated.
@@ -470,24 +467,6 @@ namespace scene
 		os::Printer::log(tmp);
 
 		return true;
-	}
-
-
-	//! Returns the mesh
-	IMesh* CTerrainSceneNode::getMesh() { return Mesh; }
-
-
-	//! Returns the material based on the zero based index i.
-	video::SMaterial& CTerrainSceneNode::getMaterial(u32 i)
-	{
-		return Mesh->getMeshBuffer(i)->getMaterial();
-	}
-
-
-	//! Returns amount of materials used by this scene node ( always 1 )
-	u32 CTerrainSceneNode::getMaterialCount() const
-	{
-		return Mesh->getMeshBufferCount();
 	}
 
 
@@ -536,17 +515,17 @@ namespace scene
 	//! Apply transformation changes(scale, position, rotation)
 	void CTerrainSceneNode::applyTransformation()
 	{
-		if (!Mesh->getMeshBufferCount())
+		if (!Mesh.getMeshBufferCount())
 			return;
 
 		TerrainData.Position = TerrainData.Position;
-		s32 vtxCount = Mesh->getMeshBuffer(0)->getVertexCount();
+		s32 vtxCount = Mesh.getMeshBuffer(0)->getVertexCount();
 		core::matrix4 rotMatrix;
 		rotMatrix.setRotationDegrees(TerrainData.Rotation);
 
 		for (s32 i = 0; i < vtxCount; ++i)
 		{
-			RenderBuffer->getVertexBuffer()[i].Pos = Mesh->getMeshBuffer(0)->getPosition(i) * TerrainData.Scale + TerrainData.Position;
+			RenderBuffer->getVertexBuffer()[i].Pos = Mesh.getMeshBuffer(0)->getPosition(i) * TerrainData.Scale + TerrainData.Position;
 
 			RenderBuffer->getVertexBuffer()[i].Pos -= TerrainData.RotationPivot;
 			rotMatrix.inverseRotateVect(RenderBuffer->getVertexBuffer()[i].Pos);
@@ -720,13 +699,13 @@ namespace scene
 		if (!IsVisible || !SceneManager->getActiveCamera())
 			return;
 
-		if (!Mesh->getMeshBufferCount())
+		if (!Mesh.getMeshBufferCount())
 			return;
 
 		video::IVideoDriver* driver = SceneManager->getVideoDriver();
 
 		driver->setTransform (video::ETS_WORLD, core::IdentityMatrix);
-		driver->setMaterial(Mesh->getMeshBuffer(0)->getMaterial());
+		driver->setMaterial(Mesh.getMeshBuffer(0)->getMaterial());
 
 		RenderBuffer->getIndexBuffer().set_used(IndicesToRender);
 
@@ -832,14 +811,14 @@ namespace scene
 	//! \param LOD: The Level Of Detail you want the indices from.
 	void CTerrainSceneNode::getMeshBufferForLOD(IDynamicMeshBuffer& mb, s32 LOD ) const
 	{
-		if (!Mesh->getMeshBufferCount())
+		if (!Mesh.getMeshBufferCount())
 			return;
 
 		LOD = core::clamp(LOD, 0, TerrainData.MaxLOD - 1);
 
-		const u32 numVertices = Mesh->getMeshBuffer(0)->getVertexCount();
+		const u32 numVertices = Mesh.getMeshBuffer(0)->getVertexCount();
 		mb.getVertexBuffer().reallocate(numVertices);
-		video::S3DVertex2TCoords* vertices = (video::S3DVertex2TCoords*)Mesh->getMeshBuffer(0)->getVertices();
+		video::S3DVertex2TCoords* vertices = (video::S3DVertex2TCoords*)Mesh.getMeshBuffer(0)->getVertices();
 
 		for (u32 n=0; n<numVertices; ++n)
 			mb.getVertexBuffer().push_back(vertices[n]);
@@ -1113,7 +1092,7 @@ namespace scene
 
 
 	//! smooth the terrain
-	void CTerrainSceneNode::smoothTerrain(IDynamicMeshBuffer* mb, s32 smoothFactor)
+	void CTerrainSceneNode::smoothTerrain(CDynamicMeshBuffer* mb, s32 smoothFactor)
 	{
 		for (s32 run = 0; run < smoothFactor; ++run)
 		{
@@ -1135,7 +1114,7 @@ namespace scene
 
 
 	//! calculate smooth normals
-	void CTerrainSceneNode::calculateNormals(IDynamicMeshBuffer* mb)
+	void CTerrainSceneNode::calculateNormals(CDynamicMeshBuffer* mb)
 	{
 		s32 count;
 		core::vector3df a, b, c, t;
@@ -1375,7 +1354,7 @@ namespace scene
 	//! Gets the height
 	f32 CTerrainSceneNode::getHeight(f32 x, f32 z) const
 	{
-		if (!Mesh->getMeshBufferCount())
+		if (!Mesh.getMeshBufferCount())
 			return 0;
 
 		f32 height = -999999.9f;
@@ -1393,7 +1372,7 @@ namespace scene
 		if (X >= 0 && X < TerrainData.Size-1 &&
 				Z >= 0 && Z < TerrainData.Size-1)
 		{
-			const video::S3DVertex2TCoords* Vertices = (const video::S3DVertex2TCoords*)Mesh->getMeshBuffer(0)->getVertices();
+			const video::S3DVertex2TCoords* Vertices = (const video::S3DVertex2TCoords*)Mesh.getMeshBuffer(0)->getVertices();
 			const core::vector3df& a = Vertices[X * TerrainData.Size + Z].Pos;
 			const core::vector3df& b = Vertices[(X + 1) * TerrainData.Size + Z].Pos;
 			const core::vector3df& c = Vertices[X * TerrainData.Size + (Z + 1)].Pos;
@@ -1500,23 +1479,22 @@ namespace scene
 
 		// copy materials
 
-		for (unsigned int m = 0; m<Mesh->getMeshBufferCount(); ++m)
+		for (unsigned int m = 0; m<Mesh.getMeshBufferCount(); ++m)
 		{
-			if (nb->Mesh->getMeshBufferCount()>m &&
-				nb->Mesh->getMeshBuffer(m) &&
-				Mesh->getMeshBuffer(m))
+			if (nb->Mesh.getMeshBufferCount()>m &&
+				nb->Mesh.getMeshBuffer(m) &&
+				Mesh.getMeshBuffer(m))
 			{
-				nb->Mesh->getMeshBuffer(m)->getMaterial() =
-					Mesh->getMeshBuffer(m)->getMaterial();
+				nb->Mesh.getMeshBuffer(m)->getMaterial() =
+					Mesh.getMeshBuffer(m)->getMaterial();
 			}
 		}
 
-		nb->RenderBuffer->getMaterial() = RenderBuffer->getMaterial();
+		nb->RenderBuffer->Material = RenderBuffer->Material;
 
 		// finish
 
-		if ( newParent )
-			nb->drop();
+		nb->drop();
 		return nb;
 	}
 

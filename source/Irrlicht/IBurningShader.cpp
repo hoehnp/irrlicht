@@ -7,14 +7,14 @@
 
 #include "SoftwareDriver2_compile_config.h"
 #include "IBurningShader.h"
-#include "CSoftwareDriver2.h"
 
 namespace irr
 {
+
 namespace video
 {
 
-	const tFixPointu IBurningShader::dithermask[] =
+	const tFixPointu IBurningShader::dithermask[ 4 * 4] =
 	{
 		0x00,0x80,0x20,0xa0,
 		0xc0,0x40,0xe0,0x60,
@@ -22,7 +22,8 @@ namespace video
 		0xf0,0x70,0xd0,0x50
 	};
 
-	IBurningShader::IBurningShader(CBurningVideoDriver* driver)
+	IBurningShader::IBurningShader(IDepthBuffer* zbuffer)
+		:RenderTarget(0),DepthBuffer(zbuffer)
 	{
 		#ifdef _DEBUG
 		setDebugName("IBurningShader");
@@ -33,17 +34,8 @@ namespace video
 			IT[i].Texture = 0;
 		}
 
-		Driver = driver;
-		RenderTarget = 0;
-		ColorMask = COLOR_BRIGHT_WHITE;
-		DepthBuffer = (CDepthBuffer*) driver->getDepthBuffer ();
 		if ( DepthBuffer )
 			DepthBuffer->grab();
-
-		Stencil = (CStencilBuffer*) driver->getStencilBuffer ();
-		if ( Stencil )
-			Stencil->grab();
-
 	}
 
 
@@ -55,9 +47,6 @@ namespace video
 
 		if (DepthBuffer)
 			DepthBuffer->drop();
-
-		if (Stencil)
-			Stencil->drop();
 
 		for ( u32 i = 0; i != BURNING_MATERIAL_MAX_TEXTURES; ++i )
 		{
@@ -81,6 +70,7 @@ namespace video
 			//(tVideoSample*)RenderTarget->lock() = (tVideoSample*)RenderTarget->lock();
 			//(fp24*) DepthBuffer->lock() = DepthBuffer->lock();
 		}
+
 	}
 
 
@@ -101,8 +91,9 @@ namespace video
 			// select mignify and magnify ( lodLevel )
 			//SOFTWARE_DRIVER_2_MIPMAPPING_LOD_BIAS
 			it->lodLevel = lodLevel;
-			it->data = (tVideoSample*) it->Texture->lock(true,
-				core::s32_clamp ( lodLevel + SOFTWARE_DRIVER_2_MIPMAPPING_LOD_BIAS, 0, SOFTWARE_DRIVER_2_MIPMAPPING_MAX - 1 ));
+			it->Texture->setCurrentMipMapLOD (
+				core::s32_clamp ( lodLevel + SOFTWARE_DRIVER_2_MIPMAPPING_LOD_BIAS, 0, SOFTWARE_DRIVER_2_MIPMAPPING_MAX - 1 )
+				);
 
 			// prepare for optimal fixpoint
 			it->pitchlog2 = s32_log2_s32 ( it->Texture->getPitch() );
@@ -110,8 +101,10 @@ namespace video
 			const core::dimension2d<u32> &dim = it->Texture->getSize();
 			it->textureXMask = s32_to_fixPoint ( dim.Width - 1 ) & FIX_POINT_UNSIGNED_MASK;
 			it->textureYMask = s32_to_fixPoint ( dim.Height - 1 ) & FIX_POINT_UNSIGNED_MASK;
+			it->data = (tVideoSample*) it->Texture->lock();
 		}
 	}
+
 
 
 } // end namespace video

@@ -27,7 +27,6 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/cursorfont.h>
 #ifdef _IRR_LINUX_X11_VIDMODE_
 #include <X11/extensions/xf86vmode.h>
 #endif
@@ -117,23 +116,11 @@ namespace irr
 		//! This sets the clipboard selection and _not_ the primary selection which you have on X on the middle mouse button.
 		virtual void copyToClipboard(const c8* text) const;
 
-		//! Remove all messages pending in the system message loop
-		virtual void clearSystemMessages();
-
 		//! Get the device type
 		virtual E_DEVICE_TYPE getType() const
 		{
 				return EIDT_X11;
 		}
-
-#ifdef _IRR_COMPILE_WITH_X11_
-		// convert an Irrlicht texture to a X11 cursor
-		Cursor TextureToCursor(irr::video::ITexture * tex, const core::rect<s32>& sourceRect, const core::position2d<s32> &hotspot);
-		Cursor TextureToMonochromeCursor(irr::video::ITexture * tex, const core::rect<s32>& sourceRect, const core::position2d<s32> &hotspot);
-#ifdef _IRR_LINUX_XCURSOR_
-		Cursor TextureToARGBCursor(irr::video::ITexture * tex, const core::rect<s32>& sourceRect, const core::position2d<s32> &hotspot);
-#endif
-#endif
 
 	private:
 
@@ -148,16 +135,45 @@ namespace irr
 
 		void initXAtoms();
 
-		bool switchToFullscreen(bool reset=false);
-
 		//! Implementation of the linux cursor control
 		class CCursorControl : public gui::ICursorControl
 		{
 		public:
 
-			CCursorControl(CIrrDeviceLinux* dev, bool null);
+			CCursorControl(CIrrDeviceLinux* dev, bool null)
+				: Device(dev), IsVisible(true), Null(null), UseReferenceRect(false)
+			{
+#ifdef _IRR_COMPILE_WITH_X11_
+				if (!Null)
+				{
+					XGCValues values;
+					unsigned long valuemask = 0;
 
-			~CCursorControl();
+					XColor fg, bg;
+
+					// this code, for making the cursor invisible was sent in by
+					// Sirshane, thank your very much!
+
+
+					Pixmap invisBitmap = XCreatePixmap(Device->display, Device->window, 32, 32, 1);
+					Pixmap maskBitmap = XCreatePixmap(Device->display, Device->window, 32, 32, 1);
+					Colormap screen_colormap = DefaultColormap( Device->display, DefaultScreen( Device->display ) );
+					XAllocNamedColor( Device->display, screen_colormap, "black", &fg, &fg );
+					XAllocNamedColor( Device->display, screen_colormap, "white", &bg, &bg );
+
+					GC gc = XCreateGC( Device->display, invisBitmap, valuemask, &values );
+
+					XSetForeground( Device->display, gc, BlackPixel( Device->display, DefaultScreen( Device->display ) ) );
+					XFillRectangle( Device->display, invisBitmap, gc, 0, 0, 32, 32 );
+					XFillRectangle( Device->display, maskBitmap, gc, 0, 0, 32, 32 );
+
+					invisCursor = XCreatePixmapCursor( Device->display, invisBitmap, maskBitmap, &fg, &bg, 1, 1 );
+					XFreeGC(Device->display, gc);
+					XFreePixmap(Device->display, invisBitmap);
+					XFreePixmap(Device->display, maskBitmap);
+				}
+#endif
+			}
 
 			//! Changes the visible state of the mouse cursor.
 			virtual void setVisible(bool visible)
@@ -234,7 +250,7 @@ namespace irr
 			}
 
 			//! Returns the current position of the mouse cursor.
-			virtual const core::position2d<s32>& getPosition()
+			virtual core::position2d<s32> getPosition()
 			{
 				updateCursorPos();
 				return CursorPos;
@@ -274,28 +290,6 @@ namespace irr
 					UseReferenceRect = false;
 			}
 
-			//! Sets the active cursor icon
-			virtual void setActiveIcon(gui::ECURSOR_ICON iconId);
-
-			//! Gets the currently active icon
-			virtual gui::ECURSOR_ICON getActiveIcon() const
-			{
-				return ActiveIcon;
-			}
-
-			//! Add a custom sprite as cursor icon.
-			virtual gui::ECURSOR_ICON addIcon(const gui::SCursorSprite& icon);
-
-			//! replace the given cursor icon.
-			virtual void changeIcon(gui::ECURSOR_ICON iconId, const gui::SCursorSprite& icon);
-
-			//! Return a system-specific size which is supported for cursors. Larger icons will fail, smaller icons might work.
-			virtual core::dimension2di getSupportedIconSize() const;
-
-#ifdef _IRR_COMPILE_WITH_X11_
-			void update();
-			void clearCursors();
-#endif
 		private:
 
 			void updateCursorPos()
@@ -328,35 +322,10 @@ namespace irr
 			core::rect<s32> ReferenceRect;
 #ifdef _IRR_COMPILE_WITH_X11_
 			Cursor invisCursor;
-
-			struct CursorFrameX11
-			{
-				CursorFrameX11() : IconHW(0) {}
-				CursorFrameX11(Cursor icon) : IconHW(icon) {}
-
-				Cursor IconHW;	// hardware cursor
-			};
-
-			struct CursorX11
-			{
-				CursorX11() {}
-				explicit CursorX11(Cursor iconHw, u32 frameTime=0) : FrameTime(frameTime)
-				{
-					Frames.push_back( CursorFrameX11(iconHw) );
-				}
-				core::array<CursorFrameX11> Frames;
-				u32 FrameTime;
-			};
-
-			core::array<CursorX11> Cursors;
-
-			void initCursors();
 #endif
 			bool IsVisible;
 			bool Null;
 			bool UseReferenceRect;
-			gui::ECURSOR_ICON ActiveIcon;
-			u32 ActiveIconStartTime;
 		};
 
 		friend class CCursorControl;

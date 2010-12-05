@@ -24,11 +24,6 @@ namespace scene
 {
 	class ISceneManager;
 
-	//! Typedef for list of scene nodes
-	typedef core::list<ISceneNode*> ISceneNodeList;
-	//! Typedef for list of scene node animators
-	typedef core::list<ISceneNodeAnimator*> ISceneNodeAnimatorList;
-
 	//! Scene node interface.
 	/** A scene node is a node in the hierarchical scene graph. Every scene
 	node may have children, which are also scene nodes. Children move
@@ -65,7 +60,7 @@ namespace scene
 			removeAll();
 
 			// delete all animators
-			ISceneNodeAnimatorList::Iterator ait = Animators.begin();
+			core::list<ISceneNodeAnimator*>::Iterator ait = Animators.begin();
 			for (; ait != Animators.end(); ++ait)
 				(*ait)->drop();
 
@@ -92,7 +87,7 @@ namespace scene
 		{
 			if (IsVisible)
 			{
-				ISceneNodeList::Iterator it = Children.begin();
+				core::list<ISceneNode*>::Iterator it = Children.begin();
 				for (; it != Children.end(); ++it)
 					(*it)->OnRegisterSceneNode();
 			}
@@ -111,7 +106,7 @@ namespace scene
 			{
 				// animate this node with all animators
 
-				ISceneNodeAnimatorList::Iterator ait = Animators.begin();
+				core::list<ISceneNodeAnimator*>::Iterator ait = Animators.begin();
 				while (ait != Animators.end())
 					{
 					// continue to the next node before calling animateNode()
@@ -120,14 +115,14 @@ namespace scene
 					ISceneNodeAnimator* anim = *ait;
 					++ait;
 					anim->animateNode(this, timeMs);
-				}
+				} 
 
 				// update absolute position
 				updateAbsolutePosition();
 
 				// perform the post render process on all children
 
-				ISceneNodeList::Iterator it = Children.begin();
+				core::list<ISceneNode*>::Iterator it = Children.begin();
 				for (; it != Children.end(); ++it)
 					(*it)->OnAnimate(timeMs);
 			}
@@ -296,7 +291,7 @@ namespace scene
 		e.g. because it couldn't be found in the children list. */
 		virtual bool removeChild(ISceneNode* child)
 		{
-			ISceneNodeList::Iterator it = Children.begin();
+			core::list<ISceneNode*>::Iterator it = Children.begin();
 			for (; it != Children.end(); ++it)
 				if ((*it) == child)
 				{
@@ -317,7 +312,7 @@ namespace scene
 		*/
 		virtual void removeAll()
 		{
-			ISceneNodeList::Iterator it = Children.begin();
+			core::list<ISceneNode*>::Iterator it = Children.begin();
 			for (; it != Children.end(); ++it)
 			{
 				(*it)->Parent = 0;
@@ -364,7 +359,7 @@ namespace scene
 		\param animator A pointer to the animator to be deleted. */
 		virtual void removeAnimator(ISceneNodeAnimator* animator)
 		{
-			ISceneNodeAnimatorList::Iterator it = Animators.begin();
+			core::list<ISceneNodeAnimator*>::Iterator it = Animators.begin();
 			for (; it != Animators.end(); ++it)
 			{
 				if ((*it) == animator)
@@ -382,7 +377,7 @@ namespace scene
 		for them. */
 		virtual void removeAnimators()
 		{
-			ISceneNodeAnimatorList::Iterator it = Animators.begin();
+			core::list<ISceneNodeAnimator*>::Iterator it = Animators.begin();
 			for (; it != Animators.end(); ++it)
 				(*it)->drop();
 
@@ -448,8 +443,8 @@ namespace scene
 
 
 		//! Gets the scale of the scene node relative to its parent.
-		/** This is the scale of this node relative to its parent.
-		If you want the absolute scale, use
+		/** This is the scale of this node relative to its parent. 
+		If you want the absolute scale, use 
 		getAbsoluteTransformation().getScale()
 		\return The scale of the scene node. */
 		virtual const core::vector3df& getScale() const
@@ -521,7 +516,7 @@ namespace scene
 		their geometry because it is their only reason for existence,
 		for example the OctreeSceneNode.
 		\param state The culling state to be used. */
-		void setAutomaticCulling( u32 state)
+		void setAutomaticCulling( E_CULLING_TYPE state)
 		{
 			AutomaticCullingState = state;
 		}
@@ -529,14 +524,15 @@ namespace scene
 
 		//! Gets the automatic culling state.
 		/** \return The automatic culling state. */
-		u32 getAutomaticCulling() const
+		E_CULLING_TYPE getAutomaticCulling() const
 		{
+			_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
 			return AutomaticCullingState;
 		}
 
 
 		//! Sets if debug data like bounding boxes should be drawn.
-		/** A bitwise OR of the types from @ref irr::scene::E_DEBUG_SCENE_TYPE.
+		/** A bitwise OR of the types from @ref irr::scene::E_DEBUG_SCENE_TYPE. 
 		Please note that not all scene nodes support all debug data types.
 		\param state The debug data visibility state to be used. */
 		virtual void setDebugDataVisible(s32 state)
@@ -545,7 +541,7 @@ namespace scene
 		}
 
 		//! Returns if debug data like bounding boxes are drawn.
-		/** \return A bitwise OR of the debug data values from
+		/** \return A bitwise OR of the debug data values from 
 		@ref irr::scene::E_DEBUG_SCENE_TYPE that are currently visible. */
 		s32 isDebugDataVisible() const
 		{
@@ -601,7 +597,7 @@ namespace scene
 		/** The Selector can be used by the engine for doing collision
 		detection. You can create a TriangleSelector with
 		ISceneManager::createTriangleSelector() or
-		ISceneManager::createOctreeTriangleSelector and set it with
+		ISceneManager::createOctTreeTriangleSelector and set it with
 		ISceneNode::setTriangleSelector(). If a scene node got no triangle
 		selector, but collision tests should be done with it, a triangle
 		selector is created using the bounding box of the scene node.
@@ -617,7 +613,7 @@ namespace scene
 		/** The Selector can be used by the engine for doing collision
 		detection. You can create a TriangleSelector with
 		ISceneManager::createTriangleSelector() or
-		ISceneManager::createOctreeTriangleSelector(). Some nodes may
+		ISceneManager::createOctTreeTriangleSelector(). Some nodes may
 		create their own selector by default, so it would be good to
 		check if there is already a selector in this node by calling
 		ISceneNode::getTriangleSelector().
@@ -637,7 +633,7 @@ namespace scene
 
 
 		//! Updates the absolute position based on the relative and the parents position
-		/** Note: This does not recursively update the parents absolute positions, so if you have a deeper
+		/** Note: This does not recursively update the parents absolute positions, so if you have a deeper 
 			hierarchy you might want to update the parents first.*/
 		virtual void updateAbsolutePosition()
 		{
@@ -686,7 +682,7 @@ namespace scene
 			out->addVector3d("Scale", getScale() );
 
 			out->addBool	("Visible", IsVisible );
-			out->addInt	("AutomaticCulling", AutomaticCullingState);
+			out->addEnum	("AutomaticCulling", AutomaticCullingState, AutomaticCullingNames);
 			out->addInt	("DebugDataVisible", DebugDataVisible );
 			out->addBool	("IsDebugObject", IsDebugObject );
 		}
@@ -711,12 +707,8 @@ namespace scene
 			setScale(in->getAttributeAsVector3d("Scale"));
 
 			IsVisible = in->getAttributeAsBool("Visible");
-			s32 tmpState = in->getAttributeAsEnumeration("AutomaticCulling",
+			AutomaticCullingState = (scene::E_CULLING_TYPE) in->getAttributeAsEnumeration("AutomaticCulling",
 					scene::AutomaticCullingNames);
-			if (tmpState != -1)
-				AutomaticCullingState = (u32)tmpState;
-			else
-				AutomaticCullingState = in->getAttributeAsInt("AutomaticCulling");
 
 			DebugDataVisible = in->getAttributeAsInt("DebugDataVisible");
 			IsDebugObject = in->getAttributeAsBool("IsDebugObject");
@@ -765,13 +757,13 @@ namespace scene
 
 			// clone children
 
-			ISceneNodeList::Iterator it = toCopyFrom->Children.begin();
+			core::list<ISceneNode*>::Iterator it = toCopyFrom->Children.begin();
 			for (; it != toCopyFrom->Children.end(); ++it)
 				(*it)->clone(this, newManager);
 
 			// clone animators
 
-			ISceneNodeAnimatorList::Iterator ait = toCopyFrom->Animators.begin();
+			core::list<ISceneNodeAnimator*>::Iterator ait = toCopyFrom->Animators.begin();
 			for (; ait != toCopyFrom->Animators.end(); ++ait)
 			{
 				ISceneNodeAnimator* anim = (*ait)->createClone(this, SceneManager);
@@ -789,7 +781,7 @@ namespace scene
 		{
 			SceneManager = newManager;
 
-			ISceneNodeList::Iterator it = Children.begin();
+			core::list<ISceneNode*>::Iterator it = Children.begin();
 			for (; it != Children.end(); ++it)
 				(*it)->setSceneManager(newManager);
 		}
@@ -828,7 +820,7 @@ namespace scene
 		s32 ID;
 
 		//! Automatic culling state
-		u32 AutomaticCullingState;
+		E_CULLING_TYPE AutomaticCullingState;
 
 		//! Flag if debug data should be drawn, such as Bounding Boxes.
 		s32 DebugDataVisible;
@@ -839,7 +831,6 @@ namespace scene
 		//! Is debug object?
 		bool IsDebugObject;
 	};
-
 
 } // end namespace scene
 } // end namespace irr

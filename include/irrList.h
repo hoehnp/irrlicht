@@ -7,7 +7,6 @@
 
 #include "irrTypes.h"
 #include "irrAllocator.h"
-#include "irrMath.h"
 
 namespace irr
 {
@@ -75,12 +74,11 @@ public:
 		T * operator ->() { return &Current->Element; }
 
 	private:
-		explicit Iterator(SKListNode* begin) : Current(begin) {}
+		Iterator(SKListNode* begin) : Current(begin) {}
 
 		SKListNode* Current;
 
 		friend class list<T>;
-		friend class ConstIterator;
 	};
 
 	//! List iterator for const access.
@@ -89,7 +87,6 @@ public:
 	public:
 
 		ConstIterator() : Current(0) {}
-		ConstIterator(const Iterator& iter) : Current(iter.Current)  {}
 
 		ConstIterator& operator ++()    { Current = Current->Next; return *this; }
 		ConstIterator& operator --()    { Current = Current->Prev; return *this; }
@@ -124,7 +121,7 @@ public:
 		ConstIterator & operator =(const Iterator & iterator) { Current = iterator.Current; return *this; }
 
 	private:
-		explicit ConstIterator(SKListNode* begin) : Current(begin) {}
+		ConstIterator(SKListNode* begin) : Current(begin) {}
 
 		SKListNode* Current;
 
@@ -172,10 +169,6 @@ public:
 
 	//! Returns amount of elements in list.
 	/** \return Amount of elements in the list. */
-	u32 size() const
-	{
-		return Size;
-	}
 	u32 getSize() const
 	{
 		return Size;
@@ -385,26 +378,12 @@ public:
 		return returnIterator;
 	}
 
-	//! Swap the content of this list container with the content of another list
-	/** Afterwards this object will contain the content of the other object and the other
-	object will contain the content of this object. Iterators will afterwards be valid for
-	the swapped object.
-	\param other Swap content with this object	*/
-	void swap(list<T>& other)
-	{
-		core::swap(First, other.First);
-		core::swap(Last, other.Last);
-		core::swap(Size, other.Size);
-		core::swap(allocator, other.allocator);	// memory is still released by the same allocator used for allocation
-	}
-
-
 private:
-
+	
+	irrAllocator<SKListNode> allocator;
 	SKListNode* First;
 	SKListNode* Last;
 	u32 Size;
-	irrAllocator<SKListNode> allocator;
 
 };
 

@@ -97,20 +97,6 @@ namespace io
 		// zipfile comment (variable size)
 	} PACK_STRUCT;
 
-	struct SZipFileExtraHeader
-	{
-		s16 ID;
-		s16 Size;
-	} PACK_STRUCT;
-
-	struct SZipFileAESExtraData
-	{
-		s16 Version;
-		u8 Vendor[2];
-		u8 EncryptionStrength;
-		s16 CompressionMode;
-	} PACK_STRUCT;
-
 	enum E_GZIP_FLAGS
 	{
 		EGZF_TEXT_DAT      = 1,
@@ -231,4 +217,3 @@ namespace io
 
 #endif // __IRR_COMPILE_WITH_ZIP_ARCHIVE_LOADER_
 #endif // __C_ZIP_READER_H_INCLUDED__
-

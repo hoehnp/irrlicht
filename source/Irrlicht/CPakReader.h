@@ -20,20 +20,9 @@ namespace irr
 {
 namespace io
 {
-	//! File header containing location and size of the table of contents
 	struct SPAKFileHeader
 	{
-		// Don't change the order of these fields!  They must match the order stored on disk.
 		c8 tag[4];
-		u32 offset;
-		u32 length;
-	};
-
-	//! An entry in the PAK file's table of contents.
-	struct SPAKFileEntry
-	{
-		// Don't change the order of these fields!  They must match the order stored on disk.
-		c8 name[56];
 		u32 offset;
 		u32 length;
 	};
@@ -90,6 +79,7 @@ namespace io
 		// file archive methods
 
 		//! return the id of the file Archive
+
 		virtual const io::path& getArchiveName() const
 		{
 			return File->getFileName();
@@ -109,11 +99,18 @@ namespace io
 
 	private:
 
-		//! scans for a local header, returns false if the header is invalid
+		//! scans for a local header, returns false if there is no more local file header.
 		bool scanLocalHeader();
+
+		//! splits filename from zip file into useful filenames and paths
+		//void extractFilename(SPakFileEntry* entry);
 
 		IReadFile* File;
 
+		SPAKFileHeader header;
+
+		//! Contains offsets of the files from the start of the archive file
+		core::array<u32> Offsets;
 	};
 
 } // end namespace io

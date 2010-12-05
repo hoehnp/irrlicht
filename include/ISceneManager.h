@@ -132,7 +132,7 @@ namespace scene
 	//! The Scene Manager manages scene nodes, mesh recources, cameras and all the other stuff.
 	/** All Scene nodes can be created only here. There is a always growing
 	list of scene nodes for lots of purposes: Indoor rendering scene nodes
-	like the Octree (addOctreeSceneNode()) or the terrain renderer
+	like the Octree (addOctTreeSceneNode()) or the terrain renderer
 	(addTerrainSceneNode()), different Camera scene nodes
 	(addCameraSceneNode(), addCameraSceneNodeMaya()), scene nodes for Light
 	(addLightSceneNode()), Billboards (addBillboardSceneNode()) and so on.
@@ -416,10 +416,8 @@ namespace scene
 
 		//! Adds a sphere scene node of the given radius and detail
 		/** \param radius: Radius of the sphere.
-		\param polyCount: The number of vertices in horizontal and
-		vertical direction. The total polyCount of the sphere is
-		polyCount*polyCount. This parameter must be less than 256 to
-		stay within the 16-bit limit of the indices of a meshbuffer.
+		\param polyCount: Polycount of the sphere, i.e. subdivision in
+		horizontal and vertical direction.
 		\param parent: Parent of the scene node. Can be 0 if no parent.
 		\param id: Id of the node. This id can be used to identify the scene node.
 		\param position: Position of the space relative to its parent
@@ -493,53 +491,37 @@ namespace scene
 			const core::vector3df& scale = core::vector3df(1.0f, 1.0f, 1.0f)) = 0;
 
 
-		//! Adds a scene node for rendering using a octree to the scene graph.
+		//! Adds a scene node for rendering using a octtree to the scene graph.
 		/** This a good method for rendering
 		scenes with lots of geometry. The Octree is built on the fly from the mesh.
-		\param mesh: The mesh containing all geometry from which the octree will be build.
+		\param mesh: The mesh containing all geometry from which the octtree will be build.
 		If this animated mesh has more than one frames in it, the first frame is taken.
-		\param parent: Parent node of the octree node.
+		\param parent: Parent node of the octtree node.
 		\param id: id of the node. This id can be used to identify the node.
 		\param minimalPolysPerNode: Specifies the minimal polygons contained a octree node.
 		If a node gets less polys than this value it will not be split into
 		smaller nodes.
 		\param alsoAddIfMeshPointerZero: Add the scene node even if a 0 pointer is passed.
-		\return Pointer to the Octree if successful, otherwise 0.
+		\return Pointer to the OctTree if successful, otherwise 0.
 		This pointer should not be dropped. See IReferenceCounted::drop() for more information. */
-		virtual IMeshSceneNode* addOctreeSceneNode(IAnimatedMesh* mesh, ISceneNode* parent=0,
+		virtual IMeshSceneNode* addOctTreeSceneNode(IAnimatedMesh* mesh, ISceneNode* parent=0,
 			s32 id=-1, s32 minimalPolysPerNode=512, bool alsoAddIfMeshPointerZero=false) = 0;
 
-		//! Adds a scene node for rendering using a octree to the scene graph.
-		/** \deprecated Use addOctreeSceneNode instead. */
-		_IRR_DEPRECATED_ IMeshSceneNode* addOctTreeSceneNode(IAnimatedMesh* mesh, ISceneNode* parent=0,
-			s32 id=-1, s32 minimalPolysPerNode=512, bool alsoAddIfMeshPointerZero=false)
-		{
-			return addOctreeSceneNode(mesh, parent, id, minimalPolysPerNode, alsoAddIfMeshPointerZero);
-		}
-
-		//! Adds a scene node for rendering using a octree to the scene graph.
+		//! Adds a scene node for rendering using a octtree to the scene graph.
 		/** This a good method for rendering scenes with lots of
 		geometry. The Octree is built on the fly from the mesh, much
 		faster then a bsp tree.
-		\param mesh: The mesh containing all geometry from which the octree will be build.
-		\param parent: Parent node of the octree node.
+		\param mesh: The mesh containing all geometry from which the octtree will be build.
+		\param parent: Parent node of the octtree node.
 		\param id: id of the node. This id can be used to identify the node.
 		\param minimalPolysPerNode: Specifies the minimal polygons contained a octree node.
 		If a node gets less polys than this value it will not be split into
 		smaller nodes.
 		\param alsoAddIfMeshPointerZero: Add the scene node even if a 0 pointer is passed.
-		\return Pointer to the octree if successful, otherwise 0.
+		\return Pointer to the octtree if successful, otherwise 0.
 		This pointer should not be dropped. See IReferenceCounted::drop() for more information. */
-		virtual IMeshSceneNode* addOctreeSceneNode(IMesh* mesh, ISceneNode* parent=0,
+		virtual IMeshSceneNode* addOctTreeSceneNode(IMesh* mesh, ISceneNode* parent=0,
 			s32 id=-1, s32 minimalPolysPerNode=256, bool alsoAddIfMeshPointerZero=false) = 0;
-
-		//! Adds a scene node for rendering using a octree to the scene graph.
-		/** \deprecated Use addOctreeSceneNode instead. */
-		_IRR_DEPRECATED_ IMeshSceneNode* addOctTreeSceneNode(IMesh* mesh, ISceneNode* parent=0,
-			s32 id=-1, s32 minimalPolysPerNode=256, bool alsoAddIfMeshPointerZero=false)
-		{
-			return addOctreeSceneNode(mesh, parent, id, minimalPolysPerNode, alsoAddIfMeshPointerZero);
-		}
 
 		//! Adds a camera scene node to the scene graph and sets it as active camera.
 		/** This camera does not react on user input like for example the one created with
@@ -554,31 +536,25 @@ namespace scene
 		\param parent: Parent scene node of the camera. Can be null. If the parent moves,
 		the camera will move too.
 		\param id: id of the camera. This id can be used to identify the camera.
-		\param makeActive Flag whether this camera should become the active one.
-		Make sure you always have one active camera.
 		\return Pointer to interface to camera if successful, otherwise 0.
 		This pointer should not be dropped. See IReferenceCounted::drop() for more information. */
 		virtual ICameraSceneNode* addCameraSceneNode(ISceneNode* parent = 0,
 			const core::vector3df& position = core::vector3df(0,0,0),
-			const core::vector3df& lookat = core::vector3df(0,0,100),
-			s32 id=-1, bool makeActive=true) = 0;
+			const core::vector3df& lookat = core::vector3df(0,0,100), s32 id=-1) = 0;
 
 		//! Adds a maya style user controlled camera scene node to the scene graph.
 		/** This is a standard camera with an animator that provides mouse control similar
-		to camera in the 3D Software Maya by Alias Wavefront.
-		\param parent: Parent scene node of the camera. Can be null.
-		\param rotateSpeed: Rotation speed of the camera.
-		\param zoomSpeed: Zoom speed of the camera.
-		\param translationSpeed: TranslationSpeed of the camera.
-		\param id: id of the camera. This id can be used to identify the camera.
-		\param makeActive Flag whether this camera should become the active one.
-		Make sure you always have one active camera.
-		\return Returns a pointer to the interface of the camera if successful, otherwise 0.
-		This pointer should not be dropped. See IReferenceCounted::drop() for more information. */
+		 to camera in the 3D Software Maya by Alias Wavefront.
+		 \param parent: Parent scene node of the camera. Can be null.
+		 \param rotateSpeed: Rotation speed of the camera.
+		 \param zoomSpeed: Zoom speed of the camera.
+		 \param translationSpeed: TranslationSpeed of the camera.
+		 \param id: id of the camera. This id can be used to identify the camera.
+		 \return Returns a pointer to the interface of the camera if successful, otherwise 0.
+		 This pointer should not be dropped. See IReferenceCounted::drop() for more information. */
 		virtual ICameraSceneNode* addCameraSceneNodeMaya(ISceneNode* parent = 0,
 			f32 rotateSpeed = -1500.0f, f32 zoomSpeed = 200.0f,
-			f32 translationSpeed = 1500.0f, s32 id=-1,
-			bool makeActive=true) = 0;
+			f32 translationSpeed = 1500.0f, s32 id=-1) = 0;
 
 		//! Adds a camera scene node with an animator which provides mouse and keyboard control appropriate for first person shooters (FPS).
 		/** This FPS camera is intended to provide a demonstration of a
@@ -639,16 +615,13 @@ namespace scene
 		up when the mouse is moved down and down when the mouse is
 		moved up, the default is 'false' which means it will follow the
 		movement of the mouse cursor.
-		\param makeActive Flag whether this camera should become the active one.
-		Make sure you always have one active camera.
 		\return Pointer to the interface of the camera if successful,
 		otherwise 0. This pointer should not be dropped. See
 		IReferenceCounted::drop() for more information. */
 		virtual ICameraSceneNode* addCameraSceneNodeFPS(ISceneNode* parent = 0,
 			f32 rotateSpeed = 100.0f, f32 moveSpeed = 0.5f, s32 id=-1,
 			SKeyMap* keyMapArray=0, s32 keyMapSize=0, bool noVerticalMovement=false,
-			f32 jumpSpeed = 0.f, bool invertMouse=false,
-			bool makeActive=true) = 0;
+			f32 jumpSpeed = 0.f, bool invertMouse=false) = 0;
 
 		//! Adds a dynamic light scene node to the scene graph.
 		/** The light will cast dynamic light on all
@@ -857,7 +830,7 @@ namespace scene
 		/** A Quake3 Scene renders multiple meshes for a specific HighLanguage Shader (Quake3 Style )
 		\return Pointer to the quake3 scene node if successful, otherwise NULL.
 		This pointer should not be dropped. See IReferenceCounted::drop() for more information. */
-		virtual IMeshSceneNode* addQuake3SceneNode(const IMeshBuffer* meshBuffer, const quake3::IShader * shader,
+		virtual IMeshSceneNode* addQuake3SceneNode(IMeshBuffer* meshBuffer, const quake3::IShader * shader,
 												ISceneNode* parent=0, s32 id=-1
 												) = 0;
 
@@ -967,22 +940,22 @@ namespace scene
 
 		//! add a static arrow mesh to the meshpool
 		/** \param name Name of the mesh
-		\param vtxColorCylinder color of the cylinder
-		\param vtxColorCone color of the cone
+		\param vtxColor0 color of the cylinder
+		\param vtxColor1 color of the cone
 		\param tesselationCylinder Number of quads the cylinder side consists of
 		\param tesselationCone Number of triangles the cone's roof consits of
 		\param height Total height of the arrow
 		\param cylinderHeight Total height of the cylinder, should be lesser than total height
-		\param widthCylinder Diameter of the cylinder
-		\param widthCone Diameter of the cone's base, should be not smaller than the cylinder's diameter
+		\param width0 Diameter of the cylinder
+		\param width1 Diameter of the cone's base, should be not smaller than the cylinder's diameter
 		\return Pointer to the arrow mesh if successful, otherwise 0.
 		This pointer should not be dropped. See IReferenceCounted::drop() for more information. */
 		virtual IAnimatedMesh* addArrowMesh(const io::path& name,
-				video::SColor vtxColorCylinder=0xFFFFFFFF,
-				video::SColor vtxColorCone=0xFFFFFFFF,
+				video::SColor vtxColor0=0xFFFFFFFF,
+				video::SColor vtxColor1=0xFFFFFFFF,
 				u32 tesselationCylinder=4, u32 tesselationCone=8,
 				f32 height=1.f, f32 cylinderHeight=0.6f,
-				f32 widthCylinder=0.05f, f32 widthCone=0.3f) = 0;
+				f32 width0=0.05f, f32 width1=0.3f) = 0;
 
 		//! add a static sphere mesh to the meshpool
 		/** \param name Name of the mesh
@@ -997,10 +970,6 @@ namespace scene
 
 		//! Add a volume light mesh to the meshpool
 		/** \param name Name of the mesh
-		\param SubdivideU Horizontal subdivision count
-		\param SubdivideV Vertical subdivision count
-		\param FootColor Color of the bottom of the light
-		\param TailColor Color of the top of the light
 		\return Pointer to the volume light mesh if successful, otherwise 0.
 		This pointer should not be dropped. See IReferenceCounted::drop() for more information.
 		*/
@@ -1208,13 +1177,13 @@ namespace scene
 		See IReferenceCounted::drop() for more information. */
 		virtual ISceneNodeAnimator* createFollowSplineAnimator(s32 startTime,
 			const core::array< core::vector3df >& points,
-			f32 speed = 1.0f, f32 tightness = 0.5f, bool loop=true, bool pingpong=false) = 0;
+			f32 speed = 1.0f, f32 tightness = 0.5f) = 0;
 
 		//! Creates a simple ITriangleSelector, based on a mesh.
 		/** Triangle selectors
 		can be used for doing collision detection. Don't use this selector
 		for a huge amount of triangles like in Quake3 maps.
-		Instead, use for example ISceneManager::createOctreeTriangleSelector().
+		Instead, use for example ISceneManager::createOctTreeTriangleSelector().
 		Please note that the created triangle selector is not automaticly attached
 		to the scene node. You will have to call ISceneNode::setTriangleSelector()
 		for this. To create and attach a triangle selector is done like this:
@@ -1251,15 +1220,15 @@ namespace scene
 		See IReferenceCounted::drop() for more information. */
 		virtual ITriangleSelector* createTriangleSelectorFromBoundingBox(ISceneNode* node) = 0;
 
-		//! Creates a Triangle Selector, optimized by an octree.
+		//! Creates a Triangle Selector, optimized by an octtree.
 		/** Triangle selectors
 		can be used for doing collision detection. This triangle selector is
-		optimized for huge amounts of triangle, it organizes them in an octree.
+		optimized for huge amounts of triangle, it organizes them in an octtree.
 		Please note that the created triangle selector is not automaticly attached
 		to the scene node. You will have to call ISceneNode::setTriangleSelector()
 		for this. To create and attach a triangle selector is done like this:
 		\code
-		ITriangleSelector* s = sceneManager->createOctreeTriangleSelector(yourMesh,
+		ITriangleSelector* s = sceneManager->createOctTreeTriangleSelector(yourMesh,
 				yourSceneNode);
 		yourSceneNode->setTriangleSelector(s);
 		s->drop();
@@ -1274,16 +1243,8 @@ namespace scene
 		\return The selector, or null if not successful.
 		If you no longer need the selector, you should call ITriangleSelector::drop().
 		See IReferenceCounted::drop() for more information. */
-		virtual ITriangleSelector* createOctreeTriangleSelector(IMesh* mesh,
+		virtual ITriangleSelector* createOctTreeTriangleSelector(IMesh* mesh,
 			ISceneNode* node, s32 minimalPolysPerNode=32) = 0;
-
-		//! //! Creates a Triangle Selector, optimized by an octree.
-		/** \deprecated Use createOctreeTriangleSelector instead. */
-		_IRR_DEPRECATED_ ITriangleSelector* createOctTreeTriangleSelector(IMesh* mesh,
-			ISceneNode* node, s32 minimalPolysPerNode=32)
-		{
-			return createOctreeTriangleSelector(mesh, node, minimalPolysPerNode);
-		}
 
 		//! Creates a meta triangle selector.
 		/** A meta triangle selector is nothing more than a

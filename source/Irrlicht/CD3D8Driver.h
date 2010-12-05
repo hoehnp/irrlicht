@@ -40,7 +40,7 @@ namespace video
 		//! applications must call this method before performing any rendering. returns false if failed.
 		virtual bool beginScene(bool backBuffer=true, bool zBuffer=true,
 				SColor color=SColor(255,0,0,0),
-				const SExposedVideoData& videoData=SExposedVideoData(),
+				void* windowId=0,
 				core::rect<s32>* sourceRect=0);
 
 		//! applications must call this method after performing any rendering. returns false if failed.
@@ -57,7 +57,7 @@ namespace video
 
 		//! sets a render target
 		virtual bool setRenderTarget(video::ITexture* texture,
-			bool clearBackBuffer=true, bool clearZBuffer=true,
+			bool clearBackBuffer=false, bool clearZBuffer=false,
 			SColor color=video::SColor(0,0,0,0));
 
 		//! sets a viewport
@@ -108,7 +108,7 @@ namespace video
 		//! initialises the Direct3D API
 		bool initDriver(const core::dimension2d<u32>& screenSize, HWND hwnd,
 				u32 bits, bool fullScreen, bool pureSoftware,
-				bool highPrecisionFPU, bool vsync, u8 antiAlias, u32 displayAdapter);
+				bool highPrecisionFPU, bool vsync, u8 antiAlias);
 
 		//! \return Returns the name of the video driver. Example: In case of the DIRECT3D8
 		//! driver, it would return "Direct3D8.1".
@@ -187,6 +187,9 @@ namespace video
 		//! Sets a constant for the pixel shader based on a name.
 		virtual bool setPixelShaderConstant(const c8* name, const f32* floats, int count);
 
+		//! Returns pointer to the IGPUProgrammingServices interface.
+		virtual IGPUProgrammingServices* getGPUProgrammingServices();
+
 		//! Returns a pointer to the IVideoDriver interface. (Implementation for
 		//! IMaterialRendererServices)
 		virtual IVideoDriver* getVideoDriver();
@@ -213,9 +216,6 @@ namespace video
 		//! \param index: The plane index. Must be between 0 and MaxUserClipPlanes.
 		//! \param enable: If true, enable the clipping plane else disable it.
 		virtual void enableClipPlane(u32 index, bool enable);
-
-		//! Returns the maximum texture size supported.
-		virtual core::dimension2du getMaxTextureSize() const;
 
 		virtual bool checkDriverReset() {return DriverWasReset;}
 	private:
@@ -254,7 +254,7 @@ namespace video
 
 		//! returns a device dependent texture from a software surface (IImage)
 		//! THIS METHOD HAS TO BE OVERRIDDEN BY DERIVED DRIVERS WITH OWN TEXTURES
-		virtual video::ITexture* createDeviceDependentTexture(IImage* surface, const io::path& name, void* mipmapData=0);
+		virtual video::ITexture* createDeviceDependentTexture(IImage* surface, const io::path& name);
 
 		// returns the current size of the screen or rendertarget
 		virtual const core::dimension2d<u32>& getCurrentRenderTargetSize() const;
@@ -271,8 +271,6 @@ namespace video
 				u32 vertexCount, const void* indexList, u32 primitiveCount,
 				E_VERTEX_TYPE vType, scene::E_PRIMITIVE_TYPE pType,
 				E_INDEX_TYPE iType, bool is3D);
-
-		D3DTEXTUREADDRESS getTextureWrapMode(const u8 clamp);
 
 		inline D3DCOLORVALUE colorToD3D(const SColor& col)
 		{
@@ -302,7 +300,7 @@ namespace video
 		IDirect3DSurface8* PrevRenderTarget;
 		core::dimension2d<u32> CurrentRendertargetSize;
 
-		HWND WindowId;
+		void* WindowId;
 		core::rect<s32>* SceneSourceRect;
 
 		D3DCAPS8 Caps;
@@ -319,8 +317,6 @@ namespace video
 		bool DriverWasReset;
 
 		SColorf AmbientLight;
-
-		u32 DisplayAdapter;
 	};
 
 } // end namespace video

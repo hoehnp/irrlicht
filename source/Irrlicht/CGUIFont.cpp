@@ -241,16 +241,14 @@ bool CGUIFont::loadTexture(video::IImage* image, const io::path& name)
 	switch(image->getColorFormat())
 	{
 	case video::ECF_R5G6B5:
-		tmpImage =  new video::CImage(video::ECF_A1R5G5B5,image->getDimension());
-		image->copyTo(tmpImage);
+		tmpImage =  new video::CImage(video::ECF_A1R5G5B5,image);
 		deleteTmpImage=true;
 		break;
 	case video::ECF_A1R5G5B5:
 	case video::ECF_A8R8G8B8:
 		break;
 	case video::ECF_R8G8B8:
-		tmpImage = new video::CImage(video::ECF_A8R8G8B8,image->getDimension());
-		image->copyTo(tmpImage);
+		tmpImage = new video::CImage(video::ECF_A8R8G8B8,image);
 		deleteTmpImage=true;
 		break;
 	}
@@ -470,7 +468,7 @@ void CGUIFont::draw(const core::stringw& text, const core::rect<s32>& position,
 	if (!Driver)
 		return;
 
-	core::dimension2d<s32> textDimension;	// NOTE: don't make this u32 or the >> later on can fail when the dimension width is < position width
+	core::dimension2d<s32> textDimension;	// NOTE: don't make this u32 or the >> later on can fail when the dimension widht is < position width
 	core::position2d<s32> offset = position.UpperLeftCorner;
 
 	if (hcenter || vcenter || clip)

@@ -31,10 +31,10 @@ CGUIModalScreen::CGUIModalScreen(IGUIEnvironment* environment, IGUIElement* pare
 
 bool CGUIModalScreen::canTakeFocus(IGUIElement* target) const
 {
-    return (target && ((const IGUIElement*)target == this // this element can take it
-                        || isMyChild(target)    // own children also
+    return (target && (target == this // this element can take it
+                        || isMyChild(target)    // own childs also
                         || (target->getType() == EGUIET_MODAL_SCREEN )// other modals also fine
-                        || (target->getParent() && target->getParent()->getType() == EGUIET_MODAL_SCREEN )))   // children of other modals will do
+                        || (target->getParent() && target->getParent()->getType() == EGUIET_MODAL_SCREEN )))   // childs of other modals will do
             ;
 }
 
@@ -77,7 +77,7 @@ bool CGUIModalScreen::isPointInside(const core::position2d<s32>& point) const
 //! called if an event happened.
 bool CGUIModalScreen::OnEvent(const SEvent& event)
 {
-    if (!isEnabled() || !isVisible() )
+    if (!IsEnabled || !isVisible() )
         return IGUIElement::OnEvent(event);
 
     switch(event.EventType)
@@ -90,7 +90,6 @@ bool CGUIModalScreen::OnEvent(const SEvent& event)
 			{
 				Environment->setFocus(this);
 			}
-			IGUIElement::OnEvent(event);
 			return false;
 		case EGET_ELEMENT_FOCUS_LOST:
 			if ( !canTakeFocus(event.GUIEvent.Element))

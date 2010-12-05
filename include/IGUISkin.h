@@ -38,7 +38,7 @@ namespace gui
 
 		//! An unknown skin, not serializable at present
 		EGST_UNKNOWN,
-
+			
 		//! this value is not used, it only specifies the number of skin types
 		EGST_COUNT
 	};
@@ -99,15 +99,6 @@ namespace gui
 		EGDC_ICON,
 		//! Selected icons in a list or tree
 		EGDC_ICON_HIGH_LIGHT,
-		//! Grayed (disabled) window symbols like on close buttons, scroll bars and check boxes
-		EGDC_GRAY_WINDOW_SYMBOL,
-		//! Window background for editable field (editbox, checkbox-field)
-		EGDC_EDITABLE,
-		//! Grayed (disabled) window background for editable field (editbox, checkbox-field)
-		EGDC_GRAY_EDITABLE,
-		//! Show focus of window background for editable field (editbox or when checkbox-field is pressed)
-		EGDC_FOCUSED_EDITABLE,
-
 		//! this value is not used, it only specifies the amount of default colors
 		//! available.
 		EGDC_COUNT
@@ -137,10 +128,6 @@ namespace gui
 		"WindowSymbol",
 		"Icon",
 		"IconHighlight",
-		"GrayWindowSymbol",
-		"Editable",
-		"GrayEditable",
-		"FocusedEditable",
 		0,
 	};
 
@@ -155,9 +142,9 @@ namespace gui
 		EGDS_WINDOW_BUTTON_WIDTH,
 		//! width of a checkbox check
 		EGDS_CHECK_BOX_WIDTH,
-		//! deprecated
+		//! width of a messagebox
 		EGDS_MESSAGE_BOX_WIDTH,
-		//! deprecated
+		//! height of a messagebox
 		EGDS_MESSAGE_BOX_HEIGHT,
 		//! width of a default button
 		EGDS_BUTTON_WIDTH,
@@ -171,19 +158,6 @@ namespace gui
 		EGDS_TITLEBARTEXT_DISTANCE_X,
 		//! distance for text in the title bar, from the top of the window rect
 		EGDS_TITLEBARTEXT_DISTANCE_Y,
-		//! free space in a messagebox between borders and contents on all sides
-		EGDS_MESSAGE_BOX_GAP_SPACE,
-		//! minimal space to reserve for messagebox text-width
-		EGDS_MESSAGE_BOX_MIN_TEXT_WIDTH,
-		//! maximal space to reserve for messagebox text-width
-		EGDS_MESSAGE_BOX_MAX_TEXT_WIDTH,
-		//! deprecated - this was a typo. Should be removed for 1.8
-		EGDS_MESSAGE_BOX_MAX_TEST_WIDTH = EGDS_MESSAGE_BOX_MAX_TEXT_WIDTH,
-		//! minimal space to reserve for messagebox text-height
-		EGDS_MESSAGE_BOX_MIN_TEXT_HEIGHT,
-		//! maximal space to reserve for messagebox text-height
-		EGDS_MESSAGE_BOX_MAX_TEXT_HEIGHT,
-
 		//! this value is not used, it only specifies the amount of default sizes
 		//! available.
 		EGDS_COUNT
@@ -205,12 +179,7 @@ namespace gui
 		"TextDistanceY",
 		"TitleBarTextX",
 		"TitleBarTextY",
-		"MessageBoxGapSpace",
-		"MessageBoxMinTextWidth",
-		"MessageBoxMaxTextWidth",
-		"MessageBoxMinTextHeight",
-		"MessageBoxMaxTextHeight",
-		0
+		0,
 	};
 
 
@@ -248,7 +217,7 @@ namespace gui
 		"WindowButtonMaximize",
 		"WindowButtonMinimize",
 		"WindowButtonRestore",
-		0
+		0,
 	};
 
 	//! Customizable symbols for GUI
@@ -463,16 +432,11 @@ namespace gui
 		\param drawTitleBar: True to enable title drawing.
 		\param rect: Defining area where to draw.
 		\param clip: Clip area.
-		\param checkClientArea: When set to non-null the function will not draw anything,
-		but will instead return the clientArea which can be used for drawing by the calling window.
-		That is the area without borders and without titlebar.
-		\return Returns rect where it would be good to draw title bar text. This will
-		work even when checkClientArea is set to a non-null value.*/
+		\return Returns rect where it would be good to draw title bar text. */
 		virtual core::rect<s32> draw3DWindowBackground(IGUIElement* element,
 			bool drawTitleBar, video::SColor titleBarColor,
 			const core::rect<s32>& rect,
-			const core::rect<s32>* clip=0,
-			core::rect<s32>* checkClientArea=0) = 0;
+			const core::rect<s32>* clip=0) = 0;
 
 		//! draws a standard 3d menu pane
 		/** Used for drawing for menus and context menus.

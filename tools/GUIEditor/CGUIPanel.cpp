@@ -275,7 +275,6 @@ void CGUIPanel::resizeInnerPane()
 	{
 		HScrollBar->setVisible(true);
 		HScrollBar->setMax(totalRect.getWidth() - outerRect.getWidth());
-		bringToFront(HScrollBar);
 	}
 	else
 		HScrollBar->setVisible(false);
@@ -285,7 +284,6 @@ void CGUIPanel::resizeInnerPane()
 	{
 		VScrollBar->setVisible(true);
 		VScrollBar->setMax(totalRect.getHeight() - outerRect.getHeight());
-		bringToFront(VScrollBar);
 	}
 	else
 		VScrollBar->setVisible(false);

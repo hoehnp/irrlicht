@@ -8,7 +8,6 @@
 #include "EDriverTypes.h"
 #include "EDeviceTypes.h"
 #include "dimension2d.h"
-#include "ILogger.h"
 
 namespace irr
 {
@@ -36,9 +35,6 @@ namespace irr
 			HighPrecisionFPU(false),
 			EventReceiver(0),
 			WindowId(0),
-			LoggingLevel(ELL_INFORMATION),
-			DisplayAdapter(0),
-			UsePerformanceTimer(true),
 			SDK_version_do_not_use(IRRLICHT_SDK_VERSION)
 		{
 		}
@@ -65,9 +61,6 @@ namespace irr
 			HighPrecisionFPU = other.HighPrecisionFPU;
 			EventReceiver = other.EventReceiver;
 			WindowId = other.WindowId;
-			LoggingLevel = other.LoggingLevel;
-			DisplayAdapter = other.DisplayAdapter;
-			UsePerformanceTimer = other.UsePerformanceTimer;
 			return *this;
 		}
 
@@ -234,25 +227,6 @@ namespace irr
 		However, there is no need to draw the picture this often. Just
 		do it how you like. */
 		void* WindowId;
-
-		//! Specifies the logging level used in the logging interface.
-		/** The default value is ELL_INFORMATION. You can access the ILogger interface
-		later on from the IrrlichtDevice with getLogger() and set another level.
-		But if you need more or less logging information already from device creation,
-		then you have to change it here.
-		*/
-		ELOG_LEVEL LoggingLevel;
-
-		//! Allows to select which graphic card is used for rendering when more than one card is in the system.
-		/** So far only supported on D3D */
-		u32 DisplayAdapter;
-
-		//! Enables use of high performance timers on Windows platform.
-		/** When performance timers are not used, standard GetTickCount()
-		is used instead which usually has worse resolution, but also less
-		problems with speed stepping and other techniques.
-		*/
-		bool UsePerformanceTimer;
 
 		//! Don't use or change this parameter.
 		/** Always set it to IRRLICHT_SDK_VERSION, which is done by default.

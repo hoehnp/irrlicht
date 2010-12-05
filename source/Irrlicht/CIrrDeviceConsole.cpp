@@ -124,7 +124,7 @@ CIrrDeviceConsole::CIrrDeviceConsole(const SIrrlichtCreationParameters& params)
 
 	case video::EDT_BURNINGSVIDEO:
 		#ifdef _IRR_COMPILE_WITH_BURNINGSVIDEO_
-		VideoDriver = video::createBurningVideoDriver(CreationParams, FileSystem, this);
+		VideoDriver = video::createSoftwareDriver2(CreationParams.WindowSize, CreationParams.Fullscreen, FileSystem, this);
 		#else
 		os::Printer::log("Burning's Video driver was not compiled in.", ELL_ERROR);
 		#endif
@@ -346,7 +346,8 @@ void CIrrDeviceConsole::sleep(u32 timeMs, bool pauseTimer)
 void CIrrDeviceConsole::setWindowCaption(const wchar_t* text)
 {
 #ifdef _IRR_WINDOWS_NT_CONSOLE_
-	SetConsoleTitleW(text);
+	core::stringc txt(text);
+	SetConsoleTitle(txt.c_str());
 #endif
 }
 

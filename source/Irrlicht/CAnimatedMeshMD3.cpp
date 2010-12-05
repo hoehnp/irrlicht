@@ -381,7 +381,7 @@ bool CAnimatedMeshMD3::loadModelFile( u32 modelIndex, io::IReadFile* file,
 		{
 			file->read( &skin, sizeof(skin) );
 
-			io::path name;
+			core::stringc name;
 			cutFilenameExtension ( name, skin.name );
 			name.replace ( '\\', '/' );
 			buf->Shader = name;

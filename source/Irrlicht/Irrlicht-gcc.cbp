@@ -423,49 +423,31 @@
 			<Add alias="All" targets="Win32 - Debug - dll;Win32 - Release - accurate math - dll;Win32 - Release - fast math - dll;" />
 		</VirtualTargets>
 		<Unit filename="../../changes.txt" />
-		<Unit filename="../../include/CDynamicMeshBuffer.h" />
-		<Unit filename="../../include/CIndexBuffer.h" />
-		<Unit filename="../../include/CMeshBuffer.h" />
-		<Unit filename="../../include/CVertexBuffer.h" />
-		<Unit filename="../../include/EAttributes.h" />
 		<Unit filename="../../include/ECullingTypes.h" />
 		<Unit filename="../../include/EDebugSceneTypes.h" />
-		<Unit filename="../../include/EDeviceTypes.h" />
-		<Unit filename="../../include/EDriverFeatures.h" />
 		<Unit filename="../../include/EDriverTypes.h" />
-		<Unit filename="../../include/EGUIAlignment.h" />
 		<Unit filename="../../include/EGUIElementTypes.h" />
-		<Unit filename="../../include/EHardwareBufferFlags.h" />
-		<Unit filename="../../include/EMaterialFlags.h" />
-		<Unit filename="../../include/EMaterialTypes.h" />
 		<Unit filename="../../include/EMeshWriterEnums.h" />
 		<Unit filename="../../include/EMessageBoxFlags.h" />
-		<Unit filename="../../include/EPrimitiveTypes.h" />
 		<Unit filename="../../include/ESceneNodeAnimatorTypes.h" />
 		<Unit filename="../../include/ESceneNodeTypes.h" />
-		<Unit filename="../../include/EShaderTypes.h" />
-		<Unit filename="../../include/ETerrainElements.h" />
 		<Unit filename="../../include/IAnimatedMesh.h" />
 		<Unit filename="../../include/IAnimatedMeshMD2.h" />
-		<Unit filename="../../include/IAnimatedMeshMD3.h" />
 		<Unit filename="../../include/IAnimatedMeshSceneNode.h" />
 		<Unit filename="../../include/IAttributeExchangingObject.h" />
 		<Unit filename="../../include/IAttributes.h" />
 		<Unit filename="../../include/IBillboardSceneNode.h" />
-		<Unit filename="../../include/IBillboardTextSceneNode.h" />
 		<Unit filename="../../include/IBoneSceneNode.h" />
 		<Unit filename="../../include/ICameraSceneNode.h" />
 		<Unit filename="../../include/ICursorControl.h" />
 		<Unit filename="../../include/IDummyTransformationSceneNode.h" />
-		<Unit filename="../../include/IDynamicMeshBuffer.h" />
 		<Unit filename="../../include/IEventReceiver.h" />
 		<Unit filename="../../include/IFileArchive.h" />
 		<Unit filename="../../include/IFileList.h" />
 		<Unit filename="../../include/IFileSystem.h" />
 		<Unit filename="../../include/IGPUProgrammingServices.h" />
 		<Unit filename="../../include/IGUIButton.h" />
-		<Unit filename="../../include/IGUICheckBox.h" />
-		<Unit filename="../../include/IGUIColorSelectDialog.h" />
+		<Unit filename="../../include/IGUICheckbox.h" />
 		<Unit filename="../../include/IGUIComboBox.h" />
 		<Unit filename="../../include/IGUIContextMenu.h" />
 		<Unit filename="../../include/IGUIEditBox.h" />
@@ -474,9 +456,7 @@
 		<Unit filename="../../include/IGUIEnvironment.h" />
 		<Unit filename="../../include/IGUIFileOpenDialog.h" />
 		<Unit filename="../../include/IGUIFont.h" />
-		<Unit filename="../../include/IGUIFontBitmap.h" />
 		<Unit filename="../../include/IGUIImage.h" />
-		<Unit filename="../../include/IGUIImageList.h" />
 		<Unit filename="../../include/IGUIInOutFader.h" />
 		<Unit filename="../../include/IGUIListBox.h" />
 		<Unit filename="../../include/IGUIMeshViewer.h" />
@@ -488,14 +468,9 @@
 		<Unit filename="../../include/IGUITabControl.h" />
 		<Unit filename="../../include/IGUITable.h" />
 		<Unit filename="../../include/IGUIToolbar.h" />
-		<Unit filename="../../include/IGUITreeView.h" />
 		<Unit filename="../../include/IGUIWindow.h" />
-		<Unit filename="../../include/IGeometryCreator.h" />
 		<Unit filename="../../include/IImage.h" />
 		<Unit filename="../../include/IImageLoader.h" />
-		<Unit filename="../../include/IImageWriter.h" />
-		<Unit filename="../../include/IIndexBuffer.h" />
-		<Unit filename="../../include/ILightManager.h" />
 		<Unit filename="../../include/ILightSceneNode.h" />
 		<Unit filename="../../include/ILogger.h" />
 		<Unit filename="../../include/IMaterialRenderer.h" />
@@ -510,20 +485,9 @@
 		<Unit filename="../../include/IMetaTriangleSelector.h" />
 		<Unit filename="../../include/IOSOperator.h" />
 		<Unit filename="../../include/IParticleAffector.h" />
-		<Unit filename="../../include/IParticleAnimatedMeshSceneNodeEmitter.h" />
-		<Unit filename="../../include/IParticleAttractionAffector.h" />
-		<Unit filename="../../include/IParticleBoxEmitter.h" />
-		<Unit filename="../../include/IParticleCylinderEmitter.h" />
 		<Unit filename="../../include/IParticleEmitter.h" />
-		<Unit filename="../../include/IParticleFadeOutAffector.h" />
-		<Unit filename="../../include/IParticleGravityAffector.h" />
-		<Unit filename="../../include/IParticleMeshEmitter.h" />
-		<Unit filename="../../include/IParticleRingEmitter.h" />
-		<Unit filename="../../include/IParticleRotationAffector.h" />
-		<Unit filename="../../include/IParticleSphereEmitter.h" />
 		<Unit filename="../../include/IParticleSystemSceneNode.h" />
 		<Unit filename="../../include/IQ3LevelMesh.h" />
-		<Unit filename="../../include/IQ3Shader.h" />
 		<Unit filename="../../include/IReadFile.h" />
 		<Unit filename="../../include/IReferenceCounted.h" />
 		<Unit filename="../../include/ISceneCollisionManager.h" />
@@ -535,7 +499,7 @@
 		<Unit filename="../../include/ISceneNodeAnimatorCollisionResponse.h" />
 		<Unit filename="../../include/ISceneNodeAnimatorFactory.h" />
 		<Unit filename="../../include/ISceneNodeFactory.h" />
-		<Unit filename="../../include/ISceneUserDataSerializer.h" />
+		<Unit filename="../../include/ISceneNodeMeshLoader.h" />
 		<Unit filename="../../include/IShaderConstantSetCallBack.h" />
 		<Unit filename="../../include/IShadowVolumeSceneNode.h" />
 		<Unit filename="../../include/ISkinnedMesh.h" />
@@ -544,7 +508,6 @@
 		<Unit filename="../../include/ITexture.h" />
 		<Unit filename="../../include/ITimer.h" />
 		<Unit filename="../../include/ITriangleSelector.h" />
-		<Unit filename="../../include/IVertexBuffer.h" />
 		<Unit filename="../../include/IVideoDriver.h" />
 		<Unit filename="../../include/IVideoModeList.h" />
 		<Unit filename="../../include/IVolumeLightSceneNode.h" />
@@ -562,22 +525,16 @@
 		<Unit filename="../../include/SKeyMap.h" />
 		<Unit filename="../../include/SLight.h" />
 		<Unit filename="../../include/SMaterial.h" />
-		<Unit filename="../../include/SMaterialLayer.h" />
 		<Unit filename="../../include/SMesh.h" />
 		<Unit filename="../../include/SMeshBuffer.h" />
 		<Unit filename="../../include/SMeshBufferLightMap.h" />
 		<Unit filename="../../include/SMeshBufferTangents.h" />
 		<Unit filename="../../include/SParticle.h" />
-		<Unit filename="../../include/SSharedMeshBuffer.h" />
 		<Unit filename="../../include/SSkinMeshBuffer.h" />
-		<Unit filename="../../include/SVertexIndex.h" />
-		<Unit filename="../../include/SVertexManipulator.h" />
 		<Unit filename="../../include/SViewFrustum.h" />
 		<Unit filename="../../include/SceneParameters.h" />
 		<Unit filename="../../include/aabbox3d.h" />
-		<Unit filename="../../include/coreutil.h" />
 		<Unit filename="../../include/dimension2d.h" />
-		<Unit filename="../../include/fast_atof.h" />
 		<Unit filename="../../include/heapsort.h" />
 		<Unit filename="../../include/irrAllocator.h" />
 		<Unit filename="../../include/irrArray.h" />
@@ -603,8 +560,6 @@
 		<Unit filename="BuiltInFont.h" />
 		<Unit filename="C3DSMeshFileLoader.cpp" />
 		<Unit filename="C3DSMeshFileLoader.h" />
-		<Unit filename="CAnimatedMeshHalfLife.cpp" />
-		<Unit filename="CAnimatedMeshHalfLife.h" />
 		<Unit filename="CAnimatedMeshMD2.cpp" />
 		<Unit filename="CAnimatedMeshMD2.h" />
 		<Unit filename="CAnimatedMeshMD3.cpp" />
@@ -739,8 +694,6 @@
 		<Unit filename="CImage.h" />
 		<Unit filename="CImageLoaderBMP.cpp" />
 		<Unit filename="CImageLoaderBMP.h" />
-		<Unit filename="CImageLoaderDDS.cpp" />
-		<Unit filename="CImageLoaderDDS.h" />
 		<Unit filename="CImageLoaderJPG.cpp" />
 		<Unit filename="CImageLoaderJPG.h" />
 		<Unit filename="CImageLoaderPCX.cpp" />
@@ -818,8 +771,6 @@
 		<Unit filename="CMetaTriangleSelector.h" />
 		<Unit filename="CMountPointReader.cpp" />
 		<Unit filename="CMountPointReader.h" />
-		<Unit filename="CNPKReader.cpp" />
-		<Unit filename="CNPKReader.h" />
 		<Unit filename="CNullDriver.cpp" />
 		<Unit filename="CNullDriver.h" />
 		<Unit filename="COBJMeshFileLoader.cpp" />
@@ -830,10 +781,10 @@
 		<Unit filename="COCTLoader.h" />
 		<Unit filename="COSOperator.cpp" />
 		<Unit filename="COSOperator.h" />
-		<Unit filename="COctreeSceneNode.cpp" />
-		<Unit filename="COctreeSceneNode.h" />
-		<Unit filename="COctreeTriangleSelector.cpp" />
-		<Unit filename="COctreeTriangleSelector.h" />
+		<Unit filename="COctTreeSceneNode.cpp" />
+		<Unit filename="COctTreeSceneNode.h" />
+		<Unit filename="COctTreeTriangleSelector.cpp" />
+		<Unit filename="COctTreeTriangleSelector.h" />
 		<Unit filename="COgreMeshFileLoader.cpp" />
 		<Unit filename="COgreMeshFileLoader.h" />
 		<Unit filename="COpenGLDriver.cpp" />
@@ -858,29 +809,22 @@
 		<Unit filename="CPakReader.cpp" />
 		<Unit filename="CPakReader.h" />
 		<Unit filename="CParticleAnimatedMeshSceneNodeEmitter.cpp" />
-		<Unit filename="CParticleAnimatedMeshSceneNodeEmitter.h" />
 		<Unit filename="CParticleAttractionAffector.cpp" />
-		<Unit filename="CParticleAttractionAffector.h" />
 		<Unit filename="CParticleBoxEmitter.cpp" />
 		<Unit filename="CParticleBoxEmitter.h" />
 		<Unit filename="CParticleCylinderEmitter.cpp" />
-		<Unit filename="CParticleCylinderEmitter.h" />
 		<Unit filename="CParticleFadeOutAffector.cpp" />
 		<Unit filename="CParticleFadeOutAffector.h" />
 		<Unit filename="CParticleGravityAffector.cpp" />
 		<Unit filename="CParticleGravityAffector.h" />
 		<Unit filename="CParticleMeshEmitter.cpp" />
-		<Unit filename="CParticleMeshEmitter.h" />
 		<Unit filename="CParticlePointEmitter.cpp" />
 		<Unit filename="CParticlePointEmitter.h" />
 		<Unit filename="CParticleRingEmitter.cpp" />
-		<Unit filename="CParticleRingEmitter.h" />
 		<Unit filename="CParticleRotationAffector.cpp" />
-		<Unit filename="CParticleRotationAffector.h" />
 		<Unit filename="CParticleScaleAffector.cpp" />
 		<Unit filename="CParticleScaleAffector.h" />
 		<Unit filename="CParticleSphereEmitter.cpp" />
-		<Unit filename="CParticleSphereEmitter.h" />
 		<Unit filename="CParticleSystemSceneNode.cpp" />
 		<Unit filename="CParticleSystemSceneNode.h" />
 		<Unit filename="CQ3LevelMesh.cpp" />
@@ -941,8 +885,6 @@
 		<Unit filename="CTRGouraudAlpha2.cpp" />
 		<Unit filename="CTRGouraudAlphaNoZ2.cpp" />
 		<Unit filename="CTRGouraudWire.cpp" />
-		<Unit filename="CTRNormalMap.cpp" />
-		<Unit filename="CTRStencilShadow.cpp" />
 		<Unit filename="CTRTextureBlend.cpp" />
 		<Unit filename="CTRTextureDetailMap2.cpp" />
 		<Unit filename="CTRTextureFlat.cpp" />
@@ -982,8 +924,6 @@
 		<Unit filename="CVideoModeList.h" />
 		<Unit filename="CVolumeLightSceneNode.cpp" />
 		<Unit filename="CVolumeLightSceneNode.h" />
-		<Unit filename="CWADReader.cpp" />
-		<Unit filename="CWADReader.h" />
 		<Unit filename="CWaterSurfaceSceneNode.cpp" />
 		<Unit filename="CWaterSurfaceSceneNode.h" />
 		<Unit filename="CWriteFile.cpp" />
@@ -999,7 +939,6 @@
 		<Unit filename="CZBuffer.h" />
 		<Unit filename="CZipReader.cpp" />
 		<Unit filename="CZipReader.h" />
-		<Unit filename="IAttribute.h" />
 		<Unit filename="IBurningShader.cpp" />
 		<Unit filename="IBurningShader.h" />
 		<Unit filename="IDepthBuffer.h" />
@@ -1009,65 +948,19 @@
 		<Unit filename="Irrlicht.cpp" />
 		<Unit filename="MacOSX/CIrrDeviceMacOSX.h" />
 		<Unit filename="MacOSX/CIrrDeviceMacOSX.mm" />
-		<Unit filename="Octree.h" />
+		<Unit filename="OctTree.h" />
 		<Unit filename="S2DVertex.h" />
 		<Unit filename="S4DVertex.h" />
 		<Unit filename="SoftwareDriver2_compile_config.h" />
 		<Unit filename="SoftwareDriver2_helper.h" />
-		<Unit filename="aesGladman/aes.h" />
-		<Unit filename="aesGladman/aescrypt.cpp" />
-		<Unit filename="aesGladman/aeskey.cpp" />
-		<Unit filename="aesGladman/aesopt.h" />
-		<Unit filename="aesGladman/aestab.cpp" />
-		<Unit filename="aesGladman/fileenc.cpp" />
-		<Unit filename="aesGladman/fileenc.h" />
-		<Unit filename="aesGladman/hmac.cpp" />
-		<Unit filename="aesGladman/hmac.h" />
-		<Unit filename="aesGladman/prng.cpp" />
-		<Unit filename="aesGladman/prng.h" />
-		<Unit filename="aesGladman/pwd2key.cpp" />
-		<Unit filename="aesGladman/pwd2key.h" />
-		<Unit filename="aesGladman/sha1.cpp" />
-		<Unit filename="aesGladman/sha1.h" />
-		<Unit filename="aesGladman/sha2.cpp" />
-		<Unit filename="aesGladman/sha2.h" />
-		<Unit filename="bzip2/blocksort.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="bzip2/bzcompress.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="bzip2/bzlib.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="bzip2/bzlib.h" />
-		<Unit filename="bzip2/bzlib_private.h" />
-		<Unit filename="bzip2/crctable.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="bzip2/decompress.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="bzip2/huffman.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="bzip2/randtable.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="dmfsupport.h" />
 		<Unit filename="glext.h" />
 		<Unit filename="irrXML.cpp" />
 		<Unit filename="jpeglib/cderror.h" />
-		<Unit filename="jpeglib/jaricom.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="jpeglib/jcapimin.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="jpeglib/jcapistd.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="jpeglib/jcarith.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="jpeglib/jccoefct.c">
@@ -1102,6 +995,9 @@
 		<Unit filename="jpeglib/jcparam.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="jpeglib/jcphuff.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="jpeglib/jcprepct.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -1115,9 +1011,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="jpeglib/jdapistd.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="jpeglib/jdarith.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="jpeglib/jdatadst.c">
@@ -1155,6 +1048,9 @@
 		<Unit filename="jpeglib/jdmerge.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="jpeglib/jdphuff.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="jpeglib/jdpostct.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -1184,6 +1080,9 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="jpeglib/jidctint.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="jpeglib/jidctred.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="jpeglib/jinclude.h" />
@@ -1254,11 +1153,6 @@
 		<Unit filename="libpng/pngwutil.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="lzma/LzmaDec.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="lzma/LzmaDec.h" />
-		<Unit filename="lzma/Types.h" />
 		<Unit filename="os.cpp" />
 		<Unit filename="os.h" />
 		<Unit filename="zlib/adler32.c">

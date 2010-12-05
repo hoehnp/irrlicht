@@ -1630,7 +1630,7 @@ public:
 	virtual bool getBool()
 	{
 		if (IsStringW)
-			return ValueW.equals_ignore_case(L"true");
+			return Value.equals_ignore_case(L"true");
 		else
 			return Value.equals_ignore_case("true");
 	}
@@ -1828,13 +1828,13 @@ public:
 
 	virtual core::stringw getStringW()
 	{
-		return core::stringw(Value ? Value->getName().getPath().c_str() : 0);
+		return core::stringw(Value ? Value->getName().c_str() : 0);
 	}
 
 	virtual core::stringc getString()
 	{
 		// since texture names can be stringw we are careful with the types
-		return core::stringc(Value ? Value->getName().getPath().c_str() : 0);
+		return core::stringc(Value ? Value->getName().c_str() : 0);
 	}
 
 	virtual void setString(const char* text)
@@ -1852,7 +1852,7 @@ public:
 	{
 		if ( value == Value )
 			return;
-
+		
 		if (Value)
 			Value->drop();
 
@@ -1884,7 +1884,7 @@ class CStringWArrayAttribute : public IAttribute
 {
 public:
 
-	CStringWArrayAttribute(const char* name, const core::array<core::stringw>& value)
+	CStringWArrayAttribute(const char* name, core::array<core::stringw> value)
 	{
 		Name = name;
 		setArray(value);
@@ -1895,7 +1895,7 @@ public:
 		return Value;
 	}
 
-	virtual void setArray(const core::array<core::stringw>& value)
+	virtual void setArray(core::array<core::stringw> value)
 	{
 		Value = value;
 	}
@@ -1927,7 +1927,7 @@ public:
 
 	virtual s32 getInt()
 	{
-		return *static_cast<s32*>(Value);
+		return *(s32*)(&Value);
 	}
 
 	virtual bool getBool()
@@ -1938,7 +1938,7 @@ public:
 	virtual core::stringw getStringW()
 	{
 		wchar_t buf[32];
-		swprintf(buf, 32, L"%p", Value);
+		swprintf(buf, 32, L"0x%x", *(int*)(&Value));
 
 		return core::stringw(buf);
 	}

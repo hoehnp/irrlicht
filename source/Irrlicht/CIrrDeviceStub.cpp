@@ -22,7 +22,7 @@ CIrrDeviceStub::CIrrDeviceStub(const SIrrlichtCreationParameters& params)
 	FileSystem(0), InputReceivingSceneManager(0), CreationParams(params),
 	Close(false)
 {
-	Timer = new CTimer(params.UsePerformanceTimer);
+	Timer = new CTimer();
 	if (os::Printer::Logger)
 	{
 		os::Printer::Logger->grab();
@@ -34,7 +34,6 @@ CIrrDeviceStub::CIrrDeviceStub(const SIrrlichtCreationParameters& params)
 		Logger = new CLogger(UserReceiver);
 		os::Printer::Logger = Logger;
 	}
-	Logger->setLogLevel( CreationParams.LoggingLevel );
 
 	os::Printer::Logger = Logger;
 
@@ -173,7 +172,7 @@ bool CIrrDeviceStub::checkVersion(const char* version)
 
 
 //! Compares to the last call of this function to return double and triple clicks.
-u32 CIrrDeviceStub::checkSuccessiveClicks(s32 mouseX, s32 mouseY, EMOUSE_INPUT_EVENT inputEvent )
+u32 CIrrDeviceStub::checkSuccessiveClicks(s32 mouseX, s32 mouseY)
 {
 	const s32 MAX_MOUSEMOVE = 3;
 
@@ -182,9 +181,7 @@ u32 CIrrDeviceStub::checkSuccessiveClicks(s32 mouseX, s32 mouseY, EMOUSE_INPUT_E
 	if ( (clickTime-MouseMultiClicks.LastClickTime) < MouseMultiClicks.DoubleClickTime
 		&& core::abs_(MouseMultiClicks.LastClick.X - mouseX ) <= MAX_MOUSEMOVE
 		&& core::abs_(MouseMultiClicks.LastClick.Y - mouseY ) <= MAX_MOUSEMOVE
-		&& MouseMultiClicks.CountSuccessiveClicks < 3
-		&& MouseMultiClicks.LastMouseInputEvent == inputEvent
-	   )
+		&& MouseMultiClicks.CountSuccessiveClicks < 3 )
 	{
 		++MouseMultiClicks.CountSuccessiveClicks;
 	}
@@ -193,7 +190,6 @@ u32 CIrrDeviceStub::checkSuccessiveClicks(s32 mouseX, s32 mouseY, EMOUSE_INPUT_E
 		MouseMultiClicks.CountSuccessiveClicks = 1;
 	}
 
-	MouseMultiClicks.LastMouseInputEvent = inputEvent;
 	MouseMultiClicks.LastClickTime = clickTime;
 	MouseMultiClicks.LastClick.X = mouseX;
 	MouseMultiClicks.LastClick.Y = mouseY;
@@ -352,12 +348,6 @@ u32 CIrrDeviceStub::getDoubleClickTime() const
 {
 	return MouseMultiClicks.DoubleClickTime;
 }
-
-//! Remove all messages pending in the system message loop
-void CIrrDeviceStub::clearSystemMessages()
-{
-}
-
 
 
 } // end namespace irr

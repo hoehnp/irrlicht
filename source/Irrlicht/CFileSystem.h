@@ -46,10 +46,8 @@ public:
 	virtual IWriteFile* createAndWriteFile(const io::path& filename, bool append=false);
 
 	//! Adds an archive to the file system.
-	virtual bool addFileArchive(const io::path& filename,
-			bool ignoreCase = true, bool ignorePaths = true,
-			E_FILE_ARCHIVE_TYPE archiveType = EFAT_UNKNOWN,
-			const core::stringc& password="");
+	virtual bool addFileArchive(const io::path& filename, bool ignoreCase = true,
+		bool ignorePaths = true, E_FILE_ARCHIVE_TYPE archiveType = EFAT_UNKNOWN);
 
 	//! move the hirarchy of the filesystem. moves sourceIndex relative up or down
 	virtual bool moveFileArchive( u32 sourceIndex, s32 relative );

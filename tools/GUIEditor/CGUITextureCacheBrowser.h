@@ -56,7 +56,6 @@ namespace gui
 		virtual void setDraggable(bool draggable);
 
 		//! not used
-		virtual core::rect<s32> getClientRect() const;
         virtual void setDrawBackground(bool draw)  { }
 		virtual bool getDrawBackground() const { return true; }
 		virtual void setDrawTitlebar(bool draw) { }

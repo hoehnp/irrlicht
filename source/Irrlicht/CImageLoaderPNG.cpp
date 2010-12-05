@@ -27,14 +27,8 @@ namespace video
 // PNG function for error handling
 static void png_cpexcept_error(png_structp png_ptr, png_const_charp msg)
 {
-	os::Printer::log("PNG fatal error", msg, ELL_ERROR);
-	longjmp(png_jmpbuf(png_ptr), 1);
-}
-
-// PNG function for warning handling
-static void png_cpexcept_warn(png_structp png_ptr, png_const_charp msg)
-{
-	os::Printer::log("PNG warning", msg, ELL_WARNING);
+	os::Printer::log("PNG FATAL ERROR", msg, ELL_ERROR);
+	longjmp(png_ptr->jmpbuf, 1);
 }
 
 // PNG function for file reading
@@ -43,7 +37,7 @@ void PNGAPI user_read_data_fcn(png_structp png_ptr, png_bytep data, png_size_t l
 	png_size_t check;
 
 	// changed by zola {
-	io::IReadFile* file=(io::IReadFile*)png_get_io_ptr(png_ptr);
+	io::IReadFile* file=(io::IReadFile*)png_ptr->io_ptr;
 	check=(png_size_t) file->read((void*)data,(u32)length);
 	// }
 
@@ -113,7 +107,7 @@ IImage* CImageLoaderPng::loadImage(io::IReadFile* file) const
 
 	// Allocate the png read struct
 	png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING,
-		NULL, (png_error_ptr)png_cpexcept_error, (png_error_ptr)png_cpexcept_warn);
+		NULL, (png_error_ptr)png_cpexcept_error, NULL);
 	if (!png_ptr)
 	{
 		os::Printer::log("LOAD PNG: Internal PNG create read struct failure\n", file->getFileName(), ELL_ERROR);
@@ -168,7 +162,7 @@ IImage* CImageLoaderPng::loadImage(io::IReadFile* file) const
 	if (BitDepth < 8)
 	{
 		if (ColorType==PNG_COLOR_TYPE_GRAY || ColorType==PNG_COLOR_TYPE_GRAY_ALPHA)
-			png_set_expand_gray_1_2_4_to_8(png_ptr);
+			png_set_gray_1_2_4_to_8(png_ptr);
 		else
 			png_set_packing(png_ptr);
 	}

@@ -181,13 +181,13 @@ core::stringw CAttributes::getAttributeAsStringW(s32 index)
 
 
 //! Adds an attribute as an array of wide strings
-void CAttributes::addArray(const c8* attributeName, const core::array<core::stringw>& value)
+void CAttributes::addArray(const c8* attributeName, core::array<core::stringw> value)
 {
 	Attributes.push_back(new CStringWArrayAttribute(attributeName, value));
 }
 
 //! Sets an attribute value as an array of wide strings.
-void CAttributes::setAttribute(const c8* attributeName, const core::array<core::stringw>& value)
+void CAttributes::setAttribute(const c8* attributeName, const core::array<core::stringw> value)
 {
 	IAttribute* att = getAttributeP(attributeName);
 	if (att)
@@ -220,7 +220,7 @@ core::array<core::stringw> CAttributes::getAttributeAsArray(s32 index)
 }
 
 //! Sets an attribute as an array of wide strings
-void CAttributes::setAttribute(s32 index, const core::array<core::stringw>& value)
+void CAttributes::setAttribute(s32 index, core::array<core::stringw> value)
 {
 	if (index >= 0 && index < (s32)Attributes.size() )
 		Attributes[index]->setArray(value);
@@ -230,7 +230,7 @@ void CAttributes::setAttribute(s32 index, const core::array<core::stringw>& valu
 
 
 //! Returns attribute index from name, -1 if not found
-s32 CAttributes::findAttribute(const c8* attributeName) const
+s32 CAttributes::findAttribute(const c8* attributeName)
 {
 	for (u32 i=0; i<Attributes.size(); ++i)
 		if (Attributes[i]->Name == attributeName)
@@ -240,7 +240,7 @@ s32 CAttributes::findAttribute(const c8* attributeName) const
 }
 
 
-IAttribute* CAttributes::getAttributeP(const c8* attributeName) const
+IAttribute* CAttributes::getAttributeP(const c8* attributeName)
 {
 	for (u32 i=0; i<Attributes.size(); ++i)
 		if (Attributes[i]->Name == attributeName)
@@ -294,7 +294,7 @@ void CAttributes::setAttribute(const c8* attributeName, s32 value)
 //! \param attributeName: Name of the attribute to get.
 //! \return Returns value of the attribute previously set by setAttribute() as integer
 //! or 0 if attribute is not set.
-s32 CAttributes::getAttributeAsInt(const c8* attributeName) const
+s32 CAttributes::getAttributeAsInt(const c8* attributeName)
 {
 	IAttribute* att = getAttributeP(attributeName);
 	if (att)
@@ -614,7 +614,7 @@ bool CAttributes::getAttributeAsBool(s32 index)
 
 //! Gets an attribute as integer value
 //! \param index: Index value, must be between 0 and getAttributeCount()-1.
-s32 CAttributes::getAttributeAsInt(s32 index) const
+s32 CAttributes::getAttributeAsInt(s32 index)
 {
 	if ((u32)index < Attributes.size())
 		return Attributes[index]->getInt();
@@ -1486,12 +1486,6 @@ void CAttributes::readAttributeFromXML(io::IXMLReader* reader)
 			tmpArray.push_back(reader->getAttributeValue((tmpName+core::stringw(n)).c_str()));
 		}
 		addArray(name.c_str(),tmpArray);
-	}
-	else
-	if (element == L"userPointer")
-	{
-		// It's debatable if a pointer should be set or not, but it's more likely that adding it now would wreck user-applications.
-		// Also it probably doesn't makes sense setting this to a value when it comes from file.
 	}
 }
 

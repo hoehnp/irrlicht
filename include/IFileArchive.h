@@ -18,7 +18,7 @@ namespace io
 enum EFileSystemType
 {
 	FILESYSTEM_NATIVE = 0,	// Native OS FileSystem
-	FILESYSTEM_VIRTUAL	// Virtual FileSystem
+	FILESYSTEM_VIRTUAL,	// Virtual FileSystem
 };
 
 //! Contains the different types of archives
@@ -36,14 +36,8 @@ enum E_FILE_ARCHIVE_TYPE
 	//! An ID Software PAK archive
 	EFAT_PAK     = MAKE_IRR_ID('P','A','K', 0),
 
-	//! A Nebula Device archive
-	EFAT_NPK     = MAKE_IRR_ID('N','P','K', 0),
-
 	//! A Tape ARchive
 	EFAT_TAR     = MAKE_IRR_ID('T','A','R', 0),
-
-	//! A wad Archive, Quake2, Halflife
-	EFAT_WAD     = MAKE_IRR_ID('W','A','D', 0),
 
 	//! The type of this archive is unknown
 	EFAT_UNKNOWN = MAKE_IRR_ID('u','n','k','n')
@@ -74,13 +68,6 @@ public:
 
 	//! get the archive type
 	virtual E_FILE_ARCHIVE_TYPE getType() const { return EFAT_UNKNOWN; }
-
-	//! An optionally used password string
-	/** This variable is publicly accessible from the interface in order to
-	avoid single access patterns to this place, and hence allow some more
-	obscurity.
-	*/
-	core::stringc Password;
 };
 
 //! Class which is able to create an archive from a file.

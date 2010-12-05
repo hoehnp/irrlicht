@@ -39,8 +39,9 @@ namespace irr
 		IVideoDriver* createSoftwareDriver(const core::dimension2d<u32>& windowSize,
 				bool fullscreen, io::IFileSystem* io,
 				video::IImagePresenter* presenter);
-		IVideoDriver* createBurningVideoDriver(const irr::SIrrlichtCreationParameters& params,
-				io::IFileSystem* io, video::IImagePresenter* presenter);
+		IVideoDriver* createSoftwareDriver2(const core::dimension2d<u32>& windowSize,
+				bool fullscreen, io::IFileSystem* io,
+				video::IImagePresenter* presenter);
 		IVideoDriver* createNullDriver(io::IFileSystem* io, const core::dimension2d<u32>& screenSize);
 	}
 
@@ -122,10 +123,6 @@ namespace irr
 		//! Get the maximal elapsed time between 2 clicks to generate double- and tripleclicks for the mouse.
 		virtual u32 getDoubleClickTime() const;
 
-		//! Remove all messages pending in the system message loop
-		virtual void clearSystemMessages();
-
-
 	protected:
 
 		void createGUIAndScene();
@@ -135,7 +132,7 @@ namespace irr
 
 		//! Compares to the last call of this function to return double and triple clicks.
 		//! \return Returns only 1,2 or 3. A 4th click will start with 1 again.
-		virtual u32 checkSuccessiveClicks(s32 mouseX, s32 mouseY, EMOUSE_INPUT_EVENT inputEvent );
+		virtual u32 checkSuccessiveClicks(s32 mouseX, s32 mouseY);
 
 		void calculateGammaRamp ( u16 *ramp, f32 gamma, f32 relativebrightness, f32 relativecontrast );
 		void calculateGammaFromRamp ( f32 &gamma, const u16 *ramp );
@@ -154,14 +151,13 @@ namespace irr
 		struct SMouseMultiClicks
 		{
 			SMouseMultiClicks()
-				: DoubleClickTime(500), CountSuccessiveClicks(0), LastClickTime(0), LastMouseInputEvent(EMIE_COUNT)
+				: DoubleClickTime(500), CountSuccessiveClicks(0), LastClickTime(0)
 			{}
 
 			u32 DoubleClickTime;
 			u32 CountSuccessiveClicks;
 			u32 LastClickTime;
 			core::position2di LastClick;
-			EMOUSE_INPUT_EVENT LastMouseInputEvent;
 		};
 		SMouseMultiClicks MouseMultiClicks;
 		video::CVideoModeList VideoModeList;

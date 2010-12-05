@@ -10,7 +10,7 @@ As always, I include the header files, use the irr namespace,
 and tell the linker to link with the .lib file.
 */
 #include <irrlicht.h>
-#include "driverChoice.h"
+#include <iostream>
 
 using namespace irr;
 
@@ -24,10 +24,28 @@ a caption, and get a pointer to the video driver.
 */
 int main()
 {
-	// ask user for driver
-	video::E_DRIVER_TYPE driverType=driverChoiceConsole();
-	if (driverType==video::EDT_COUNT)
-		return 1;
+	// let user select driver type
+
+	video::E_DRIVER_TYPE driverType;
+
+	printf("Please select the driver you want for this example:\n"\
+		" (a) Direct3D 9.0c\n (b) Direct3D 8.1\n (c) OpenGL 1.5\n"\
+		" (d) Software Renderer\n (e) Burning's Software Renderer\n"\
+		" (f) NullDevice\n (otherKey) exit\n\n");
+
+	char i;
+	std::cin >> i;
+
+	switch(i)
+	{
+		case 'a': driverType = video::EDT_DIRECT3D9;break;
+		case 'b': driverType = video::EDT_DIRECT3D8;break;
+		case 'c': driverType = video::EDT_OPENGL;   break;
+		case 'd': driverType = video::EDT_SOFTWARE; break;
+		case 'e': driverType = video::EDT_BURNINGSVIDEO;break;
+		case 'f': driverType = video::EDT_NULL;     break;
+		default: return 0;
+	}
 
 	// create device
 
@@ -70,12 +88,6 @@ int main()
 
 	core::rect<s32> imp1(349,15,385,78);
 	core::rect<s32> imp2(387,15,423,78);
-
-	/*
-	Prepare a nicely filtering 2d render mode for special cases.
-	*/
-	driver->getMaterial2D().TextureLayer[0].BilinearFilter=true;
-	driver->getMaterial2D().AntiAliasing=video::EAAM_FULL_BASIC;
 
 	/*
 	Everything is prepared, now we can draw everything in the draw loop,
@@ -136,18 +148,16 @@ int main()
 					video::SColor(255,time % 255,time % 255,255));
 
 			/*
-			Next, we draw the Irrlicht Engine logo (without
-			using a color or an alpha channel). Since we slightly scale
-			the image we use the prepared filter mode.
+			At last, we draw the Irrlicht Engine logo (without
+			using a color or an alpha channel) and a transparent 2d
+			Rectangle at the position of the mouse cursor.
 			*/
-			driver->enableMaterial2D();
-			driver->draw2DImage(images, core::rect<s32>(10,10,108,48),
-				core::rect<s32>(354,87,442,118));
-			driver->enableMaterial2D(false);
 
-			/*
-			Finally draw a half-transparent rect under the mouse cursor.
-			*/
+			// draw logo
+			driver->draw2DImage(images, core::position2d<s32>(10,10),
+				core::rect<s32>(354,87,442,118));
+
+			// draw transparent rect under cursor
 			core::position2d<s32> m = device->getCursorControl()->getPosition();
 			driver->draw2DRectangle(video::SColor(100,255,255,255),
 				core::rect<s32>(m.X-20, m.Y-20, m.X+20, m.Y+20));

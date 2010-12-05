@@ -161,7 +161,7 @@ namespace irr
 			}
 
 			//! Returns the current position of the mouse cursor.
-			virtual const core::position2d<s32>& getPosition()
+			virtual core::position2d<s32> getPosition()
 			{
 				return CursorPos;
 			}

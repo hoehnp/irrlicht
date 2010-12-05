@@ -44,10 +44,8 @@ static bool runTestWithDriver(E_DRIVER_TYPE driverType)
 
 	driver->endScene();
 
-	bool result = takeScreenshotAndCompareAgainstReference(driver, "-drawPixel.png", 98.81f);
+	bool result = takeScreenshotAndCompareAgainstReference(driver, "-drawPixel.png");
 
-	device->closeDevice();
-	device->run();
 	device->drop();
 
 	return result;
@@ -58,8 +56,6 @@ bool drawPixel(void)
 {
 	bool passed = true;
 
-	logTestString("Check OpenGL driver\n");
-	passed &= runTestWithDriver(EDT_OPENGL);
 	logTestString("Check Software driver\n");
 	passed &= runTestWithDriver(EDT_SOFTWARE);
 	logTestString("Check Burning's Video driver\n");
@@ -68,6 +64,8 @@ bool drawPixel(void)
 	passed &= runTestWithDriver(EDT_DIRECT3D9);
 	logTestString("Check Direct3D8 driver\n");
 	passed &= runTestWithDriver(EDT_DIRECT3D8);
+	logTestString("Check OpenGL driver\n");
+	passed &= runTestWithDriver(EDT_OPENGL);
 
 	return passed;
 }

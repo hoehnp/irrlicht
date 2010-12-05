@@ -54,14 +54,13 @@ ISceneNode* CEmptySceneNode::clone(ISceneNode* newParent, ISceneManager* newMana
 	if (!newManager)
 		newManager = SceneManager;
 
-	CEmptySceneNode* nb = new CEmptySceneNode(newParent,
+	CEmptySceneNode* nb = new CEmptySceneNode(newParent, 
 		newManager, ID);
 
 	nb->cloneMembers(this, newManager);
 	nb->Box = Box;
 
-	if ( newParent )
-		nb->drop();
+	nb->drop();
 	return nb;
 }
 

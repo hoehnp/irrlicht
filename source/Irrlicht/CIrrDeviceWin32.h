@@ -87,9 +87,6 @@ namespace irr
 		//! Get the current Gamma Value for the Display
 		virtual bool getGammaRamp( f32 &red, f32 &green, f32 &blue, f32 &brightness, f32 &contrast );
 
-		//! Remove all messages pending in the system message loop
-		virtual void clearSystemMessages();
-
 		//! Get the device type
 		virtual E_DEVICE_TYPE getType() const
 		{
@@ -98,29 +95,34 @@ namespace irr
 
 		//! Compares to the last call of this function to return double and triple clicks.
 		//! \return Returns only 1,2 or 3. A 4th click will start with 1 again.
-		virtual u32 checkSuccessiveClicks(s32 mouseX, s32 mouseY, EMOUSE_INPUT_EVENT inputEvent )
+		virtual u32 checkSuccessiveClicks(s32 mouseX, s32 mouseY)
 		{
 			// we just have to make it public
-			return CIrrDeviceStub::checkSuccessiveClicks(mouseX, mouseY, inputEvent );
+			return CIrrDeviceStub::checkSuccessiveClicks(mouseX, mouseY);
 		}
-
-		//! switchs to fullscreen
-		bool switchToFullScreen(bool reset=false);
-
-		//! Check for and show last Windows API error to help internal debugging.
-		//! Does call GetLastError and on errors formats the errortext and displays it in a messagebox.
-		static void ReportLastWinApiError();
-
-		// convert an Irrlicht texture to a windows cursor
-		HCURSOR TextureToCursor(HWND hwnd, irr::video::ITexture * tex, const core::rect<s32>& sourceRect, const core::position2d<s32> &hotspot);
 
 		//! Implementation of the win32 cursor control
 		class CCursorControl : public gui::ICursorControl
 		{
 		public:
 
-			CCursorControl(CIrrDeviceWin32* device, const core::dimension2d<u32>& wsize, HWND hwnd, bool fullscreen);
-			~CCursorControl();
+			CCursorControl(const core::dimension2d<u32>& wsize, HWND hwnd, bool fullscreen)
+				: WindowSize(wsize), InvWindowSize(0.0f, 0.0f),
+					HWnd(hwnd), BorderX(0), BorderY(0),
+					UseReferenceRect(false), IsVisible(true)
+			{
+				if (WindowSize.Width!=0)
+					InvWindowSize.Width = 1.0f / WindowSize.Width;
+
+				if (WindowSize.Height!=0)
+					InvWindowSize.Height = 1.0f / WindowSize.Height;
+
+				if (!fullscreen)
+				{
+					BorderX = GetSystemMetrics(SM_CXDLGFRAME);
+					BorderY = GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYDLGFRAME);
+				}
+			}
 
 			//! Changes the visible state of the mouse cursor.
 			virtual void setVisible(bool visible)
@@ -194,7 +196,7 @@ namespace irr
 			}
 
 			//! Returns the current position of the mouse cursor.
-			virtual const core::position2d<s32>& getPosition()
+			virtual core::position2d<s32> getPosition()
 			{
 				updateInternalCursorPosition();
 				return CursorPos;
@@ -234,64 +236,21 @@ namespace irr
 				else
 					UseReferenceRect = false;
 			}
-
+			
 			/** Used to notify the cursor that the window was resized. */
 			virtual void OnResize(const core::dimension2d<u32>& size)
 			{
 				WindowSize = size;
 				if (size.Width!=0)
 					InvWindowSize.Width = 1.0f / size.Width;
-				else
+				else 
 					InvWindowSize.Width = 0.f;
-
+ 
 				if (size.Height!=0)
 					InvWindowSize.Height = 1.0f / size.Height;
 				else
 					InvWindowSize.Height = 0.f;
 			}
-
-			/** Used to notify the cursor that the window resizable settings changed. */
-			void updateBorderSize(bool fullscreen, bool resizable)
-			{
-			   if (!fullscreen)
-			   {
-				  if (resizable)
-				  {
-					 BorderX = GetSystemMetrics(SM_CXSIZEFRAME);
-					 BorderY = GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYSIZEFRAME);
-				  }
-				  else
-				  {
-					 BorderX = GetSystemMetrics(SM_CXDLGFRAME);
-					 BorderY = GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYDLGFRAME);
-				  }
-			   }
-			   else
-			   {
-				  BorderX = BorderY = 0;
-			   }
-			}
-
-
-			//! Sets the active cursor icon
-			virtual void setActiveIcon(gui::ECURSOR_ICON iconId);
-
-			//! Gets the currently active icon
-			virtual gui::ECURSOR_ICON getActiveIcon() const
-			{
-				return ActiveIcon;
-			}
-
-			//! Add a custom sprite as cursor icon.
-			virtual gui::ECURSOR_ICON addIcon(const gui::SCursorSprite& icon);
-
-			//! replace the given cursor icon.
-			virtual void changeIcon(gui::ECURSOR_ICON iconId, const gui::SCursorSprite& icon);
-
-            //! Return a system-specific size which is supported for cursors. Larger icons will fail, smaller icons might work.
-			virtual core::dimension2di getSupportedIconSize() const;
-
-            void update();
 
 		private:
 
@@ -304,7 +263,7 @@ namespace irr
 					DWORD xy = GetMessagePos();
 					p.x = GET_X_LPARAM(xy);
 					p.y = GET_Y_LPARAM(xy);
-				}
+				} 
 
 				if (UseReferenceRect)
 				{
@@ -329,7 +288,6 @@ namespace irr
 				}
 			}
 
-            CIrrDeviceWin32* Device;
 			core::position2d<s32> CursorPos;
 			core::dimension2d<u32> WindowSize;
 			core::dimension2d<f32> InvWindowSize;
@@ -339,32 +297,6 @@ namespace irr
 			core::rect<s32> ReferenceRect;
 			bool UseReferenceRect;
 			bool IsVisible;
-
-
-			struct CursorFrameW32
-			{
-				CursorFrameW32() : IconHW(0) {}
-				CursorFrameW32(HCURSOR icon) : IconHW(icon) {}
-
-				HCURSOR IconHW;	// hardware cursor
-			};
-
-			struct CursorW32
-			{
-				CursorW32() {}
-				explicit CursorW32(HCURSOR iconHw, u32 frameTime=0) : FrameTime(frameTime)
-				{
-					Frames.push_back( CursorFrameW32(iconHw) );
-				}
-				core::array<CursorFrameW32> Frames;
-				u32 FrameTime;
-			};
-
-			core::array<CursorW32> Cursors;
-			gui::ECURSOR_ICON ActiveIcon;
-			u32 ActiveIconStartTime;
-
-			void initCursors();
 		};
 
 		//! returns the win32 cursor control
@@ -374,6 +306,9 @@ namespace irr
 
 		//! create the driver
 		void createDriver();
+
+		//! switchs to fullscreen
+		bool switchToFullScreen(s32 width, s32 height, s32 bits);
 
 		void getWindowsVersion(core::stringc& version);
 
@@ -403,3 +338,4 @@ namespace irr
 
 #endif // _IRR_COMPILE_WITH_WINDOWS_DEVICE_
 #endif // __C_IRR_DEVICE_WIN32_H_INCLUDED__
+

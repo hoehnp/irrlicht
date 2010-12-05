@@ -64,10 +64,8 @@ bool writeImageToFile(void)
 	format = screenshot->getColorFormat();
 	if(format != video::ECF_R8G8B8)
 	{
-		irr::video::IImage * fixedScreenshot = driver->createImage(video::ECF_R8G8B8, screenshot->getDimension());
-		screenshot->copyTo(fixedScreenshot);
+		irr::video::IImage * fixedScreenshot = driver->createImage(video::ECF_R8G8B8, screenshot);
 		screenshot->drop();
-		screenshot = 0;
 
 		if(!fixedScreenshot)
 		{
@@ -80,7 +78,7 @@ bool writeImageToFile(void)
 	}
 
 	buffer = new c8[BUFFER_SIZE];
-	writtenFilename = "results/Burning's Video-writeImageToFile.png";
+	writtenFilename = "results" DIR_SEP_STRING "Burning's Video-drawPixel.png";
 	memoryFile = device->getFileSystem()->createMemoryWriteFile(buffer, BUFFER_SIZE, writtenFilename, false);
 	if(!driver->writeImageToFile(screenshot, memoryFile))
 	{
@@ -107,20 +105,17 @@ bool writeImageToFile(void)
 	writtenFile->drop();
 	writtenFile = 0;
 
-	referenceFilename = "media/Burning's Video-drawPixel.png";
+	referenceFilename = "media" DIR_SEP_STRING "Burning's Video-drawPixel.png";
 	if(!binaryCompareFiles(writtenFilename, referenceFilename))
 	{
-		logTestString("File written from memory is not the same as the reference file. %s:%d\n" ,  __FILE__, __LINE__);
-//		assert(false);
+		logTestString("File written from memory is not the same as the reference file.\n");
+		assert(false);
 		goto cleanup;
 	}
 
 	result = true;
 
 cleanup:
-	if ( screenshot )
-		screenshot->drop();
-
 	if(writtenFile)
 		writtenFile->drop();
 

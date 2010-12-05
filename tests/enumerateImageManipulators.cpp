@@ -15,7 +15,7 @@ bool enumerateImageManipulators(void)
 
     IVideoDriver* driver = device->getVideoDriver();
 
-	const char* filenames[] = 
+	const char filenames[][8] = 
 	{
 		"foo.bmp",
 		"foo.jpg",
@@ -24,20 +24,8 @@ bool enumerateImageManipulators(void)
 		"foo.ppm",
 		"foo.psd",
 		"foo.tga",
-		// the following have no writers
-		"foo.wal",
-		"foo.pgm",
-		"foo.pbm",
-		"foo.rgb",
-		"foo.rgba",
-		"foo.sgi",
-		"foo.int",
-		"foo.inta",
-		"foo.bw"
+		"foo.wal"
 	};
-	// how many formats have loaders?
-	const u32 writersUntil = 7;
-
 	const u32 numberOfFilenames = sizeof(filenames) / sizeof(filenames[0]);
 	bool loaderForFilename[numberOfFilenames] = { false }; // and the rest get 0 == false
 	bool writerForFilename[numberOfFilenames] = { false }; // and the rest get 0 == false
@@ -62,6 +50,7 @@ bool enumerateImageManipulators(void)
 			if(loader->isALoadableFileExtension(filenames[filename]))
 			{
 				loaderForFilename[filename] = true;
+				break;
 			}
 		}
 	}
@@ -117,7 +106,7 @@ bool enumerateImageManipulators(void)
 	for(u32 filename = 0; filename < numberOfFilenames; ++filename)
 	{
 		// There's no writer for the .WAL file type.
-		if(!writerForFilename[filename] && (filename<writersUntil))
+		if(!writerForFilename[filename] && 0 != strcmp(filenames[filename], "foo.wal"))
 		{
 			logTestString("File type '%s' doesn't have a writer\n", filenames[filename]);
 			assert(false);
@@ -125,8 +114,6 @@ bool enumerateImageManipulators(void)
 		}
 	}
 
-	device->closeDevice();
-	device->run();
     device->drop();
 
     return result;

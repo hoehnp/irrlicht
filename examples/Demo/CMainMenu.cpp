@@ -63,7 +63,7 @@ bool CMainMenu::run(bool& outFullscreen, bool& outMusic, bool& outShadows,
 	box->addItem(L"OpenGL 1.5");
 	box->addItem(L"Direct3D 8.1");
 	box->addItem(L"Direct3D 9.0c");
-	box->addItem(L"Burning's Video 0.47");
+	box->addItem(L"Burning's Video 0.44");
 	box->addItem(L"Irrlicht Software Renderer 1.0");
 	box->setSelected(selected);
 
@@ -90,7 +90,7 @@ bool CMainMenu::run(bool& outFullscreen, bool& outMusic, bool& outShadows,
 
 	// add about text
 
-	const wchar_t* text2 = L"This is the tech demo of the Irrlicht engine. To start, "\
+	wchar_t* text2 = L"This is the tech demo of the Irrlicht engine. To start, "\
 		L"select a video driver which works best with your hardware and press 'Start Demo'.\n"\
 		L"What you currently see is displayed using the Burning Software Renderer (Thomas Alten).\n"\
 		L"The Irrlicht Engine was written by me, Nikolaus Gebhardt. The models, "\
@@ -142,11 +142,11 @@ bool CMainMenu::run(bool& outFullscreen, bool& outMusic, bool& outShadows,
 	const SLightParticle lightParticle[] =
 	{
 		//LIGHT_GLOBAL,0,
-		{LIGHT_RED,0},
-		{LIGHT_BLUE,0},
-		{LIGHT_RED,1},
-		{LIGHT_BLUE,1},
-		{LIGHT_NONE,0}
+		LIGHT_RED,0,
+		LIGHT_BLUE,0,
+		LIGHT_RED,1,
+		LIGHT_BLUE,1,
+		LIGHT_NONE,0
 	};
 
 	const SLightParticle *l = lightParticle;

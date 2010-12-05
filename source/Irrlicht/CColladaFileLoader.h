@@ -131,10 +131,9 @@ struct SColladaMaterial
 //! Collada effect (materials, shaders, and programs)
 struct SColladaEffect
 {
+	video::SMaterial Mat;
 	core::stringc Id;
 	f32 Transparency;
-	core::array<core::stringc> Textures;
-	video::SMaterial Mat;
 
 	inline bool operator< (const SColladaEffect & other) const
 	{
@@ -214,7 +213,7 @@ private:
 	void readAssetSection(io::IXMLReaderUTF8* reader);
 
 	//! reads a <node> section and its content
-	//! if a prefab pointer is passed the nodes are created as scene prefabs children of that prefab
+	//! if a prefab pointer is passed the nodes are created as scene prefabs childs of that prefab
 	void readNodeSection(io::IXMLReaderUTF8* reader, scene::ISceneNode* parent, CScenePrefab* p=0);
 
 	//! reads a <lookat> element and its content and creates a matrix from it
@@ -248,14 +247,12 @@ private:
 	f32 readFloatNode(io::IXMLReaderUTF8* reader);
 
 	//! reads a <instance> node
-	void readInstanceNode(io::IXMLReaderUTF8* reader,
-			scene::ISceneNode* parent, scene::ISceneNode** outNode,
-			CScenePrefab* p=0, const core::stringc& type=core::stringc());
+	void readInstanceNode(io::IXMLReaderUTF8* reader, scene::ISceneNode* parent,
+		scene::ISceneNode** outNode, CScenePrefab* p=0);
 
 	//! creates a scene node from Prefabs (with name given in 'url')
 	void instantiateNode(scene::ISceneNode* parent, scene::ISceneNode** outNode=0,
-			CScenePrefab* p=0, const core::stringc& url="",
-			const core::stringc& type=core::stringc());
+			CScenePrefab* p=0, const core::stringc& url="");
 
 	//! reads a <light> element and stores it as prefab
 	void readLightPrefab(io::IXMLReaderUTF8* reader);
@@ -309,7 +306,7 @@ private:
 	void readColladaInputs(io::IXMLReaderUTF8* reader, const core::stringc& parentName);
 
 	//! reads a collada input tag and adds it to the input parameter
-	void readColladaInput(io::IXMLReaderUTF8* reader, core::array<SColladaInput>& inputs);
+	void readColladaInput(io::IXMLReaderUTF8* reader);
 
 	//! returns a collada input or none if not found
 	SColladaInput* getColladaInput(ECOLLADA_INPUT_SEMANTIC input);
@@ -322,8 +319,8 @@ private:
 
 	//! reads a polygons section and creates a mesh from it
 	void readPolygonSection(io::IXMLReaderUTF8* reader,
-			core::array<SSource>& sources, scene::SMesh* mesh,
-			const core::stringc& geometryId);
+		const core::stringc& vertexPositionSource, core::array<SSource>& sources,
+		scene::SMesh* mesh, const core::stringc& geometryId);
 
 	//! finds a material, possible instancing it
 	const SColladaMaterial * findMaterial(const core::stringc & materialName);
@@ -356,9 +353,7 @@ private:
 	core::array<SColladaMaterial> Materials;
 	core::array<SColladaInput> Inputs;
 	core::array<SColladaEffect> Effects;
-	//! meshbuffer reference ("geomid/matname") -> index into MeshesToBind
 	core::map<core::stringc,u32> MaterialsToBind;
-	//! Array of buffers for each material binding
 	core::array< core::array<irr::scene::IMeshBuffer*> > MeshesToBind;
 	io::CAttributes Parameters;
 

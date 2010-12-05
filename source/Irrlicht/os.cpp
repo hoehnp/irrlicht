@@ -15,14 +15,11 @@
 	#include <stdlib.h>
 	#define bswap_16(X) _byteswap_ushort(X)
 	#define bswap_32(X) _byteswap_ulong(X)
-#if (_MSC_VER >= 1400)
-	#define localtime _localtime_s
-#endif
 #elif defined(_IRR_OSX_PLATFORM_)
 	#include <libkern/OSByteOrder.h>
 	#define bswap_16(X) OSReadSwapInt16(&X,0)
 	#define bswap_32(X) OSReadSwapInt32(&X,0)
-#elif defined(__FreeBSD__) || defined(__OpenBSD__)
+#elif defined(__FreeBSD__)
 	#include <sys/endian.h>
 	#define bswap_16(X) bswap16(X)
 	#define bswap_32(X) bswap32(X)
@@ -41,7 +38,7 @@ namespace os
 	s16 Byteswap::byteswap(s16 num) {return bswap_16(num);}
 	u32 Byteswap::byteswap(u32 num) {return bswap_32(num);}
 	s32 Byteswap::byteswap(s32 num) {return bswap_32(num);}
-	f32 Byteswap::byteswap(f32 num) {u32 tmp=IR(num); tmp=bswap_32(tmp); return (FR(tmp));}
+	f32 Byteswap::byteswap(f32 num) {u32 tmp=bswap_32(*((u32*)&num)); return *((f32*)&tmp);}
 	// prevent accidental byte swapping of chars
 	u8  Byteswap::byteswap(u8 num)  {return num;}
 	c8  Byteswap::byteswap(c8 num)  {return num;}
@@ -58,7 +55,6 @@ namespace os
 #else
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <time.h>
 #endif
 
 namespace irr
@@ -73,8 +69,8 @@ namespace os
 		tmp += L"\n";
 		OutputDebugStringW(tmp.c_str());
 #else
-		OutputDebugStringA(message);
-		OutputDebugStringA("\n");
+		OutputDebugString(message);
+		OutputDebugString("\n");
 		printf("%s\n", message);
 #endif
 	}
@@ -83,18 +79,15 @@ namespace os
 	static BOOL HighPerformanceTimerSupport = FALSE;
 	static BOOL MultiCore = FALSE;
 
-	void Timer::initTimer(bool usePerformanceTimer)
+	void Timer::initTimer()
 	{
 #if !defined(_WIN32_WCE) && !defined (_IRR_XBOX_PLATFORM_)
-		// workaround for hires timer on multiple core systems, bios bugs result in bad hires timers.
+		// disable hires timer on multiple core systems, bios bugs result in bad hires timers.
 		SYSTEM_INFO sysinfo;
 		GetSystemInfo(&sysinfo);
 		MultiCore = (sysinfo.dwNumberOfProcessors > 1);
 #endif
-		if (usePerformanceTimer)
-			HighPerformanceTimerSupport = QueryPerformanceFrequency(&HighPerformanceFreq);
-		else
-			HighPerformanceTimerSupport = FALSE;
+		HighPerformanceTimerSupport = QueryPerformanceFrequency(&HighPerformanceFreq);
 		initVirtualTimer();
 	}
 
@@ -149,7 +142,7 @@ namespace os
 		printf("%s\n", message);
 	}
 
-	void Timer::initTimer(bool usePerformanceTimer)
+	void Timer::initTimer()
 	{
 		initVirtualTimer();
 	}
@@ -160,6 +153,7 @@ namespace os
 		gettimeofday(&tv, 0);
 		return (u32)(tv.tv_sec * 1000) + (tv.tv_usec / 1000);
 	}
+
 } // end namespace os
 
 #endif // end linux / windows
@@ -229,28 +223,6 @@ namespace os
 	u32 Timer::StartRealTime = 0;
 	u32 Timer::StaticTime = 0;
 
-	//! Get real time and date in calendar form
-	ITimer::RealTimeDate Timer::getRealTimeAndDate()
-	{
-		time_t rawtime;
-		time(&rawtime);
-
-		struct tm * timeinfo;
-		timeinfo = localtime(&rawtime);
-
-		ITimer::RealTimeDate date;
-		date.Hour=(u32)timeinfo->tm_hour;
-		date.Minute=(u32)timeinfo->tm_min;
-		date.Second=(u32)timeinfo->tm_sec;
-		date.Day=(u32)timeinfo->tm_mday;
-		date.Month=(u32)timeinfo->tm_mon+1;
-		date.Year=(u32)timeinfo->tm_year+1900;
-		date.Weekday=(ITimer::EWeekday)timeinfo->tm_wday;
-		date.Yearday=(u32)timeinfo->tm_yday+1;
-		date.IsDST=timeinfo->tm_isdst != 0;
-		return date;
-	}
-
 	//! returns current virtual time
 	u32 Timer::getTime()
 	{
@@ -317,7 +289,7 @@ namespace os
 	//! returns if the timer currently is stopped
 	bool Timer::isStopped()
 	{
-		return VirtualTimerStopCounter < 0;
+		return VirtualTimerStopCounter != 0;
 	}
 
 	void Timer::initVirtualTimer()

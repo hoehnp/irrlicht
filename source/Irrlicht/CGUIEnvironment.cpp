@@ -55,7 +55,7 @@ const wchar_t* IRR_XML_FORMAT_GUI_ELEMENT_ATTR_TYPE	= L"type";
 //! constructor
 CGUIEnvironment::CGUIEnvironment(io::IFileSystem* fs, video::IVideoDriver* driver, IOSOperator* op)
 : IGUIElement(EGUIET_ELEMENT, 0, 0, 0, core::rect<s32>(core::position2d<s32>(0,0), driver ? core::dimension2d<s32>(driver->getScreenSize()) : core::dimension2d<s32>(0,0))),
-	Driver(driver), Hovered(0), HoveredNoSubelement(0), Focus(0), LastHoveredMousePos(0,0), CurrentSkin(0),
+	Driver(driver), Hovered(0), Focus(0), LastHoveredMousePos(0,0), CurrentSkin(0),
 	FileSystem(fs), UserReceiver(0), Operator(op)
 {
 	if (Driver)
@@ -84,9 +84,7 @@ CGUIEnvironment::CGUIEnvironment(io::IFileSystem* fs, video::IVideoDriver* drive
 
 	//set tooltip default
 	ToolTip.LastTime = 0;
-	ToolTip.EnterTime = 0;
 	ToolTip.LaunchTime = 1000;
-	ToolTip.RelaunchTime = 500;
 	ToolTip.Element = 0;
 
 	// environment is root tab group
@@ -98,12 +96,6 @@ CGUIEnvironment::CGUIEnvironment(io::IFileSystem* fs, video::IVideoDriver* drive
 //! destructor
 CGUIEnvironment::~CGUIEnvironment()
 {
-	if ( HoveredNoSubelement && HoveredNoSubelement != this )
-	{
-		HoveredNoSubelement->drop();
-		HoveredNoSubelement = 0;
-	}
-
 	if (Hovered && Hovered != this)
 	{
 		Hovered->drop();
@@ -180,7 +172,7 @@ void CGUIEnvironment::loadBuiltInFont()
 	}
 
 	SFont f;
-	f.NamedPath.setPath(filename);
+	f.Filename = filename;
 	f.Font = font;
 	Fonts.push_back(f);
 
@@ -367,11 +359,6 @@ void CGUIEnvironment::clear()
 		Hovered->drop();
 		Hovered = 0;
 	}
-	if ( HoveredNoSubelement && HoveredNoSubelement != this)
-	{
-		HoveredNoSubelement->drop();
-		HoveredNoSubelement = 0;
-	}
 
 	// get the root's children in case the root changes in future
 	const core::list<IGUIElement*>& children = getRootGUIElement()->getChildren();
@@ -401,12 +388,14 @@ bool CGUIEnvironment::OnEvent(const SEvent& event)
 //
 void CGUIEnvironment::OnPostRender( u32 time )
 {
+	// check tooltip
+
 	// launch tooltip
-	if ( ToolTip.Element == 0 &&
-		HoveredNoSubelement && HoveredNoSubelement != this &&
-		(time - ToolTip.EnterTime >= ToolTip.LaunchTime
-		|| (time - ToolTip.LastTime >= ToolTip.RelaunchTime && time - ToolTip.LastTime < ToolTip.LaunchTime)) &&
-		HoveredNoSubelement->getToolTipText().size() &&
+	if ( time - ToolTip.LastTime >= ToolTip.LaunchTime &&
+		Hovered && Hovered != this &&
+		ToolTip.Element == 0 &&
+		Hovered != ToolTip.Element &&
+		Hovered->getToolTipText().size() &&
 		getSkin() &&
 		getSkin()->getFont(EGDF_TOOLTIP)
 		)
@@ -414,7 +403,7 @@ void CGUIEnvironment::OnPostRender( u32 time )
 		core::rect<s32> pos;
 
 		pos.UpperLeftCorner = LastHoveredMousePos;
-		core::dimension2du dim = getSkin()->getFont(EGDF_TOOLTIP)->getDimension(HoveredNoSubelement->getToolTipText().c_str());
+		core::dimension2du dim = getSkin()->getFont(EGDF_TOOLTIP)->getDimension(Hovered->getToolTipText().c_str());
 		dim.Width += getSkin()->getSize(EGDS_TEXT_DISTANCE_X)*2;
 		dim.Height += getSkin()->getSize(EGDS_TEXT_DISTANCE_Y)*2;
 
@@ -424,7 +413,7 @@ void CGUIEnvironment::OnPostRender( u32 time )
 
 		pos.constrainTo(getAbsolutePosition());
 
-		ToolTip.Element = addStaticText(HoveredNoSubelement->getToolTipText().c_str(), pos, true, true, this, -1, true);
+		ToolTip.Element = addStaticText(Hovered->getToolTipText().c_str(), pos, true, true, this, -1, true);
 		ToolTip.Element->setOverrideColor(getSkin()->getColor(EGDC_TOOLTIP));
 		ToolTip.Element->setBackgroundColor(getSkin()->getColor(EGDC_TOOLTIP_BACKGROUND));
 		ToolTip.Element->setOverrideFont(getSkin()->getFont(EGDF_TOOLTIP));
@@ -435,22 +424,7 @@ void CGUIEnvironment::OnPostRender( u32 time )
 		pos = ToolTip.Element->getRelativePosition();
 		pos.LowerRightCorner.Y = pos.UpperLeftCorner.Y + textHeight;
 		ToolTip.Element->setRelativePosition(pos);
-	}
 
-	if (ToolTip.Element && ToolTip.Element->isVisible() )	// (isVisible() check only because we might use visibility for ToolTip one day)
-	{
-		ToolTip.LastTime = time;
-
-		// got invisible or removed in the meantime?
-		if ( !HoveredNoSubelement ||
-			!HoveredNoSubelement->isVisible() ||
-			!HoveredNoSubelement->getParent()
-			)	// got invisible or removed in the meantime?
-		{
-			ToolTip.Element->remove();
-			ToolTip.Element->drop();
-			ToolTip.Element = 0;
-		}
 	}
 
 	IGUIElement::OnPostRender ( time );
@@ -461,77 +435,58 @@ void CGUIEnvironment::OnPostRender( u32 time )
 void CGUIEnvironment::updateHoveredElement(core::position2d<s32> mousePos)
 {
 	IGUIElement* lastHovered = Hovered;
-	IGUIElement* lastHoveredNoSubelement = HoveredNoSubelement;
 	LastHoveredMousePos = mousePos;
 
 	Hovered = getElementFromPoint(mousePos);
 
-	if ( ToolTip.Element && Hovered == ToolTip.Element )
+	if (Hovered)
 	{
-		// When the mouse is over the ToolTip we remove that so it will be re-created at a new position.
-		// Note that ToolTip.EnterTime does not get changed here, so it will be re-created at once.
-		ToolTip.Element->remove();
-		ToolTip.Element->drop();
-		ToolTip.Element = 0;
+		u32 now = os::Timer::getTime ();
 
-		// Get the real Hovered
-		Hovered = getElementFromPoint(mousePos);
-	}
+		if (Hovered != this)
+			Hovered->grab();
 
-	// for tooltips we want the element itself and not some of it's subelements
-	HoveredNoSubelement = Hovered;
-	while ( HoveredNoSubelement && HoveredNoSubelement->isSubElement() )
-	{
-		HoveredNoSubelement = HoveredNoSubelement->getParent();
-	}
-
-	if (Hovered && Hovered != this)
-		Hovered->grab();
-	if ( HoveredNoSubelement && HoveredNoSubelement != this)
-		HoveredNoSubelement->grab();
-
-	if (Hovered != lastHovered)
-	{
-		SEvent event;
-		event.EventType = EET_GUI_EVENT;
-
-		if (lastHovered)
+		if (Hovered != lastHovered)
 		{
-			event.GUIEvent.Caller = lastHovered;
-			event.GUIEvent.Element = 0;
-			event.GUIEvent.EventType = EGET_ELEMENT_LEFT;
-			lastHovered->OnEvent(event);
-		}
+			SEvent event;
+			event.EventType = EET_GUI_EVENT;
 
-		if ( Hovered )
-		{
-			event.GUIEvent.Caller  = Hovered;
-			event.GUIEvent.Element = Hovered;
+			if (lastHovered)
+			{
+				event.GUIEvent.Caller = lastHovered;
+				event.GUIEvent.EventType = EGET_ELEMENT_LEFT;
+				lastHovered->OnEvent(event);
+			}
+
+			if ( ToolTip.Element )
+			{
+				ToolTip.Element->remove();
+				ToolTip.Element->drop();
+				ToolTip.Element = 0;
+				ToolTip.LastTime += 500;
+			}
+			else
+			{
+				// boost tooltip generation for relaunch
+				if ( now - ToolTip.LastTime < ToolTip.LastTime )
+				{
+					ToolTip.LastTime += 500;
+				}
+				else
+				{
+					ToolTip.LastTime = now;
+				}
+			}
+
+
+			event.GUIEvent.Caller = Hovered;
 			event.GUIEvent.EventType = EGET_ELEMENT_HOVERED;
 			Hovered->OnEvent(event);
 		}
 	}
 
-	if ( lastHoveredNoSubelement != HoveredNoSubelement )
-	{
-		if (ToolTip.Element)
-		{
-			ToolTip.Element->remove();
-			ToolTip.Element->drop();
-			ToolTip.Element = 0;
-		}
-
-		if ( HoveredNoSubelement )
-		{
-			u32 now = os::Timer::getTime();
-			ToolTip.EnterTime = now;
-		}
-	}
-
 	if (lastHovered && lastHovered != this)
 		lastHovered->drop();
-	if (lastHoveredNoSubelement && lastHoveredNoSubelement != this)
-		lastHoveredNoSubelement->drop();
 }
 
 
@@ -994,19 +949,16 @@ IGUIWindow* CGUIEnvironment::addWindow(const core::rect<s32>& rectangle, bool mo
 {
 	parent = parent ? parent : this;
 
+	if (modal)
+	{
+		parent = new CGUIModalScreen(this, parent, -1);
+		parent->drop();
+	}
+
 	IGUIWindow* win = new CGUIWindow(this, parent, id, rectangle);
 	if (text)
 		win->setText(text);
 	win->drop();
-
-	if (modal)
-	{
-		// Careful, don't just set the modal as parent above. That will mess up the focus (and is hard to change because we have to be very
-		// careful not to get virtual function call, like OnEvent, in the window.
-		CGUIModalScreen * modalScreen = new CGUIModalScreen(this, parent, -1);
-		modalScreen->drop();
-		modalScreen->addChild(win);
-	}
 
 	return win;
 }
@@ -1026,7 +978,7 @@ IGUIElement* CGUIEnvironment::addModalScreen(IGUIElement* parent)
 
 //! Adds a message box.
 IGUIWindow* CGUIEnvironment::addMessageBox(const wchar_t* caption, const wchar_t* text,
-	bool modal, s32 flag, IGUIElement* parent, s32 id, video::ITexture* image)
+	bool modal, s32 flag, IGUIElement* parent, s32 id)
 {
 	if (!CurrentSkin)
 		return 0;
@@ -1038,28 +990,24 @@ IGUIWindow* CGUIEnvironment::addMessageBox(const wchar_t* caption, const wchar_t
 
 	screenDim.Width = parent->getAbsolutePosition().getWidth();
 	screenDim.Height = parent->getAbsolutePosition().getHeight();
-	msgBoxDim.Width = 2;
-	msgBoxDim.Height = 2;
+	msgBoxDim.Width = CurrentSkin->getSize(gui::EGDS_MESSAGE_BOX_WIDTH);
+	msgBoxDim.Height = CurrentSkin->getSize(gui::EGDS_MESSAGE_BOX_HEIGHT);
 
 	rect.UpperLeftCorner.X = (screenDim.Width - msgBoxDim.Width) / 2;
 	rect.UpperLeftCorner.Y = (screenDim.Height - msgBoxDim.Height) / 2;
 	rect.LowerRightCorner.X = rect.UpperLeftCorner.X + msgBoxDim.Width;
 	rect.LowerRightCorner.Y = rect.UpperLeftCorner.Y + msgBoxDim.Height;
 
-	IGUIWindow* win = new CGUIMessageBox(this, caption, text, flag,
-		parent, id, rect, image);
-	win->drop();
-
 	if (modal)
 	{
-		// Careful, don't just set the modal as parent above. That will mess up the focus (and is hard to change because we have to be very
-		// careful not to get virtual function call, like OnEvent, in the CGUIMessageBox.
-		CGUIModalScreen * modalScreen = new CGUIModalScreen(this, parent, -1);
-		modalScreen->drop();
-		modalScreen->addChild( win );
+		parent = new CGUIModalScreen(this, parent, -1);
+		parent->drop();
 	}
 
+	IGUIWindow* win = new CGUIMessageBox(this, caption, text, flag,
+		parent, id, rect);
 
+	win->drop();
 	return win;
 }
 
@@ -1188,18 +1136,15 @@ IGUIFileOpenDialog* CGUIEnvironment::addFileOpenDialog(const wchar_t* title,
 {
 	parent = parent ? parent : this;
 
-	IGUIFileOpenDialog* d = new CGUIFileOpenDialog(title, this, parent, id);
-	d->drop();
-
 	if (modal)
 	{
-		// Careful, don't just set the modal as parent above. That will mess up the focus (and is hard to change because we have to be very
-		// careful not to get virtual function call, like OnEvent, in the window.
-		CGUIModalScreen * modalScreen = new CGUIModalScreen(this, parent, -1);
-		modalScreen->drop();
-		modalScreen->addChild(d);
+		parent = new CGUIModalScreen(this, parent, -1);
+		parent->drop();
 	}
 
+	IGUIFileOpenDialog* d = new CGUIFileOpenDialog(title, this, parent, id);
+
+	d->drop();
 	return d;
 }
 
@@ -1210,19 +1155,16 @@ IGUIColorSelectDialog* CGUIEnvironment::addColorSelectDialog(const wchar_t* titl
 {
 	parent = parent ? parent : this;
 
-	IGUIColorSelectDialog* d = new CGUIColorSelectDialog( title,
-			this, parent, id);
-	d->drop();
-
 	if (modal)
 	{
-		// Careful, don't just set the modal as parent above. That will mess up the focus (and is hard to change because we have to be very
-		// careful not to get virtual function call, like OnEvent, in the window.
-		CGUIModalScreen * modalScreen = new CGUIModalScreen(this, parent, -1);
-		modalScreen->drop();
-		modalScreen->addChild(d);
+		parent = new CGUIModalScreen(this, parent, -1);
+		parent->drop();
 	}
 
+	IGUIColorSelectDialog* d = new CGUIColorSelectDialog( title,
+			this, parent, id);
+
+	d->drop();
 	return d;
 }
 
@@ -1361,13 +1303,17 @@ IGUIComboBox* CGUIEnvironment::addComboBox(const core::rect<s32>& rectangle,
 }
 
 
+
 //! returns the font
 IGUIFont* CGUIEnvironment::getFont(const io::path& filename)
 {
 	// search existing font
 
 	SFont f;
-	f.NamedPath.setPath(filename);
+	IGUIFont* ifont=0;
+	f.Filename = filename;
+
+	f.Filename.make_lower();
 
 	s32 index = Fonts.binary_search(f);
 	if (index != -1)
@@ -1379,11 +1325,10 @@ IGUIFont* CGUIEnvironment::getFont(const io::path& filename)
 
 	if (!FileSystem->existFile(filename))
 	{
-		os::Printer::log("Could not load font because the file does not exist", f.NamedPath.getPath(), ELL_ERROR);
+		os::Printer::log("Could not load font because the file does not exist", f.Filename, ELL_ERROR);
 		return 0;
 	}
 
-	IGUIFont* ifont=0;
 	io::IXMLReader *xml = FileSystem->createXMLReader(filename );
 	if (xml)
 	{
@@ -1418,7 +1363,7 @@ IGUIFont* CGUIEnvironment::getFont(const io::path& filename)
 			ifont = (IGUIFont*)font;
 			// change working directory, for loading textures
 			io::path workingDir = FileSystem->getWorkingDirectory();
-			FileSystem->changeWorkingDirectoryTo(FileSystem->getFileDir(f.NamedPath.getPath()));
+			FileSystem->changeWorkingDirectoryTo(FileSystem->getFileDir(f.Filename));
 
 			// load the font
 			if (!font->load(xml))
@@ -1433,7 +1378,7 @@ IGUIFont* CGUIEnvironment::getFont(const io::path& filename)
 		else if (t==EGFT_VECTOR)
 		{
 			// todo: vector fonts
-			os::Printer::log("Unable to load font, XML vector fonts are not supported yet", f.NamedPath, ELL_ERROR);
+			os::Printer::log("Unable to load font, XML vector fonts are not supported yet", f.Filename.c_str(), ELL_ERROR);
 
 			//CGUIFontVector* font = new CGUIFontVector(Driver);
 			//ifont = (IGUIFont*)font;
@@ -1446,9 +1391,9 @@ IGUIFont* CGUIEnvironment::getFont(const io::path& filename)
 	if (!ifont)
 	{
 
-		CGUIFont* font = new CGUIFont(this, f.NamedPath.getPath() );
+		CGUIFont* font = new CGUIFont(this, f.Filename );
 		ifont = (IGUIFont*)font;
-		if (!font->load(f.NamedPath.getPath()))
+		if (!font->load(f.Filename))
 		{
 			font->drop();
 			return 0;
@@ -1464,55 +1409,13 @@ IGUIFont* CGUIEnvironment::getFont(const io::path& filename)
 }
 
 
-//! add an externally loaded font
-IGUIFont* CGUIEnvironment::addFont(const io::path& name, IGUIFont* font)
-{
-	if (font)
-	{
-		SFont f;
-		f.NamedPath.setPath(name);
-		s32 index = Fonts.binary_search(f);
-		if (index != -1)
-			return Fonts[index].Font;
-		f.Font = font;
-		Fonts.push_back(f);
-		font->grab();
-	}
-	return font;
-}
-
-//! remove loaded font
-void CGUIEnvironment::removeFont(IGUIFont* font)
-{
-	if ( !font )
-		return;
-	for ( u32 i=0; i<Fonts.size(); ++i )
-	{
-		if ( Fonts[i].Font == font )
-		{
-			Fonts[i].Font->drop();
-			Fonts.erase(i);
-			return;
-		}
-	}
-}
-
-//! returns default font
-IGUIFont* CGUIEnvironment::getBuiltInFont() const
-{
-	if (Fonts.empty())
-		return 0;
-
-	return Fonts[0].Font;
-}
-
-
 IGUISpriteBank* CGUIEnvironment::getSpriteBank(const io::path& filename)
 {
 	// search for the file name
 
 	SSpriteBank b;
-	b.NamedPath.setPath(filename);
+	b.Filename = filename;
+	b.Filename.make_lower();
 
 	s32 index = Banks.binary_search(b);
 	if (index != -1)
@@ -1520,9 +1423,9 @@ IGUISpriteBank* CGUIEnvironment::getSpriteBank(const io::path& filename)
 
 	// we don't have this sprite bank, we should load it
 
-	if (!FileSystem->existFile(b.NamedPath.getPath()))
+	if (!FileSystem->existFile(b.Filename))
 	{
-		os::Printer::log("Could not load sprite bank because the file does not exist", b.NamedPath.getPath(), ELL_ERROR);
+		os::Printer::log("Could not load sprite bank because the file does not exist", filename, ELL_ERROR);
 		return 0;
 	}
 
@@ -1537,7 +1440,8 @@ IGUISpriteBank* CGUIEnvironment::addEmptySpriteBank(const io::path& name)
 	// no duplicate names allowed
 
 	SSpriteBank b;
-	b.NamedPath.setPath(name);
+	b.Filename = name;
+	b.Filename.make_lower();
 
 	const s32 index = Banks.binary_search(b);
 	if (index != -1)
@@ -1551,6 +1455,15 @@ IGUISpriteBank* CGUIEnvironment::addEmptySpriteBank(const io::path& name)
 	return b.Bank;
 }
 
+
+//! returns default font
+IGUIFont* CGUIEnvironment::getBuiltInFont() const
+{
+	if (Fonts.empty())
+		return 0;
+
+	return Fonts[0].Font;
+}
 
 //! Creates the image list from the given texture.
 IGUIImageList* CGUIEnvironment::createImageList(  video::ITexture* texture,

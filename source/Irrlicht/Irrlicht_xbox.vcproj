@@ -274,9 +274,6 @@
 				RelativePath="..\..\include\IAnimatedMeshSceneNode.h">
 			</File>
 			<File
-				RelativePath="..\..\include\EAttributes.h">
-			</File>
-			<File
 				RelativePath="..\..\include\IAttributeExchangingObject.h">
 			</File>
 			<File
@@ -749,10 +746,10 @@
 				RelativePath=".\CLightSceneNode.h">
 			</File>
 			<File
-				RelativePath=".\COctreeSceneNode.cpp">
+				RelativePath=".\COctTreeSceneNode.cpp">
 			</File>
 			<File
-				RelativePath=".\COctreeSceneNode.h">
+				RelativePath=".\COctTreeSceneNode.h">
 			</File>
 			<File
 				RelativePath=".\CShadowVolumeSceneNode.cpp">
@@ -1105,10 +1102,10 @@
 				RelativePath=".\COCTLoader.h">
 			</File>
 			<File
-				RelativePath=".\COctreeTriangleSelector.cpp">
+				RelativePath=".\COctTreeTriangleSelector.cpp">
 			</File>
 			<File
-				RelativePath=".\COctreeTriangleSelector.h">
+				RelativePath=".\COctTreeTriangleSelector.h">
 			</File>
 			<File
 				RelativePath=".\COgreMeshFileLoader.cpp">
@@ -1133,12 +1130,6 @@
 			</File>
 			<File
 				RelativePath=".\CPakReader.h">
-			</File>
-			<File
-				RelativePath=".\CNPKReader.cpp">
-			</File>
-			<File
-				RelativePath=".\CNPKReader.h">
 			</File>
 			<File
 				RelativePath=".\CTarReader.cpp">
@@ -1378,9 +1369,6 @@
 				RelativePath=".\glxext.h">
 			</File>
 			<File
-				RelativePath=".\IAttribute.h">
-			</File>
-			<File
 				RelativePath=".\IBurningShader.cpp">
 			</File>
 			<File
@@ -1408,7 +1396,7 @@
 				RelativePath=".\IZBuffer.h">
 			</File>
 			<File
-				RelativePath=".\Octree.h">
+				RelativePath=".\OctTree.h">
 			</File>
 			<File
 				RelativePath=".\os.cpp">

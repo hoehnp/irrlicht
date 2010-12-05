@@ -33,7 +33,7 @@ bool loadFromFileFolder(void)
 		logTestString("Unable to open ../media/tools.png\n");
 	if (driver->getTextureCount()!=numTexs+1)
 	{
-		logTestString("No additional texture in the texture cache %s:%d\n", __FILE__, __LINE__);
+		logTestString("No additional texture in the texture cache");
 		return false;
 	}
 
@@ -43,7 +43,7 @@ bool loadFromFileFolder(void)
 		logTestString("Unable to open ../media/tools.png\n");
 	if (driver->getTextureCount()!=numTexs+1)
 	{
-		logTestString("Additional texture in the texture cache %s:%d\n", __FILE__, __LINE__);
+		logTestString("Additional texture in the texture cache (1)\n");
 		return false;
 	}
 
@@ -53,7 +53,7 @@ bool loadFromFileFolder(void)
 		logTestString("Unable to create texture from ../media/tools.png\n");
 	if (driver->getTextureCount()!=numTexs+1)
 	{
-		logTestString("Additional texture in the texture cache %s:%d\n", __FILE__, __LINE__);
+		logTestString("Additional texture in the texture cache (2)\n");
 		return false;
 	}
 
@@ -68,7 +68,7 @@ bool loadFromFileFolder(void)
 		logTestString("Unable to open tools.png\n");
 	if (driver->getTextureCount()!=numTexs+1)
 	{
-		logTestString("Additional texture in the texture cache %s:%d\n", __FILE__, __LINE__);
+		logTestString("Additional texture in the texture cache (3)\n");
 		return false;
 	}
 
@@ -78,7 +78,7 @@ bool loadFromFileFolder(void)
 		logTestString("Unable to open tools.png\n");
 	if (driver->getTextureCount()!=numTexs+1)
 	{
-		logTestString("Additional texture in the texture cache %s:%d\n", __FILE__, __LINE__);
+		logTestString("Additional texture in the texture cache (4)\n");
 		return false;
 	}
 

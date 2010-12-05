@@ -36,14 +36,17 @@ CGUIListBox::CGUIListBox(IGUIEnvironment* environment, IGUIElement* parent,
 	IGUISkin* skin = Environment->getSkin();
 	const s32 s = skin->getSize(EGDS_SCROLLBAR_SIZE);
 
-	ScrollBar = new CGUIScrollBar(false, Environment, this, -1,
+	ScrollBar = new CGUIScrollBar(false, Environment, this, 0,
 		core::rect<s32>(RelativeRect.getWidth() - s, 0, RelativeRect.getWidth(), RelativeRect.getHeight()),
 		!clip);
 	ScrollBar->setSubElement(true);
 	ScrollBar->setTabStop(false);
 	ScrollBar->setAlignment(EGUIA_LOWERRIGHT, EGUIA_LOWERRIGHT, EGUIA_UPPERLEFT, EGUIA_LOWERRIGHT);
 	ScrollBar->setVisible(false);
+	ScrollBar->drop();
+
 	ScrollBar->setPos(0);
+	ScrollBar->grab();
 
 	setNotClipped(!clip);
 
@@ -163,9 +166,8 @@ void CGUIListBox::recalculateItemHeight()
 
 	TotalItemHeight = ItemHeight * Items.size();
 	ScrollBar->setMax(TotalItemHeight - AbsoluteRect.getHeight());
-	s32 minItemHeight = ItemHeight > 0 ? ItemHeight : 1;
-	ScrollBar->setSmallStep ( minItemHeight );
-	ScrollBar->setLargeStep ( 2*minItemHeight );
+	ScrollBar->setSmallStep ( 1 );
+	ScrollBar->setLargeStep ( ItemHeight );
 
 	if ( TotalItemHeight <= AbsoluteRect.getHeight() )
 		ScrollBar->setVisible(false);
@@ -213,7 +215,7 @@ void CGUIListBox::setSelected(const wchar_t *item)
 //! called if an event happened.
 bool CGUIListBox::OnEvent(const SEvent& event)
 {
-	if (isEnabled())
+	if (IsEnabled)
 	{
 		switch(event.EventType)
 		{
@@ -388,7 +390,7 @@ bool CGUIListBox::OnEvent(const SEvent& event)
 				switch(event.MouseInput.Event)
 				{
 				case EMIE_MOUSE_WHEEL:
-					ScrollBar->setPos(ScrollBar->getPos() + (s32)event.MouseInput.Wheel*-ItemHeight/2);
+					ScrollBar->setPos(ScrollBar->getPos() + (s32)event.MouseInput.Wheel*-10);
 					return true;
 
 				case EMIE_LMOUSE_PRESSED_DOWN:
@@ -450,8 +452,6 @@ void CGUIListBox::selectNew(s32 ypos, bool onlyHover)
 
 	recalculateScrollPos();
 
-	gui::EGUI_EVENT_TYPE eventType = (Selected == oldSelected && now < selectTime + 500) ? EGET_LISTBOX_SELECTED_AGAIN : EGET_LISTBOX_CHANGED;
-	selectTime = now;
 	// post the news
 	if (Parent && !onlyHover)
 	{
@@ -459,9 +459,10 @@ void CGUIListBox::selectNew(s32 ypos, bool onlyHover)
 		event.EventType = EET_GUI_EVENT;
 		event.GUIEvent.Caller = this;
 		event.GUIEvent.Element = 0;
-		event.GUIEvent.EventType = eventType;
+		event.GUIEvent.EventType = (Selected == oldSelected && now < selectTime + 500) ? EGET_LISTBOX_SELECTED_AGAIN : EGET_LISTBOX_CHANGED;
 		Parent->OnEvent(event);
 	}
+	selectTime = now;
 }
 
 

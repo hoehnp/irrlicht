@@ -75,10 +75,7 @@ namespace video
 		EMF_COLOR_MASK = 0x8000,
 
 		//! ColorMaterial enum for vertex color interpretation
-		EMF_COLOR_MATERIAL = 0x10000,
-
-		//! Flag for enabling/disabling mipmap usage
-		EMF_USE_MIP_MAPS = 0x20000
+		EMF_COLOR_MATERIAL = 0x10000
 	};
 
 } // end namespace video

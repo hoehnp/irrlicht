@@ -7,10 +7,14 @@ node callbacks, are left out for simplicity of the example.
 */
 
 #include <irrlicht.h>
-#include "driverChoice.h"
+#include <iostream>
 
 using namespace irr;
 using namespace core;
+using namespace scene;
+using namespace video;
+using namespace io;
+using namespace gui;
 
 #if defined(_MSC_VER)
 #pragma comment(lib, "Irrlicht.lib")
@@ -47,7 +51,7 @@ using namespace core;
 	This light manager is also an event receiver; this is purely for simplicity in this example,
     it's neither necessary nor recommended for a real application.
 */
-class CMyLightManager : public scene::ILightManager, public IEventReceiver
+class CMyLightManager : public ILightManager, public IEventReceiver
 {
 	typedef enum
 	{
@@ -62,16 +66,16 @@ class CMyLightManager : public scene::ILightManager, public IEventReceiver
 
 	// These data represent the state information that this light manager
 	// is interested in.
-	scene::ISceneManager * SceneManager;
-	core::array<scene::ILightSceneNode*> * SceneLightList;
-	scene::E_SCENE_NODE_RENDER_PASS CurrentRenderPass;
-	scene::ISceneNode * CurrentSceneNode;
+	ISceneManager * SceneManager;
+	core::array<ILightSceneNode*> * SceneLightList;
+	E_SCENE_NODE_RENDER_PASS CurrentRenderPass;
+	ISceneNode * CurrentSceneNode;
 
 public:
-	CMyLightManager(scene::ISceneManager* sceneManager)
+	CMyLightManager(ISceneManager* sceneManager)
 		: Mode(NO_MANAGEMENT), RequestedMode(NO_MANAGEMENT),
 		SceneManager(sceneManager),  SceneLightList(0),
-		CurrentRenderPass(scene::ESNRP_NONE), CurrentSceneNode(0)
+		CurrentRenderPass(ESNRP_NONE), CurrentSceneNode(0)
 	{ }
 
 	virtual ~CMyLightManager(void) { }
@@ -111,7 +115,7 @@ public:
 
 
 	// This is called before the first scene node is rendered.
-	virtual void OnPreRender(core::array<scene::ILightSceneNode*> & lightList)
+	virtual void OnPreRender(core::array<ILightSceneNode*> & lightList)
 	{
 		// Update the mode; changing it here ensures that it's consistent throughout a render
 		Mode = RequestedMode;
@@ -131,16 +135,16 @@ public:
 			(*SceneLightList)[i]->setVisible(true);
 	}
 
-	virtual void OnRenderPassPreRender(scene::E_SCENE_NODE_RENDER_PASS renderPass)
+	virtual void OnRenderPassPreRender(E_SCENE_NODE_RENDER_PASS renderPass)
 	{
 		// I don't have to do anything here except remember which render pass I am in.
 		CurrentRenderPass = renderPass;
 	}
 
-	virtual void OnRenderPassPostRender(scene::E_SCENE_NODE_RENDER_PASS renderPass)
+	virtual void OnRenderPassPostRender(E_SCENE_NODE_RENDER_PASS renderPass)
 	{
 		// I only want solid nodes to be lit, so after the solid pass, turn all lights off.
-		if(scene::ESNRP_SOLID == renderPass)
+		if(ESNRP_SOLID == renderPass)
 		{
 			for(u32 i = 0; i < SceneLightList->size(); ++i)
 				(*SceneLightList)[i]->setVisible(false);
@@ -148,22 +152,22 @@ public:
 	}
 
 	// This is called before the specified scene node is rendered
-	virtual void OnNodePreRender(scene::ISceneNode* node)
+	virtual void OnNodePreRender(ISceneNode* node)
 	{
 		CurrentSceneNode = node;
 
 		// This light manager only considers solid objects, but you are free to manipulate
 		// lights during any phase, depending on your requirements.
-		if (scene::ESNRP_SOLID != CurrentRenderPass)
+		if(ESNRP_SOLID != CurrentRenderPass)
 			return;
 
 		// And in fact for this example, I only want to consider lighting for cube scene
 		// nodes.  You will probably want to deal with lighting for (at least) mesh /
 		// animated mesh scene nodes as well.
-		if (node->getType() != scene::ESNT_CUBE)
+		if(node->getType() != ESNT_CUBE)
 			return;
 
-		if (LIGHTS_NEAREST_NODE == Mode)
+		if(LIGHTS_NEAREST_NODE == Mode)
 		{
 			// This is a naive implementation that prioritises every light in the scene
 			// by its proximity to the node being rendered.  This produces some flickering
@@ -178,7 +182,7 @@ public:
 			u32 i;
 			for(i = 0; i < SceneLightList->size(); ++i)
 			{
-				scene::ILightSceneNode* lightNode = (*SceneLightList)[i];
+				ILightSceneNode* lightNode = (*SceneLightList)[i];
 				f64 distance = lightNode->getAbsolutePosition().getDistanceFromSQ(nodePosition);
 				sortingArray.push_back(LightDistanceElement(lightNode, distance));
 			}
@@ -198,23 +202,23 @@ public:
 			// on all lights that are found under that node in the scene graph.
 			// This is a general purpose algorithm that doesn't use any special
 			// knowledge of how this particular scene graph is organised.
-			for (u32 i = 0; i < SceneLightList->size(); ++i)
+			for(u32 i = 0; i < SceneLightList->size(); ++i)
 			{
-				scene::ILightSceneNode* lightNode = (*SceneLightList)[i];
-				video::SLight & lightData = lightNode->getLightData();
+				ILightSceneNode* lightNode = (*SceneLightList)[i];
+				SLight & lightData = lightNode->getLightData();
 
-				if (video::ELT_DIRECTIONAL != lightData.Type)
+				if(ELT_DIRECTIONAL != lightData.Type)
 					lightNode->setVisible(false);
 			}
 
-			scene::ISceneNode * parentZone = findZone(node);
-			if (parentZone)
+			ISceneNode * parentZone = findZone(node);
+			if(parentZone)
 				turnOnZoneLights(parentZone);
 		}
 	}
 
 	// Called after the specified scene node is rendered
-	virtual void OnNodePostRender(scene::ISceneNode* node)
+	virtual void OnNodePostRender(ISceneNode* node)
 	{
 		// I don't need to do any light management after individual node rendering.
 	}
@@ -222,12 +226,12 @@ public:
 private:
 
 	// Find the empty scene node that is the parent of the specified node
-	scene::ISceneNode * findZone(scene::ISceneNode * node)
+	ISceneNode * findZone(ISceneNode * node)
 	{
 		if(!node)
 			return 0;
 
-		if(node->getType() == scene::ESNT_EMPTY)
+		if(node->getType() == ESNT_EMPTY)
 			return node;
 
 		return findZone(node->getParent());
@@ -235,15 +239,15 @@ private:
 
 	// Turn on all lights that are children (directly or indirectly) of the
 	// specified scene node.
-	void turnOnZoneLights(scene::ISceneNode * node)
+	void turnOnZoneLights(ISceneNode * node)
 	{
-		core::list<scene::ISceneNode*> const & children = node->getChildren();
-		for (core::list<scene::ISceneNode*>::ConstIterator child = children.begin();
+		core::list<ISceneNode*> const & children = node->getChildren();
+		for (core::list<ISceneNode*>::ConstIterator child = children.begin();
 			child != children.end();
 			++child)
 		{
-			if((*child)->getType() == scene::ESNT_LIGHT)
-				static_cast<scene::ILightSceneNode*>(*child)->setVisible(true);
+			if((*child)->getType() == ESNT_LIGHT)
+				static_cast<ILightSceneNode*>(*child)->setVisible(true);
 			else // Assume that lights don't have any children that are also lights
 				turnOnZoneLights(*child);
 		}
@@ -256,10 +260,10 @@ private:
 	public:
 		LightDistanceElement() {};
 
-		LightDistanceElement(scene::ILightSceneNode* n, f64 d)
+		LightDistanceElement(ILightSceneNode* n, f64 d)
 			: node(n), distance(d) { }
 
-		scene::ILightSceneNode* node;
+		ILightSceneNode* node;
 		f64 distance;
 
 		// Lower distance elements are sorted to the start of the array
@@ -275,27 +279,48 @@ private:
 */
 int main(int argumentCount, char * argumentValues[])
 {
-	// ask user for driver
-	video::E_DRIVER_TYPE driverType=driverChoiceConsole();
-	if (driverType==video::EDT_COUNT)
-		return 1;
+	char driverChoice;
 
-	IrrlichtDevice *device = createDevice(driverType,
-			dimension2d<u32>(640, 480), 32);
+	if(argumentCount > 1)
+		driverChoice = argumentValues[1][0];
+	else
+	{
+		printf("Please select the driver you want for this example:\n"\
+			" (a) Direct3D 9.0c\n (b) Direct3D 8.1\n (c) OpenGL 1.5\n"\
+			" (d) Software Renderer\n (e) Burning's Software Renderer\n"\
+			" (f) NullDevice\n (otherKey) exit\n\n");
 
+		std::cin >> driverChoice;
+	}
+
+	video::E_DRIVER_TYPE driverType;
+	switch(driverChoice)
+	{
+		case 'a': driverType = video::EDT_DIRECT3D9;break;
+		case 'b': driverType = video::EDT_DIRECT3D8;break;
+		case 'c': driverType = video::EDT_OPENGL;   break;
+		case 'd': driverType = video::EDT_SOFTWARE; break;
+		case 'e': driverType = video::EDT_BURNINGSVIDEO;break;
+		case 'f': driverType = video::EDT_NULL;     break;
+		default: return 0;
+	}
+
+
+	IrrlichtDevice *device = createDevice(driverType, dimension2d<u32>(640, 480), 32,
+										false, false, false, 0);
 	if(!device)
 		return -1;
 
 	f32 const lightRadius = 60.f; // Enough to reach the far side of each 'zone'
 
-	video::IVideoDriver* driver = device->getVideoDriver();
-	scene::ISceneManager* smgr = device->getSceneManager();
-	gui::IGUIEnvironment* guienv = device->getGUIEnvironment();
+	IVideoDriver* driver = device->getVideoDriver();
+	ISceneManager* smgr = device->getSceneManager();
+	IGUIEnvironment* guienv = device->getGUIEnvironment();
 
 	gui::IGUISkin* skin = guienv->getSkin();
 	if (skin)
 	{
-		skin->setColor(gui::EGDC_BUTTON_TEXT, video::SColor(255, 255, 255, 255));
+		skin->setColor(EGDC_BUTTON_TEXT, SColor(255, 255, 255, 255));
 		gui::IGUIFont* font = guienv->getFont("../../media/fontlucida.png");
 		if(font)
 			skin->setFont(font);
@@ -312,38 +337,38 @@ Add several "zones".  You could use this technique to light individual rooms, fo
 		for(f32 zoneY = -60.f; zoneY <= 60.f; zoneY += 60.f)
 		{
 			// Start with an empty scene node, which we will use to represent a zone.
-			scene::ISceneNode * zoneRoot = smgr->addEmptySceneNode();
+			ISceneNode * zoneRoot = smgr->addEmptySceneNode();
 			zoneRoot->setPosition(vector3df(zoneX, zoneY, 0));
 
 			// Each zone contains a rotating cube
-			scene::IMeshSceneNode * node = smgr->addCubeSceneNode(15, zoneRoot);
-			scene::ISceneNodeAnimator * rotation = smgr->createRotationAnimator(vector3df(0.25f, 0.5f, 0.75f));
+			IMeshSceneNode * node = smgr->addCubeSceneNode(15, zoneRoot);
+			ISceneNodeAnimator * rotation = smgr->createRotationAnimator(vector3df(0.25f, 0.5f, 0.75f));
 			node->addAnimator(rotation);
 			rotation->drop();
 
 			// And each cube has three lights attached to it.  The lights are attached to billboards so
 			// that we can see where they are.  The billboards are attached to the cube, so that the
 			// lights are indirect descendents of the same empty scene node as the cube.
-			scene::IBillboardSceneNode * billboard = smgr->addBillboardSceneNode(node);
+			IBillboardSceneNode * billboard = smgr->addBillboardSceneNode(node);
 			billboard->setPosition(vector3df(0, -14, 30));
 			billboard->setMaterialType(video::EMT_TRANSPARENT_ADD_COLOR );
 			billboard->setMaterialTexture(0, driver->getTexture("../../media/particle.bmp"));
 			billboard->setMaterialFlag(video::EMF_LIGHTING, false);
-			scene::ILightSceneNode * light = smgr->addLightSceneNode(billboard, vector3df(0, 0, 0), video::SColorf(1, 0, 0), lightRadius);
+			ILightSceneNode * light = smgr->addLightSceneNode(billboard, vector3df(0, 0, 0), SColorf(1, 0, 0), lightRadius);
 
 			billboard = smgr->addBillboardSceneNode(node);
 			billboard->setPosition(vector3df(-21, -14, -21));
 			billboard->setMaterialType(video::EMT_TRANSPARENT_ADD_COLOR );
 			billboard->setMaterialTexture(0, driver->getTexture("../../media/particle.bmp"));
 			billboard->setMaterialFlag(video::EMF_LIGHTING, false);
-			light = smgr->addLightSceneNode(billboard, vector3df(0, 0, 0), video::SColorf(0, 1, 0), lightRadius);
+			light = smgr->addLightSceneNode(billboard, vector3df(0, 0, 0), SColorf(0, 1, 0), lightRadius);
 
 			billboard = smgr->addBillboardSceneNode(node);
 			billboard->setPosition(vector3df(21, -14, -21));
 			billboard->setMaterialType(video::EMT_TRANSPARENT_ADD_COLOR );
 			billboard->setMaterialTexture(0, driver->getTexture("../../media/particle.bmp"));
 			billboard->setMaterialFlag(video::EMF_LIGHTING, false);
-			light = smgr->addLightSceneNode(billboard, vector3df(0, 0, 0), video::SColorf(0, 0, 1), lightRadius);
+			light = smgr->addLightSceneNode(billboard, vector3df(0, 0, 0), SColorf(0, 0, 1), lightRadius);
 
 			// Each cube also has a smaller cube rotating around it, to show that the cubes are being
 			// lit by the lights in their 'zone', not just lights that are their direct children.
@@ -361,7 +386,7 @@ Add several "zones".  You could use this technique to light individual rooms, fo
 
 	while(device->run())
 	{
-		driver->beginScene(true, true, video::SColor(255,100,101,140));
+		driver->beginScene(true, true, SColor(255,100,101,140));
 		smgr->drawAll();
 		guienv->drawAll();
 		driver->endScene();

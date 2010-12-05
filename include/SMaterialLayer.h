@@ -26,23 +26,14 @@ namespace video
 		//! Texture is clamped to the border pixel (if exists)
 		ETC_CLAMP_TO_BORDER,
 		//! Texture is alternatingly mirrored (0..1..0..1..0..)
-		ETC_MIRROR,
-		//! Texture is mirrored once and then clamped (0..1..0)
-		ETC_MIRROR_CLAMP,
-		//! Texture is mirrored once and then clamped to edge
-		ETC_MIRROR_CLAMP_TO_EDGE,
-		//! Texture is mirrored once and then clamped to border
-		ETC_MIRROR_CLAMP_TO_BORDER
+		ETC_MIRROR
 	};
 	static const char* const aTextureClampNames[] = {
 			"texture_clamp_repeat",
 			"texture_clamp_clamp",
 			"texture_clamp_clamp_to_edge",
 			"texture_clamp_clamp_to_border",
-			"texture_clamp_mirror",
-			"texture_clamp_mirror_clamp",
-			"texture_clamp_mirror_clamp_to_edge",
-			"texture_clamp_mirror_clamp_to_border", 0};
+			"texture_clamp_mirror", 0};
 
 	//! Struct for holding material parameters which exist per texture layer
 	class SMaterialLayer
@@ -51,8 +42,7 @@ namespace video
 		//! Default constructor
 		SMaterialLayer()
 			: Texture(0),
-				TextureWrapU(ETC_REPEAT),
-				TextureWrapV(ETC_REPEAT),
+				TextureWrap(ETC_REPEAT),
 				BilinearFilter(true),
 				TrilinearFilter(false),
 				AnisotropicFilter(0),
@@ -107,8 +97,7 @@ namespace video
 				else
 					TextureMatrix = 0;
 			}
-			TextureWrapU = other.TextureWrapU;
-			TextureWrapV = other.TextureWrapV;
+			TextureWrap = other.TextureWrap;
 			BilinearFilter = other.BilinearFilter;
 			TrilinearFilter = other.TrilinearFilter;
 			AnisotropicFilter = other.AnisotropicFilter;
@@ -116,6 +105,36 @@ namespace video
 
 			return *this;
 		}
+
+		//! Texture
+		ITexture* Texture;
+
+		//! Texture Clamp Mode
+		u8 TextureWrap;
+
+		//! Is bilinear filtering enabled? Default: true
+		bool BilinearFilter:1;
+
+		//! Is trilinear filtering enabled? Default: false
+		/** If the trilinear filter flag is enabled,
+		the bilinear filtering flag is ignored. */
+		bool TrilinearFilter:1;
+
+		//! Is anisotropic filtering enabled? Default: 0, disabled
+		/** In Irrlicht you can use anisotropic texture filtering
+		in conjunction with bilinear or trilinear texture
+		filtering to improve rendering results. Primitives
+		will look less blurry with this flag switched on. The number gives 
+		the maximal anisotropy degree, and is often in the range 2-16. 
+		Value 1 is equivalent to 0, but should be avoided. */
+		u8 AnisotropicFilter;
+
+		//! Bias for the mipmap choosing decision.
+		/** This value can make the textures more or less blurry than with the
+		default value of 0. The value (divided by 8.f) is added to the mipmap level
+		chosen initially, and thus takes a smaller mipmap for a region
+		if the value is positive. */
+		s8 LODBias;
 
 		//! Gets the texture transformation matrix
 		/** \return Texture matrix of this layer. */
@@ -159,8 +178,7 @@ namespace video
 		{
 			bool different =
 				Texture != b.Texture ||
-				TextureWrapU != b.TextureWrapU ||
-				TextureWrapV != b.TextureWrapV ||
+				TextureWrap != b.TextureWrap ||
 				BilinearFilter != b.BilinearFilter ||
 				TrilinearFilter != b.TrilinearFilter ||
 				AnisotropicFilter != b.AnisotropicFilter ||
@@ -179,38 +197,6 @@ namespace video
 		\return True if layers are equal, else false. */
 		inline bool operator==(const SMaterialLayer& b) const
 		{ return !(b!=*this); }
-
-		//! Texture
-		ITexture* Texture;
-
-		//! Texture Clamp Mode
-		/** Values are tkane from E_TEXTURE_CLAMP. */
-		u8 TextureWrapU:4;
-		u8 TextureWrapV:4;
-
-		//! Is bilinear filtering enabled? Default: true
-		bool BilinearFilter:1;
-
-		//! Is trilinear filtering enabled? Default: false
-		/** If the trilinear filter flag is enabled,
-		the bilinear filtering flag is ignored. */
-		bool TrilinearFilter:1;
-
-		//! Is anisotropic filtering enabled? Default: 0, disabled
-		/** In Irrlicht you can use anisotropic texture filtering
-		in conjunction with bilinear or trilinear texture
-		filtering to improve rendering results. Primitives
-		will look less blurry with this flag switched on. The number gives 
-		the maximal anisotropy degree, and is often in the range 2-16. 
-		Value 1 is equivalent to 0, but should be avoided. */
-		u8 AnisotropicFilter;
-
-		//! Bias for the mipmap choosing decision.
-		/** This value can make the textures more or less blurry than with the
-		default value of 0. The value (divided by 8.f) is added to the mipmap level
-		chosen initially, and thus takes a smaller mipmap for a region
-		if the value is positive. */
-		s8 LODBias;
 
 	private:
 		friend class SMaterial;

@@ -77,14 +77,6 @@ public:
 	//! returns the font
 	virtual IGUIFont* getFont(const io::path& filename);
 
-	//! add an externally loaded font
-	virtual IGUIFont* addFont(const io::path& name, IGUIFont* font);
-
-	//! remove loaded font
-	virtual void removeFont(IGUIFont* font);
-
-	//! returns default font
-	virtual IGUIFont* getBuiltInFont() const;
 
 	//! returns the sprite bank
 	virtual IGUISpriteBank* getSpriteBank(const io::path& filename);
@@ -104,7 +96,7 @@ public:
 
 	//! Adds a message box.
 	virtual IGUIWindow* addMessageBox(const wchar_t* caption, const wchar_t* text=0,
-		bool modal = true, s32 flag = EMBF_OK, IGUIElement* parent=0, s32 id=-1, video::ITexture* image=0);
+		bool modal = true, s32 flag = EMBF_OK, IGUIElement* parent=0, s32 id=-1);
 
 	//! adds a scrollbar. The returned pointer must not be dropped.
 	virtual IGUIScrollBar* addScrollBar(bool horizontal, const core::rect<s32>& rectangle,
@@ -190,6 +182,9 @@ public:
 	//! Returns the element with the focus
 	virtual IGUIElement* getFocus() const;
 
+	//! returns default font
+	virtual IGUIFont* getBuiltInFont() const;
+
 	//! Adds an element for fading in or out.
 	virtual IGUIInOutFader* addInOutFader(const core::rect<s32>* rectangle=0, IGUIElement* parent=0, s32 id=-1);
 
@@ -261,23 +256,23 @@ private:
 
 	struct SFont
 	{
-		io::SNamedPath NamedPath;
+		io::path Filename;
 		IGUIFont* Font;
 
 		bool operator < (const SFont& other) const
 		{
-			return (NamedPath < other.NamedPath);
+			return (Filename < other.Filename);
 		}
 	};
 
 	struct SSpriteBank
 	{
-		io::SNamedPath NamedPath;
+		core::stringc Filename;
 		IGUISpriteBank* Bank;
 
 		bool operator < (const SSpriteBank& other) const
 		{
-			return (NamedPath < other.NamedPath);
+			return (Filename < other.Filename);
 		}
 	};
 
@@ -285,9 +280,7 @@ private:
 	{
 		IGUIStaticText* Element;
 		u32 LastTime;
-		u32 EnterTime;
 		u32 LaunchTime;
-		u32 RelaunchTime;
 	};
 
 	SToolTip ToolTip;
@@ -298,7 +291,6 @@ private:
 	core::array<SSpriteBank> Banks;
 	video::IVideoDriver* Driver;
 	IGUIElement* Hovered;
-	IGUIElement* HoveredNoSubelement;	// subelements replaced by their parent, so you only have 'real' elements here
 	IGUIElement* Focus;
 	core::position2d<s32> LastHoveredMousePos;
 	IGUISkin* CurrentSkin;
