@@ -327,7 +327,7 @@ namespace core
 		this vector.  The calculation assumes the pole at (0,1,0) and
 		returns the angles in X and Y.
 		*/
-		vector3d<T> getSphericalCoordinateAngles() const
+		vector3d<T> getSphericalCoordinateAngles()
 		{
 			vector3d<T> angle;
 			const f64 length = X*X + Y*Y + Z*Z;
@@ -393,16 +393,6 @@ namespace core
 			array[2] = Z;
 			array[3] = 0;
 		}
-
-		//! Fills an array of 3 values with the vector data (usually floats).
-		/** Useful for setting in shader constants for example.*/
-		void getAs3Values(T* array) const
-		{
-			array[0] = X;
-			array[1] = Y;
-			array[2] = Z;
-		}
-
 
 		//! X coordinate of the vector
 		T X;

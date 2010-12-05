@@ -53,8 +53,9 @@ inline void heapsort(T* array_, s32 size)
 	for (i=((size-1)/2); i>=0; --i)
 		heapsink(virtualArray, i+1, virtualSize-1);
 
-	// sort array, leave out the last element (0)
-	for (i=size-1; i>0; --i)
+	// sort array
+
+	for (i=size-1; i>=0; --i)
 	{
 		T t = array_[0];
 		array_[0] = array_[i];

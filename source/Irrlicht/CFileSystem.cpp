@@ -12,7 +12,6 @@
 #include "CPakReader.h"
 #include "CNPKReader.h"
 #include "CTarReader.h"
-#include "CWADReader.h"
 #include "CFileList.h"
 #include "CXMLReader.h"
 #include "CXMLWriter.h"
@@ -22,11 +21,11 @@
 #include "CMemoryFile.h"
 #include "CLimitReadFile.h"
 
+
 #if defined (_IRR_WINDOWS_API_)
 	#if !defined ( _WIN32_WCE )
 		#include <direct.h> // for _chdir
 		#include <io.h> // for _access
-		#include <tchar.h>
 	#endif
 #else
 	#if (defined(_IRR_POSIX_API_) || defined(_IRR_OSX_PLATFORM_))
@@ -76,11 +75,6 @@ CFileSystem::CFileSystem()
 #ifdef __IRR_COMPILE_WITH_TAR_ARCHIVE_LOADER_
 	ArchiveLoader.push_back(new CArchiveLoaderTAR(this));
 #endif
-
-#ifdef __IRR_COMPILE_WITH_WAD_ARCHIVE_LOADER_
-	ArchiveLoader.push_back(new CArchiveLoaderWAD(this));
-#endif
-
 }
 
 
@@ -206,11 +200,7 @@ bool CFileSystem::addFileArchive(const io::path& filename, bool ignoreCase,
 	// check if the archive was already loaded
 	for (i = 0; i < FileArchives.size(); ++i)
 	{
-		// TODO: This should go into a path normalization method
-		// We need to check for directory names with trailing slash and without
-		const core::stringc absPath = getAbsolutePath(filename);
-		const core::stringc arcPath = FileArchives[i]->getFileList()->getPath();
-		if ((absPath == arcPath) || ((absPath+"/") == arcPath))
+		if (getAbsolutePath(filename) == FileArchives[i]->getFileList()->getPath())
 		{
 			if (password.size())
 				FileArchives[i]->Password=password;
@@ -592,7 +582,7 @@ io::path& CFileSystem::flattenFilename(io::path& directory, const io::path& root
 }
 
 
-//! Sets the current file systen type
+//! Creates a list of files and directories in the current working directory
 EFileSystemType CFileSystem::setFileListSystem(EFileSystemType listType)
 {
 	EFileSystemType current = FileSystemType;
@@ -613,6 +603,7 @@ IFileList* CFileSystem::createFileList()
 	//! Construct from native filesystem
 	if (FileSystemType == FILESYSTEM_NATIVE)
 	{
+		io::path fullPath;
 		// --------------------------------------------
 		//! Windows version
 		#ifdef _IRR_WINDOWS_API_
@@ -620,16 +611,18 @@ IFileList* CFileSystem::createFileList()
 
 		r = new CFileList(Path, true, false);
 
-		struct _tfinddata_t c_file;
+		struct _finddata_t c_file;
 		long hFile;
 
-		if( (hFile = _tfindfirst( _T("*"), &c_file )) != -1L )
+		if( (hFile = _findfirst( "*", &c_file )) != -1L )
 		{
 			do
 			{
-				r->addItem(Path + c_file.name, 0, c_file.size, (_A_SUBDIR & c_file.attrib) != 0, 0);
+				fullPath = Path + c_file.name;
+
+				r->addItem(fullPath, c_file.size, (_A_SUBDIR & c_file.attrib) != 0, 0);
 			}
-			while( _tfindnext( hFile, &c_file ) == 0 );
+			while( _findnext( hFile, &c_file ) == 0 );
 
 			_findclose( hFile );
 		}
@@ -648,7 +641,7 @@ IFileList* CFileSystem::createFileList()
 
 		r = new CFileList(Path, false, false);
 
-		r->addItem(Path + "..", 0, 0, true, 0);
+		r->addItem(Path + "..", 0, true, 0);
 
 		//! We use the POSIX compliant methods instead of scandir
 		DIR* dirHandle=opendir(Path.c_str());
@@ -659,6 +652,7 @@ IFileList* CFileSystem::createFileList()
 			{
 				u32 size = 0;
 				bool isDirectory = false;
+				fullPath = Path + dirEntry->d_name;
 
 				if((strcmp(dirEntry->d_name, ".")==0) ||
 				   (strcmp(dirEntry->d_name, "..")==0))
@@ -679,7 +673,7 @@ IFileList* CFileSystem::createFileList()
 				}
 				#endif
 
-				r->addItem(Path + dirEntry->d_name, 0, size, isDirectory, 0);
+				r->addItem(fullPath, size, isDirectory, 0);
 			}
 			closedir(dirHandle);
 		}
@@ -695,10 +689,10 @@ IFileList* CFileSystem::createFileList()
 		SFileListEntry e3;
 
 		//! PWD
-		r->addItem(Path + ".", 0, 0, true, 0);
+		r->addItem(Path + ".", 0, true, 0);
 
 		//! parent
-		r->addItem(Path + "..", 0, 0, true, 0);
+		r->addItem(Path + "..", 0, true, 0);
 
 		//! merge archives
 		for (u32 i=0; i < FileArchives.size(); ++i)
@@ -709,10 +703,12 @@ IFileList* CFileSystem::createFileList()
 			{
 				if (core::isInSameDirectory(Path, merge->getFullFileName(j)) == 0)
 				{
-					r->addItem(merge->getFullFileName(j), merge->getFileOffset(j), merge->getFileSize(j), merge->isDirectory(j), 0);
+					io::path fullPath = merge->getFullFileName(j);
+					r->addItem(fullPath, merge->getFileSize(j), merge->isDirectory(j), 0);
 				}
 			}
 		}
+
 	}
 
 	if (r)
@@ -755,10 +751,8 @@ bool CFileSystem::existFile(const io::path& filename) const
 #else
 	return (_access(filename.c_str(), 0) != -1);
 #endif
-#elif defined(F_OK)
-	return (access(filename.c_str(), F_OK) != -1);
 #else
-    return (access(filename.c_str(), 0) != -1);
+	return (access(filename.c_str(), F_OK) != -1);
 #endif
 #endif
 }

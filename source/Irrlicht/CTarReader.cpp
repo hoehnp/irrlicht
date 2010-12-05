@@ -110,7 +110,7 @@ bool CArchiveLoaderTAR::isALoadableFileFormat(io::IReadFile* file) const
 		checksum2 += c8(*p);
 	}
 
-	if (!strncmp(fHead.Magic, "ustar", 5))
+	if (!strcmp(fHead.Magic, "star"))
 	{
 		for (u8* p = (u8*)(&fHead.Magic[0]); p < (u8*)(&fHead) + sizeof(fHead); ++p)
 		{
@@ -125,7 +125,7 @@ bool CArchiveLoaderTAR::isALoadableFileFormat(io::IReadFile* file) const
 	TAR Archive
 */
 CTarReader::CTarReader(IReadFile* file, bool ignoreCase, bool ignorePaths)
- : CFileList((file ? file->getFileName() : io::path("")), ignoreCase, ignorePaths), File(file)
+ : CFileList(file ? file->getFileName() : "", ignoreCase, ignorePaths), File(file)
 {
 	#ifdef _DEBUG
 	setDebugName("CTarReader");
@@ -177,7 +177,7 @@ u32 CTarReader::populateFileList()
 
 			// USTAR archives have a filename prefix
 			// may not be null terminated, copy carefully!
-			if (!strncmp(fHead.Magic, "ustar", 5))
+			if (!strcmp(fHead.Magic, "ustar"))
 			{
 				c8* np = fHead.FileNamePrefix;
 				while(*np && (np - fHead.FileNamePrefix) < 155)
@@ -216,7 +216,8 @@ u32 CTarReader::populateFileList()
 			pos = offset + (size / 512) * 512 + ((size % 512) ? 512 : 0);
 
 			// add file to list
-			addItem(fullPath, offset, size, false );
+			addItem(fullPath, size, false, Offsets.size());
+			Offsets.push_back(offset);
 		}
 		else
 		{
@@ -245,11 +246,10 @@ IReadFile* CTarReader::createAndOpenFile(const io::path& filename)
 //! opens a file by index
 IReadFile* CTarReader::createAndOpenFile(u32 index)
 {
-	if (index >= Files.size() )
+	if (index < Files.size())
+		return createLimitReadFile(Files[index].FullName, File, Offsets[Files[index].ID], Files[index].Size);
+	else
 		return 0;
-
-	const SFileListEntry &entry = Files[index];
-	return createLimitReadFile( entry.FullName, File, entry.Offset, entry.Size );
 }
 
 } // end namespace io

@@ -273,7 +273,7 @@ void CGUIColorSelectDialog::buildColorRing( const core::dimension2d<u32> & dim, 
 					{
 						const u32 alpha = (u32) ( (rTest - 0.5f ) * ( 255.f / 0.05f ) );
 						rgb.setAlpha(alpha);
-					}
+					} 
 					else if ( rTest >= 0.95f )
 					{
 						const u32 alpha = (u32) ( (rTest - 0.95f ) * ( 255.f / 0.05f ) );
@@ -302,7 +302,7 @@ void CGUIColorSelectDialog::buildColorRing( const core::dimension2d<u32> & dim, 
 	bool generateMipLevels = driver->getTextureCreationFlag(video::ETCF_CREATE_MIP_MAPS);
 	driver->setTextureCreationFlag( video::ETCF_CREATE_MIP_MAPS, false);
 
-	ColorRing.Texture = driver->addTexture ( "#colorring", RawTexture);
+	ColorRing.Texture = driver->addTexture ( L"#colorring", RawTexture);
 	RawTexture->drop();
 
 	driver->setTextureCreationFlag(video::ETCF_CREATE_MIP_MAPS, generateMipLevels);
@@ -312,7 +312,7 @@ void CGUIColorSelectDialog::buildColorRing( const core::dimension2d<u32> & dim, 
 //! called if an event happened.
 bool CGUIColorSelectDialog::OnEvent(const SEvent& event)
 {
-	if (isEnabled())
+	if (IsEnabled)
 	{
 		switch(event.EventType)
 		{

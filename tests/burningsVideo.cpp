@@ -32,8 +32,6 @@ bool burningsVideo(void)
 		result = takeScreenshotAndCompareAgainstReference(driver, "-ambient-lighting.png", 100);
 	}
 
-	device->closeDevice();
-	device->run();
     device->drop();
 
     return result;

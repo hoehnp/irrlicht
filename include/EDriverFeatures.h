@@ -106,9 +106,6 @@ namespace video
 		//! Supports geometry shaders
 		EVDF_GEOMETRY_SHADER,
 
-		//! Supports occlusion queries
-		EVDF_OCCLUSION_QUERY,
-
 		//! Only used for counting the elements of this enum
 		EVDF_COUNT
 	};

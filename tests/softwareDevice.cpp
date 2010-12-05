@@ -7,6 +7,8 @@ using namespace irr;
 using namespace core;
 using namespace scene;
 
+
+
 //! Tests the basic functionality of the software device.
 bool softwareDevice(void)
 {
@@ -52,3 +54,5 @@ bool softwareDevice(void)
 
 	return result;
 }
+
+

@@ -187,7 +187,6 @@ public:
 	}
 
 
-	//! The alignment defines how the borders of this element will be positioned when the parent element is resized.
 	void setAlignment(EGUI_ALIGNMENT left, EGUI_ALIGNMENT right, EGUI_ALIGNMENT top, EGUI_ALIGNMENT bottom)
 	{
 		AlignLeft = left;
@@ -454,16 +453,9 @@ public:
 	}
 
 
-	//! Returns true if element is enabled
-	/** Currently elements do _not_ care about parent-states.
-		So if you want to affect childs you have to enable/disable them all.
-		The only exception to this are sub-elements which also check their parent.
-	*/
+	//! Returns true if element is enabled.
 	virtual bool isEnabled() const
 	{
-		if ( isSubElement() && IsEnabled && getParent() )
-			return getParent()->isEnabled();
-
 		_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
 		return IsEnabled;
 	}
@@ -544,27 +536,6 @@ public:
 		return false;
 	}
 
-
-	//! Moves a child to the back, so it's siblings are drawn on top of it
-	/** \return True if successful, false if not. */
-	virtual bool bringToBack(IGUIElement* child)
-	{
-		core::list<IGUIElement*>::Iterator it = Children.begin();
-		if (child == (*it))	// already there
-			return true;
-		for (; it != Children.end(); ++it)
-		{
-			if (child == (*it))
-			{
-				Children.erase(it);
-				Children.push_front(child);
-				return true;
-			}
-		}
-
-		_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
-		return false;
-	}
 
 	//! Returns list with children of this element
 	virtual const core::list<IGUIElement*>& getChildren() const

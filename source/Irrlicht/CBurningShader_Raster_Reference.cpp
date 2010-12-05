@@ -509,7 +509,7 @@ class CBurningShader_Raster_Reference : public IBurningShader
 public:
 
 	//! constructor
-	CBurningShader_Raster_Reference(CBurningVideoDriver* driver);
+	CBurningShader_Raster_Reference(IDepthBuffer* depthBuffer);
 
 	//! draws an indexed triangle list
 	virtual void drawTriangle ( const s4DVertex *a,const s4DVertex *b,const s4DVertex *c );
@@ -536,8 +536,8 @@ private:
 };
 
 //! constructor
-CBurningShader_Raster_Reference::CBurningShader_Raster_Reference(CBurningVideoDriver* driver)
-: IBurningShader(driver)
+CBurningShader_Raster_Reference::CBurningShader_Raster_Reference(IDepthBuffer* depthBuffer)
+: IBurningShader(depthBuffer)
 {
 	#ifdef _DEBUG
 	setDebugName("CBurningShader_Raster_Reference");
@@ -1129,9 +1129,9 @@ namespace video
 
 
 //! creates a flat triangle renderer
-IBurningShader* createTriangleRendererReference(CBurningVideoDriver* driver)
+IBurningShader* createTriangleRendererReference(IDepthBuffer* depthBuffer)
 {
-	return new CBurningShader_Raster_Reference(driver);
+	return new CBurningShader_Raster_Reference(depthBuffer);
 }
 
 

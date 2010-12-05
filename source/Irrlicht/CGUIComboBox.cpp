@@ -64,7 +64,7 @@ CGUIComboBox::CGUIComboBox(IGUIEnvironment* environment, IGUIElement* parent,
 	SelectedText->setAlignment(EGUIA_UPPERLEFT, EGUIA_LOWERRIGHT, EGUIA_UPPERLEFT, EGUIA_LOWERRIGHT);
 	SelectedText->setTextAlignment(EGUIA_UPPERLEFT, EGUIA_CENTER);
 	if (skin)
-		SelectedText->setOverrideColor(skin->getColor(EGDC_BUTTON_TEXT));
+		SelectedText->setOverrideColor(skin->getColor(EGDC_BUTTON_TEXT)); 
 	SelectedText->enableOverrideColor(true);
 
 	// this element can be tabbed to
@@ -182,7 +182,7 @@ void CGUIComboBox::setSelected(s32 idx)
 //! called if an event happened.
 bool CGUIComboBox::OnEvent(const SEvent& event)
 {
-	if (isEnabled())
+	if (IsEnabled)
 	{
 		switch(event.EventType)
 		{
@@ -363,23 +363,20 @@ void CGUIComboBox::draw()
 	{
 		HasFocus = currentFocus == this || isMyChild(currentFocus);
 		LastFocus = currentFocus;
-	}
 
-	// set colors each time as skin-colors can be changed
-	SelectedText->setBackgroundColor(skin->getColor(EGDC_HIGH_LIGHT));
-	if(isEnabled())
-	{
-		SelectedText->setDrawBackground(HasFocus);
-		SelectedText->setOverrideColor(skin->getColor(HasFocus ? EGDC_HIGH_LIGHT_TEXT : EGDC_BUTTON_TEXT));
-	}
-	else
-	{
-		SelectedText->setDrawBackground(false);
-		SelectedText->setOverrideColor(skin->getColor(EGDC_GRAY_TEXT));
-	}
-	ListButton->setSprite(EGBS_BUTTON_UP, skin->getIcon(EGDI_CURSOR_DOWN), skin->getColor(isEnabled() ? EGDC_WINDOW_SYMBOL : EGDC_GRAY_WINDOW_SYMBOL));
-	ListButton->setSprite(EGBS_BUTTON_DOWN, skin->getIcon(EGDI_CURSOR_DOWN), skin->getColor(isEnabled() ? EGDC_WINDOW_SYMBOL : EGDC_GRAY_WINDOW_SYMBOL));
+		SelectedText->setBackgroundColor(skin->getColor(EGDC_HIGH_LIGHT));
 
+		if(isEnabled())
+		{
+			SelectedText->setDrawBackground(HasFocus);
+			SelectedText->setOverrideColor(skin->getColor(HasFocus ? EGDC_HIGH_LIGHT_TEXT : EGDC_BUTTON_TEXT));
+		}
+		else
+		{
+			SelectedText->setDrawBackground(false);
+			SelectedText->setOverrideColor(skin->getColor(EGDC_GRAY_TEXT)); 
+		}
+	}
 
 	core::rect<s32> frameRect(AbsoluteRect);
 

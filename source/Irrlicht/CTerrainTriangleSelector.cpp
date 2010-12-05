@@ -186,11 +186,6 @@ s32 CTerrainTriangleSelector::getTriangleCount() const
 	return TrianglePatches.TotalTriangles;
 }
 
-ISceneNode* CTerrainTriangleSelector::getSceneNodeForTriangle(u32 triangleIndex) const
-{
-	return SceneNode;
-}
-
 } // end namespace scene
 } // end namespace irr
 

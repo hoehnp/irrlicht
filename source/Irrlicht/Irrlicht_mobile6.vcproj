@@ -593,7 +593,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\include\IAnimatedMeshMD3.h"
+					RelativePath="..\..\include\IAnimatedMeshMS3D.h"
 					>
 				</File>
 				<File
@@ -2684,6 +2684,10 @@
 						>
 					</File>
 					<File
+						RelativePath="jpeglib\jchuff.h"
+						>
+					</File>
+					<File
 						RelativePath="jpeglib\jcinit.c"
 						>
 					</File>
@@ -2761,6 +2765,10 @@
 					</File>
 					<File
 						RelativePath="jpeglib\jdhuff.c"
+						>
+					</File>
+					<File
+						RelativePath="jpeglib\jdhuff.h"
 						>
 					</File>
 					<File

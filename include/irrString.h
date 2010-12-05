@@ -79,7 +79,7 @@ public:
 	: array(0), allocated(1), used(1)
 	{
 		array = allocator.allocate(1); // new T[1];
-		array[0] = 0;
+		array[0] = 0x0;
 	}
 
 
@@ -159,85 +159,6 @@ public:
 
 	//! Constructs a string from an unsigned int
 	explicit string(unsigned int number)
-	: array(0), allocated(0), used(0)
-	{
-		// temporary buffer for 16 numbers
-
-		c8 tmpbuf[16]={0};
-		u32 idx = 15;
-
-		// special case '0'
-
-		if (!number)
-		{
-			tmpbuf[14] = '0';
-			*this = &tmpbuf[14];
-			return;
-		}
-
-		// add numbers
-
-		while(number && idx)
-		{
-			--idx;
-			tmpbuf[idx] = (c8)('0' + (number % 10));
-			number /= 10;
-		}
-
-		*this = &tmpbuf[idx];
-	}
-
-
-	//! Constructs a string from a long
-	explicit string(long number)
-	: array(0), allocated(0), used(0)
-	{
-		// store if negative and make positive
-
-		bool negative = false;
-		if (number < 0)
-		{
-			number *= -1;
-			negative = true;
-		}
-
-		// temporary buffer for 16 numbers
-
-		c8 tmpbuf[16]={0};
-		u32 idx = 15;
-
-		// special case '0'
-
-		if (!number)
-		{
-			tmpbuf[14] = '0';
-			*this = &tmpbuf[14];
-			return;
-		}
-
-		// add numbers
-
-		while(number && idx)
-		{
-			--idx;
-			tmpbuf[idx] = (c8)('0' + (number % 10));
-			number /= 10;
-		}
-
-		// add sign
-
-		if (negative)
-		{
-			--idx;
-			tmpbuf[idx] = '-';
-		}
-
-		*this = &tmpbuf[idx];
-	}
-
-
-	//! Constructs a string from an unsigned long
-	explicit string(unsigned long number)
 	: array(0), allocated(0), used(0)
 	{
 		// temporary buffer for 16 numbers
@@ -481,12 +402,6 @@ public:
 		return used-1;
 	}
 
-	//! Informs if the string is empty or not.
-	//! \return True if the string is empty, false if not.
-	bool empty() const
-	{
-		return (size() == 0);
-	}
 
 	//! Returns character string
 	/** \return pointer to C-style NUL terminated string. */
@@ -497,20 +412,18 @@ public:
 
 
 	//! Makes the string lower case.
-	string<T,TAlloc>& make_lower()
+	void make_lower()
 	{
 		for (u32 i=0; i<used; ++i)
 			array[i] = locale_lower ( array[i] );
-		return *this;
 	}
 
 
 	//! Makes the string upper case.
-	string<T,TAlloc>& make_upper()
+	void make_upper()
 	{
 		for (u32 i=0; i<used; ++i)
 			array[i] = locale_upper ( array[i] );
-		return *this;
 	}
 
 
@@ -598,7 +511,7 @@ public:
 
 	//! Appends a character to this string
 	/** \param character: Character to append. */
-	string<T,TAlloc>& append(T character)
+	void append(T character)
 	{
 		if (used + 1 > allocated)
 			reallocate(used + 1);
@@ -607,18 +520,15 @@ public:
 
 		array[used-2] = character;
 		array[used-1] = 0;
-
-		return *this;
 	}
 
 
 	//! Appends a char string to this string
 	/** \param other: Char string to append. */
-	/** \param length: The length of the string to append. */
-	string<T,TAlloc>& append(const T* const other, u32 length=0xffffffff)
+	void append(const T* const other)
 	{
 		if (!other)
-			return *this;
+			return;
 
 		u32 len = 0;
 		const T* p = other;
@@ -627,8 +537,6 @@ public:
 			++len;
 			++p;
 		}
-		if (len > length)
-			len = length;
 
 		if (used + len > allocated)
 			reallocate(used + len);
@@ -640,18 +548,13 @@ public:
 			array[l+used] = *(other+l);
 
 		used += len;
-
-		return *this;
 	}
 
 
 	//! Appends a string to this string
 	/** \param other: String to append. */
-	string<T,TAlloc>& append(const string<T,TAlloc>& other)
+	void append(const string<T,TAlloc>& other)
 	{
-		if (other.size() == 0)
-			return *this;
-
 		--used;
 		u32 len = other.size()+1;
 
@@ -662,23 +565,18 @@ public:
 			array[used+l] = other[l];
 
 		used += len;
-
-		return *this;
 	}
 
 
 	//! Appends a string of the length l to this string.
 	/** \param other: other String to append to this string.
 	\param length: How much characters of the other string to add to this one. */
-	string<T,TAlloc>& append(const string<T,TAlloc>& other, u32 length)
+	void append(const string<T,TAlloc>& other, u32 length)
 	{
-		if (other.size() == 0)
-			return *this;
-
 		if (other.size() < length)
 		{
 			append(other);
-			return *this;
+			return;
 		}
 
 		if (used + length > allocated)
@@ -693,8 +591,6 @@ public:
 		// ensure proper termination
 		array[used]=0;
 		++used;
-
-		return *this;
 	}
 
 
@@ -729,9 +625,9 @@ public:
 	this should be strlen(c)
 	\return Position where one of the characters has been found,
 	or -1 if not found. */
-	s32 findFirstChar(const T* const c, u32 count=1) const
+	s32 findFirstChar(const T* const c, u32 count) const
 	{
-		if (!c || !count)
+		if (!c)
 			return -1;
 
 		for (u32 i=0; i<used; ++i)
@@ -751,11 +647,8 @@ public:
 	\return Position where the character has been found,
 	or -1 if not found. */
 	template <class B>
-	s32 findFirstCharNotInList(const B* const c, u32 count=1) const
+	s32 findFirstCharNotInList(const B* const c, u32 count) const
 	{
-		if (!c || !count)
-			return -1;
-
 		for (u32 i=0; i<used-1; ++i)
 		{
 			u32 j;
@@ -778,11 +671,8 @@ public:
 	\return Position where the character has been found,
 	or -1 if not found. */
 	template <class B>
-	s32 findLastCharNotInList(const B* const c, u32 count=1) const
+	s32 findLastCharNotInList(const B* const c, u32 count) const
 	{
-		if (!c || !count)
-			return -1;
-
 		for (s32 i=(s32)(used-2); i>=0; --i)
 		{
 			u32 j;
@@ -834,9 +724,9 @@ public:
 	this should be strlen(c)
 	\return Position where one of the characters has been found,
 	or -1 if not found. */
-	s32 findLastChar(const T* const c, u32 count=1) const
+	s32 findLastChar(const T* const c, u32 count) const
 	{
-		if (!c || !count)
+		if (!c)
 			return -1;
 
 		for (s32 i=used-1; i>=0; --i)
@@ -884,35 +774,25 @@ public:
 
 	//! Returns a substring
 	/** \param begin: Start of substring.
-	\param length: Length of substring.
-	\param make_lower, copy only lower case */
-	string<T> subString(u32 begin, s32 length, bool make_lower = false ) const
+	\param length: Length of substring. */
+	string<T,TAlloc> subString(u32 begin, s32 length) const
 	{
 		// if start after string
 		// or no proper substring length
 		if ((length <= 0) || (begin>=size()))
-			return string<T>("");
+			return string<T,TAlloc>("");
 		// clamp length to maximal value
 		if ((length+begin) > size())
 			length = size()-begin;
 
-		string<T> o;
+		string<T,TAlloc> o;
 		o.reserve(length+1);
 
-		s32 i;
-		if ( !make_lower )
-		{
-			for (i=0; i<length; ++i)
-				o.array[i] = array[i+begin];
-		}
-		else
-		{
-			for (i=0; i<length; ++i)
-				o.array[i] = locale_lower ( array[i+begin] );
-		}
+		for (s32 i=0; i<length; ++i)
+			o.array[i] = array[i+begin];
 
 		o.array[length] = 0;
-		o.used = length + 1;
+		o.used = o.allocated;
 
 		return o;
 	}
@@ -974,7 +854,7 @@ public:
 
 	//! Appends a string representation of a number to this string
 	/** \param i Number to append. */
-	string<T,TAlloc>& operator += (const unsigned long i)
+	string<T,TAlloc>& operator += (const unsigned long& i)
 	{
 		append(string<T,TAlloc>(i));
 		return *this;
@@ -1002,133 +882,17 @@ public:
 	//! Replaces all characters of a special type with another one
 	/** \param toReplace Character to replace.
 	\param replaceWith Character replacing the old one. */
-	string<T,TAlloc>& replace(T toReplace, T replaceWith)
+	void replace(T toReplace, T replaceWith)
 	{
 		for (u32 i=0; i<used; ++i)
 			if (array[i] == toReplace)
 				array[i] = replaceWith;
-		return *this;
-	}
-
-
-	//! Replaces all instances of a string with another one.
-	/** \param toReplace The string to replace.
-	\param replaceWith The string replacing the old one. */
-	string<T,TAlloc>& replace(const string<T,TAlloc>& toReplace, const string<T,TAlloc>& replaceWith)
-	{
-		if (toReplace.size() == 0)
-			return *this;
-
-		const T* other = toReplace.c_str();
-		const T* replace = replaceWith.c_str();
-		const u32 other_size = toReplace.size();
-		const u32 replace_size = replaceWith.size();
-
-		// Determine the delta.  The algorithm will change depending on the delta.
-		s32 delta = replace_size - other_size;
-
-		// A character for character replace.  The string will not shrink or grow.
-		if (delta == 0)
-		{
-			s32 pos = 0;
-			while ((pos = find(other, pos)) != -1)
-			{
-				for (u32 i = 0; i < replace_size; ++i)
-					array[pos + i] = replace[i];
-				++pos;
-			}
-			return *this;
-		}
-
-		// We are going to be removing some characters.  The string will shrink.
-		if (delta < 0)
-		{
-			u32 i = 0;
-			for (u32 pos = 0; pos < used; ++i, ++pos)
-			{
-				// Is this potentially a match?
-				if (array[pos] == *other)
-				{
-					// Check to see if we have a match.
-					u32 j;
-					for (j = 0; j < other_size; ++j)
-					{
-						if (array[pos + j] != other[j])
-							break;
-					}
-
-					// If we have a match, replace characters.
-					if (j == other_size)
-					{
-						for (j = 0; j < replace_size; ++j)
-							array[i + j] = replace[j];
-						i += replace_size - 1;
-						pos += other_size - 1;
-						continue;
-					}
-				}
-
-				// No match found, just copy characters.
-				array[i] = array[pos];
-			}
-			array[i-1] = 0;
-			used = i;
-			
-			return *this;
-		}
-
-		// We are going to be adding characters, so the string size will increase.
-		// Count the number of times toReplace exists in the string so we can allocate the new size.
-		u32 find_count = 0;
-		s32 pos = 0;
-		while ((pos = find(other, pos)) != -1)
-		{
-			++find_count;
-			++pos;
-		}
-
-		// Re-allocate the string now, if needed.
-		u32 len = delta * find_count;
-		if (used + len > allocated)
-			reallocate(used + len);
-
-		// Don't take the string terminator into account.
-		--used;
-
-		// Start replacing.
-		pos = 0;
-		while ((pos = find(other, pos)) != -1)
-		{
-			T* start = array + pos + other_size - 1;
-			T* ptr   = array + used;
-			T* end   = array + used + delta;
-
-			// Shift characters to make room for the string.
-			while (ptr != start)
-			{
-				*end = *ptr;
-				--ptr;
-				--end;
-			}
-
-			// Add the new string now.
-			for (u32 i = 0; i < replace_size; ++i)
-				array[pos + i] = replace[i];
-
-			pos += replace_size;
-			used += delta;
-		}
-
-		// Terminate the string and return ourself.
-		array[used] = 0;
-		++used;
-		return *this;
 	}
 
 
 	//! Removes characters from a string.
 	/** \param c: Character to remove. */
-	string<T,TAlloc>& remove(T c)
+	void remove(T c)
 	{
 		u32 pos = 0;
 		u32 found = 0;
@@ -1143,18 +907,15 @@ public:
 			array[pos++] = array[i];
 		}
 		used -= found;
-		array[used-1] = 0;
-		return *this;
+		array[used] = 0;
 	}
 
 
 	//! Removes a string from the string.
 	/** \param toRemove: String to remove. */
-	string<T,TAlloc>& remove(const string<T,TAlloc>& toRemove)
+	void remove(const string<T,TAlloc> toRemove)
 	{
 		u32 size = toRemove.size();
-		if ( size == 0 )
-			return *this;
 		u32 pos = 0;
 		u32 found = 0;
 		for (u32 i=0; i<used; ++i)
@@ -1176,18 +937,14 @@ public:
 			array[pos++] = array[i];
 		}
 		used -= found;
-		array[used-1] = 0;
-		return *this;
+		array[used] = 0;
 	}
 
 
 	//! Removes characters from a string.
 	/** \param characters: Characters to remove. */
-	string<T,TAlloc>& removeChars(const string<T,TAlloc> & characters)
+	void removeChars(const string<T,TAlloc> & characters)
 	{
-		if (characters.size() == 0)
-			return *this;
-
 		u32 pos = 0;
 		u32 found = 0;
 		for (u32 i=0; i<used; ++i)
@@ -1210,9 +967,7 @@ public:
 			array[pos++] = array[i];
 		}
 		used -= found;
-		array[used-1] = 0;
-
-		return *this;
+		array[used] = 0;
 	}
 
 
@@ -1236,7 +991,7 @@ public:
 	/** May be slow, because all elements
 	following after the erased element have to be copied.
 	\param index: Index of element to be erased. */
-	string<T,TAlloc>& erase(u32 index)
+	void erase(u32 index)
 	{
 		_IRR_DEBUG_BREAK_IF(index>=used) // access violation
 
@@ -1244,11 +999,10 @@ public:
 			array[i-1] = array[i];
 
 		--used;
-		return *this;
 	}
 
 	//! verify the existing string.
-	string<T,TAlloc>& validate()
+	void validate()
 	{
 		// terminate on existing null
 		for (u32 i=0; i<allocated; ++i)
@@ -1256,22 +1010,20 @@ public:
 			if (array[i] == 0)
 			{
 				used = i + 1;
-				return *this;
+				return;
 			}
 		}
 
 		// terminate
 		if ( allocated > 0 )
 		{
-			used = allocated;
-			array[used-1] = 0;
+			used = allocated - 1;
+			array[used] = 0;
 		}
 		else
 		{
 			used = 0;
 		}
-
-		return *this;
 	}
 
 	//! gets the last char of a string or null

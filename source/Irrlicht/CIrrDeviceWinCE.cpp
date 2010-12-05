@@ -30,13 +30,13 @@ namespace irr
 		#ifdef _IRR_COMPILE_WITH_DIRECT3D_8_
 		IVideoDriver* createDirectX8Driver(const core::dimension2d<s32>& screenSize, HWND window,
 			u32 bits, bool fullscreen, bool stencilbuffer, io::IFileSystem* io,
-			bool pureSoftware, bool highPrecisionFPU, bool vsync, bool antiAlias, u32 displayAdapter);
+			bool pureSoftware, bool highPrecisionFPU, bool vsync, bool antiAlias);
 		#endif
 
 		#ifdef _IRR_COMPILE_WITH_DIRECT3D_9_
 		IVideoDriver* createDirectX9Driver(const core::dimension2d<s32>& screenSize, HWND window,
 			u32 bits, bool fullscreen, bool stencilbuffer, io::IFileSystem* io,
-			bool pureSoftware, bool highPrecisionFPU, bool vsync, bool antiAlias, u32 displayAdapter);
+			bool pureSoftware, bool highPrecisionFPU, bool vsync, bool antiAlias);
 		#endif
 
 		#ifdef _IRR_COMPILE_WITH_OPENGL_
@@ -471,8 +471,7 @@ void CIrrDeviceWinCE::createDriver()
 	case video::EDT_DIRECT3D8:
 		#ifdef _IRR_COMPILE_WITH_DIRECT3D_8_
 		VideoDriver = video::createDirectX8Driver(CreationParams.WindowSize, HWnd, CreationParams.Bits, CreationParams.Fullscreen,
-			CreationParams.Stencilbuffer, FileSystem, false, CreationParams.HighPrecisionFPU, CreationParams.Vsync, CreationParams.AntiAlias
-			, CreationParams.DisplayAdapter);
+			CreationParams.Stencilbuffer, FileSystem, false, CreationParams.HighPrecisionFPU, CreationParams.Vsync, CreationParams.AntiAlias);
 		if (!VideoDriver)
 		{
 			os::Printer::log("Could not create DIRECT3D8 Driver.", ELL_ERROR);
@@ -486,8 +485,7 @@ void CIrrDeviceWinCE::createDriver()
 	case video::EDT_DIRECT3D9:
 		#ifdef _IRR_COMPILE_WITH_DIRECT3D_9_
 		VideoDriver = video::createDirectX9Driver(CreationParams.WindowSize, HWnd, CreationParams.Bits, CreationParams.Fullscreen,
-			CreationParams.Stencilbuffer, FileSystem, false, CreationParams.HighPrecisionFPU, CreationParams.Vsync, CreationParams.AntiAlias
-			, CreationParams.DisplayAdapter);
+			CreationParams.Stencilbuffer, FileSystem, false, CreationParams.HighPrecisionFPU, CreationParams.Vsync, CreationParams.AntiAlias);
 		if (!VideoDriver)
 		{
 			os::Printer::log("Could not create DIRECT3D9 Driver.", ELL_ERROR);
@@ -529,7 +527,7 @@ void CIrrDeviceWinCE::createDriver()
 		#ifdef _IRR_COMPILE_WITH_BURNINGSVIDEO_
 		if (CreationParams.Fullscreen)
 			switchToFullScreen();
-		VideoDriver = video::createBurningVideoDriver(CreationParams, FileSystem, this);
+		VideoDriver = video::createSoftwareDriver2(CreationParams.WindowSize, CreationParams.Fullscreen, FileSystem, this);
 		#else
 		os::Printer::log("Burning's Video driver was not compiled in.", ELL_ERROR);
 		#endif
@@ -712,13 +710,7 @@ void CIrrDeviceWinCE::closeDevice()
 	PeekMessage(&msg, NULL, WM_QUIT, WM_QUIT, PM_REMOVE);
 	PostQuitMessage(0);
 	PeekMessage(&msg, NULL, WM_QUIT, WM_QUIT, PM_REMOVE);
-	if (!ExternalWindow)
-	{
-		DestroyWindow(HWnd);
-		const fschar_t* ClassName = __TEXT("CIrrDeviceWin32");
-		HINSTANCE hInstance = GetModuleHandle(0);
-		UnregisterClass(ClassName, hInstance);
-	}
+	DestroyWindow(HWnd);
 	Close=true;
 }
 
