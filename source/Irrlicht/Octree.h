@@ -11,17 +11,12 @@
 #include "irrArray.h"
 #include "CMeshBuffer.h"
 
-/**
+/*!
 	Flags for Octree
 */
-//! use meshbuffer for drawing, enables VBO usage
-#define OCTREE_USE_HARDWARE	false
-//! use visibility information together with VBOs
-#define OCTREE_USE_VISIBILITY true
-//! use bounding box or frustum for calculate polys
-#define OCTREE_BOX_BASED true
-//! bypass full invisible/visible test
-#define OCTREE_PARENTTEST
+#define OCTREE_USE_HARDWARE	// use meshbuffer for drawing, enables hardware acceleration
+#define OCTREE_PARENTTEST	// bypass full invisible/visible test
+#define OCTREE_BOX_BASED	// use bounding box or frustum for calculate polys
 
 namespace irr
 {
@@ -34,6 +29,7 @@ class Octree
 {
 public:
 
+#if defined (OCTREE_USE_HARDWARE)
 	struct SMeshChunk : public scene::CMeshBuffer<T>
 	{
 		SMeshChunk ()
@@ -49,6 +45,14 @@ public:
 
 		s32 MaterialId;
 	};
+#else
+	struct SMeshChunk
+	{
+		core::array<T> Vertices;
+		core::array<u16> Indices;
+		s32 MaterialId;
+	};
+#endif
 
 	struct SIndexChunk
 	{
@@ -243,8 +247,8 @@ private:
 						}
 					}
 
-					(*indices)[i].Indices.set_used(keepIndices.size());
 					memcpy( (*indices)[i].Indices.pointer(), keepIndices.pointer(), keepIndices.size()*sizeof(u16));
+					(*indices)[i].Indices.set_used(keepIndices.size());
 					keepIndices.set_used(0);
 				}
 
@@ -319,21 +323,33 @@ private:
 			if ( parentTest != 2 )
 #endif
 			{
-#if defined (OCTREE_PARENTTEST )
-				parentTest = 2;
-#endif
+				core::vector3df edges[8];
+				Box.getEdges(edges);
+
 				for (i=0; i!=scene::SViewFrustum::VF_PLANE_COUNT; ++i)
 				{
-					core::EIntersectionRelation3D r = Box.classifyPlaneRelation(frustum.planes[i]);
-					if ( r == core::ISREL3D_FRONT )
+					u32 boxInFrustum=0;
+
+					for (u32 j=0; j!=8; ++j)
+					{
+						if (frustum.planes[i].classifyPointRelation(edges[j]) != core::ISREL3D_FRONT)
+						{
+							boxInFrustum += 1;
+#if !defined (OCTREE_PARENTTEST )
+							break;
+#endif
+						}
+					}
+
+					if ( 0  == boxInFrustum) // all edges outside
 						return;
+
 #if defined (OCTREE_PARENTTEST )
-					if ( r == core::ISREL3D_CLIPPED )
-						parentTest = 1;	// must still check children
+					if ( 8  == boxInFrustum) // all edges in, all children in
+						parentTest = 2;
 #endif
 				}
 			}
-
 
 			const u32 cnt = IndexData->size();
 

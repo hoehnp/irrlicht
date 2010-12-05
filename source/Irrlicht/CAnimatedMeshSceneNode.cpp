@@ -32,7 +32,7 @@ CAnimatedMeshSceneNode::CAnimatedMeshSceneNode(IAnimatedMesh* mesh,
 		const core::vector3df& rotation,
 		const core::vector3df& scale)
 : IAnimatedMeshSceneNode(parent, mgr, id, position, rotation, scale), Mesh(0),
-	StartFrame(0), EndFrame(0), FramesPerSecond(0.f),
+	BeginFrameTime(0), StartFrame(0), EndFrame(0), FramesPerSecond(0.f),
 	CurrentFrameNr(0.f), LastTimeMs(0),
 	TransitionTime(0), Transiting(0.f), TransitingBlend(0.f),
 	JointMode(EJUOR_NONE), JointsUsed(false),
@@ -44,6 +44,7 @@ CAnimatedMeshSceneNode::CAnimatedMeshSceneNode(IAnimatedMesh* mesh,
 	setDebugName("CAnimatedMeshSceneNode");
 	#endif
 
+	BeginFrameTime = os::Timer::getTime();
 	FramesPerSecond = 25.f/1000.f;
 
 	setMesh(mesh);
@@ -77,6 +78,12 @@ void CAnimatedMeshSceneNode::setCurrentFrame(f32 frame)
 	// if you pass an out of range value, we just clamp it
 	CurrentFrameNr = core::clamp ( frame, (f32)StartFrame, (f32)EndFrame );
 
+	BeginFrameTime = os::Timer::getTime();
+	if (FramesPerSecond > 0)
+		BeginFrameTime += (s32)((CurrentFrameNr - StartFrame) / FramesPerSecond);
+	else if (FramesPerSecond < 0)
+		BeginFrameTime += (s32)((CurrentFrameNr - EndFrame) / -FramesPerSecond);
+
 	beginTransition(); //transit to this frame if enabled
 }
 
@@ -108,18 +115,15 @@ void CAnimatedMeshSceneNode::buildFrameNr(u32 timeMs)
 	{
 		// play animation looped
 		CurrentFrameNr += timeMs * FramesPerSecond;
-
-		// We have no interpolation between EndFrame and StartFrame,
-		// the last frame must be identical to first one with our current solution.
 		if (FramesPerSecond > 0.f) //forwards...
 		{
 			if (CurrentFrameNr > EndFrame)
-				CurrentFrameNr = StartFrame + fmod(CurrentFrameNr - StartFrame, (f32)(EndFrame-StartFrame));
+				CurrentFrameNr -= (EndFrame-StartFrame);
 		}
 		else //backwards...
 		{
 			if (CurrentFrameNr < StartFrame)
-				CurrentFrameNr = EndFrame - fmod(EndFrame - CurrentFrameNr, (f32)(EndFrame-StartFrame));
+				CurrentFrameNr += (EndFrame-StartFrame);
 		}
 	}
 	else
@@ -191,18 +195,16 @@ void CAnimatedMeshSceneNode::OnRegisterSceneNode()
 	}
 }
 
-IMesh * CAnimatedMeshSceneNode::getMeshForCurrentFrame()
+IMesh * CAnimatedMeshSceneNode::getMeshForCurrentFrame(bool forceRecalcOfControlJoints)
 {
 	if(Mesh->getMeshType() != EAMT_SKINNED)
 	{
-		s32 frameNr = (s32) getFrameNr();
-		s32 frameBlend = (s32) (core::fract ( getFrameNr() ) * 1000.f);
-		return Mesh->getMesh(frameNr, frameBlend, StartFrame, EndFrame);
+		return Mesh->getMesh((s32)getFrameNr(), 255, StartFrame, EndFrame);
 	}
 	else
 	{
 		// As multiple scene nodes may be sharing the same skinned mesh, we have to
-		// re-animate it every frame to ensure that this node gets the mesh that it needs.
+		// re-animated it every frame to ensure that this node gets the mesh that it needs.
 
 		CSkinnedMesh* skinnedMesh = reinterpret_cast<CSkinnedMesh*>(Mesh);
 
@@ -244,7 +246,7 @@ void CAnimatedMeshSceneNode::OnAnimate(u32 timeMs)
 
 	if (Mesh)
 	{
-		scene::IMesh * mesh = getMeshForCurrentFrame();
+		scene::IMesh * mesh = getMeshForCurrentFrame( true );
 
 		if (mesh)
 			Box = mesh->getBoundingBox();
@@ -269,7 +271,7 @@ void CAnimatedMeshSceneNode::render()
 
 	++PassCount;
 
-	scene::IMesh* m = getMeshForCurrentFrame();
+	scene::IMesh* m = getMeshForCurrentFrame( false );
 
 	if(m)
 	{
@@ -559,17 +561,17 @@ u32 CAnimatedMeshSceneNode::getMaterialCount() const
 
 //! Creates shadow volume scene node as child of this node
 //! and returns a pointer to it.
-IShadowVolumeSceneNode* CAnimatedMeshSceneNode::addShadowVolumeSceneNode(
-		const IMesh* shadowMesh, s32 id, bool zfailmethod, f32 infinity)
+IShadowVolumeSceneNode* CAnimatedMeshSceneNode::addShadowVolumeSceneNode(const IMesh* shadowMesh,
+						 s32 id, bool zfailmethod, f32 infinity)
 {
 	if (!SceneManager->getVideoDriver()->queryFeature(video::EVDF_STENCIL_BUFFER))
 		return 0;
 
+	if (Shadow)
+		return Shadow;
+
 	if (!shadowMesh)
 		shadowMesh = Mesh; // if null is given, use the mesh of node
-
-	if (Shadow)
-		Shadow->drop();
 
 	Shadow = new CShadowVolumeSceneNode(shadowMesh, this, SceneManager, id,  zfailmethod, infinity);
 	return Shadow;
@@ -594,7 +596,7 @@ IBoneSceneNode* CAnimatedMeshSceneNode::getJointNode(const c8* jointName)
 
 	if (number == -1)
 	{
-		os::Printer::log("Joint with specified name not found in skinned mesh.", jointName, ELL_DEBUG);
+		os::Printer::log("Joint with specified name not found in skinned mesh.", jointName, ELL_WARNING);
 		return 0;
 	}
 
@@ -1058,20 +1060,15 @@ ISceneNode* CAnimatedMeshSceneNode::clone(ISceneNode* newParent, ISceneManager* 
 	if (!newManager) newManager = SceneManager;
 
 	CAnimatedMeshSceneNode * newNode =
-		new CAnimatedMeshSceneNode(Mesh, NULL, newManager, ID, RelativeTranslation,
+		new CAnimatedMeshSceneNode(Mesh, newParent, newManager, ID, RelativeTranslation,
 						 RelativeRotation, RelativeScale);
-
-	if ( newParent )
-	{
-		newNode->setParent(newParent); 	// not in constructor because virtual overload for updateAbsolutePosition won't be called
-		newNode->drop();
-	}
 
 	newNode->cloneMembers(this, newManager);
 
 	newNode->Materials = Materials;
 	newNode->Box = Box;
 	newNode->Mesh = Mesh;
+	newNode->BeginFrameTime = BeginFrameTime;
 	newNode->StartFrame = StartFrame;
 	newNode->EndFrame = EndFrame;
 	newNode->FramesPerSecond = FramesPerSecond;
@@ -1091,6 +1088,7 @@ ISceneNode* CAnimatedMeshSceneNode::clone(ISceneNode* newParent, ISceneManager* 
 	newNode->RenderFromIdentity = RenderFromIdentity;
 	newNode->MD3Special = MD3Special;
 
+	(void)newNode->drop();
 	return newNode;
 }
 

@@ -29,10 +29,6 @@
 #include "CMD2MeshFileLoader.h"
 #endif
 
-#ifdef _IRR_COMPILE_WITH_HALFLIFE_LOADER_
-#include "CAnimatedMeshHalfLife.h"
-#endif
-
 #ifdef _IRR_COMPILE_WITH_MS3D_LOADER_
 #include "CMS3DMeshFileLoader.h"
 #endif
@@ -226,9 +222,6 @@ CSceneManager::CSceneManager(video::IVideoDriver* driver, io::IFileSystem* fs,
 	#ifdef _IRR_COMPILE_WITH_MS3D_LOADER_
 	MeshLoaderList.push_back(new CMS3DMeshFileLoader(Driver));
 	#endif
-	#ifdef _IRR_COMPILE_WITH_HALFLIFE_LOADER_
-	MeshLoaderList.push_back(new CHalflifeMDLMeshFileLoader( this ));
-	#endif
 	#ifdef _IRR_COMPILE_WITH_3DS_LOADER_
 	MeshLoaderList.push_back(new C3DSMeshFileLoader(this, FileSystem));
 	#endif
@@ -291,12 +284,6 @@ CSceneManager::~CSceneManager()
 {
 	clearDeletionList();
 
-	//! force to remove hardwareTextures from the driver
-	//! because Scenes may hold internally data bounded to sceneNodes
-	//! which may be destroyed twice
-	if (Driver)
-		Driver->removeAllHardwareBuffers ();
-
 	if (FileSystem)
 		FileSystem->drop();
 
@@ -329,6 +316,12 @@ CSceneManager::~CSceneManager()
 
 	for (i=0; i<SceneNodeAnimatorFactoryList.size(); ++i)
 		SceneNodeAnimatorFactoryList[i]->drop();
+
+	//! force to remove hardwareTextures from the driver
+	//! because Scenes may hold internally data bounded to sceneNodes
+	//! which may be destroyed twice
+	if (Driver)
+		Driver->removeAllHardwareBuffers ();
 
 	if(LightManager)
 		LightManager->drop();
@@ -492,7 +485,7 @@ IBillboardTextSceneNode* CSceneManager::addBillboardTextSceneNode(gui::IGUIFont*
 
 
 //! Adds a scene node, which can render a quake3 shader
-IMeshSceneNode* CSceneManager::addQuake3SceneNode(const IMeshBuffer* meshBuffer,
+IMeshSceneNode* CSceneManager::addQuake3SceneNode(IMeshBuffer* meshBuffer,
 					const quake3::IShader * shader,
 					ISceneNode* parent, s32 id )
 {
@@ -963,10 +956,9 @@ IAnimatedMesh* CSceneManager::addTerrainMesh(const io::path& name,
 	if (MeshCache->isMeshLoaded(name))
 		return MeshCache->getMeshByName(name);
 
-	const bool debugBorders=false;
 	IMesh* mesh = GeometryCreator->createTerrainMesh(texture, heightmap,
 			stretchSize, maxHeight, getVideoDriver(),
-			defaultVertexBlockSize, debugBorders);
+			defaultVertexBlockSize);
 	if (!mesh)
 		return 0;
 
@@ -1139,71 +1131,70 @@ bool CSceneManager::isCulled(const ISceneNode* node) const
 		_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
 		return false;
 	}
-	bool result = false;
 
-	// has occlusion query information
-	if (node->getAutomaticCulling() & scene::EAC_OCC_QUERY)
+	switch ( node->getAutomaticCulling() )
 	{
-		result = (Driver->getOcclusionQueryResult(const_cast<ISceneNode*>(node))==0);
-	}
-
-	// can be seen by a bounding box ?
-	if (!result && (node->getAutomaticCulling() & scene::EAC_BOX))
-	{
-		core::aabbox3d<f32> tbox = node->getBoundingBox();
-		node->getAbsoluteTransformation().transformBoxEx(tbox);
-		result = !(tbox.intersectsWithBox(cam->getViewFrustum()->getBoundingBox() ));
-	}
-
-	// can be seen by a bounding sphere
-	if (!result && (node->getAutomaticCulling() & scene::EAC_FRUSTUM_SPHERE))
-	{ // requires bbox diameter
-	}
-
-	// can be seen by cam pyramid planes ?
-	if (!result && (node->getAutomaticCulling() & scene::EAC_FRUSTUM_BOX))
-	{
-		SViewFrustum frust = *cam->getViewFrustum();
-
-		//transform the frustum to the node's current absolute transformation
-		core::matrix4 invTrans(node->getAbsoluteTransformation(), core::matrix4::EM4CONST_INVERSE);
-		//invTrans.makeInverse();
-		frust.transform(invTrans);
-
-		core::vector3df edges[8];
-		node->getBoundingBox().getEdges(edges);
-
-		for (s32 i=0; i<scene::SViewFrustum::VF_PLANE_COUNT; ++i)
+		// can be seen by a bounding box ?
+		case scene::EAC_BOX:
 		{
-			bool boxInFrustum=false;
-			for (u32 j=0; j<8; ++j)
-			{
-				if (frust.planes[i].classifyPointRelation(edges[j]) != core::ISREL3D_FRONT)
-				{
-					boxInFrustum=true;
-					break;
-				}
-			}
+			core::aabbox3d<f32> tbox = node->getBoundingBox();
+			node->getAbsoluteTransformation().transformBoxEx(tbox);
+			_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
+			return !(tbox.intersectsWithBox(cam->getViewFrustum()->getBoundingBox() ));
+		}
 
-			if (!boxInFrustum)
+		// can be seen by a bounding sphere
+		case scene::EAC_FRUSTUM_SPHERE:
+		{ // requires bbox diameter
+		}
+		break;
+
+		// can be seen by cam pyramid planes ?
+		case scene::EAC_FRUSTUM_BOX:
+		{
+			SViewFrustum frust = *cam->getViewFrustum();
+
+			//transform the frustum to the node's current absolute transformation
+			core::matrix4 invTrans(node->getAbsoluteTransformation(), core::matrix4::EM4CONST_INVERSE);
+			//invTrans.makeInverse();
+			frust.transform(invTrans);
+
+			core::vector3df edges[8];
+			node->getBoundingBox().getEdges(edges);
+
+			for (s32 i=0; i<scene::SViewFrustum::VF_PLANE_COUNT; ++i)
 			{
-				result = true;
-				break;
+				bool boxInFrustum=false;
+				for (u32 j=0; j<8; ++j)
+				{
+					if (frust.planes[i].classifyPointRelation(edges[j]) != core::ISREL3D_FRONT)
+					{
+						boxInFrustum=true;
+						break;
+					}
+				}
+
+				if (!boxInFrustum)
+					return true;
 			}
 		}
+		break;
+
+		case scene::EAC_OFF:
+		break;
 	}
 
 	_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
-	return result;
+	return false;
 }
 
 
 //! registers a node for rendering it at a specific time.
-u32 CSceneManager::registerNodeForRendering(ISceneNode* node, E_SCENE_NODE_RENDER_PASS pass)
+u32 CSceneManager::registerNodeForRendering(ISceneNode* node, E_SCENE_NODE_RENDER_PASS time)
 {
 	u32 taken = 0;
 
-	switch(pass)
+	switch(time)
 	{
 		// take camera if it is not already registered
 	case ESNRP_CAMERA:
@@ -1262,7 +1253,7 @@ u32 CSceneManager::registerNodeForRendering(ISceneNode* node, E_SCENE_NODE_RENDE
 	case ESNRP_AUTOMATIC:
 		if (!isCulled(node))
 		{
-			const u32 count = node->getMaterialCount();
+			u32 count = node->getMaterialCount();
 
 			taken = 0;
 			for (u32 i=0; i<count; ++i)

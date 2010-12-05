@@ -372,8 +372,7 @@ ISceneNode* CMeshSceneNode::clone(ISceneNode* newParent, ISceneManager* newManag
 	nb->ReadOnlyMaterials = ReadOnlyMaterials;
 	nb->Materials = Materials;
 
-	if ( newParent )
-		nb->drop();
+	nb->drop();
 	return nb;
 }
 

@@ -267,7 +267,7 @@ ISceneNode* CSceneCollisionManager::getSceneNodeAndCollisionPointFromRay(
 
 void CSceneCollisionManager::getPickedNodeFromBBAndSelector(
 				ISceneNode * root,
-				core::line3df & ray,
+				const core::line3df & ray,
 				s32 bits,
 				bool noDebugObjects,
 				f32 & outBestDistanceSquared,
@@ -303,7 +303,7 @@ void CSceneCollisionManager::getPickedNodeFromBBAndSelector(
 			core::triangle3df candidateTriangle;
 
 			// do intersection test in object space
-			ISceneNode * hitNode = 0;
+			const ISceneNode * hitNode = 0;
 			if (box.intersectsWithLine(line) &&
 				getCollisionPoint(ray, selector, candidateCollisionPoint, candidateTriangle, hitNode))
 			{
@@ -315,8 +315,6 @@ void CSceneCollisionManager::getPickedNodeFromBBAndSelector(
 					outBestNode = current;
 					outBestCollisionPoint = candidateCollisionPoint;
 					outBestTriangle = candidateTriangle;
-					const core::vector3df rayVector = ray.getVector().normalize();
-					ray.end = ray.start + (rayVector * sqrtf(distanceSquared));
 				}
 			}
 		}
@@ -349,7 +347,7 @@ ISceneNode* CSceneCollisionManager::getSceneNodeFromCameraBB(
 bool CSceneCollisionManager::getCollisionPoint(const core::line3d<f32>& ray,
 		ITriangleSelector* selector, core::vector3df& outIntersection,
 		core::triangle3df& outTriangle,
-		ISceneNode*& outNode)
+		const ISceneNode*& outNode)
 {
 	if (!selector)
 	{
@@ -423,7 +421,7 @@ core::vector3df CSceneCollisionManager::getCollisionResultPosition(
 		core::triangle3df& triout,
 		core::vector3df& hitPosition,
 		bool& outFalling,
-		ISceneNode*& outNode,
+		const ISceneNode*& outNode,
 		f32 slidingSpeed,
 		const core::vector3df& gravity)
 {
@@ -691,7 +689,7 @@ core::vector3df CSceneCollisionManager::collideEllipsoidWithWorld(
 		core::triangle3df& triout,
 		core::vector3df& hitPosition,
 		bool& outFalling,
-		ISceneNode*& outNode)
+		const ISceneNode*& outNode)
 {
 	if (!selector || radius.X == 0.0f || radius.Y == 0.0f || radius.Z == 0.0f)
 		return position;
@@ -916,7 +914,7 @@ inline bool CSceneCollisionManager::getLowestRoot(f32 a, f32 b, f32 c, f32 maxR,
 	f32 determinant = b*b - 4.0f*a*c;
 
 	// if determinant is negative, no solution
-	if (determinant < 0.0f || a == 0.f ) return false;
+	if (determinant < 0.0f) return false;
 
 	// calculate two roots: (if det==0 then x1==x2
 	// but lets disregard that slight optimization)

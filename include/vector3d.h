@@ -57,37 +57,10 @@ namespace core
 		vector3d<T> operator/(const T v) const { T i=(T)1.0/v; return vector3d<T>(X * i, Y * i, Z * i); }
 		vector3d<T>& operator/=(const T v) { T i=(T)1.0/v; X*=i; Y*=i; Z*=i; return *this; }
 
-		//! sort in order X, Y, Z. Equality with rounding tolerance.
-		bool operator<=(const vector3d<T>&other) const
-		{
-			return 	(X<other.X || core::equals(X, other.X)) ||
-					(core::equals(X, other.X) && (Y<other.Y || core::equals(Y, other.Y))) ||
-					(core::equals(X, other.X) && core::equals(Y, other.Y) && (Z<other.Z || core::equals(Z, other.Z)));
-		}
-
-		//! sort in order X, Y, Z. Equality with rounding tolerance.
-		bool operator>=(const vector3d<T>&other) const
-		{
-			return 	(X>other.X || core::equals(X, other.X)) ||
-					(core::equals(X, other.X) && (Y>other.Y || core::equals(Y, other.Y))) ||
-					(core::equals(X, other.X) && core::equals(Y, other.Y) && (Z>other.Z || core::equals(Z, other.Z)));
-		}
-
-		//! sort in order X, Y, Z. Difference must be above rounding tolerance.
-		bool operator<(const vector3d<T>&other) const
-		{
-			return 	(X<other.X && !core::equals(X, other.X)) ||
-					(core::equals(X, other.X) && Y<other.Y && !core::equals(Y, other.Y)) ||
-					(core::equals(X, other.X) && core::equals(Y, other.Y) && Z<other.Z && !core::equals(Z, other.Z));
-		}
-
-		//! sort in order X, Y, Z. Difference must be above rounding tolerance.
-		bool operator>(const vector3d<T>&other) const
-		{
-			return 	(X>other.X && !core::equals(X, other.X)) ||
-					(core::equals(X, other.X) && Y>other.Y && !core::equals(Y, other.Y)) ||
-					(core::equals(X, other.X) && core::equals(Y, other.Y) && Z>other.Z && !core::equals(Z, other.Z));
-		}
+		bool operator<=(const vector3d<T>&other) const { return X<=other.X && Y<=other.Y && Z<=other.Z;}
+		bool operator>=(const vector3d<T>&other) const { return X>=other.X && Y>=other.Y && Z>=other.Z;}
+		bool operator<(const vector3d<T>&other) const { return X<other.X && Y<other.Y && Z<other.Z;}
+		bool operator>(const vector3d<T>&other) const { return X>other.X && Y>other.Y && Z>other.Z;}
 
 		//! use weak float compare
 		bool operator==(const vector3d<T>& other) const
@@ -322,12 +295,12 @@ namespace core
 			return angle;
 		}
 
-		//! Get the spherical coordinate angles
+		//! Get the spherical coordinate angles 
 		/** This returns Euler degrees for the point represented by
 		this vector.  The calculation assumes the pole at (0,1,0) and
 		returns the angles in X and Y.
 		*/
-		vector3d<T> getSphericalCoordinateAngles() const
+		vector3d<T> getSphericalCoordinateAngles()
 		{
 			vector3d<T> angle;
 			const f64 length = X*X + Y*Y + Z*Z;
@@ -344,7 +317,7 @@ namespace core
 				angle.X = (T)(acos(Y * core::reciprocal_squareroot(length)) * RADTODEG64);
 			}
 			return angle;
-		}
+		} 
 
 		//! Builds a direction vector from (this) rotation vector.
 		/** This vector is assumed to be a rotation vector composed of 3 Euler angle rotations, in degrees.
@@ -394,16 +367,6 @@ namespace core
 			array[3] = 0;
 		}
 
-		//! Fills an array of 3 values with the vector data (usually floats).
-		/** Useful for setting in shader constants for example.*/
-		void getAs3Values(T* array) const
-		{
-			array[0] = X;
-			array[1] = Y;
-			array[2] = Z;
-		}
-
-
 		//! X coordinate of the vector
 		T X;
 
@@ -415,11 +378,10 @@ namespace core
 	};
 
 	//! partial specialization for integer vectors
-	// Implementor note: inline keyword needed due to template specialization for s32. Otherwise put specialization into a .cpp
 	template <>
-	inline vector3d<s32> vector3d<s32>::operator /(s32 val) const {return core::vector3d<s32>(X/val,Y/val,Z/val);}
+	vector3d<s32> vector3d<s32>::operator /(s32 val) const {return core::vector3d<s32>(X/val,Y/val,Z/val);}
 	template <>
-	inline vector3d<s32>& vector3d<s32>::operator /=(s32 val) {X/=val;Y/=val;Z/=val; return *this;}
+	vector3d<s32>& vector3d<s32>::operator /=(s32 val) {X/=val;Y/=val;Z/=val; return *this;}
 
 	//! Typedef for a f32 3d vector.
 	typedef vector3d<f32> vector3df;

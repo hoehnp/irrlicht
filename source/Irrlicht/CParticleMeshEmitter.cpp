@@ -178,12 +178,6 @@ void CParticleMeshEmitter::setMesh(IMesh* mesh)
 	Mesh = mesh;
 
 	TotalVertices = 0;
-	MBCount = 0;
-	VertexPerMeshBufferList.clear();
-
-	if ( !Mesh )
-		return;
-
 	MBCount = Mesh->getMeshBufferCount();
 	VertexPerMeshBufferList.reallocate(MBCount);
 	for( u32 i = 0; i < MBCount; ++i )

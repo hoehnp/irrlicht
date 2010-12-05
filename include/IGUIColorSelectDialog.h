@@ -12,7 +12,7 @@ namespace irr
 namespace gui
 {
 
-	//! Standard color chooser dialog.
+	//! Standard file chooser dialog.
 	class IGUIColorSelectDialog : public IGUIElement
 	{
 	public:

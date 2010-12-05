@@ -65,25 +65,6 @@ bool transformations(void)
 	core::vector3df newRotation = m.getRotationDegrees();
 	result &= (core::vector3df(30,40,50).equals(newRotation, 0.000004f));
 	assert(result);
-	m.setRotationDegrees(vector3df(90.0001f, 270.85f, 180.0f));
-	s.setRotationDegrees(vector3df(0,0, 0.860866f));
-	m *= s;
-	newRotation = m.getRotationDegrees();
-	result &= (core::vector3df(0,270,270).equals(newRotation, 0.0001f));
-	assert(result);
-	m.setRotationDegrees(vector3df(270.0f, 89.8264f, 0.000100879f));
-	s.setRotationDegrees(vector3df(0,0, 0.189398f));
-	m *= s;
-	newRotation = m.getRotationDegrees();
-	result &= (core::vector3df(0,90,90).equals(newRotation, 0.0001f));
-	assert(result);
-	m.setRotationDegrees(vector3df(270.0f, 89.0602f, 359.999f));
-	s.setRotationDegrees(vector3df(0,0, 0.949104f));
-	m *= s;
-	newRotation = m.getRotationDegrees();
-	result &= (core::vector3df(0,90,89.999f).equals(newRotation));
-	assert(result);
-
 	return result;
 }
 
@@ -173,20 +154,6 @@ bool rotations(void)
 	rot2.setRotationDegrees(core::vector3df(0,43,0));
 	vec1=(rot2*rot1).getRotationDegrees();
 	result &= (vec1.equals(core::vector3df(27.5400505f, 34.4302292f, 42.6845398f), 0.000002f));
-	assert(result);
-
-	// corner cases
-    rot1.setRotationDegrees(irr::core::vector3df(180.0f, 0.f, 0.f));
-    vec1=rot1.getRotationDegrees();
-	result &= (vec1.equals(core::vector3df(180.0f, 0.f, 0.f), 0.000002f));
-	assert(result);
-    rot1.setRotationDegrees(irr::core::vector3df(0.f, 180.0f, 0.f));
-    vec1=rot1.getRotationDegrees();
-	result &= (vec1.equals(core::vector3df(180.0f, 360, 180.0f), 0.000002f));
-	assert(result);
-    rot1.setRotationDegrees(irr::core::vector3df(0.f, 0.f, 180.0f));
-    vec1=rot1.getRotationDegrees();
-	result &= (vec1.equals(core::vector3df(0.f, 0.f, 180.0f), 0.000002f));
 	assert(result);
 
 	return result;

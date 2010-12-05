@@ -14,7 +14,7 @@ statements, so we do not need to write the whole names of all classes. In this
 tutorial, we use a lot stuff from the gui namespace.
 */
 #include <irrlicht.h>
-#include "driverChoice.h"
+#include <iostream>
 
 using namespace irr;
 using namespace gui;
@@ -87,10 +87,8 @@ enum
 	GUI_ID_BUTTON_SHOW_TOOLBOX,
 	GUI_ID_BUTTON_SELECT_ARCHIVE,
 
-	GUI_ID_ANIMATION_INFO,
-
 	// And some magic numbers
-	MAX_FRAMERATE = 80,
+	MAX_FRAMERATE = 1000,
 	DEFAULT_FRAMERATE = 30
 };
 
@@ -113,7 +111,7 @@ void setActiveCamera(scene::ICameraSceneNode* newActive)
 /*
 	Set the skin transparency by changing the alpha values of all skin-colors
 */
-void setSkinTransparency(s32 alpha, irr::gui::IGUISkin * skin)
+void SetSkinTransparency(s32 alpha, irr::gui::IGUISkin * skin)
 {
 	for (s32 i=0; i<irr::gui::EGDC_COUNT ; ++i)
 	{
@@ -126,7 +124,7 @@ void setSkinTransparency(s32 alpha, irr::gui::IGUISkin * skin)
 /*
   Update the display of the model scaling
 */
-void updateScaleInfo(scene::ISceneNode* model)
+void UpdateScaleInfo(scene::ISceneNode* model)
 {
 	IGUIElement* toolboxWnd = Device->getGUIEnvironment()->getRootGUIElement()->getElementFromId(GUI_ID_DIALOG_ROOT_WINDOW, true);
 	if (!toolboxWnd)
@@ -170,9 +168,9 @@ void loadModel(const c8* fn)
 {
 	// modify the name if it a .pk3 file
 
-	io::path filename(fn);
+	core::stringc filename(fn);
 
-	io::path extension;
+	core::stringc extension;
 	core::getFileNameExtension(extension, filename);
 	extension.make_lower();
 
@@ -210,16 +208,6 @@ void loadModel(const c8* fn)
 
 	Model = 0;
 
-	if (extension==".irr")
-	{
-		core::array<scene::ISceneNode*> outNodes;
-		Device->getSceneManager()->loadScene(filename);
-		Device->getSceneManager()->getSceneNodesFromType(scene::ESNT_ANIMATED_MESH, outNodes);
-		if (outNodes.size())
-			Model = outNodes[0];
-		return;
-	}
-
 	scene::IAnimatedMesh* m = Device->getSceneManager()->getMesh( filename.c_str() );
 
 	if (!m)
@@ -254,7 +242,7 @@ void loadModel(const c8* fn)
 	if (menu)
 		for(int item = 1; item < 6; ++item)
 			menu->setItemChecked(item, false);
-	updateScaleInfo(Model);
+	UpdateScaleInfo(Model);
 }
 
 
@@ -287,7 +275,7 @@ void createToolBox()
 			core::rect<s32>(10,20,60,45), false, false, t1);
 	env->addStaticText(L"X:", core::rect<s32>(22,48,40,66), false, false, t1);
 	env->addEditBox(L"1.0", core::rect<s32>(40,46,130,66), true, t1, GUI_ID_X_SCALE);
-	env->addStaticText(L"Y:", core::rect<s32>(22,82,40,96), false, false, t1);
+	env->addStaticText(L"Y:", core::rect<s32>(22,82,40,GUI_ID_OPEN_MODEL), false, false, t1);
 	env->addEditBox(L"1.0", core::rect<s32>(40,76,130,96), true, t1, GUI_ID_Y_SCALE);
 	env->addStaticText(L"Z:", core::rect<s32>(22,108,40,126), false, false, t1);
 	env->addEditBox(L"1.0", core::rect<s32>(40,106,130,126), true, t1, GUI_ID_Z_SCALE);
@@ -298,7 +286,7 @@ void createToolBox()
 	env->addButton(core::rect<s32>(65,20,95,40), t1, GUI_ID_BUTTON_SCALE_MUL10, L"* 10");
 	env->addButton(core::rect<s32>(100,20,130,40), t1, GUI_ID_BUTTON_SCALE_DIV10, L"* 0.1");
 
-	updateScaleInfo(Model);
+	UpdateScaleInfo(Model);
 
 	// add transparency control
 	env->addStaticText(L"GUI Transparency Control:",
@@ -309,43 +297,17 @@ void createToolBox()
 	scrollbar->setPos(255);
 
 	// add framerate control
-	env->addStaticText(L":", core::rect<s32>(10,240,150,265), true, false, t1);
 	env->addStaticText(L"Framerate:",
-			core::rect<s32>(12,240,75,265), false, false, t1);
-	env->addStaticText(L"", core::rect<s32>(75,240,200,265), false, false, t1,
-			GUI_ID_ANIMATION_INFO);
+			core::rect<s32>(10,240,150,265), true, false, t1);
 	scrollbar = env->addScrollBar(true,
 			core::rect<s32>(10,265,150,280), t1, GUI_ID_SKIN_ANIMATION_FPS);
 	scrollbar->setMax(MAX_FRAMERATE);
 	scrollbar->setMin(-MAX_FRAMERATE);
 	scrollbar->setPos(DEFAULT_FRAMERATE);
-	scrollbar->setSmallStep(1);
-}
 
-void updateToolBox()
-{
-	IGUIEnvironment* env = Device->getGUIEnvironment();
-	IGUIElement* root = env->getRootGUIElement();
-	IGUIElement* dlg = root->getElementFromId(GUI_ID_DIALOG_ROOT_WINDOW, true);
-	if (!dlg )
-		return;
-
-	// update the info we have about the animation of the model
-	IGUIStaticText *  aniInfo = (IGUIStaticText *)(dlg->getElementFromId(GUI_ID_ANIMATION_INFO, true));
-	if (aniInfo)
-	{
-		if ( Model && scene::ESNT_ANIMATED_MESH == Model->getType() )
-		{
-			scene::IAnimatedMeshSceneNode* animatedModel = (scene::IAnimatedMeshSceneNode*)Model;
-
-			core::stringw str( (s32)core::round_(animatedModel->getAnimationSpeed()) );
-			str += L" Frame: ";
-			str += core::stringw((s32)animatedModel->getFrameNr());
-			aniInfo->setText(str.c_str());
-		}
-		else
-			aniInfo->setText(L"");
-	}
+	// bring irrlicht engine logo to front, because it
+	// now may be below the newly created toolbox
+	root->bringToFront(root->getElementFromId(666, true));
 }
 
 /*
@@ -394,7 +356,7 @@ public:
 				if (id == GUI_ID_SKIN_TRANSPARENCY)
 				{
 					const s32 pos = ((IGUIScrollBar*)event.GUIEvent.Caller)->getPos();
-					setSkinTransparency(pos, env->getSkin());
+					SetSkinTransparency(pos, env->getSkin());
 				}
 				// control animation speed
 				else if (id == GUI_ID_SKIN_ANIMATION_FPS)
@@ -434,18 +396,18 @@ public:
 
 						if (Model)
 							Model->setScale(scale);
-						updateScaleInfo(Model);
+						UpdateScaleInfo(Model);
 					}
 					break;
 				case GUI_ID_BUTTON_SCALE_MUL10:
 					if (Model)
 						Model->setScale(Model->getScale()*10.f);
-					updateScaleInfo(Model);
+					UpdateScaleInfo(Model);
 					break;
 				case GUI_ID_BUTTON_SCALE_DIV10:
 					if (Model)
 						Model->setScale(Model->getScale()*0.1f);
-					updateScaleInfo(Model);
+					UpdateScaleInfo(Model);
 					break;
 				case GUI_ID_BUTTON_OPEN_MODEL:
 					env->addFileOpenDialog(L"Please select a model file to open");
@@ -676,9 +638,27 @@ is quite useful for a mesh viewer.
 int main(int argc, char* argv[])
 {
 	// ask user for driver
-	video::E_DRIVER_TYPE driverType=driverChoiceConsole();
-	if (driverType==video::EDT_COUNT)
-		return 1;
+
+	video::E_DRIVER_TYPE driverType = video::EDT_DIRECT3D8;
+
+	printf("Please select the driver you want for this example:\n"\
+		" (a) Direct3D 9.0c\n (b) Direct3D 8.1\n (c) OpenGL 1.5\n"\
+		" (d) Software Renderer\n (e) Burning's Software Renderer\n"\
+		" (f) NullDevice\n (otherKey) exit\n\n");
+
+	char key;
+	std::cin >> key;
+
+	switch(key)
+	{
+		case 'a': driverType = video::EDT_DIRECT3D9;break;
+		case 'b': driverType = video::EDT_DIRECT3D8;break;
+		case 'c': driverType = video::EDT_OPENGL;   break;
+		case 'd': driverType = video::EDT_SOFTWARE; break;
+		case 'e': driverType = video::EDT_BURNINGSVIDEO;break;
+		case 'f': driverType = video::EDT_NULL;     break;
+		default: return 1;
+	}
 
 	// create device and exit if creation failed
 	MyEventReceiver receiver;
@@ -699,9 +679,9 @@ int main(int argc, char* argv[])
 
 	driver->setTextureCreationFlag(video::ETCF_ALWAYS_32_BIT, true);
 
+	smgr->addLightSceneNode();
 	smgr->addLightSceneNode(0, core::vector3df(200,200,200),
 		video::SColorf(1.0f,1.0f,1.0f),2000);
-	smgr->setAmbientLight(video::SColorf(0.3f,0.3f,0.3f));
 	// add our media directory as "search path"
 	Device->getFileSystem()->addFolderFileArchive("../../media/");
 
@@ -838,7 +818,7 @@ int main(int argc, char* argv[])
 	image = driver->getTexture("help.png");
 	bar->addButton(GUI_ID_BUTTON_SHOW_ABOUT, 0, L"Open Help", image, 0, false, true);
 
-	// create a combobox for texture filters
+	// create a combobox with some senseless texts
 
 	gui::IGUIComboBox* box = env->addComboBox(core::rect<s32>(250,4,350,23), bar, GUI_ID_TEXTUREFILTER);
 	box->addItem(L"No filtering");
@@ -942,14 +922,12 @@ int main(int argc, char* argv[])
 
 			driver->endScene();
 
-			// update information about current frame-rate
 			core::stringw str(L"FPS: ");
 			str.append(core::stringw(driver->getFPS()));
 			str += L" Tris: ";
 			str.append(core::stringw(driver->getPrimitiveCountDrawn()));
 			fpstext->setText(str.c_str());
 
-			// update information about the active camera
 			scene::ICameraSceneNode* cam = Device->getSceneManager()->getActiveCamera();
 			str = L"Pos: ";
 			str.append(core::stringw(cam->getPosition().X));
@@ -964,9 +942,6 @@ int main(int argc, char* argv[])
 			str += L" ";
 			str.append(core::stringw(cam->getTarget().Z));
 			postext->setText(str.c_str());
-
-			// update the tool dialog
-			updateToolBox();
 		}
 		else
 			Device->yield();

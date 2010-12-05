@@ -19,6 +19,7 @@ bool meshLoaders(void)
 	if (!device)
 		return false;
 
+	IVideoDriver* driver = device->getVideoDriver();
 	ISceneManager * smgr = device->getSceneManager();
 
 	IAnimatedMesh* mesh = smgr->getMesh("../media/ninja.b3d");

@@ -63,16 +63,13 @@ int main(int argumentCount, char * arguments[])
 	TEST(testDimension2d);
 	TEST(testVector2d);
 	TEST(testVector3d);
-	TEST(testQuaternion);
-	TEST(testS3DVertex);
 	TEST(testaabbox3d);
-    TEST(color);
 	// TODO: Needs to be fixed first
 //	TEST(testTriangle3d);
 	TEST(vectorPositionDimension2d);
 	// file system checks (with null driver)
 	TEST(filesystem);
-	TEST(archiveReader); 
+	TEST(archiveReader);
 	TEST(testXML);
 	TEST(serializeAttributes);
 	// null driver
@@ -93,35 +90,22 @@ int main(int argumentCount, char * arguments[])
 	TEST(drawRectOutline);
 	TEST(flyCircleAnimator);
 	TEST(md2Animation);
-	TEST(testGeometryCreator); 
+	TEST(testGeometryCreator);
 	TEST(writeImageToFile);
-	TEST(meshTransform);
-	TEST(createImage);
 	// all driver checks
-	TEST(videoDriver);
 	TEST(drawPixel);
 	TEST(guiDisabledMenu);
 	TEST(makeColorKeyTexture);
 	TEST(renderTargetTexture);
 	TEST(textureFeatures);
 	TEST(textureRenderStates);
-	TEST(transparentMaterials);
-	TEST(antiAliasing);
-	TEST(draw2DImage);
-	TEST(lights);
-	TEST(twodmaterial);
-//	TEST(viewPort);
-	TEST(mrt);
+	TEST(transparentAlphaChannelRef);
 	// TODO: Needs to be fixed first.
 //	TEST(projectionMatrix);
-	// large scenes/long rendering
-	// shadows are slow
-//	TEST(orthoCam);
-//	TEST(stencilShadow);
-	// q3 maps are slow
+	// large scenes
 	TEST(planeMatrix);
 	TEST(terrainSceneNode);
-	TEST(lightMaps); 
+	TEST(lightMaps);
 
 	unsigned int numberOfTests = tests.size();
 	unsigned int testToRun = 0;

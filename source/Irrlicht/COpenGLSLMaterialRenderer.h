@@ -123,7 +123,6 @@ protected:
 	};
 
 	GLhandleARB Program;
-	GLuint Program2;
 	core::array<SUniformInfo> UniformInfo;
 	s32 UserData;
 };

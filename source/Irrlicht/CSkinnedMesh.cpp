@@ -1204,18 +1204,17 @@ void CSkinnedMesh::normalizeWeights()
 	// Normalise the weights on bones....
 
 	u32 i,j;
-	core::array< core::array<f32> > verticesTotalWeight;
+	core::array< core::array<f32> > Vertices_TotalWeight;
 
-	verticesTotalWeight.reallocate(LocalBuffers.size());
 	for (i=0; i<LocalBuffers.size(); ++i)
 	{
-		verticesTotalWeight.push_back(core::array<f32>());
-		verticesTotalWeight[i].set_used(LocalBuffers[i]->getVertexCount());
+		Vertices_TotalWeight.push_back(core::array<f32>());
+		Vertices_TotalWeight[i].set_used(LocalBuffers[i]->getVertexCount());
 	}
 
-	for (i=0; i<verticesTotalWeight.size(); ++i)
-		for (j=0; j<verticesTotalWeight[i].size(); ++j)
-			verticesTotalWeight[i][j] = 0;
+	for (i=0; i<Vertices_TotalWeight.size(); ++i)
+		for (j=0; j<Vertices_TotalWeight[i].size(); ++j)
+			Vertices_TotalWeight[i][j] = 0;
 
 	for (i=0; i<AllJoints.size(); ++i)
 	{
@@ -1229,7 +1228,7 @@ void CSkinnedMesh::normalizeWeights()
 			}
 			else
 			{
-				verticesTotalWeight[joint->Weights[j].buffer_id] [joint->Weights[j].vertex_id] += joint->Weights[j].strength;
+				Vertices_TotalWeight[ joint->Weights[j].buffer_id ] [ joint->Weights[j].vertex_id ] += joint->Weights[j].strength;
 			}
 		}
 	}
@@ -1239,7 +1238,7 @@ void CSkinnedMesh::normalizeWeights()
 		SJoint *joint=AllJoints[i];
 		for (j=0; j< joint->Weights.size(); ++j)
 		{
-			const f32 total = verticesTotalWeight[joint->Weights[j].buffer_id] [joint->Weights[j].vertex_id];
+			const f32 total = Vertices_TotalWeight[ joint->Weights[j].buffer_id ] [ joint->Weights[j].vertex_id ];
 			if (total != 0 && total != 1)
 				joint->Weights[j].strength /= total;
 		}
@@ -1255,13 +1254,17 @@ void CSkinnedMesh::recoverJointsFromMesh(core::array<IBoneSceneNode*> &JointChil
 		SJoint *joint=AllJoints[i];
 		node->setPosition( joint->LocalAnimatedMatrix.getTranslation() );
 		node->setRotation( joint->LocalAnimatedMatrix.getRotationDegrees() );
-		node->setScale( joint->LocalAnimatedMatrix.getScale() );
+
+		//node->setScale( joint->LocalAnimatedMatrix.getScale() );
 
 		node->positionHint=joint->positionHint;
 		node->scaleHint=joint->scaleHint;
 		node->rotationHint=joint->rotationHint;
 
-		node->updateAbsolutePosition();
+		//node->setAbsoluteTransformation(joint->GlobalMatrix); //not going to work
+
+		//Note: This updateAbsolutePosition will not work well if joints are not nested like b3d
+		//node->updateAbsolutePosition();
 	}
 }
 
@@ -1273,15 +1276,19 @@ void CSkinnedMesh::transferJointsToMesh(const core::array<IBoneSceneNode*> &Join
 		const IBoneSceneNode* const node=JointChildSceneNodes[i];
 		SJoint *joint=AllJoints[i];
 
-		joint->LocalAnimatedMatrix.setRotationDegrees(node->getRotation());
 		joint->LocalAnimatedMatrix.setTranslation(node->getPosition());
-		joint->LocalAnimatedMatrix *= core::matrix4().setScale(node->getScale());
+		joint->LocalAnimatedMatrix.setRotationDegrees(node->getRotation());
+
+		//joint->LocalAnimatedMatrix.setScale( node->getScale() );
 
 		joint->positionHint=node->positionHint;
 		joint->scaleHint=node->scaleHint;
 		joint->rotationHint=node->rotationHint;
 
-		joint->GlobalSkinningSpace=(node->getSkinningSpace()==EBSS_GLOBAL);
+		if (node->getSkinningSpace()==EBSS_GLOBAL)
+			joint->GlobalSkinningSpace=true;
+		else
+			joint->GlobalSkinningSpace=false;
 	}
 	//Remove cache, temp...
 	LastAnimatedFrame=-1;

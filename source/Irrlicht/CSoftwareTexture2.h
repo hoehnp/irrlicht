@@ -59,8 +59,7 @@ public:
 	//! Returns the size of the largest mipmap.
 	f32 getLODFactor( const f32 texArea ) const
 	{
-		return OrigImageDataSizeInPixels * texArea;
-		//return MipMap[0]->getImageDataSizeInPixels () * texArea;
+		return MipMap[0]->getImageDataSizeInPixels () * texArea;
 	}
 
 	//! Returns (=size) of the texture.
@@ -123,7 +122,6 @@ public:
 	}
 
 private:
-	f32 OrigImageDataSizeInPixels;
 	core::dimension2d<u32> OrigSize;
 
 	CImage * MipMap[SOFTWARE_DRIVER_2_MIPMAPPING_MAX];

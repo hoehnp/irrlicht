@@ -122,6 +122,9 @@ namespace scene
 		//! named animations
 		core::array< SAnimationData > AnimationData;
 
+		//! calculates the bounding box
+		virtual void calculateBoundingBox();
+
 		u32 FrameCount;
 
 	private:

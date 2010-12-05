@@ -37,20 +37,20 @@ public:
 	\param vertexShaderProgram: String containing the source of the vertex
 	shader program. This can be 0 if no vertex program shall be used.
 	\param vertexShaderEntryPointName: Name of the entry function of the
-	vertexShaderProgram (p.e. "main")
+	vertexShaderProgram
 	\param vsCompileTarget: Vertex shader version the high level shader
 	shall be compiled to.
 	\param pixelShaderProgram: String containing the source of the pixel
 	shader program. This can be 0 if no pixel shader shall be used.
 	\param pixelShaderEntryPointName: Entry name of the function of the
-	pixelShaderProgram (p.e. "main")
+	pixelShaderEntryPointName
 	\param psCompileTarget: Pixel shader version the high level shader
 	shall be compiled to.
 	\param geometryShaderProgram: String containing the source of the
 	geometry shader program. This can be 0 if no geometry shader shall be
 	used.
 	\param geometryShaderEntryPointName: Entry name of the function of the
-	geometryShaderProgram (p.e. "main")
+	geometryShaderEntryPointName
 	\param gsCompileTarget: Geometry shader version the high level shader
 	shall be compiled to.
 	\param inType Type of vertices passed to geometry shader
@@ -75,12 +75,12 @@ public:
 	error log and can be catched with a custom event receiver. */
 	virtual s32 addHighLevelShaderMaterial(
 		const c8* vertexShaderProgram,
-		const c8* vertexShaderEntryPointName,
-		E_VERTEX_SHADER_TYPE vsCompileTarget,
-		const c8* pixelShaderProgram,
-		const c8* pixelShaderEntryPointName,
-		E_PIXEL_SHADER_TYPE psCompileTarget,
-		const c8* geometryShaderProgram,
+		const c8* vertexShaderEntryPointName = "main",
+		E_VERTEX_SHADER_TYPE vsCompileTarget = EVST_VS_1_1,
+		const c8* pixelShaderProgram = 0,
+		const c8* pixelShaderEntryPointName = "main",
+		E_PIXEL_SHADER_TYPE psCompileTarget = EPST_PS_1_1,
+		const c8* geometryShaderProgram = 0,
 		const c8* geometryShaderEntryPointName = "main",
 		E_GEOMETRY_SHADER_TYPE gsCompileTarget = EGST_GS_4_0,
 		scene::E_PRIMITIVE_TYPE inType = scene::EPT_TRIANGLES,
@@ -116,21 +116,21 @@ public:
 	of the vertex shader program. Set to empty string if no vertex shader
 	shall be created.
 	\param vertexShaderEntryPointName: Name of the entry function of the
-	vertexShaderProgram  (p.e. "main")
+	vertexShaderProgram
 	\param vsCompileTarget: Vertex shader version the high level shader
 	shall be compiled to.
 	\param pixelShaderProgramFileName: Text file containing the source of
 	the pixel shader program. Set to empty string if no pixel shader shall
 	be created.
 	\param pixelShaderEntryPointName: Entry name of the function of the
-	pixelShaderProgram (p.e. "main")
+	pixelShaderEntryPointName
 	\param psCompileTarget: Pixel shader version the high level shader
 	shall be compiled to.
-	\param geometryShaderProgramFileName: Name of the source of
+	\param geometryShaderProgramFileName: String containing the source of
 	the geometry shader program. Set to empty string if no geometry shader
 	shall be created.
 	\param geometryShaderEntryPointName: Entry name of the function of the
-	geometryShaderProgram (p.e. "main")
+	geometryShaderEntryPointName
 	\param gsCompileTarget: Geometry shader version the high level shader
 	shall be compiled to.
 	\param inType Type of vertices passed to geometry shader
@@ -155,12 +155,12 @@ public:
 	error log and can be catched with a custom event receiver. */
 	virtual s32 addHighLevelShaderMaterialFromFiles(
 		const io::path& vertexShaderProgramFileName,
-		const c8* vertexShaderEntryPointName,
-		E_VERTEX_SHADER_TYPE vsCompileTarget,
-		const io::path& pixelShaderProgramFileName,
-		const c8* pixelShaderEntryPointName,
-		E_PIXEL_SHADER_TYPE psCompileTarget,
-		const io::path& geometryShaderProgramFileName,
+		const c8* vertexShaderEntryPointName = "main",
+		E_VERTEX_SHADER_TYPE vsCompileTarget = EVST_VS_1_1,
+		const io::path& pixelShaderProgramFileName = "",
+		const c8* pixelShaderEntryPointName = "main",
+		E_PIXEL_SHADER_TYPE psCompileTarget = EPST_PS_1_1,
+		const io::path& geometryShaderProgramFileName="",
 		const c8* geometryShaderEntryPointName = "main",
 		E_GEOMETRY_SHADER_TYPE gsCompileTarget = EGST_GS_4_0,
 		scene::E_PRIMITIVE_TYPE inType = scene::EPT_TRIANGLES,
@@ -202,14 +202,14 @@ public:
 	\param pixelShaderProgram: Text file handle containing the source of
 	the pixel shader program. Set to 0 if no pixel shader shall be created.
 	\param pixelShaderEntryPointName: Entry name of the function of the
-	pixelShaderProgram (p.e. "main")
+	pixelShaderEntryPointName
 	\param psCompileTarget: Pixel shader version the high level shader
 	shall be compiled to.
 	\param geometryShaderProgram: Text file handle containing the source of
 	the geometry shader program. Set to 0 if no geometry shader shall be
 	created.
 	\param geometryShaderEntryPointName: Entry name of the function of the
-	geometryShaderProgram (p.e. "main")
+	geometryShaderEntryPointName
 	\param gsCompileTarget: Geometry shader version the high level shader
 	shall be compiled to.
 	\param inType Type of vertices passed to geometry shader
@@ -233,12 +233,12 @@ public:
 	the error log and can be catched with a custom event receiver. */
 	virtual s32 addHighLevelShaderMaterialFromFiles(
 		io::IReadFile* vertexShaderProgram,
-		const c8* vertexShaderEntryPointName,
-		E_VERTEX_SHADER_TYPE vsCompileTarget,
-		io::IReadFile* pixelShaderProgram,
-		const c8* pixelShaderEntryPointName,
-		E_PIXEL_SHADER_TYPE psCompileTarget,
-		io::IReadFile* geometryShaderProgram,
+		const c8* vertexShaderEntryPointName = "main",
+		E_VERTEX_SHADER_TYPE vsCompileTarget = EVST_VS_1_1,
+		io::IReadFile* pixelShaderProgram = 0,
+		const c8* pixelShaderEntryPointName = "main",
+		E_PIXEL_SHADER_TYPE psCompileTarget = EPST_PS_1_1,
+		io::IReadFile* geometryShaderProgram = 0,
 		const c8* geometryShaderEntryPointName = "main",
 		E_GEOMETRY_SHADER_TYPE gsCompileTarget = EGST_GS_4_0,
 		scene::E_PRIMITIVE_TYPE inType = scene::EPT_TRIANGLES,

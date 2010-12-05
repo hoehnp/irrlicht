@@ -196,7 +196,7 @@ namespace scene
 			video::SColor colorTop = 0xFFFFFFFF, video::SColor colorBottom = 0xFFFFFFFF);
 
 		//! Adds a scene node, which can render a quake3 shader
-		virtual IMeshSceneNode* addQuake3SceneNode(const IMeshBuffer* meshBuffer, const quake3::IShader * shader,
+		virtual IMeshSceneNode* addQuake3SceneNode(IMeshBuffer* meshBuffer, const quake3::IShader * shader,
 												ISceneNode* parent=0, s32 id=-1
 												);
 
@@ -216,9 +216,8 @@ namespace scene
 
 		//! Adds a terrain mesh to the mesh pool.
 		virtual IAnimatedMesh* addTerrainMesh(const io::path& meshname,	video::IImage* texture, video::IImage* heightmap,
-			const core::dimension2d<f32>& stretchSize = core::dimension2d<f32>(10.0f,10.0f),
-			f32 maxHeight=200.0f,
-			const core::dimension2d<u32>& defaultVertexBlockSize = core::dimension2d<u32>(64,64));
+			const core::dimension2d<f32>& stretchSize,
+			f32 maxHeight, const core::dimension2d<u32>& defaultVertexBlockSize);
 
 		//! Add a arrow mesh to the mesh pool
 		virtual IAnimatedMesh* addArrowMesh(const io::path& name,

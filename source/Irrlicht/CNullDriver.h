@@ -13,9 +13,7 @@
 #include "irrString.h"
 #include "irrMap.h"
 #include "IAttributes.h"
-#include "IMesh.h"
 #include "IMeshBuffer.h"
-#include "IMeshSceneNode.h"
 #include "CFPSCounter.h"
 #include "S3DVertex.h"
 #include "SVertexIndex.h"
@@ -56,9 +54,6 @@ namespace video
 
 		//! queries the features of the driver, returns true if feature is available
 		virtual bool queryFeature(E_VIDEO_DRIVER_FEATURE feature) const;
-
-		//! Get attributes of the actual video driver
-		const io::IAttributes& getDriverAttributes() const;
 
 		//! sets transformation
 		virtual void setTransform(E_TRANSFORMATION_STATE state, const core::matrix4& mat);
@@ -400,18 +395,17 @@ namespace video
 		//! updates hardware buffer if needed  (only some drivers can)
 		virtual bool updateHardwareBuffer(SHWBufferLink *HWBuffer) {return false;}
 
-		//! Draw hardware buffer (only some drivers can)
-		virtual void drawHardwareBuffer(SHWBufferLink *HWBuffer) {}
-
-		//! Delete hardware buffer
-		virtual void deleteHardwareBuffer(SHWBufferLink *HWBuffer);
-
 		//! Create hardware buffer from mesh (only some drivers can)
 		virtual SHWBufferLink *createHardwareBuffer(const scene::IMeshBuffer* mb) {return 0;}
 
-	public:
+		//! Draw hardware buffer (only some drivers can)
+		virtual void drawHardwareBuffer(SHWBufferLink *HWBuffer) {}
+
 		//! Update all hardware buffers, remove unused ones
 		virtual void updateAllHardwareBuffers();
+
+		//! Delete hardware buffer
+		virtual void deleteHardwareBuffer(SHWBufferLink *HWBuffer);
 
 		//! Remove hardware buffer
 		virtual void removeHardwareBuffer(const scene::IMeshBuffer* mb);
@@ -422,43 +416,7 @@ namespace video
 		//! is vbo recommended on this mesh?
 		virtual bool isHardwareBufferRecommend(const scene::IMeshBuffer* mb);
 
-		//! Create occlusion query.
-		/** Use node for identification and mesh for occlusion test. */
-		virtual void createOcclusionQuery(scene::ISceneNode* node,
-				const scene::IMesh* mesh=0);
-
-		//! Remove occlusion query.
-		virtual void removeOcclusionQuery(scene::ISceneNode* node);
-
-		//! Remove all occlusion queries.
-		virtual void removeAllOcclusionQueries();
-
-		//! Run occlusion query. Draws mesh stored in query.
-		/** If the mesh shall not be rendered visible, use
-		overrideMaterial to disable the color and depth buffer. */
-		virtual void runOcclusionQuery(scene::ISceneNode* node, bool visible=false);
-
-		//! Run all occlusion queries. Draws all meshes stored in queries.
-		/** If the meshes shall not be rendered visible, use
-		overrideMaterial to disable the color and depth buffer. */
-		virtual void runAllOcclusionQueries(bool visible=false);
-
-		//! Update occlusion query. Retrieves results from GPU.
-		/** If the query shall not block, set the flag to false.
-		Update might not occur in this case, though */
-		virtual void updateOcclusionQuery(scene::ISceneNode* node, bool block=true);
-
-		//! Update all occlusion queries. Retrieves results from GPU.
-		/** If the query shall not block, set the flag to false.
-		Update might not occur in this case, though */
-		virtual void updateAllOcclusionQueries(bool block=true);
-
-		//! Return query result.
-		/** Return value is the number of visible pixels/fragments.
-		The value is a safe approximation, i.e. can be larger than the
-		actual value of pixels. */
-		virtual u32 getOcclusionQueryResult(scene::ISceneNode* node) const;
-
+	public:
 		//! Only used by the engine internally.
 		/** Used to notify the driver that the window was resized. */
 		virtual void OnResize(const core::dimension2d<u32>& size);
@@ -635,19 +593,6 @@ namespace video
 		//! Returns the maximum texture size supported.
 		virtual core::dimension2du getMaxTextureSize() const;
 
-		//! Color conversion convenience function
-		/** Convert an image (as array of pixels) from source to destination
-		array, thereby converting the color format. The pixel size is
-		determined by the color formats.
-		\param sP Pointer to source
-		\param sF Color format of source
-		\param sN Number of pixels to convert, both array must be large enough
-		\param dP Pointer to destination
-		\param dF Color format of destination
-		*/
-		virtual void convertColor(const void* sP, ECOLOR_FORMAT sF, s32 sN,
-				void* dP, ECOLOR_FORMAT dF) const;
-
 		//! deprecated method
 		virtual ITexture* createRenderTargetTexture(const core::dimension2d<u32>& size,
 				const c8* name=0);
@@ -730,65 +675,8 @@ namespace video
 			virtual void regenerateMipMapLevels(void* mipmapData=0) {};
 			core::dimension2d<u32> size;
 		};
+
 		core::array<SSurface> Textures;
-
-		struct SOccQuery
-		{
-			SOccQuery(scene::ISceneNode* node, const scene::IMesh* mesh=0) : Node(node), Mesh(mesh), PID(0), Result(~0), Run(~0)
-			{
-				if (Node)
-					Node->grab();
-				if (Mesh)
-					Mesh->grab();
-			}
-
-			SOccQuery(const SOccQuery& other) : Node(other.Node), Mesh(other.Mesh), PID(other.PID), Result(other.Result), Run(other.Run)
-			{
-				if (Node)
-					Node->grab();
-				if (Mesh)
-					Mesh->grab();
-			}
-
-			~SOccQuery()
-			{
-				if (Node)
-					Node->drop();
-				if (Mesh)
-					Mesh->drop();
-			}
-
-			SOccQuery& operator=(const SOccQuery& other)
-			{
-				Node=other.Node;
-				Mesh=other.Mesh;
-				PID=other.PID;
-				Result=other.Result;
-				Run=other.Run;
-				if (Node)
-					Node->grab();
-				if (Mesh)
-					Mesh->grab();
-				return *this;
-			}
-
-			bool operator==(const SOccQuery& other) const
-			{
-				return other.Node==Node;
-			}
-
-			scene::ISceneNode* Node;
-			const scene::IMesh* Mesh;
-			union
-			{
-				void* PID;
-				unsigned int UID;
-			};
-			u32 Result;
-			u32 Run;
-		};
-		core::array<SOccQuery> OcclusionQueries;
-
 		core::array<video::IImageLoader*> SurfaceLoader;
 		core::array<video::IImageWriter*> SurfaceWriter;
 		core::array<SLight> Lights;
@@ -818,8 +706,6 @@ namespace video
 		f32 FogDensity;
 		SColor FogColor;
 		SExposedVideoData ExposedData;
-
-		io::IAttributes* DriverAttributes;
 
 		SOverrideMaterial OverrideMaterial;
 		SMaterial OverrideMaterial2D;

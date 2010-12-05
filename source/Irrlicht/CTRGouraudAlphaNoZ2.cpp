@@ -81,7 +81,7 @@ class CTRGouraudAlphaNoZ2 : public IBurningShader
 public:
 
 	//! constructor
-	CTRGouraudAlphaNoZ2(CBurningVideoDriver* driver);
+	CTRGouraudAlphaNoZ2(IDepthBuffer* zbuffer);
 
 	//! draws an indexed triangle list
 	virtual void drawTriangle ( const s4DVertex *a,const s4DVertex *b,const s4DVertex *c );
@@ -95,8 +95,8 @@ private:
 };
 
 //! constructor
-CTRGouraudAlphaNoZ2::CTRGouraudAlphaNoZ2(CBurningVideoDriver* driver)
-: IBurningShader(driver)
+CTRGouraudAlphaNoZ2::CTRGouraudAlphaNoZ2(IDepthBuffer* zbuffer)
+: IBurningShader(zbuffer)
 {
 	#ifdef _DEBUG
 	setDebugName("CTRGouraudAlphaNoZ2");
@@ -134,7 +134,10 @@ void CTRGouraudAlphaNoZ2::scanline_bilinear ()
 	sVec4 slopeC;
 #endif
 #ifdef IPOL_T0
-	sVec2 slopeT[BURNING_MATERIAL_MAX_TEXTURES];
+	sVec2 slopeT[0];
+#endif
+#ifdef IPOL_T1
+	sVec2 slopeT[1];
 #endif
 
 	// apply top-left fill-convention, left
@@ -638,10 +641,10 @@ namespace video
 {
 
 //! creates a flat triangle renderer
-IBurningShader* createTRGouraudAlphaNoZ2(CBurningVideoDriver* driver)
+IBurningShader* createTRGouraudAlphaNoZ2(IDepthBuffer* zbuffer)
 {
 	#ifdef _IRR_COMPILE_WITH_BURNINGSVIDEO_
-	return new CTRGouraudAlphaNoZ2(driver);
+	return new CTRGouraudAlphaNoZ2(zbuffer);
 	#else
 	return 0;
 	#endif // _IRR_COMPILE_WITH_BURNINGSVIDEO_

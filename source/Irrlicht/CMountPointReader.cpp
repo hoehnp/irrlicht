@@ -24,23 +24,24 @@ CArchiveLoaderMount::CArchiveLoaderMount( io::IFileSystem* fs)
 }
 
 
+//! destructor
+CArchiveLoaderMount::~CArchiveLoaderMount()
+{
+}
+
+
 //! returns true if the file maybe is able to be loaded by this class
 bool CArchiveLoaderMount::isALoadableFileFormat(const io::path& filename) const
 {
+	bool ret = false;
 	io::path fname(filename);
 	deletePathFromFilename(fname);
 
 	if (!fname.size())
-		return true;
-	IFileList* list = FileSystem->createFileList();
-	bool ret = false;
-	if (list)
 	{
-		// check if name is found as directory
-		if (list->findFile(filename, true))
-			ret=true;
-		list->drop();
+		ret = true;
 	}
+
 	return ret;
 }
 
@@ -63,11 +64,11 @@ IFileArchive* CArchiveLoaderMount::createArchive(const io::path& filename, bool 
 
 	EFileSystemType current = FileSystem->setFileListSystem(FILESYSTEM_NATIVE);
 
-	const io::path save = FileSystem->getWorkingDirectory();
+	io::path save = FileSystem->getWorkingDirectory();
 	io::path fullPath = FileSystem->getAbsolutePath(filename);
 	FileSystem->flattenFilename(fullPath);
 
-	if (FileSystem->changeWorkingDirectoryTo(fullPath))
+	if ( FileSystem->changeWorkingDirectoryTo ( fullPath ) )
 	{
 		archive = new CMountPointReader(FileSystem, fullPath, ignoreCase, ignorePaths);
 	}
@@ -85,15 +86,16 @@ IFileArchive* CArchiveLoaderMount::createArchive(io::IReadFile* file, bool ignor
 	return 0;
 }
 
-//! compatible Folder Architecture
+//! compatible Folder Archticture
+//
 CMountPointReader::CMountPointReader(IFileSystem * parent, const io::path& basename, bool ignoreCase, bool ignorePaths)
 	: CFileList(basename, ignoreCase, ignorePaths), Parent(parent)
 {
 	//! ensure CFileList path ends in a slash
 	if (Path.lastChar() != '/' )
-		Path.append('/');
+		Path.append ('/');
 
-	const io::path work = Parent->getWorkingDirectory();
+	io::path work = Parent->getWorkingDirectory();
 
 	Parent->changeWorkingDirectoryTo(basename);
 	buildDirectory();
@@ -102,6 +104,10 @@ CMountPointReader::CMountPointReader(IFileSystem * parent, const io::path& basen
 	sort();
 }
 
+CMountPointReader::~CMountPointReader()
+{
+
+}
 
 //! returns the list of files
 const IFileList* CMountPointReader::getFileList() const
@@ -112,8 +118,6 @@ const IFileList* CMountPointReader::getFileList() const
 void CMountPointReader::buildDirectory()
 {
 	IFileList * list = Parent->createFileList();
-	if (!list)
-		return;
 
 	const u32 size = list->getFileCount();
 	for (u32 i=0; i < size; ++i)
@@ -123,7 +127,7 @@ void CMountPointReader::buildDirectory()
 
 		if (!list->isDirectory(i))
 		{
-			addItem(full, list->getFileOffset(i), list->getFileSize(i), false, RealFileNames.size());
+			addItem(full, list->getFileSize(i), false, RealFileNames.size());
 			RealFileNames.push_back(list->getFullFileName(i));
 		}
 		else
@@ -136,9 +140,9 @@ void CMountPointReader::buildDirectory()
 
 			if ( rel != "." && rel != ".." )
 			{
-				addItem(full, 0, 0, true, 0);
+				addItem(full, 0, true, 0);
 				Parent->changeWorkingDirectoryTo(pwd);
-				buildDirectory();
+				buildDirectory ();
 				Parent->changeWorkingDirectoryTo("..");
 			}
 		}

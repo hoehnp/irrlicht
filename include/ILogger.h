@@ -11,25 +11,18 @@ namespace irr
 {
 
 //! Possible log levels.
-//! When used has filter ELL_DEBUG means => log everything and ELL_NONE means => log (nearly) nothing.
-//! When used to print logging information ELL_DEBUG will have lowest priority while ELL_NONE
-//! messages are never filtered and always printed.
 enum ELOG_LEVEL
 {
-	//! Used for printing information helpful in debugging
-	ELL_DEBUG,
+	//! High log level, warnings, errors and important information texts are printed out.
+	ELL_INFORMATION = 0,
 
-	//! Useful information to print. For example hardware infos or something started/stopped.
-	ELL_INFORMATION,
-
-	//! Warnings that something isn't as expected and can cause oddities
+	//! Default log level, warnings and errors are printed out
 	ELL_WARNING,
 
-	//! Something did go wrong.
+	//! Low log level, only errors are printed into the log
 	ELL_ERROR,
 
-	//! Logs with ELL_NONE will never be filtered.
-	//! And used as filter it will remove all logging except ELL_NONE messages.
+	//! Nothing is printed out to the log
 	ELL_NONE
 };
 

@@ -5,9 +5,13 @@
 
 using namespace irr;
 using namespace core;
+using namespace scene;
+using namespace video;
+using namespace io;
+using namespace gui;
 
 //! Tests locking miplevels
-static bool lockAllMipLevels(video::E_DRIVER_TYPE driverType)
+static bool lockAllMipLevels(E_DRIVER_TYPE driverType)
 {
 	bool result=true;
 
@@ -15,8 +19,8 @@ static bool lockAllMipLevels(video::E_DRIVER_TYPE driverType)
 	if (!device)
 		return result; // Treat a failure to create a driver as benign; this saves a lot of #ifdefs
 
-	video::IVideoDriver* driver = device->getVideoDriver();
-	scene::ISceneManager * smgr = device->getSceneManager();
+	IVideoDriver* driver = device->getVideoDriver();
+	ISceneManager * smgr = device->getSceneManager();
 
 	scene::ISceneNode* n = smgr->addCubeSceneNode();
 
@@ -39,7 +43,7 @@ static bool lockAllMipLevels(video::E_DRIVER_TYPE driverType)
 			}
 		}
 
-		video::ITexture* tex = driver->addTexture("miptest", image, mipdata);
+		ITexture* tex = driver->addTexture("miptest", image, mipdata);
 		if (!tex)
 			// is probably an error in the mipdata handling
 			return false;
@@ -50,7 +54,7 @@ static bool lockAllMipLevels(video::E_DRIVER_TYPE driverType)
 
 	(void)smgr->addCameraSceneNode();
 
-	driver->beginScene(true, true, video::SColor(255,100,101,140));
+	driver->beginScene(true, true, SColor(255,100,101,140));
 	smgr->drawAll();
 	driver->endScene();
 
@@ -81,11 +85,11 @@ bool textureFeatures(void)
 {
 	bool passed = true;
 
-	passed &= lockAllMipLevels(video::EDT_OPENGL);
-	passed &= lockAllMipLevels(video::EDT_SOFTWARE);
-	passed &= lockAllMipLevels(video::EDT_BURNINGSVIDEO);
-	passed &= lockAllMipLevels(video::EDT_DIRECT3D9);
-	passed &= lockAllMipLevels(video::EDT_DIRECT3D8);
+	passed &= lockAllMipLevels(EDT_OPENGL);
+	passed &= lockAllMipLevels(EDT_SOFTWARE);
+	passed &= lockAllMipLevels(EDT_BURNINGSVIDEO);
+	passed &= lockAllMipLevels(EDT_DIRECT3D9);
+	passed &= lockAllMipLevels(EDT_DIRECT3D8);
 
 	return passed;
 }

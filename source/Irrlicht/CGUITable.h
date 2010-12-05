@@ -158,10 +158,9 @@ namespace gui
 
 		struct Cell
 		{
-			Cell() : IsOverrideColor(false), Data(0)  {}
+			Cell() : Data(0) {}
 			core::stringw Text;
 			core::stringw BrokenText;
-			bool IsOverrideColor;
 			video::SColor Color;
 			void *Data;
 		};
@@ -176,6 +175,7 @@ namespace gui
 		{
 			Column() : Width(0), OrderingMode(EGCO_NONE) {}
 			core::stringw Name;
+			video::SColor TextColor;
 			u32 Width;
 			EGUI_COLUMN_ORDERING OrderingMode;
 		};

@@ -11,7 +11,6 @@
 #include "CImage.h"
 #include "os.h"
 #include "irrString.h"
-#include "SIrrCreationParameters.h"
 
 namespace irr
 {
@@ -22,7 +21,7 @@ namespace video
 	public:
 
 		//! constructor
-		CBurningVideoDriver(const irr::SIrrlichtCreationParameters& params, io::IFileSystem* io, video::IImagePresenter* presenter);
+		CBurningVideoDriver(const core::dimension2d<u32>& windowSize, bool fullscreen, io::IFileSystem* io, video::IImagePresenter* presenter);
 
 		//! destructor
 		virtual ~CBurningVideoDriver();
@@ -158,9 +157,6 @@ namespace video
 		//! Returns the maximum texture size supported.
 		virtual core::dimension2du getMaxTextureSize() const;
 
-		virtual IDepthBuffer * getDepthBuffer () { return DepthBuffer; }
-		virtual IStencilBuffer * getStencilBuffer () { return StencilBuffer; }
-
 	protected:
 
 
@@ -191,7 +187,6 @@ namespace video
 		IBurningShader* BurningShader[ETR2_COUNT];
 
 		IDepthBuffer* DepthBuffer;
-		IStencilBuffer* StencilBuffer;
 
 
 		/*
@@ -206,7 +201,6 @@ namespace video
 			ETS_CURRENT,
 			ETS_CLIPSCALE,
 			ETS_VIEW_INVERSE,
-			ETS_WORLD_INVERSE,
 
 			ETS_COUNT_BURNING
 		};
@@ -221,7 +215,6 @@ namespace video
 		core::matrix4 Transformation[ETS_COUNT_BURNING];
 
 		void getCameraPosWorldSpace ();
-		void getLightPosObjectSpace ();
 
 
 		// Vertex Cache
@@ -261,7 +254,7 @@ namespace video
 
 		void ndc_2_dc_and_project ( s4DVertex *dest,s4DVertex *source, u32 vIn ) const;
 		f32 screenarea ( const s4DVertex *v0 ) const;
-		void select_polygon_mipmap ( s4DVertex *source, u32 vIn, u32 tex, const core::dimension2du& texSize ) const;
+		void select_polygon_mipmap ( s4DVertex *source, u32 vIn, u32 tex, const core::dimension2du& texSize );
 		f32 texelarea ( const s4DVertex *v0, int tex ) const;
 
 

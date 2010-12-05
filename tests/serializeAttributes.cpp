@@ -145,7 +145,7 @@ public:
 
 	void set()
 	{
-		ValInt = 152722522;
+		ValInt = 1;
 		ValFloat = 1.f;
 		ValString = "one";
 		ValStringW = L"ONE";
@@ -314,8 +314,6 @@ bool serializeAttributes()
 	{
 		logTestString("XmlSerialization failed in %s:%d\n", __FILE__, __LINE__ );
 	}
-
-	device->drop();
 
 	return result;
 }

@@ -222,18 +222,16 @@ class aabbox3d
 		otherwise false. */
 		bool isFullInside(const aabbox3d<T>& other) const
 		{
-			return (MinEdge.X >= other.MinEdge.X && MinEdge.Y >= other.MinEdge.Y && MinEdge.Z >= other.MinEdge.Z &&
-				MaxEdge.X <= other.MaxEdge.X && MaxEdge.Y <= other.MaxEdge.Y && MaxEdge.Z <= other.MaxEdge.Z);
+			return MinEdge >= other.MinEdge && MaxEdge <= other.MaxEdge;
 		}
 
-		//! Determines if the axis-aligned box intersects with another axis-aligned box.
+		//! Determines if the box intersects with another box.
 		/** \param other: Other box to check a intersection with.
 		\return True if there is an intersection with the other box,
 		otherwise false. */
 		bool intersectsWithBox(const aabbox3d<T>& other) const
 		{
-			return (MinEdge.X <= other.MaxEdge.X && MinEdge.Y <= other.MaxEdge.Y && MinEdge.Z <= other.MaxEdge.Z &&
-				MaxEdge.X >= other.MinEdge.X && MaxEdge.Y >= other.MinEdge.Y && MaxEdge.Z >= other.MinEdge.Z);
+			return (MinEdge <= other.MaxEdge && MaxEdge >= other.MinEdge);
 		}
 
 		//! Tests if the box intersects with a line

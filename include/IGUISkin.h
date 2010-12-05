@@ -99,15 +99,6 @@ namespace gui
 		EGDC_ICON,
 		//! Selected icons in a list or tree
 		EGDC_ICON_HIGH_LIGHT,
-		//! Grayed (disabled) window symbols like on close buttons, scroll bars and check boxes
-		EGDC_GRAY_WINDOW_SYMBOL,
-		//! Window background for editable field (editbox, checkbox-field)
-		EGDC_EDITABLE,
-		//! Grayed (disabled) window background for editable field (editbox, checkbox-field)
-		EGDC_GRAY_EDITABLE,
-		//! Show focus of window background for editable field (editbox or when checkbox-field is pressed)
-		EGDC_FOCUSED_EDITABLE,
-
 		//! this value is not used, it only specifies the amount of default colors
 		//! available.
 		EGDC_COUNT
@@ -137,10 +128,6 @@ namespace gui
 		"WindowSymbol",
 		"Icon",
 		"IconHighlight",
-		"GrayWindowSymbol",
-		"Editable",
-		"GrayEditable",
-		"FocusedEditable",
 		0,
 	};
 
@@ -176,9 +163,7 @@ namespace gui
 		//! minimal space to reserve for messagebox text-width
 		EGDS_MESSAGE_BOX_MIN_TEXT_WIDTH,
 		//! maximal space to reserve for messagebox text-width
-		EGDS_MESSAGE_BOX_MAX_TEXT_WIDTH,
-		//! deprecated - this was a typo. Should be removed for 1.8
-		EGDS_MESSAGE_BOX_MAX_TEST_WIDTH = EGDS_MESSAGE_BOX_MAX_TEXT_WIDTH,
+		EGDS_MESSAGE_BOX_MAX_TEST_WIDTH,
 		//! minimal space to reserve for messagebox text-height
 		EGDS_MESSAGE_BOX_MIN_TEXT_HEIGHT,
 		//! maximal space to reserve for messagebox text-height

@@ -22,15 +22,14 @@ namespace scene
 //! constructor
 COctreeSceneNode::COctreeSceneNode(ISceneNode* parent, ISceneManager* mgr,
 					 s32 id, s32 minimalPolysPerNode)
-	: IMeshSceneNode(parent, mgr, id), StdOctree(0), LightMapOctree(0),
-	TangentsOctree(0), VertexType((video::E_VERTEX_TYPE)-1),
-	MinimalPolysPerNode(minimalPolysPerNode), Mesh(0),
-	UseVBOs(OCTREE_USE_HARDWARE), UseVisibilityAndVBOs(OCTREE_USE_VISIBILITY),
-	BoxBased(OCTREE_BOX_BASED)
+: IMeshSceneNode(parent, mgr, id), StdOctree(0), LightMapOctree(0), TangentsOctree(0),
+	MinimalPolysPerNode(minimalPolysPerNode), Mesh(0)
 {
 #ifdef _DEBUG
 	setDebugName("COctreeSceneNode");
 #endif
+
+	vertexType = (video::E_VERTEX_TYPE)-1;
 }
 
 
@@ -89,7 +88,7 @@ void COctreeSceneNode::render()
 {
 	video::IVideoDriver* driver = SceneManager->getVideoDriver();
 
-	if (VertexType == -1 || !driver)
+	if (vertexType == -1 || !driver)
 		return;
 
 	ICameraSceneNode* camera = SceneManager->getActiveCamera();
@@ -111,16 +110,19 @@ void COctreeSceneNode::render()
 		frust.transform(invTrans);
 	}
 
+#if defined ( OCTREE_BOX_BASED )
 	const core::aabbox3d<float> &box = frust.getBoundingBox();
+#endif
 
-	switch (VertexType)
+	switch(vertexType)
 	{
 	case video::EVT_STANDARD:
 		{
-			if (BoxBased)
-				StdOctree->calculatePolys(box);
-			else
-				StdOctree->calculatePolys(frust);
+#if defined ( OCTREE_BOX_BASED )
+			StdOctree->calculatePolys(box);
+#else
+			StdOctree->calculatePolys(frust);
+#endif
 
 			const Octree<video::S3DVertex>::SIndexData* d = StdOctree->getIndexData();
 
@@ -165,11 +167,11 @@ void COctreeSceneNode::render()
 		break;
 	case video::EVT_2TCOORDS:
 		{
-			if (BoxBased)
-				LightMapOctree->calculatePolys(box);
-			else
-				LightMapOctree->calculatePolys(frust);
-
+#if defined ( OCTREE_BOX_BASED )
+			LightMapOctree->calculatePolys(box);
+#else
+			LightMapOctree->calculatePolys(frust);
+#endif
 			const Octree<video::S3DVertex2TCoords>::SIndexData* d = LightMapOctree->getIndexData();
 
 			for (u32 i=0; i<Materials.size(); ++i)
@@ -185,27 +187,14 @@ void COctreeSceneNode::render()
 				if (transparent == isTransparentPass)
 				{
 					driver->setMaterial(Materials[i]);
-					if (UseVBOs)
-					{
-						if (UseVisibilityAndVBOs)
-						{
-							u16* oldPointer = LightMapMeshes[i].Indices.pointer();
-							const u32 oldSize = LightMapMeshes[i].Indices.size();
-							LightMapMeshes[i].Indices.set_free_when_destroyed(false);
-							LightMapMeshes[i].Indices.set_pointer(d[i].Indices, d[i].CurrentSize, false, false);
-							LightMapMeshes[i].setDirty(scene::EBT_INDEX);
-							driver->drawMeshBuffer ( &LightMapMeshes[i] );
-							LightMapMeshes[i].Indices.set_pointer(oldPointer, oldSize);
-							LightMapMeshes[i].setDirty(scene::EBT_INDEX);
-						}
-						else
-							driver->drawMeshBuffer ( &LightMapMeshes[i] );
-					}
-					else
-						driver->drawIndexedTriangleList(
-							&LightMapMeshes[i].Vertices[0],
-							LightMapMeshes[i].Vertices.size(),
-							d[i].Indices, d[i].CurrentSize / 3);
+#if defined (OCTREE_USE_HARDWARE)
+					driver->drawMeshBuffer ( &LightMapMeshes[i] );
+
+#else
+					driver->drawIndexedTriangleList(
+						&LightMapMeshes[i].Vertices[0], LightMapMeshes[i].Vertices.size(),
+						d[i].Indices, d[i].CurrentSize / 3);
+#endif
 				}
 			}
 
@@ -231,10 +220,11 @@ void COctreeSceneNode::render()
 		break;
 	case video::EVT_TANGENTS:
 		{
-			if (BoxBased)
-				TangentsOctree->calculatePolys(box);
-			else
-				TangentsOctree->calculatePolys(frust);
+#if defined ( OCTREE_BOX_BASED )
+			TangentsOctree->calculatePolys(box);
+#else
+			TangentsOctree->calculatePolys(frust);
+#endif
 
 			const Octree<video::S3DVertexTangents>::SIndexData* d =  TangentsOctree->getIndexData();
 
@@ -311,9 +301,9 @@ bool COctreeSceneNode::createTree(IMesh* mesh)
 
 	if (mesh->getMeshBufferCount())
 	{
-		VertexType = mesh->getMeshBuffer(0)->getVertexType();
+		vertexType = mesh->getMeshBuffer(0)->getVertexType();
 
-		switch(VertexType)
+		switch(vertexType)
 		{
 		case video::EVT_STANDARD:
 			{
@@ -372,13 +362,9 @@ bool COctreeSceneNode::createTree(IMesh* mesh)
 						Octree<video::S3DVertex2TCoords>::SMeshChunk& nchunk = LightMapMeshes.getLast();
 						nchunk.MaterialId = Materials.size() - 1;
 
-						if (UseVisibilityAndVBOs)
-						{
-							nchunk.setHardwareMappingHint(scene::EHM_STATIC, scene::EBT_VERTEX);
-							nchunk.setHardwareMappingHint(scene::EHM_DYNAMIC, scene::EBT_INDEX);
-						}
-						else
-							nchunk.setHardwareMappingHint(scene::EHM_STATIC);
+#if defined (OCTREE_USE_HARDWARE)
+						nchunk.setHardwareMappingHint ( b->getHardwareMappingHint_Vertex() );
+#endif
 
 						u32 v;
 						nchunk.Vertices.reallocate(b->getVertexCount());

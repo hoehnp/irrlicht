@@ -165,7 +165,7 @@ namespace scene
 	private:
 
 		//! Get a static mesh for the current frame of this animated mesh
-		IMesh* getMeshForCurrentFrame();
+		IMesh* getMeshForCurrentFrame(bool forceRecalcOfControlJoints);
 
 		void buildFrameNr(u32 timeMs);
 		void checkJoints();
@@ -175,6 +175,7 @@ namespace scene
 		core::aabbox3d<f32> Box;
 		IAnimatedMesh* Mesh;
 
+		u32 BeginFrameTime;
 		s32 StartFrame;
 		s32 EndFrame;
 		f32 FramesPerSecond;

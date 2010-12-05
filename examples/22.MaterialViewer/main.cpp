@@ -5,10 +5,11 @@ Only the default non-shader materials are used in here.
 
 You have two nodes to make it easier to see which difference your settings will make.
 Additionally you have one lightscenenode and you can set the global ambient values.
+
 */
 
 #include <irrlicht.h>
-#include "driverChoice.h"
+#include <iostream>
 
 using namespace irr;
 
@@ -790,9 +791,9 @@ protected:
 	// returns true when it was succesful initialized, otherwise false.
 	bool init(int argc, char *argv[])
 	{
-		// ask user for driver
-		Config.DriverType=driverChoiceConsole();
-		if (Config.DriverType==video::EDT_COUNT)
+		// ask user for the driver which should be used
+		Config.DriverType = getDriverTypeFromConsole();
+		if ( (int)Config.DriverType < 0 )
 			return false;
 
 		// create the device with the settings from our config
@@ -867,6 +868,30 @@ protected:
 		GlobalAmbient->setColor( smgr->getAmbientLight().toSColor() );
 
 		return true;
+	}
+
+	// Ask the user which driver to use
+	video::E_DRIVER_TYPE getDriverTypeFromConsole()
+	{
+		printf("Please select the driver you want for this example:\n"\
+			" (a) Direct3D 9.0c\n (b) Direct3D 8.1\n (c) OpenGL 1.5\n"\
+			" (d) Software Renderer\n (e) Burning's Software Renderer\n"\
+			" (f) NullDevice\n (otherKey) exit\n\n");
+
+		char i;
+		std::cin >> i;
+
+		switch(i)
+		{
+
+			case 'a': return video::EDT_DIRECT3D9;
+			case 'b': return video::EDT_DIRECT3D8;
+			case 'c': return video::EDT_OPENGL;
+			case 'd': return video::EDT_SOFTWARE;
+			case 'e': return video::EDT_BURNINGSVIDEO;
+			case 'f': return video::EDT_NULL;
+			default: return video::E_DRIVER_TYPE(-1);
+		}
 	}
 
 	// Update one frame

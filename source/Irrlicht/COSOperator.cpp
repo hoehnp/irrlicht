@@ -5,13 +5,17 @@
 #include "COSOperator.h"
 
 #ifdef _IRR_WINDOWS_API_
-#ifndef _IRR_XBOX_PLATFORM_
+#ifdef _IRR_XBOX_PLATFORM_
+#else
 #include <windows.h>
 #endif
 #else
 #include <string.h>
 #include <unistd.h>
-#ifndef _IRR_SOLARIS_PLATFORM_
+#ifdef _IRR_COMPILE_WITH_OSX_DEVICE_
+#include "MacOSX/OSXClipboard.h"
+#endif
+#ifdef _IRR_OSX_PLATFORM_
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #endif
@@ -19,9 +23,6 @@
 
 #if defined(_IRR_COMPILE_WITH_X11_DEVICE_)
 #include "CIrrDeviceLinux.h"
-#endif
-#ifdef _IRR_COMPILE_WITH_OSX_DEVICE_
-#include "MacOSX/OSXClipboard.h"
 #endif
 
 namespace irr
@@ -183,7 +184,7 @@ bool COSOperator::getSystemMemory(u32* Total, u32* Avail) const
 	_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
 	return true;
 
-#elif defined(_IRR_POSIX_API_) && !defined(__FreeBSD__)
+#elif defined(_IRR_POSIX_API_)
 #if defined(_SC_PHYS_PAGES) && defined(_SC_AVPHYS_PAGES)
         long ps = sysconf(_SC_PAGESIZE);
         long pp = sysconf(_SC_PHYS_PAGES);

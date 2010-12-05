@@ -23,7 +23,7 @@ CSceneNodeAnimatorCollisionResponse::CSceneNodeAnimatorCollisionResponse(
 		f32 slidingSpeed)
 : Radius(ellipsoidRadius), Gravity(gravityPerSecond), Translation(ellipsoidTranslation),
 	World(world), Object(object), SceneManager(scenemanager), LastTime(0),
-	SlidingSpeed(slidingSpeed), CollisionNode(0), CollisionCallback(0),
+	SlidingSpeed(slidingSpeed), CollisionCallback(0),
 	Falling(false), IsCamera(false), AnimateCameraTarget(true), CollisionOccurred(false),
 	FirstUpdate(true)
 {
@@ -165,7 +165,7 @@ void CSceneNodeAnimatorCollisionResponse::animateNode(ISceneNode* node, u32 time
 		FirstUpdate = false;
 	}
 
-	const u32 diff = timeMs - LastTime;
+	u32 diff = timeMs - LastTime;
 	LastTime = timeMs;
 
 	CollisionResultPosition = Object->getPosition();

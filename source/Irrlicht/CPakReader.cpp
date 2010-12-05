@@ -100,7 +100,7 @@ bool CArchiveLoaderPAK::isALoadableFileFormat(io::IReadFile* file) const
 	PAK Reader
 */
 CPakReader::CPakReader(IReadFile* file, bool ignoreCase, bool ignorePaths)
-: CFileList((file ? file->getFileName() : io::path("")), ignoreCase, ignorePaths), File(file)
+: CFileList(file ? file->getFileName() : "", ignoreCase, ignorePaths), File(file)
 {
 #ifdef _DEBUG
 	setDebugName("CPakReader");
@@ -130,13 +130,13 @@ const IFileList* CPakReader::getFileList() const
 bool CPakReader::scanLocalHeader()
 {
 	SPAKFileHeader header;
-
+		
 	// Read and validate the header
 	File->read(&header, sizeof(header));
 	if (!isHeaderValid(header))
 		return false;
 
-	// Seek to the table of contents
+	// Seek to the table of contents	
 #ifdef __BIG_ENDIAN__
 	header.offset = os::Byteswap::byteswap(header.offset);
 	header.length = os::Byteswap::byteswap(header.length);
@@ -145,6 +145,7 @@ bool CPakReader::scanLocalHeader()
 
 	const int numberOfFiles = header.length / sizeof(SPAKFileEntry);
 
+	Offsets.reallocate(numberOfFiles);
 	// Loop through each entry in the table of contents
 	for(int i = 0; i < numberOfFiles; i++)
 	{
@@ -161,7 +162,8 @@ bool CPakReader::scanLocalHeader()
 		entry.length = os::Byteswap::byteswap(entry.length);
 #endif
 
-		addItem(io::path(entry.name), entry.offset, entry.length, false );
+		addItem(io::path(entry.name), entry.length, false, Offsets.size());
+		Offsets.push_back(entry.offset);
 	}
 	return true;
 }
@@ -182,11 +184,12 @@ IReadFile* CPakReader::createAndOpenFile(const io::path& filename)
 //! opens a file by index
 IReadFile* CPakReader::createAndOpenFile(u32 index)
 {
-	if (index >= Files.size() )
+	if (index < Files.size())
+	{
+		return createLimitReadFile(Files[index].FullName, File, Offsets[Files[index].ID], Files[index].Size);
+	}
+	else
 		return 0;
-
-	const SFileListEntry &entry = Files[index];
-	return createLimitReadFile( entry.FullName, File, entry.Offset, entry.Size );
 }
 
 } // end namespace io

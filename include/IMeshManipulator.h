@@ -64,16 +64,6 @@ namespace scene
 		\param angleWeighted: If the normals shall be smoothed in relation to their angles. More expensive, but also higher precision. */
 		virtual void recalculateNormals(IMeshBuffer* buffer, bool smooth = false, bool angleWeighted = false) const = 0;
 
-		//! Recalculates tangents, requires a tangent mesh
-		/** \param mesh Mesh on which the operation is performed.
-		\param recalculateNormals If the normals shall be recalculated, otherwise original normals of the mesh are used unchanged.
-		\param smooth If the normals shall be smoothed.
-		\param angleWeighted If the normals shall be smoothed in relation to their angles. More expensive, but also higher precision.
-		*/
-		virtual void recalculateTangents(IMesh* mesh,
-				bool recalculateNormals=false, bool smooth=false,
-				bool angleWeighted=false) const=0;
-
 		//! Scales the actual mesh, not a scene node.
 		/** \param mesh Mesh on which the operation is performed.
 		\param factor Scale factor for each axis. */
@@ -181,12 +171,11 @@ namespace scene
 		\param smooth The normals/tangents are smoothed across the
 		meshbuffer's faces if this flag is set.
 		\param angleWeighted Improved smoothing calculation used
-		\param recalculateTangents Whether are actually calculated, or just the mesh with proper type is created.
 		\return Mesh consisting only of S3DVertexTangents vertices. If
 		you no longer need the cloned mesh, you should call
 		IMesh::drop(). See IReferenceCounted::drop() for more
 		information. */
-		virtual IMesh* createMeshWithTangents(IMesh* mesh, bool recalculateNormals=false, bool smooth=false, bool angleWeighted=false, bool recalculateTangents=true) const = 0;
+		virtual IMesh* createMeshWithTangents(IMesh* mesh, bool recalculateNormals=false, bool smooth=false, bool angleWeighted=false) const = 0;
 
 		//! Creates a copy of the mesh, which will only consist of S3DVertex2TCoord vertices.
 		/** \param mesh Input mesh
@@ -270,9 +259,9 @@ namespace scene
 				if (boundingBoxUpdate)
 				{
 					if (0==i)
-						bufferbox.reset(mesh->getMeshBuffer(i)->getBoundingBox());
+						bufferbox.reset(mesh->getBoundingBox());
 					else
-						bufferbox.addInternalBox(mesh->getMeshBuffer(i)->getBoundingBox());
+						bufferbox.addInternalBox(mesh->getBoundingBox());
 				}
 			}
 			if (boundingBoxUpdate)

@@ -1515,8 +1515,7 @@ namespace scene
 
 		// finish
 
-		if ( newParent )
-			nb->drop();
+		nb->drop();
 		return nb;
 	}
 

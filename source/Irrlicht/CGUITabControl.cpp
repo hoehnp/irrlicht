@@ -27,7 +27,7 @@ CGUITab::CGUITab(s32 number, IGUIEnvironment* environment,
 	IGUIElement* parent, const core::rect<s32>& rectangle,
 	s32 id)
 	: IGUITab(environment, parent, id, rectangle), Number(number),
-		BackColor(0,0,0,0), OverrideTextColorEnabled(false), TextColor(255,0,0,0),
+		BackColor(0,0,0,0), TextColor(255,0,0,0),
 		DrawBackground(false)
 {
 	#ifdef _DEBUG
@@ -54,13 +54,6 @@ void CGUITab::setNumber(s32 n)
 	Number = n;
 }
 
-void CGUITab::refreshSkinColors()
-{
-	if ( !OverrideTextColorEnabled )
-	{
-		TextColor = Environment->getSkin()->getColor(EGDC_BUTTON_TEXT);
-	}
-}
 
 //! draws the element and its children
 void CGUITab::draw()
@@ -94,7 +87,6 @@ void CGUITab::setBackgroundColor(video::SColor c)
 //! sets the color of the text
 void CGUITab::setTextColor(video::SColor c)
 {
-	OverrideTextColorEnabled = true;
 	TextColor = c;
 }
 
@@ -128,7 +120,6 @@ void CGUITab::serializeAttributes(io::IAttributes* out, io::SAttributeReadWriteO
 	out->addInt		("TabNumber",		Number);
 	out->addBool	("DrawBackground",	DrawBackground);
 	out->addColor	("BackColor",		BackColor);
-	out->addBool	("OverrideTextColorEnabled", OverrideTextColorEnabled);
 	out->addColor	("TextColor",		TextColor);
 
 }
@@ -142,12 +133,7 @@ void CGUITab::deserializeAttributes(io::IAttributes* in, io::SAttributeReadWrite
 	setNumber(in->getAttributeAsInt("TabNumber"));
 	setDrawBackground(in->getAttributeAsBool("DrawBackground"));
 	setBackgroundColor(in->getAttributeAsColor("BackColor"));
-	bool override = in->getAttributeAsBool("OverrideTextColorEnabled");
 	setTextColor(in->getAttributeAsColor("TextColor"));
-	if ( !override )
-	{
-		OverrideTextColorEnabled = false;
-	}
 
 	if (Parent && Parent->getType() == EGUIET_TAB_CONTROL)
 	{
@@ -174,6 +160,7 @@ CGUITabControl::CGUITabControl(IGUIEnvironment* environment,
 	setDebugName("CGUITabControl");
 	#endif
 
+	video::SColor color(255,255,255,255);
 	IGUISkin* skin = Environment->getSkin();
 	IGUISpriteBank* sprites = 0;
 
@@ -182,6 +169,7 @@ CGUITabControl::CGUITabControl(IGUIEnvironment* environment,
 	if (skin)
 	{
 		sprites = skin->getSpriteBank();
+		color = skin->getColor(EGDC_WINDOW_SYMBOL);
 		TabHeight = skin->getSize(gui::EGDS_BUTTON_HEIGHT) + 2;
 	}
 
@@ -190,6 +178,8 @@ CGUITabControl::CGUITabControl(IGUIEnvironment* environment,
 	if (UpButton)
 	{
 		UpButton->setSpriteBank(sprites);
+		UpButton->setSprite(EGBS_BUTTON_UP, skin->getIcon(EGDI_CURSOR_LEFT), color);
+		UpButton->setSprite(EGBS_BUTTON_DOWN, skin->getIcon(EGDI_CURSOR_LEFT), color);
 		UpButton->setVisible(false);
 		UpButton->setSubElement(true);
 		UpButton->setAlignment(EGUIA_LOWERRIGHT, EGUIA_LOWERRIGHT, EGUIA_UPPERLEFT, EGUIA_UPPERLEFT);
@@ -202,6 +192,8 @@ CGUITabControl::CGUITabControl(IGUIEnvironment* environment,
 	if (DownButton)
 	{
 		DownButton->setSpriteBank(sprites);
+		DownButton->setSprite(EGBS_BUTTON_UP, skin->getIcon(EGDI_CURSOR_RIGHT), color);
+		DownButton->setSprite(EGBS_BUTTON_DOWN, skin->getIcon(EGDI_CURSOR_RIGHT), color);
 		DownButton->setVisible(false);
 		DownButton->setSubElement(true);
 		DownButton->setAlignment(EGUIA_LOWERRIGHT, EGUIA_LOWERRIGHT, EGUIA_UPPERLEFT, EGUIA_UPPERLEFT);
@@ -210,8 +202,8 @@ CGUITabControl::CGUITabControl(IGUIEnvironment* environment,
 	}
 
 	setTabVerticalAlignment(EGUIA_UPPERLEFT);
-	refreshSprites();
 }
+
 
 //! destructor
 CGUITabControl::~CGUITabControl()
@@ -229,27 +221,6 @@ CGUITabControl::~CGUITabControl()
 		DownButton->drop();
 }
 
-void CGUITabControl::refreshSprites()
-{
-	video::SColor color(255,255,255,255);
-	IGUISkin* skin = Environment->getSkin();
-	if (skin)
-	{
-		color = skin->getColor(isEnabled() ? EGDC_WINDOW_SYMBOL : EGDC_GRAY_WINDOW_SYMBOL);
-	}
-
-	if (UpButton)
-	{
-		UpButton->setSprite(EGBS_BUTTON_UP, skin->getIcon(EGDI_CURSOR_LEFT), color);
-		UpButton->setSprite(EGBS_BUTTON_DOWN, skin->getIcon(EGDI_CURSOR_LEFT), color);
-	}
-
-	if (DownButton)
-	{
-		DownButton->setSprite(EGBS_BUTTON_UP, skin->getIcon(EGDI_CURSOR_RIGHT), color);
-		DownButton->setSprite(EGBS_BUTTON_DOWN, skin->getIcon(EGDI_CURSOR_RIGHT), color);
-	}
-}
 
 //! Adds a tab
 IGUITab* CGUITabControl::addTab(const wchar_t* caption, s32 id)
@@ -354,7 +325,7 @@ IGUITab* CGUITabControl::getTab(s32 idx) const
 //! called if an event happened.
 bool CGUITabControl::OnEvent(const SEvent& event)
 {
-	if (isEnabled())
+	if (IsEnabled)
 	{
 
 		switch(event.EventType)
@@ -424,18 +395,18 @@ s32 CGUITabControl::calcTabWidth(s32 pos, IGUIFont* font, const wchar_t* text, b
 {
 	if ( !font )
 		return 0;
-
+	
 	s32 len = font->getDimension(text).Width + TabExtraWidth;
 	if ( TabMaxWidth > 0 && len > TabMaxWidth )
 		len = TabMaxWidth;
-
+	
 	// check if we miss the place to draw the tab-button
 	if ( withScrollControl && ScrollControl && pos+len > UpButton->getAbsolutePosition().UpperLeftCorner.X - 2 )
 	{
 		s32 tabMinWidth = font->getDimension(L"A").Width;
 		if ( TabExtraWidth > 0 && TabExtraWidth > tabMinWidth )
 			tabMinWidth = TabExtraWidth;
-
+		
 		if ( ScrollControl && pos+tabMinWidth <= UpButton->getAbsolutePosition().UpperLeftCorner.X - 2 )
 		{
 			len = UpButton->getAbsolutePosition().UpperLeftCorner.X - 2 - pos;
@@ -528,7 +499,7 @@ bool CGUITabControl::selectTab(core::position2d<s32> p)
 		s32 len = calcTabWidth(pos, font, text, true);
 		if ( ScrollControl && pos+len > UpButton->getAbsolutePosition().UpperLeftCorner.X - 2 )
 			return false;
-
+		
 		frameRect.UpperLeftCorner.X = pos;
 		frameRect.LowerRightCorner.X = frameRect.UpperLeftCorner.X + len;
 
@@ -581,7 +552,7 @@ void CGUITabControl::draw()
 
 	bool needLeftScroll = CurrentScrollTabIndex > 0;
 	bool needRightScroll = false;
-
+	
 	// left and right pos of the active tab
 	s32 left = 0;
 	s32 right = 0;
@@ -609,9 +580,6 @@ void CGUITabControl::draw()
 		frameRect.LowerRightCorner.X = frameRect.UpperLeftCorner.X + len;
 
 		pos += len;
-
-		if ( text )
-			Tabs[i]->refreshSkinColors();
 
 		if ((s32)i == ActiveTab)
 		{
@@ -701,13 +669,12 @@ void CGUITabControl::draw()
 	}
 
 	skin->draw3DTabBody(this, Border, FillBackground, AbsoluteRect, &AbsoluteClippingRect, TabHeight, VerticalAlignment);
-
+	
 	// enable scrollcontrols on need
 	if ( UpButton )
 		UpButton->setEnabled(needLeftScroll);
 	if ( DownButton )
 		DownButton->setEnabled(needRightScroll);
-	refreshSprites();
 
 	IGUIElement::draw();
 }
@@ -737,7 +704,7 @@ void CGUITabControl::setTabMaxWidth(s32 width )
 {
 	TabMaxWidth = width;
 }
-
+	
 //! get the maximal width of a tab
 s32 CGUITabControl::getTabMaxWidth() const
 {
@@ -785,6 +752,7 @@ void CGUITabControl::recalculateScrollBar()
 	bringToFront( UpButton );
 	bringToFront( DownButton );
 }
+
 
 //! Set the alignment of the tabs
 void CGUITabControl::setTabVerticalAlignment( EGUI_ALIGNMENT alignment )
@@ -872,7 +840,7 @@ bool CGUITabControl::setActiveTab(s32 idx)
 }
 
 
-bool CGUITabControl::setActiveTab(IGUITab *tab)
+bool CGUITabControl::setActiveTab(IGUIElement *tab)
 {
 	for (s32 i=0; i<(s32)Tabs.size(); ++i)
 		if (Tabs[i] == tab)

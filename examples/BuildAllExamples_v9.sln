@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
+# Visual C++ Express 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "01.HelloWorld_vc9", "01.HelloWorld\HelloWorld_vc9.vcproj", "{5AD4C95C-BA38-4692-BA4B-8C25A86208F9}"
 	ProjectSection(ProjectDependencies) = postProject
 		{E08E042A-6C45-411B-92BE-3CC31331019F} = {E08E042A-6C45-411B-92BE-3CC31331019F}
@@ -88,11 +88,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "16.Quake3MapShader_vc9", "1
 		{E08E042A-6C45-411B-92BE-3CC31331019F} = {E08E042A-6C45-411B-92BE-3CC31331019F}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "17.HelloWorld_Mobile_v9", "17.HelloWorld_Mobile\17. HelloWorld for Windows Mobile on PC_v9.vcproj", "{2A29B6B1-AFC4-46C7-9944-7052AAE66F7B}"
-	ProjectSection(ProjectDependencies) = postProject
-		{E08E042A-6C45-411B-92BE-3CC31331019F} = {E08E042A-6C45-411B-92BE-3CC31331019F}
-	EndProjectSection
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "18.SplitScreen_vc9", "18.SplitScreen\SplitScreen_vc9.vcproj", "{1AB9413E-4F53-42A3-8CB2-CB4BE22336D0}"
 	ProjectSection(ProjectDependencies) = postProject
 		{E08E042A-6C45-411B-92BE-3CC31331019F} = {E08E042A-6C45-411B-92BE-3CC31331019F}
@@ -123,7 +118,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "23.SMeshHandling_vc9", "23.
 		{E08E042A-6C45-411B-92BE-3CC31331019F} = {E08E042A-6C45-411B-92BE-3CC31331019F}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "24.CursorControl_vc9", "24.CursorControl\CursorControl_vc9.vcproj", "{02B67A37-50E1-49DB-BECF-905BC029C2FE}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "17.HelloWorld for Windows Mobile on PC", "17.HelloWorld_Mobile\17. HelloWorld for Windows Mobile on PC_v9.vcproj", "{2A29B6B1-AFC4-46C7-9944-7052AAE66F7B}"
 	ProjectSection(ProjectDependencies) = postProject
 		{E08E042A-6C45-411B-92BE-3CC31331019F} = {E08E042A-6C45-411B-92BE-3CC31331019F}
 	EndProjectSection
@@ -211,8 +206,8 @@ Global
 		{78C9F424-523C-49AC-94B7-823AA4A26BF9}.Release|Win32.Build.0 = Release|Win32
 		{E08E042A-6C45-411B-92BE-3CC31331019F}.Debug|Win32.ActiveCfg = Debug|Win32
 		{E08E042A-6C45-411B-92BE-3CC31331019F}.Debug|Win32.Build.0 = Debug|Win32
-		{E08E042A-6C45-411B-92BE-3CC31331019F}.Release|Win32.ActiveCfg = Release|Win32
-		{E08E042A-6C45-411B-92BE-3CC31331019F}.Release|Win32.Build.0 = Release|Win32
+		{E08E042A-6C45-411B-92BE-3CC31331019F}.Release|Win32.ActiveCfg = Release - Fast FPU|Win32
+		{E08E042A-6C45-411B-92BE-3CC31331019F}.Release|Win32.Build.0 = Release - Fast FPU|Win32
 		{6F076455-D955-45D4-9C68-4AD4E45F2D47}.Debug|Win32.ActiveCfg = Debug|Win32
 		{6F076455-D955-45D4-9C68-4AD4E45F2D47}.Debug|Win32.Build.0 = Debug|Win32
 		{6F076455-D955-45D4-9C68-4AD4E45F2D47}.Release|Win32.ActiveCfg = Release|Win32
@@ -261,10 +256,6 @@ Global
 		{E72B637E-4AA6-46F3-885F-AC67B4B470ED}.Debug|Win32.Build.0 = Debug|Win32
 		{E72B637E-4AA6-46F3-885F-AC67B4B470ED}.Release|Win32.ActiveCfg = Release|Win32
 		{E72B637E-4AA6-46F3-885F-AC67B4B470ED}.Release|Win32.Build.0 = Release|Win32
-		{02B67A37-50E1-49DB-BECF-905BC029C2FE}.Debug|Win32.ActiveCfg = Debug|Win32
-		{02B67A37-50E1-49DB-BECF-905BC029C2FE}.Debug|Win32.Build.0 = Debug|Win32
-		{02B67A37-50E1-49DB-BECF-905BC029C2FE}.Release|Win32.ActiveCfg = Release|Win32
-		{02B67A37-50E1-49DB-BECF-905BC029C2FE}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

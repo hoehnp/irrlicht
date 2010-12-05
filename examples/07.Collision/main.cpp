@@ -1,17 +1,17 @@
 /** Example 007 Collision
 
-We will describe 2 methods: Automatic collision detection for moving through
-3d worlds with stair climbing and sliding, and manual scene node and triangle
-picking using a ray.  In this case, we will use a ray coming out from the
-camera, but you can use any ray.
+We will describe 2 methods: Automatic collision detection for moving through 3d worlds
+with stair climbing and sliding, and manual scene node and triangle picking using a
+ray.  In this case, we will use a ray coming out from the camera, but you can use
+any ray.
 
-To start, we take the program from tutorial 2, which loads and displays a
-quake 3 level. We will use the level to walk in it and to pick triangles from.
-In addition we'll place 3 animated models into it for triangle picking. The
-following code starts up the engine and loads the level, as per tutorial 2.
+To start, we take the program from tutorial 2, which loads and displays a quake
+3 level. We will use the level to walk in it and to pick triangles from. In
+addition we'll place 3 animated models into it for triangle picking. The
+following code starts up the engine and loads a quake 3 level, as per tutorial 2.
 */
 #include <irrlicht.h>
-#include "driverChoice.h"
+#include <iostream>
 
 using namespace irr;
 
@@ -37,10 +37,28 @@ enum
 
 int main()
 {
-	// ask user for driver
-	video::E_DRIVER_TYPE driverType=driverChoiceConsole();
-	if (driverType==video::EDT_COUNT)
-		return 1;
+	// let user select driver type
+
+	video::E_DRIVER_TYPE driverType;
+
+	printf("Please select the driver you want for this example:\n"\
+		" (a) Direct3D 9.0c\n (b) Direct3D 8.1\n (c) OpenGL 1.5\n"\
+		" (d) Software Renderer\n (e) Burning's Software Renderer\n"\
+		" (f) NullDevice\n (otherKey) exit\n\n");
+
+	char i;
+	std::cin >> i;
+
+	switch(i)
+	{
+		case 'a': driverType = video::EDT_DIRECT3D9;break;
+		case 'b': driverType = video::EDT_DIRECT3D8;break;
+		case 'c': driverType = video::EDT_OPENGL;   break;
+		case 'd': driverType = video::EDT_SOFTWARE; break;
+		case 'e': driverType = video::EDT_BURNINGSVIDEO;break;
+		case 'f': driverType = video::EDT_NULL;     break;
+		default: return 0;
+	}
 
 	// create device
 
@@ -164,15 +182,14 @@ int main()
 	selection is being performed. */
 	scene::IAnimatedMeshSceneNode* node = 0;
 
-	video::SMaterial material;
-
 	// Add an MD2 node, which uses vertex-based animation.
 	node = smgr->addAnimatedMeshSceneNode(smgr->getMesh("../../media/faerie.md2"),
 						0, IDFlag_IsPickable | IDFlag_IsHighlightable);
-	node->setPosition(core::vector3df(-90,-15,-140)); // Put its feet on the floor.
-	node->setScale(core::vector3df(1.6f)); // Make it appear realistically scaled
+	node->setPosition(core::vector3df(-70,-15,-120)); // Put its feet on the floor.
+	node->setScale(core::vector3df(2, 2, 2)); // Make it appear realistically scaled
 	node->setMD2Animation(scene::EMAT_POINT);
 	node->setAnimationSpeed(20.f);
+	video::SMaterial material;
 	material.setTexture(0, driver->getTexture("../../media/faerie2.bmp"));
 	material.Lighting = true;
 	material.NormalizeNormals = true;
@@ -184,40 +201,24 @@ int main()
 	node->setTriangleSelector(selector);
 	selector->drop(); // We're done with this selector, so drop it now.
 
-	// And this B3D file uses skinned skeletal animation.
-	node = smgr->addAnimatedMeshSceneNode(smgr->getMesh("../../media/ninja.b3d"),
-						0, IDFlag_IsPickable | IDFlag_IsHighlightable);
-	node->setScale(core::vector3df(10));
-	node->setPosition(core::vector3df(-75,-66,-80));
-	node->setRotation(core::vector3df(0,90,0));
-	node->setAnimationSpeed(8.f);
-	node->getMaterial(0).NormalizeNormals = true;
-	node->getMaterial(0).Lighting = true;
-	// Just do the same as we did above.
-	selector = smgr->createTriangleSelector(node);
-	node->setTriangleSelector(selector);
-	selector->drop();
-
 	// This X files uses skeletal animation, but without skinning.
 	node = smgr->addAnimatedMeshSceneNode(smgr->getMesh("../../media/dwarf.x"),
 						0, IDFlag_IsPickable | IDFlag_IsHighlightable);
-	node->setPosition(core::vector3df(-70,-66,-30)); // Put its feet on the floor.
+	node->setPosition(core::vector3df(-70,-66,0)); // Put its feet on the floor.
 	node->setRotation(core::vector3df(0,-90,0)); // And turn it towards the camera.
 	node->setAnimationSpeed(20.f);
-	node->getMaterial(0).Lighting = true;
 	selector = smgr->createTriangleSelector(node);
 	node->setTriangleSelector(selector);
 	selector->drop();
 
-
-	// And this mdl file uses skinned skeletal animation.
-	node = smgr->addAnimatedMeshSceneNode(smgr->getMesh("../../media/yodan.mdl"),
+	// And this B3D file uses skinned skeletal animation.
+	node = smgr->addAnimatedMeshSceneNode(smgr->getMesh("../../media/ninja.b3d"),
 						0, IDFlag_IsPickable | IDFlag_IsHighlightable);
-	node->setPosition(core::vector3df(-90,-25,20));
-	node->setScale(core::vector3df(0.8f));
-	node->getMaterial(0).Lighting = true;
-	node->setAnimationSpeed(20.f);
-
+	node->setScale(core::vector3df(10, 10, 10));
+	node->setPosition(core::vector3df(-70,-66,-60));
+	node->setRotation(core::vector3df(0,90,0));
+	node->setAnimationSpeed(10.f);
+	node->getMaterial(0).NormalizeNormals = true;
 	// Just do the same as we did above.
 	selector = smgr->createTriangleSelector(node);
 	node->setTriangleSelector(selector);
@@ -327,4 +328,3 @@ int main()
 
 /*
 **/
-

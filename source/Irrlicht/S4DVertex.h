@@ -23,7 +23,6 @@ struct sVec2
 
 	sVec2 () {}
 
-	sVec2 ( f32 s) : x ( s ), y ( s ) {}
 	sVec2 ( f32 _x, f32 _y )
 		: x ( _x ), y ( _y ) {}
 
@@ -108,18 +107,9 @@ struct sCompressedVec4
 
 struct sVec4
 {
-	union
-	{
-		struct { f32 x, y, z, w; };
-		struct { f32 a, r, g, b; };
-//		struct { sVec2 xy, zw; };	// sorry, this does not compile with gcc
-	};
-
-
+	f32 x, y, z, w;
 
 	sVec4 () {}
-
-	sVec4 ( f32 s) : x ( s ), y ( s ), z ( s ), w ( s ) {}
 
 	sVec4 ( f32 _x, f32 _y, f32 _z, f32 _w )
 		: x ( _x ), y ( _y ), z( _z ), w ( _w ){}
@@ -215,7 +205,7 @@ struct sVec4
 		w += other.w;
 	}
 
-	sVec4 operator*(const f32 s) const
+	sVec4 operator*(f32 s) const
 	{
 		return sVec4(x * s , y * s, z * s,w * s);
 	}
@@ -233,15 +223,6 @@ struct sVec4
 		z = (f32) ( z * i );
 		w = (f32) ( w * i );
 	}
-
-	void mul ( const f32 s )
-	{
-		x *= s;
-		y *= s;
-		z *= s;
-		w *= s;
-	}
-
 /*
 	void operator*=(f32 s)
 	{
@@ -270,19 +251,7 @@ struct sVec4
 
 struct sVec3
 {
-	union
-	{
-		struct { f32 r, g, b; };
-		struct { f32 x, y, z; };
-	};
-
-
-	sVec3 () {}
-	sVec3 ( f32 _x, f32 _y, f32 _z )
-		: r ( _x ), g ( _y ), b( _z ) {}
-
-	sVec3 ( const sVec4 &v )
-		: r ( v.x ), g ( v.y ), b( v.z ) {}
+	f32 r, g, b;
 
 	void set ( f32 _r, f32 _g, f32 _b )
 	{
@@ -334,56 +303,6 @@ struct sVec3
 		dest.w = core::min_ ( b, 1.f );
 	}
 
-	// f = a * t + b * ( 1 - t )
-	void interpolate(const sVec3& v0, const sVec3& v1, const f32 t)
-	{
-		r = v1.r + ( ( v0.r - v1.r ) * t );
-		g = v1.g + ( ( v0.g - v1.g ) * t );
-		b = v1.b + ( ( v0.b - v1.b ) * t );
-	}
-
-	sVec3 operator-(const sVec3& other) const
-	{
-		return sVec3(r - other.r, b - other.b, g - other.g);
-	}
-
-	sVec3 operator+(const sVec3& other) const
-	{
-		return sVec3(r + other.r, g + other.g, b + other.b);
-	}
-
-	sVec3 operator*(const f32 s) const
-	{
-		return sVec3(r * s , g * s, b * s);
-	}
-
-	sVec3 operator/(const f32 s) const
-	{
-		f32 inv = 1.f / s;
-		return sVec3(r * inv , g * inv, b * inv);
-	}
-
-	sVec3 operator*(const sVec3 &other) const
-	{
-		return sVec3(r * other.r , b * other.b, g * other.g);
-	}
-
-	void operator+=(const sVec3& other)
-	{
-		r += other.r;
-		g += other.g;
-		b += other.b;
-	}
-
-	void setLength ( f32 len )
-	{
-		const f32 l = len * core::reciprocal_squareroot ( r * r + g * g + b * b );
-
-		r *= l;
-		g *= l;
-		b *= l;
-	}
-
 };
 
 
@@ -413,30 +332,24 @@ enum e4DVertexFlag
 
 	VERTEX4D_FORMAT_MASK_COLOR		= 0x00F00000,
 	VERTEX4D_FORMAT_COLOR_1			= 0x00100000,
-	VERTEX4D_FORMAT_COLOR_2			= 0x00200000,
-
-	VERTEX4D_FORMAT_MASK_BUMP		= 0x0F000000,
-	VERTEX4D_FORMAT_BUMP_DOT3		= 0x01000000,
+	VERTEX4D_FORMAT_COLOR_2			= 0x00200000
 
 };
 
 const u32 MATERIAL_MAX_COLORS = 1;
 const u32 BURNING_MATERIAL_MAX_TEXTURES = 2;
-const u32 BURNING_MATERIAL_MAX_TANGENT = 1;
 
 // dummy Vertex. used for calculation vertex memory size
 struct s4DVertex_proxy
 {
-	u32 flag;
 	sVec4 Pos;
-	sVec2 Tex[BURNING_MATERIAL_MAX_TEXTURES];
 
 #ifdef SOFTWARE_DRIVER_2_USE_VERTEX_COLOR
 	sVec4 Color[MATERIAL_MAX_COLORS];
 #endif
 
-	sVec3 LightTangent[BURNING_MATERIAL_MAX_TANGENT];
-
+	sVec2 Tex[BURNING_MATERIAL_MAX_TEXTURES];
+	u32 flag;
 };
 
 #define SIZEOF_SVERTEX	64
@@ -447,18 +360,17 @@ struct s4DVertex_proxy
 */
 struct s4DVertex
 {
-	u32 flag;
-
 	sVec4 Pos;
-	sVec2 Tex[ BURNING_MATERIAL_MAX_TEXTURES ];
 
 #ifdef SOFTWARE_DRIVER_2_USE_VERTEX_COLOR
 	sVec4 Color[ MATERIAL_MAX_COLORS ];
 #endif
 
-	sVec3 LightTangent[BURNING_MATERIAL_MAX_TANGENT];
+	sVec2 Tex[ BURNING_MATERIAL_MAX_TEXTURES ];
 
-	//u8 fill [ SIZEOF_SVERTEX - sizeof (s4DVertex_proxy) ];
+	u32 flag;
+
+	u8 fill [ SIZEOF_SVERTEX - sizeof (s4DVertex_proxy) ];
 
 	// f = a * t + b * ( 1 - t )
 	void interpolate(const s4DVertex& b, const s4DVertex& a, const f32 t)
@@ -480,12 +392,6 @@ struct s4DVertex
 		for ( i = 0; i!= size; ++i )
 		{
 			Tex[i].interpolate ( a.Tex[i], b.Tex[i], t );
-		}
-
-		size = (flag & VERTEX4D_FORMAT_MASK_BUMP) >> 24;
-		for ( i = 0; i!= size; ++i )
-		{
-			LightTangent[i].interpolate ( a.LightTangent[i], b.LightTangent[i], t );
 		}
 
 	}
@@ -601,8 +507,6 @@ struct sScanConvertData
 	sVec2 t[BURNING_MATERIAL_MAX_TEXTURES][2];		// texture
 	sVec2 slopeT[BURNING_MATERIAL_MAX_TEXTURES][2];	// texture slope along edges
 
-	sVec3 l[BURNING_MATERIAL_MAX_TANGENT][2];		// Light Tangent
-	sVec3 slopeL[BURNING_MATERIAL_MAX_TEXTURES][2];	// tanget slope along edges
 };
 
 // passed to scan Line
@@ -622,7 +526,6 @@ struct sScanLineData
 #endif
 
 	sVec2 t[BURNING_MATERIAL_MAX_TEXTURES][2];		// texture start, texture end of scanline
-	sVec3 l[BURNING_MATERIAL_MAX_TANGENT][2];		// Light Tangent start, end
 };
 
 // passed to pixel Shader
@@ -640,7 +543,7 @@ struct sPixelShaderData
 /*
 	load a color value
 */
-inline void getTexel_plain2 (	tFixPoint &r, tFixPoint &g, tFixPoint &b,
+inline void getTexel_plain2 (	tFixPoint &r, tFixPoint &g, tFixPoint &b, 
 							const sVec4 &v
 							)
 {
@@ -652,7 +555,7 @@ inline void getTexel_plain2 (	tFixPoint &r, tFixPoint &g, tFixPoint &b,
 /*
 	load a color value
 */
-inline void getSample_color (	tFixPoint &a, tFixPoint &r, tFixPoint &g, tFixPoint &b,
+inline void getSample_color (	tFixPoint &a, tFixPoint &r, tFixPoint &g, tFixPoint &b, 
 							const sVec4 &v
 							)
 {
@@ -689,5 +592,5 @@ inline void getSample_color (	tFixPoint &r, tFixPoint &g, tFixPoint &b,
 
 }
 
-#endif
+#endif 
 

@@ -50,10 +50,7 @@ namespace video
 		//! OpenGL device, available on most platforms.
 		/** Performs hardware accelerated rendering of 3D and 2D
 		primitives. */
-		EDT_OPENGL,
-
-		//! No driver, just for counting the elements
-		EDT_COUNT
+		EDT_OPENGL
 	};
 
 } // end namespace video

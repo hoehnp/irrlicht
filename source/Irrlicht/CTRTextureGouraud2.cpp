@@ -80,7 +80,7 @@ class CTRTextureGouraud2 : public IBurningShader
 public:
 
 	//! constructor
-	CTRTextureGouraud2(CBurningVideoDriver* driver);
+	CTRTextureGouraud2(IDepthBuffer* zbuffer);
 
 	//! draws an indexed triangle list
 	virtual void drawTriangle ( const s4DVertex *a,const s4DVertex *b,const s4DVertex *c );
@@ -94,8 +94,8 @@ private:
 };
 
 //! constructor
-CTRTextureGouraud2::CTRTextureGouraud2(CBurningVideoDriver* driver)
-: IBurningShader(driver)
+CTRTextureGouraud2::CTRTextureGouraud2(IDepthBuffer* zbuffer)
+: IBurningShader(zbuffer)
 {
 	#ifdef _DEBUG
 	setDebugName("CTRTextureGouraud2");
@@ -657,10 +657,10 @@ namespace video
 {
 
 //! creates a flat triangle renderer
-IBurningShader* createTriangleRendererTextureGouraud2(CBurningVideoDriver* driver)
+IBurningShader* createTriangleRendererTextureGouraud2(IDepthBuffer* zbuffer)
 {
 	#ifdef _IRR_COMPILE_WITH_BURNINGSVIDEO_
-	return new CTRTextureGouraud2(driver);
+	return new CTRTextureGouraud2(zbuffer);
 	#else
 	return 0;
 	#endif // _IRR_COMPILE_WITH_BURNINGSVIDEO_

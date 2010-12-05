@@ -135,7 +135,7 @@ void CMetaTriangleSelector::removeAllTriangleSelectors()
 
 
 //! Return the scene node associated with a given triangle.
-ISceneNode* CMetaTriangleSelector::getSceneNodeForTriangle(u32 triangleIndex) const
+const ISceneNode* CMetaTriangleSelector::getSceneNodeForTriangle(u32 triangleIndex) const
 {
 	u32 totalTriangles = 0;
 

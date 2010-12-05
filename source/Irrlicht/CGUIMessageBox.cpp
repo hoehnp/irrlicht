@@ -122,7 +122,7 @@ void CGUIMessageBox::refreshControls()
 	core::rect<s32> staticRect;
 	staticRect.UpperLeftCorner.X = borderWidth;
 	staticRect.UpperLeftCorner.Y = titleHeight + borderWidth;
-	staticRect.LowerRightCorner.X = staticRect.UpperLeftCorner.X + skin->getSize(EGDS_MESSAGE_BOX_MAX_TEXT_WIDTH);
+	staticRect.LowerRightCorner.X = staticRect.UpperLeftCorner.X + skin->getSize(EGDS_MESSAGE_BOX_MAX_TEST_WIDTH);
 	staticRect.LowerRightCorner.Y = staticRect.UpperLeftCorner.Y + skin->getSize(EGDS_MESSAGE_BOX_MAX_TEXT_HEIGHT);
 	if (!StaticText)
 	{
@@ -254,7 +254,7 @@ void CGUIMessageBox::refreshControls()
 //! called if an event happened.
 bool CGUIMessageBox::OnEvent(const SEvent& event)
 {
-	if (isEnabled())
+	if (IsEnabled)
 	{
 		SEvent outevent;
 		outevent.EventType = EET_GUI_EVENT;
@@ -321,8 +321,6 @@ bool CGUIMessageBox::OnEvent(const SEvent& event)
 			{
 				if (OkButton && event.KeyInput.Key == KEY_RETURN)
 				{
-					setVisible(false);	// this is a workaround to make sure it's no longer the hovered element, crashes on pressing 1-2 times ESC
-					Environment->setFocus(0);
 					outevent.GUIEvent.EventType = EGET_MESSAGEBOX_OK;
 					Parent->OnEvent(outevent);
 					remove();
@@ -331,8 +329,6 @@ bool CGUIMessageBox::OnEvent(const SEvent& event)
 				else
 				if ((CancelButton || CloseButton) && event.KeyInput.Key == KEY_ESCAPE)
 				{
-					setVisible(false);	// this is a workaround to make sure it's no longer the hovered element, crashes on pressing 1-2 times ESC
-					Environment->setFocus(0);
 					outevent.GUIEvent.EventType = EGET_MESSAGEBOX_CANCEL;
 					Parent->OnEvent(outevent);
 					remove();
@@ -341,8 +337,6 @@ bool CGUIMessageBox::OnEvent(const SEvent& event)
 				else
 				if (YesButton && event.KeyInput.Key == KEY_KEY_Y)
 				{
-					setVisible(false);	// this is a workaround to make sure it's no longer the hovered element, crashes on pressing 1-2 times ESC
-					Environment->setFocus(0);
 					outevent.GUIEvent.EventType = EGET_MESSAGEBOX_YES;
 					Parent->OnEvent(outevent);
 					remove();
@@ -351,8 +345,6 @@ bool CGUIMessageBox::OnEvent(const SEvent& event)
 				else
 				if (NoButton && event.KeyInput.Key == KEY_KEY_N)
 				{
-					setVisible(false);	// this is a workaround to make sure it's no longer the hovered element, crashes on pressing 1-2 times ESC
-					Environment->setFocus(0);
 					outevent.GUIEvent.EventType = EGET_MESSAGEBOX_NO;
 					Parent->OnEvent(outevent);
 					remove();
@@ -365,8 +357,6 @@ bool CGUIMessageBox::OnEvent(const SEvent& event)
 			{
 				if (event.GUIEvent.Caller == OkButton)
 				{
-					setVisible(false);	// this is a workaround to make sure it's no longer the hovered element, crashes on pressing 1-2 times ESC
-					Environment->setFocus(0);
 					outevent.GUIEvent.EventType = EGET_MESSAGEBOX_OK;
 					Parent->OnEvent(outevent);
 					remove();
@@ -376,8 +366,6 @@ bool CGUIMessageBox::OnEvent(const SEvent& event)
 				if (event.GUIEvent.Caller == CancelButton ||
 					event.GUIEvent.Caller == CloseButton)
 				{
-					setVisible(false);	// this is a workaround to make sure it's no longer the hovered element, crashes on pressing 1-2 times ESC
-					Environment->setFocus(0);
 					outevent.GUIEvent.EventType = EGET_MESSAGEBOX_CANCEL;
 					Parent->OnEvent(outevent);
 					remove();
@@ -386,8 +374,6 @@ bool CGUIMessageBox::OnEvent(const SEvent& event)
 				else
 				if (event.GUIEvent.Caller == YesButton)
 				{
-					setVisible(false);	// this is a workaround to make sure it's no longer the hovered element, crashes on pressing 1-2 times ESC
-					Environment->setFocus(0);
 					outevent.GUIEvent.EventType = EGET_MESSAGEBOX_YES;
 					Parent->OnEvent(outevent);
 					remove();
@@ -396,8 +382,6 @@ bool CGUIMessageBox::OnEvent(const SEvent& event)
 				else
 				if (event.GUIEvent.Caller == NoButton)
 				{
-					setVisible(false);	// this is a workaround to make sure it's no longer the hovered element, crashes on pressing 1-2 times ESC
-					Environment->setFocus(0);
 					outevent.GUIEvent.EventType = EGET_MESSAGEBOX_NO;
 					Parent->OnEvent(outevent);
 					remove();

@@ -510,14 +510,6 @@ namespace scene
 			s32 id=-1, s32 minimalPolysPerNode=512, bool alsoAddIfMeshPointerZero=false) = 0;
 
 		//! Adds a scene node for rendering using a octree to the scene graph.
-		/** \deprecated Use addOctreeSceneNode instead. */
-		_IRR_DEPRECATED_ IMeshSceneNode* addOctTreeSceneNode(IAnimatedMesh* mesh, ISceneNode* parent=0,
-			s32 id=-1, s32 minimalPolysPerNode=512, bool alsoAddIfMeshPointerZero=false)
-		{
-			return addOctreeSceneNode(mesh, parent, id, minimalPolysPerNode, alsoAddIfMeshPointerZero);
-		}
-
-		//! Adds a scene node for rendering using a octree to the scene graph.
 		/** This a good method for rendering scenes with lots of
 		geometry. The Octree is built on the fly from the mesh, much
 		faster then a bsp tree.
@@ -532,14 +524,6 @@ namespace scene
 		This pointer should not be dropped. See IReferenceCounted::drop() for more information. */
 		virtual IMeshSceneNode* addOctreeSceneNode(IMesh* mesh, ISceneNode* parent=0,
 			s32 id=-1, s32 minimalPolysPerNode=256, bool alsoAddIfMeshPointerZero=false) = 0;
-
-		//! Adds a scene node for rendering using a octree to the scene graph.
-		/** \deprecated Use addOctreeSceneNode instead. */
-		_IRR_DEPRECATED_ IMeshSceneNode* addOctTreeSceneNode(IMesh* mesh, ISceneNode* parent=0,
-			s32 id=-1, s32 minimalPolysPerNode=256, bool alsoAddIfMeshPointerZero=false)
-		{
-			return addOctreeSceneNode(mesh, parent, id, minimalPolysPerNode, alsoAddIfMeshPointerZero);
-		}
 
 		//! Adds a camera scene node to the scene graph and sets it as active camera.
 		/** This camera does not react on user input like for example the one created with
@@ -857,7 +841,7 @@ namespace scene
 		/** A Quake3 Scene renders multiple meshes for a specific HighLanguage Shader (Quake3 Style )
 		\return Pointer to the quake3 scene node if successful, otherwise NULL.
 		This pointer should not be dropped. See IReferenceCounted::drop() for more information. */
-		virtual IMeshSceneNode* addQuake3SceneNode(const IMeshBuffer* meshBuffer, const quake3::IShader * shader,
+		virtual IMeshSceneNode* addQuake3SceneNode(IMeshBuffer* meshBuffer, const quake3::IShader * shader,
 												ISceneNode* parent=0, s32 id=-1
 												) = 0;
 
@@ -967,22 +951,22 @@ namespace scene
 
 		//! add a static arrow mesh to the meshpool
 		/** \param name Name of the mesh
-		\param vtxColorCylinder color of the cylinder
-		\param vtxColorCone color of the cone
+		\param vtxColor0 color of the cylinder
+		\param vtxColor1 color of the cone
 		\param tesselationCylinder Number of quads the cylinder side consists of
 		\param tesselationCone Number of triangles the cone's roof consits of
 		\param height Total height of the arrow
 		\param cylinderHeight Total height of the cylinder, should be lesser than total height
-		\param widthCylinder Diameter of the cylinder
-		\param widthCone Diameter of the cone's base, should be not smaller than the cylinder's diameter
+		\param width0 Diameter of the cylinder
+		\param width1 Diameter of the cone's base, should be not smaller than the cylinder's diameter
 		\return Pointer to the arrow mesh if successful, otherwise 0.
 		This pointer should not be dropped. See IReferenceCounted::drop() for more information. */
 		virtual IAnimatedMesh* addArrowMesh(const io::path& name,
-				video::SColor vtxColorCylinder=0xFFFFFFFF,
-				video::SColor vtxColorCone=0xFFFFFFFF,
+				video::SColor vtxColor0=0xFFFFFFFF,
+				video::SColor vtxColor1=0xFFFFFFFF,
 				u32 tesselationCylinder=4, u32 tesselationCone=8,
 				f32 height=1.f, f32 cylinderHeight=0.6f,
-				f32 widthCylinder=0.05f, f32 widthCone=0.3f) = 0;
+				f32 width0=0.05f, f32 width1=0.3f) = 0;
 
 		//! add a static sphere mesh to the meshpool
 		/** \param name Name of the mesh
@@ -997,10 +981,6 @@ namespace scene
 
 		//! Add a volume light mesh to the meshpool
 		/** \param name Name of the mesh
-		\param SubdivideU Horizontal subdivision count
-		\param SubdivideV Vertical subdivision count
-		\param FootColor Color of the bottom of the light
-		\param TailColor Color of the top of the light
 		\return Pointer to the volume light mesh if successful, otherwise 0.
 		This pointer should not be dropped. See IReferenceCounted::drop() for more information.
 		*/
@@ -1276,14 +1256,6 @@ namespace scene
 		See IReferenceCounted::drop() for more information. */
 		virtual ITriangleSelector* createOctreeTriangleSelector(IMesh* mesh,
 			ISceneNode* node, s32 minimalPolysPerNode=32) = 0;
-
-		//! //! Creates a Triangle Selector, optimized by an octree.
-		/** \deprecated Use createOctreeTriangleSelector instead. */
-		_IRR_DEPRECATED_ ITriangleSelector* createOctTreeTriangleSelector(IMesh* mesh,
-			ISceneNode* node, s32 minimalPolysPerNode=32)
-		{
-			return createOctreeTriangleSelector(mesh, node, minimalPolysPerNode);
-		}
 
 		//! Creates a meta triangle selector.
 		/** A meta triangle selector is nothing more than a

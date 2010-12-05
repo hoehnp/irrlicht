@@ -81,7 +81,7 @@ namespace scene
 		Octree<video::S3DVertexTangents>* TangentsOctree;
 		core::array< Octree<video::S3DVertexTangents>::SMeshChunk > TangentsMeshes;
 
-		video::E_VERTEX_TYPE VertexType;
+		video::E_VERTEX_TYPE vertexType;
 		core::array< video::SMaterial > Materials;
 
 		core::stringc MeshName;
@@ -89,12 +89,6 @@ namespace scene
 		s32 PassCount;
 
 		IMesh * Mesh;
-		//! use VBOs for rendering where possible
-		bool UseVBOs;
-		//! use visibility information together with VBOs
-		bool UseVisibilityAndVBOs;
-		//! use bounding box or frustum for calculate polys
-		bool BoxBased;
 	};
 
 } // end namespace scene

@@ -90,23 +90,21 @@ inline io::path& deletePathFromPath(io::path& filename, s32 pathCount)
 	s32 i = filename.size();
 
 	// search for path separator or beginning
-	while ( i>=0 )
+	while ( i )
 	{
 		if ( filename[i] == '/' || filename[i] == '\\' )
 		{
 			if ( --pathCount <= 0 )
 				break;
 		}
-		--i;
+		i -= 1;
 	}
 
-	if ( i>0 )
+	if ( i )
 	{
 		filename [ i + 1 ] = 0;
 		filename.validate();
 	}
-	else
-		filename="";
 	return filename;
 }
 
@@ -136,39 +134,6 @@ inline s32 isInSameDirectory ( const io::path& path, const io::path& file )
 	}
 
 	return subB - subA;
-}
-
-// splits a path into components
-static inline void splitFilename( const io::path &name, io::path *path,io::path* filename, io::path* extension,bool make_lower = false )
-{
-	s32 i = name.size();
-	s32 extpos = i;
-
-	// search for path separator or beginning
-	while ( i >= 0 )
-	{
-		if ( name[i] == '.' )
-		{
-			extpos = i;
-			if ( extension )
-				*extension = name.subString ( extpos + 1, name.size() - (extpos + 1), make_lower );
-		}
-		else
-		if ( name[i] == '/' || name[i] == '\\' )
-		{
-			if ( filename )
-				*filename = name.subString ( i + 1, extpos - (i + 1), make_lower );
-			if ( path )
-			{
-				*path = name.subString ( 0, i + 1, make_lower );
-				path->replace ( '\\', '/' );
-			}
-			return;
-		}
-		i -= 1;
-	}
-	if ( filename )
-		*filename = name.subString ( 0, extpos, make_lower );
 }
 
 

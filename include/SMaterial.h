@@ -100,7 +100,7 @@ namespace video
 	/** alpha source can be an OR'ed combination of E_ALPHA_SOURCE values. */
 	inline f32 pack_texureBlendFunc ( const E_BLEND_FACTOR srcFact, const E_BLEND_FACTOR dstFact, const E_MODULATE_FUNC modulate=EMFN_MODULATE_1X, const u32 alphaSource=EAS_TEXTURE )
 	{
-		const u32 tmp = (alphaSource << 12) | (modulate << 8) | (srcFact << 4) | dstFact;
+		const u32 tmp = (alphaSource << 24) | (modulate << 16) | (srcFact << 8) | dstFact;
 		return FR(tmp);
 	}
 
@@ -110,10 +110,10 @@ namespace video
 			E_MODULATE_FUNC &modulo, u32& alphaSource, const f32 param )
 	{
 		const u32 state = IR(param);
-		alphaSource = (state & 0x0000F000) >> 12;
-		modulo	= E_MODULATE_FUNC( ( state & 0x00000F00 ) >> 8 );
-		srcFact = E_BLEND_FACTOR ( ( state & 0x000000F0 ) >> 4 );
-		dstFact = E_BLEND_FACTOR ( ( state & 0x0000000F ) );
+		alphaSource = (state & 0xFF000000) >> 24;
+		modulo	= E_MODULATE_FUNC( ( state & 0x00FF0000 ) >> 16 );
+		srcFact = E_BLEND_FACTOR ( ( state & 0x0000FF00 ) >> 8 );
+		dstFact = E_BLEND_FACTOR ( ( state & 0x000000FF ) );
 	}
 
 	//! EMT_ONETEXTURE_BLEND: has BlendFactor Alphablending
@@ -197,7 +197,7 @@ namespace video
 			ZBuffer(ECFN_LESSEQUAL), AntiAliasing(EAAM_SIMPLE), ColorMask(ECP_ALL),
 			ColorMaterial(ECM_DIFFUSE),
 			Wireframe(false), PointCloud(false), GouraudShading(true), Lighting(true), ZWriteEnable(true),
-			BackfaceCulling(true), FrontfaceCulling(false), FogEnable(false), NormalizeNormals(false), UseMipMaps(true)
+			BackfaceCulling(true), FrontfaceCulling(false), FogEnable(false), NormalizeNormals(false)
 		{ }
 
 		//! Copy constructor
@@ -246,7 +246,6 @@ namespace video
 			AntiAliasing = other.AntiAliasing;
 			ColorMask = other.ColorMask;
 			ColorMaterial = other.ColorMaterial;
-			UseMipMaps = other.UseMipMaps;
 
 			return *this;
 		}
@@ -378,10 +377,6 @@ namespace video
 		/** Always use this if the mesh lit and scaled. Default: false */
 		bool NormalizeNormals:1;
 
-		//! Shall mipmaps be used if available
-		/** Sometimes, disabling mipmap usage can be useful. Default: true */
-		bool UseMipMaps:1;
-
 		//! Gets the texture transformation matrix for level i
 		/** \param i The desired level. Must not be larger than MATERIAL_MAX_TEXTURES.
 		\return Texture matrix for texture level i. */
@@ -497,8 +492,6 @@ namespace video
 				case EMF_COLOR_MATERIAL:
 					ColorMaterial = value?ECM_DIFFUSE:ECM_NONE;
 					break;
-				case EMF_USE_MIP_MAPS:
-					UseMipMaps = value;
 				default:
 					break;
 			}
@@ -552,8 +545,6 @@ namespace video
 					return (ColorMask!=ECP_NONE);
 				case EMF_COLOR_MATERIAL:
 					return (ColorMaterial != ECM_NONE);
-				case EMF_USE_MIP_MAPS:
-					return UseMipMaps;
 			}
 
 			return false;
@@ -586,8 +577,7 @@ namespace video
 				NormalizeNormals != b.NormalizeNormals ||
 				AntiAliasing != b.AntiAliasing ||
 				ColorMask != b.ColorMask ||
-				ColorMaterial != b.ColorMaterial ||
-				UseMipMaps != b.UseMipMaps;
+				ColorMaterial != b.ColorMaterial;
 			for (u32 i=0; (i<MATERIAL_MAX_TEXTURES) && !different; ++i)
 			{
 				different |= (TextureLayer[i] != b.TextureLayer[i]);

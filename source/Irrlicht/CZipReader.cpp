@@ -4,18 +4,11 @@
 
 #include "CZipReader.h"
 
-#include "os.h"
-
-// This method is used for error output from bzip2.
-extern "C" void bz_internal_error(int errorCode)
-{
-	irr::os::Printer::log("Error in bzip2 handling", irr::core::stringc(errorCode), irr::ELL_ERROR);
-}
-
 #ifdef __IRR_COMPILE_WITH_ZIP_ARCHIVE_LOADER_
 
 #include "CFileList.h"
 #include "CReadFile.h"
+#include "os.h"
 #include "coreutil.h"
 
 #include "IrrCompileConfig.h"
@@ -39,6 +32,14 @@ extern "C" void bz_internal_error(int errorCode)
 	#ifdef _IRR_COMPILE_WITH_LZMA_
 	#include "lzma/LzmaDec.h"
 	#endif
+#endif
+
+#ifdef BZ_NO_STDIO
+// This method is used for error output from bzip2.
+extern "C" void bz_internal_error(int errorCode)
+{
+	irr::os::Printer::log("Error in bzip2 handling", irr::core::stringc(errorCode), irr::ELL_ERROR);
+}
 #endif
 
 namespace irr
@@ -138,7 +139,7 @@ bool CArchiveLoaderZIP::isALoadableFileFormat(io::IReadFile* file) const
 // -----------------------------------------------------------------------------
 
 CZipReader::CZipReader(IReadFile* file, bool ignoreCase, bool ignorePaths, bool isGZip)
- : CFileList((file ? file->getFileName() : io::path("")), ignoreCase, ignorePaths), File(file), IsGZip(isGZip)
+ : CFileList(file ? file->getFileName() : "", ignoreCase, ignorePaths), File(file), IsGZip(isGZip)
 {
 	#ifdef _DEBUG
 	setDebugName("CZipReader");
@@ -363,7 +364,7 @@ bool CZipReader::scanGZipHeader()
 #endif
 
 		// now we've filled all the fields, this is just a standard deflate block
-		addItem(ZipFileName, entry.Offset, entry.header.DataDescriptor.UncompressedSize, false, 0);
+		addItem(ZipFileName, entry.header.DataDescriptor.UncompressedSize, false, 0);
 		FileInfo.push_back(entry);
 	}
 
@@ -471,7 +472,7 @@ bool CZipReader::scanZipHeader()
 	//os::Debuginfo::print("added file from archive", ZipFileName.c_str());
 	#endif
 
-	addItem(ZipFileName, entry.Offset, entry.header.DataDescriptor.UncompressedSize, false, FileInfo.size());
+	addItem(ZipFileName, entry.header.DataDescriptor.UncompressedSize, false, FileInfo.size());
 	FileInfo.push_back(entry);
 
 	return true;
@@ -489,7 +490,6 @@ IReadFile* CZipReader::createAndOpenFile(const io::path& filename)
 	return 0;
 }
 
-#ifdef _IRR_COMPILE_WITH_LZMA_
 //! Used for LZMA decompression. The lib has no default memory management
 namespace
 {
@@ -497,7 +497,6 @@ namespace
 	void SzFree(void *p, void *address) { p = p; free(address); }
 	ISzAlloc lzmaAlloc = { SzAlloc, SzFree };
 }
-#endif
 
 //! opens a file by index
 IReadFile* CZipReader::createAndOpenFile(u32 index)

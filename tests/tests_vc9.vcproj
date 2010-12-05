@@ -172,14 +172,6 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\2dmaterial.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\anti-aliasing.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\archiveReader.cpp"
 				>
 			</File>
@@ -196,23 +188,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\color.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\createImage.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\cursorSetVisible.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\disambiguateTextures.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\draw2DImage.cpp"
 				>
 			</File>
 			<File
@@ -272,10 +252,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\lights.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\line2dIntersectWith.cpp"
 				>
 			</File>
@@ -301,18 +277,6 @@
 			</File>
 			<File
 				RelativePath=".\meshLoaders.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\meshTransform.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\mrt.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\orthoCam.cpp"
 				>
 			</File>
 			<File
@@ -344,10 +308,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\stencilshadow.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\terrainSceneNode.cpp"
 				>
 			</File>
@@ -361,14 +321,6 @@
 			</File>
 			<File
 				RelativePath=".\testGeometryCreator.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\testQuaternion.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\testS3DVertex.cpp"
 				>
 			</File>
 			<File
@@ -400,15 +352,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\transparentMaterials.cpp"
+				RelativePath=".\transparentAlphaChannelRef.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\vectorPositionDimension2d.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\videoDriver.cpp"
 				>
 			</File>
 			<File
