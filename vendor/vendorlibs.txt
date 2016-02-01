@@ -18,7 +18,21 @@ There is no vendorlib for lzma, not sure if that is accidental or not done becau
 -------
 gladman
 -------
-TODO - figure it out
+enfile.zip from Gladman's site (http://173.254.28.24/~brgladma//oldsite/cryptography_technology/fileencrypt/index.php), removed the bzip stuff and renamed c files to cpp.
+Note there is a newer version of most files on https://github.com/BrianGladman/AES. Including a newer license (similar to old but shorter).
+But in Irrlicht we only care about unzipping password protected files, as long as that works and it compiles we are fine.
+
+# remove files we don't need
+rm *.vcproj
+rm encfile.*
+rm bzlib.h
+rm -rf bzip2
+rm main.c
+# Rename c files to cpp (because we will use Irrlicht types later on)
+for f in *.c; do mv -- "$f" "${f%.c}.cpp"; done
+
+Inside Irrlicht:
+There are a lot of minor changes. Most to get it compiling together with Irrlicht on all kind of platforms.
 
 -------
 jpeglib
