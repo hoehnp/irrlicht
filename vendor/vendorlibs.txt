@@ -46,7 +46,7 @@ Additional file jconfig.h (maybe generated somehow, seems to be a autoconfigurat
 ------
 libpng
 ------
-version 1.6.21 from package lpng1621.zip or pgng1621.7z (the xz or tar.gz archives are different they support configure)
+version 1.6.23 from package lpng1623.zip or pgng1623.7z (the xz or tar.gz archives are different they support configure)
 
 Inside Irrlicht:
 The sub-folders "projects", "scripts" and "contrib" are not copied to source/Irrlicht/libpng (so just the main-folder)
