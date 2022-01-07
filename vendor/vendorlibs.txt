@@ -23,6 +23,7 @@ Add to bzlib.h before the define section starting with BZ_RUN:
 lzma
 -----
 There is no vendorlib for lzma, not sure if that is accidental or not done because it's just one .c file and two headers.
+It doesn't look anything like modern versions of lzma, so not seeing any simple update route currently.
 
 -------
 gladman
@@ -69,7 +70,7 @@ Do keep documentation and license intact!
 ----
 zlib
 ----
-version 1.2.8
+version 1.2.11
 rm -R -- */
 rm *.com
 
