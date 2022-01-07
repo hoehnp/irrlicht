@@ -2,18 +2,22 @@ Libraries used inside Irrlicht and distributed with it.
 There are sometimes a few files removed (large files we don't need and build files we don't use).
 Inside Irrlicht the libs can have further changes, so when updating do a diff first between vendor libs and the corresponding libs in trunk.
 
-Note: In svn it will be easier to update the library sub-folders instead of removing them and adding them with new version. That will result in conflicts when trying to merge branchnes.
+Note: In svn it will be easier to update the library sub-folders instead of removing them and adding them with new version. That will result in conflicts when trying to merge branches.
 
 -----
 bzip2 
 -----
-version 1.0.6 from package bzip2-10.0.6.tar.gz
+version 1.0.8 from package bzip2-latest.tar.gz
 rm sample*
 rm manual.*
 
 Inside Irrlicht:
-compress.c got renamed to bzcompress.c (not sure why, maybe some conflict with compress.c from zlib if some project writes .o files for subprojects into the same subfolder)
-Also a few minor changes in bzlib.c and bzlib.h (probably to get it compiling on VS)
+rename compress.c to bzcompress.c (not sure why, maybe some conflict with compress.c from zlib if some project writes .o files for subprojects into the same subfolder)
+
+Add to bzlib.h before the define section starting with BZ_RUN:
+
+// We don't need the FILE* interface and it causes warnings on VS
+#define BZ_NO_STDIO
 
 -----
 lzma
